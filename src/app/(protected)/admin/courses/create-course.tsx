@@ -1,5 +1,6 @@
 "use client"
 
+import createCourse from "@/api/course.create.api"
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,31 +25,13 @@ const CreateCourse = ({ onCreate }: { onCreate: (course: CourseCardType) => void
     const { isLoading, callApi } = useApiHandler();
     const [isOpen, setIsOpen] = React.useState(false);
 
-    const createCourse = async () => {
-        if (!title) {
+    const handleSave = async () => {
+        if (!title.trim()) {
             toast.error("Title is required");
             return;
         }
 
-        const response = await fetch('/api/courses', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ title }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            toast.error(errorData.error || "Failed to create course");
-            return null;
-        }
-
-        return await response.json();
-    }
-
-    const handleSave = async () => {
-        const data = await callApi(createCourse, () => {
+        const data = await callApi(() => createCourse(title), () => {
             setTitle('');
             setIsOpen(false);
         });

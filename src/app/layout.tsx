@@ -2,7 +2,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
-import { Toaster } from "sonner";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -31,7 +30,7 @@ export default function RootLayout({
 						disableTransitionOnChange
 					>
 						{children}
-						<Toaster />
+						{/* <Toaster /> */}
 					</ThemeProvider>
 				</body>
 			</html>

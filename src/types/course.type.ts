@@ -36,7 +36,7 @@ export type ResourcesType = {
     fileUrl: string
 }
 
-export interface CourseDetailsType extends CourseCardType {
+export interface CourseType extends CourseCardType {
     videoUrl: string;
     longDescription: string;
     whatYoullLearn: string[];

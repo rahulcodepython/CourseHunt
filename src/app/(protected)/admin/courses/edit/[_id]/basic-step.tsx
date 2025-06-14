@@ -1,5 +1,6 @@
 "use client"
 
+import updateCourseBasic from "@/api/update.course.basic.api"
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,17 +9,22 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useApiHandler } from "@/hooks/useApiHandler"
-import { CourseDetailsType } from "@/types/course.type"
+import { CourseCategoryType } from "@/types/course.category.type"
+import { CourseBasicFormType } from "@/types/course.form.type"
+import { CourseType } from "@/types/course.type"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 interface BasicStepProps {
-    courseData: CourseDetailsType | null
-    setCourseData: React.Dispatch<React.SetStateAction<CourseDetailsType | null>>
+    categories: CourseCategoryType[]
+    courseData: CourseType | null
+    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
 }
 
-export default function BasicStep({ courseData, setCourseData }: BasicStepProps) {
-    const [formData, setFormData] = useState({
+export default function BasicStep({ categories, courseData, setCourseData }: BasicStepProps) {
+    const { isLoading, callApi } = useApiHandler()
+
+    const [formData, setFormData] = useState<CourseBasicFormType>({
         title: "",
         description: "",
         duration: "",
@@ -42,36 +48,16 @@ export default function BasicStep({ courseData, setCourseData }: BasicStepProps)
         })
     }, [courseData])
 
-    const { isLoading, callApi } = useApiHandler()
-
     const handleInputChange = (field: string, value: string) => {
         setFormData((prev: any) => ({ ...prev, [field]: value }))
     }
 
-    const updateCourseData = async () => {
-        const response = await fetch(`/api/courses/${courseData?._id}`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(formData)
-        })
-
-        if (response.ok) {
-            const updatedCourse = await response.json()
-            return updatedCourse
-        } else {
-            const errorData = await response.json()
-            toast.error(errorData.error)
-            return null
-        }
-    }
-
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await callApi(updateCourseData)
-        if (updatedCourseData) {
+        if (courseData) {
+            const updatedCourseData = await callApi(() => updateCourseBasic(formData, courseData._id), () => {
+                toast.success("Basic information saved successfully")
+            })
             setCourseData(updatedCourseData)
-            toast.success("Basic information saved successfully")
         }
     }
 
@@ -93,18 +79,21 @@ export default function BasicStep({ courseData, setCourseData }: BasicStepProps)
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="category">Category *</Label>
+                        <Label htmlFor="category">
+                            Category *
+                        </Label>
                         <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                             <SelectTrigger className={`w-full`}>
                                 <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="programming">Programming</SelectItem>
-                                <SelectItem value="design">Design</SelectItem>
-                                <SelectItem value="business">Business</SelectItem>
-                                <SelectItem value="marketing">Marketing</SelectItem>
-                                <SelectItem value="photography">Photography</SelectItem>
-                                <SelectItem value="music">Music</SelectItem>
+                                {
+                                    categories.map((category) => (
+                                        category && <SelectItem key={category._id} value={category.name}>
+                                            {category.name}
+                                        </SelectItem>
+                                    ))
+                                }
                             </SelectContent>
                         </Select>
                     </div>

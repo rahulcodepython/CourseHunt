@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         user: {
             name: "shadcn",
             email: "m@example.com",
-            avatar: "/avatars/shadcn.jpg",
+            avatar: "/placeholder.svg",
         },
         navMain: [
             {

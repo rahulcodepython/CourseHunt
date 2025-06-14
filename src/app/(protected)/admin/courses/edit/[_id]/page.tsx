@@ -1,7 +1,12 @@
 "use client"
 
+import getAdminCourseSingle from "@/api/admin.course.single.api"
+import getCourseCategory from "@/api/course.category.api"
 import { Button } from "@/components/ui/button"
-import { CourseDetailsType } from "@/types/course.type"
+import { useApiHandler } from "@/hooks/useApiHandler"
+import { CourseCategoryType } from "@/types/course.category.type"
+import { CourseType } from "@/types/course.type"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -11,8 +16,11 @@ const steps = ["Basic", "Details", "Chapter & Lesson", "FAQ", "Resources", "Sett
 
 export default function CourseEditForm() {
     const [currentStep, setCurrentStep] = useState(0)
-    const [courseData, setCourseData] = useState<CourseDetailsType | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+    const [courseData, setCourseData] = useState<CourseType | null>(null)
+    const [notFound, setNotFound] = useState(false)
+    const [categories, setCategories] = useState<CourseCategoryType[]>([])
+
+    const { isLoading, callApi } = useApiHandler()
 
     const { _id } = useParams()
 
@@ -23,22 +31,15 @@ export default function CourseEditForm() {
                 return
             }
 
-            try {
-                const response = await fetch(`/api/courses/${_id}`)
-
-                if (!response.ok) {
-                    const data = await response.json()
-                    toast.error(data.error || "Unknown error")
-                    return
-                }
-
-                const data = await response.json()
-                setCourseData(data.course)
-            } catch (error) {
-                toast.error("Failed to fetch course data")
-            } finally {
-                setIsLoading(false)
+            const courseSingleData = await callApi(() => getAdminCourseSingle(`${_id}`))
+            if (!courseSingleData) {
+                setNotFound(true)
+                return
             }
+            setCourseData(courseSingleData)
+
+            const categoryData = await callApi(getCourseCategory)
+            setCategories(categoryData)
         }
 
         handler()
@@ -60,6 +61,7 @@ export default function CourseEditForm() {
         switch (currentStep) {
             case 0:
                 return <BasicStep
+                    categories={categories}
                     courseData={courseData}
                     setCourseData={setCourseData}
                 />
@@ -136,8 +138,30 @@ export default function CourseEditForm() {
             {
                 isLoading ? <div className="w-full flex items-center justify-center">
                     Fetching course data...
+                </div> : notFound ? <div className="w-full flex items-center justify-center">
+                    Course not found
                 </div> : renderStep()
             }
+
+            <div className="w-full flex justify-between mt-4">
+                <Button
+                    variant="outline"
+                    onClick={prevStep}
+                    disabled={currentStep === 0}
+                    className="w-32"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    Previous
+                </Button>
+                <Button
+                    onClick={nextStep}
+                    disabled={currentStep === steps.length - 1 || isLoading}
+                    className="w-32"
+                >
+                    {currentStep === steps.length - 1 ? "Finish" : "Next"}
+                    <ArrowRight className="w-4 h-4" />
+                </Button>
+            </div>
         </div>
     )
 }

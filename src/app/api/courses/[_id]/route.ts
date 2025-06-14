@@ -6,13 +6,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ _id:
 
     await connectDB();
 
-    const course = await Course.findById(_id)
+    try {
+        const course = await Course.findById(_id)
 
-    if (!course) {
+        return new Response(JSON.stringify(course), { status: 200 });
+    } catch {
         return new Response(JSON.stringify({ error: "Course not found" }), { status: 404 });
     }
-
-    return new Response(JSON.stringify({ course: course }), { status: 200 });
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ _id: string }> }) {
@@ -22,11 +22,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ _i
 
     const courseData = await request.json()
 
-    const updatedCourse = await Course.findByIdAndUpdate(_id, courseData, { new: true });
+    try {
+        const updatedCourse = await Course.findByIdAndUpdate(_id, courseData, { new: true });
 
-    if (!updatedCourse) {
+        return new Response(JSON.stringify(updatedCourse), { status: 200 });
+    } catch {
         return new Response(JSON.stringify({ error: "Failed to update course" }), { status: 400 });
     }
-
-    return new Response(JSON.stringify({ course: updatedCourse }), { status: 200 });
 }
