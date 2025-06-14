@@ -1,71 +1,86 @@
 "use client"
 
-import type React from "react"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Edit, Trash2, File } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { UploadResponseType } from "@/types/imagekit.type"
+import uploadMedia from "@/utils/uploadMedia"
+import { Image } from "@imagekit/next"
+import { Upload } from "lucide-react"
+import { useRef, useState } from "react"
 
 interface FileUploadProps {
-  label: string
-  value: string
-  onChange: (url: string) => void
-  accept?: string
-  error?: string
+    label: string
+    onChange: (field: string, url: string, thumbnailUrl: string, fileType?: string) => void
+    field: string
+    accept: string
+    value: {
+        url: string
+        thumbnailUrl: string
+        fileType: string
+    }
 }
 
-export default function FileUpload({ label, value, onChange, accept = "*/*", error }: FileUploadProps) {
-  const [isEditing, setIsEditing] = useState(false)
+export default function FileUpload({ label, onChange, field, accept, value }: FileUploadProps) {
+    const [progress, setProgress] = useState(0)
+    const [uploading, setUploading] = useState(false)
+    const [previousValue, setPreviousValue] = useState(value)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // In a real application, you would upload the file to a server
-      // and get back a URL. For this demo, we'll create a mock URL
-      const mockUrl = `https://example.com/uploads/${file.name}`
-      onChange(mockUrl)
-      setIsEditing(false)
+    const fileRef = useRef<HTMLInputElement>(null)
+
+    const handleFileChange = async () => {
+        const selectedFile = fileRef.current?.files?.[0]
+        if (selectedFile) {
+            setProgress(0)
+            setUploading(true)
+
+            const folderPath = selectedFile.type.startsWith('image/') ? '/courses/images' : '/courses/videos';
+            const uploadResponse: UploadResponseType | null = await uploadMedia(selectedFile, setProgress, folderPath).finally(() => {
+                setUploading(false)
+                fileRef.current!.value = ""
+            })
+
+            if (uploadResponse) {
+                const { url, thumbnailUrl, fileType } = uploadResponse;
+                onChange(field, url, thumbnailUrl, fileType);
+                setPreviousValue({ url, thumbnailUrl, fileType });
+            }
+        }
     }
-  }
 
-  const handleDelete = () => {
-    onChange("")
-    setIsEditing(false)
-  }
 
-  const handleEdit = () => {
-    setIsEditing(true)
-  }
-
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-
-      {!value || isEditing ? (
+    return (
         <div className="space-y-2">
-          <Input type="file" accept={accept} onChange={handleFileChange} className={error ? "border-red-500" : ""} />
-          {isEditing && (
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-              Cancel
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
-          <File className="h-4 w-4" />
-          <span className="flex-1 text-sm truncate">{value}</span>
-          <Button type="button" variant="outline" size="sm" onClick={handleEdit}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+            <Label>{label}</Label>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
-    </div>
-  )
+            <div className="flex items-center gap-2">
+                <Input type="file" className="flex-1" accept={accept} ref={fileRef} />
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleFileChange}
+                    disabled={uploading}
+                >
+                    <Upload className="h-4 w-4" />
+                </Button>
+            </div>
+
+            {uploading && (
+                <Progress
+                    value={progress}
+                    className="mt-2"
+                    style={{ width: "100%" }}
+                />
+            )}
+            {
+                previousValue && !uploading && previousValue.fileType === 'image' ? <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                    <Image src={previousValue.thumbnailUrl} alt="Uploaded file" width={50} height={50} />
+                    <span className="flex-1 text-sm truncate">{previousValue.url}</span>
+                </div> : null
+            }
+        </div>
+    )
 }

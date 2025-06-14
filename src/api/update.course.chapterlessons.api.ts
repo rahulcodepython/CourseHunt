@@ -1,7 +1,6 @@
-import { CourseBasicFormType } from "@/types/course.form.type"
-import { CourseType } from "@/types/course.type"
+import { ChapterType, CourseType } from "@/types/course.type"
 
-const updateCourseBasic = async (formData: CourseBasicFormType, _id: string): Promise<CourseType> => {
+const updateCourseChapterLessons = async (formData: { chapters: ChapterType[] }, _id: string): Promise<CourseType> => {
     const response = await fetch(`/api/courses/${_id}`, {
         method: "PATCH",
         headers: {
@@ -18,4 +17,4 @@ const updateCourseBasic = async (formData: CourseBasicFormType, _id: string): Pr
     }
 }
 
-export default updateCourseBasic;
+export default updateCourseChapterLessons;

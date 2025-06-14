@@ -12,12 +12,13 @@ import { useApiHandler } from "@/hooks/useApiHandler"
 import { CourseCategoryType } from "@/types/course.category.type"
 import { CourseBasicFormType } from "@/types/course.form.type"
 import { CourseType } from "@/types/course.type"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
+import FileUpload from "./file-upload"
 
 interface BasicStepProps {
     categories: CourseCategoryType[]
-    courseData: CourseType | null
+    courseData: CourseType
     setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
 }
 
@@ -25,40 +26,44 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
     const { isLoading, callApi } = useApiHandler()
 
     const [formData, setFormData] = useState<CourseBasicFormType>({
-        title: "",
-        description: "",
-        duration: "",
-        price: 0,
-        originalPrice: 0,
-        category: "",
-        imageUrl: "",
-        previewVideoUrl: ""
+        title: courseData.title || "",
+        description: courseData.description || "",
+        duration: courseData.duration || "",
+        price: courseData.price || 0,
+        originalPrice: courseData.originalPrice || 0,
+        category: courseData.category || "",
+        imageUrl: {
+            url: courseData.imageUrl?.url || "",
+            thumbnailUrl: courseData.imageUrl?.thumbnailUrl || "",
+            fileType: courseData.imageUrl.fileType || ""
+        },
+        previewVideoUrl: {
+            url: courseData.previewVideoUrl?.url || "",
+            thumbnailUrl: courseData.previewVideoUrl?.thumbnailUrl || "",
+            fileType: courseData.previewVideoUrl.fileType || ""
+        }
     })
 
-    useEffect(() => {
-        setFormData({
-            title: courseData?.title || "",
-            description: courseData?.description || "",
-            duration: courseData?.duration || "",
-            price: courseData?.price || 0,
-            originalPrice: courseData?.originalPrice || 0,
-            category: courseData?.category || "",
-            imageUrl: courseData?.imageUrl || "",
-            previewVideoUrl: courseData?.previewVideoUrl || ""
-        })
-    }, [courseData])
-
     const handleInputChange = (field: string, value: string) => {
-        setFormData((prev: any) => ({ ...prev, [field]: value }))
+        setFormData((prev: CourseBasicFormType) => ({ ...prev, [field]: value }))
     }
 
     const handleSaveAndContinue = async () => {
-        if (courseData) {
-            const updatedCourseData = await callApi(() => updateCourseBasic(formData, courseData._id), () => {
-                toast.success("Basic information saved successfully")
-            })
-            setCourseData(updatedCourseData)
-        }
+        const updatedCourseData = await callApi(() => updateCourseBasic(formData, courseData._id), () => {
+            toast.success("Basic information saved successfully")
+        })
+        setCourseData(updatedCourseData)
+    }
+
+    const handleMediaUpload = (field: string, url: string, thumbnailUrl: string, fileType?: string) => {
+        setFormData((prev: CourseBasicFormType) => ({
+            ...prev,
+            [field]: {
+                url,
+                thumbnailUrl,
+                fileType
+            }
+        }))
     }
 
     return (
@@ -144,26 +149,26 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
                     </div>
                 </div>
 
-                {/* <div className="space-y-4">
+                <div className="space-y-4">
                     <FileUpload
                         label="Course Image *"
-                        value={formData.imageUrl}
-                        onChange={(url) => handleInputChange("imageUrl", url)}
+                        onChange={handleMediaUpload}
+                        field="imageUrl"
                         accept="image/*"
-                        error={errors.imageUrl}
+                        value={formData.imageUrl}
                     />
 
                     <FileUpload
                         label="Preview Video *"
-                        value={formData.previewVideoUrl}
-                        onChange={(url) => handleInputChange("previewVideoUrl", url)}
+                        onChange={handleMediaUpload}
+                        field="previewVideoUrl"
                         accept="video/*"
-                        error={errors.previewVideoUrl}
+                        value={formData.previewVideoUrl}
                     />
-                </div> */}
+                </div>
 
                 <div className="flex justify-end">
-                    <LoadingButton isLoading={isLoading} title="Saving changes...">
+                    <LoadingButton isLoading={isLoading} title="Saving Changes...">
                         <Button onClick={handleSaveAndContinue}>Save Changes</Button>
                     </LoadingButton>
                 </div>

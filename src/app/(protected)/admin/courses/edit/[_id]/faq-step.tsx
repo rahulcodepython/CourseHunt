@@ -1,21 +1,26 @@
 "use client"
 
+import updateCourseFAQ from "@/api/update.course.faq.api"
+import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { FAQType } from "@/types/course.type"
-import { ChevronLeft, Plus, X } from "lucide-react"
+import { useApiHandler } from "@/hooks/useApiHandler"
+import { CourseType, FAQType } from "@/types/course.type"
+import { Plus, X } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 
 interface FAQStepProps {
-    onNext: () => void
-    onPrev: () => void
+    courseData: CourseType
+    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
 }
 
-export default function FAQStep({ onNext, onPrev }: FAQStepProps) {
-    const [faqs, setFaqs] = useState<FAQType[]>([{ question: "", answer: "" }])
+export default function FAQStep({ courseData, setCourseData }: FAQStepProps) {
+    const [faqs, setFaqs] = useState<FAQType[]>(courseData.faq || [{ question: "", answer: "" }])
+    const { isLoading, callApi } = useApiHandler()
 
     const addFAQ = () => {
         setFaqs((prev) => [...prev, { question: "", answer: "" }])
@@ -29,8 +34,14 @@ export default function FAQStep({ onNext, onPrev }: FAQStepProps) {
         setFaqs((prev) => prev.map((faq, i) => (i === index ? { ...faq, [field]: value } : faq)))
     }
 
-    const handleSaveAndContinue = () => {
-        onNext()
+    const handleSaveAndContinue = async () => {
+        const updatedCourseData = await callApi(() => updateCourseFAQ({ faq: faqs }, courseData._id), () => {
+            toast.success("Course FAQ updated successfully")
+        }
+        )
+        if (updatedCourseData) {
+            setCourseData(updatedCourseData)
+        }
     }
 
     return (
@@ -80,12 +91,10 @@ export default function FAQStep({ onNext, onPrev }: FAQStepProps) {
                     Add FAQ
                 </Button>
 
-                <div className="flex justify-between">
-                    <Button variant="outline" onClick={onPrev}>
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        Previous
-                    </Button>
-                    <Button onClick={handleSaveAndContinue}>Save & Continue</Button>
+                <div className="flex justify-end">
+                    <LoadingButton isLoading={isLoading} title="Saving Changes...">
+                        <Button onClick={handleSaveAndContinue}>Save Changes</Button>
+                    </LoadingButton>
                 </div>
             </CardContent>
         </Card>

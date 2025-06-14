@@ -1,3 +1,5 @@
+import { ImageUrlType, VideoUrlType } from "./course.type";
+
 export interface CourseBasicFormType {
     title: string;
     description: string;
@@ -5,6 +7,17 @@ export interface CourseBasicFormType {
     price: number;
     originalPrice: number;
     category: string;
-    imageUrl: string;
-    previewVideoUrl: string;
+    imageUrl: ImageUrlType;
+    previewVideoUrl: VideoUrlType;
+}
+
+export interface CourseDetailsFormType {
+    longDescription: string;
+    whatYouWillLearn: string[];
+    prerequisites: string[];
+    requirements: string[];
+}
+
+export interface CourseSettingsFormType {
+    isPublished: boolean
 }

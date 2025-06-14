@@ -1,5 +1,7 @@
 "use client"
 
+import updateCourseChapterLessons from "@/api/update.course.chapterlessons.api"
+import LoadingButton from "@/components/loading-button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,22 +10,20 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { ChapterType } from "@/types/course.type"
-import { ChevronLeft, Plus, X } from "lucide-react"
+import { useApiHandler } from "@/hooks/useApiHandler"
+import { ChapterType, CourseType } from "@/types/course.type"
+import { Plus, X } from "lucide-react"
 import { useState } from "react"
-import FileUpload from "./file-upload"
+import { toast } from "sonner"
 
 interface ChapterLessonStepProps {
-    onNext: () => void
-    onPrev: () => void
+    courseData: CourseType
+    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
 }
 
-export default function ChapterLessonStep({ onNext, onPrev }: ChapterLessonStepProps) {
-    const [chapters, setChapters] = useState<ChapterType[]>([
-        {
-            title: "", totallessons: 0, preview: false, lessons: [{ title: "", duration: "", type: "video", content: "" }]
-        },
-    ])
+export default function ChapterLessonStep({ courseData, setCourseData }: ChapterLessonStepProps) {
+    const [chapters, setChapters] = useState<ChapterType[]>(courseData.chapters || [])
+    const { isLoading, callApi } = useApiHandler()
 
     const addChapter = () => {
         setChapters((prev) => [
@@ -71,8 +71,14 @@ export default function ChapterLessonStep({ onNext, onPrev }: ChapterLessonStepP
         )
     }
 
-    const handleSaveAndContinue = () => {
-        onNext()
+    const handleSaveAndContinue = async () => {
+        const updatedCourseData = await callApi(() => updateCourseChapterLessons({ chapters }, courseData._id), () => {
+            toast.success("Course chapters & lessons updated successfully")
+        }
+        )
+        if (updatedCourseData) {
+            setCourseData(updatedCourseData)
+        }
     }
 
     return (
@@ -179,14 +185,16 @@ export default function ChapterLessonStep({ onNext, onPrev }: ChapterLessonStepP
                                                         </div>
                                                     </div>
 
-                                                    {lesson.type === "video" && (
-                                                        <FileUpload
-                                                            label="Video File"
-                                                            value={lesson.videoUrl || ""}
-                                                            onChange={(url) => updateLesson(chapterIndex, lessonIndex, "videoUrl", url)}
-                                                            accept="video/*"
-                                                        />
-                                                    )}
+                                                    {
+                                                        // lesson.type === "video" && (
+                                                        // <FileUpload
+                                                        //     label="Video File"
+                                                        //     value={lesson.videoUrl || ""}
+                                                        //     onChange={(url) => updateLesson(chapterIndex, lessonIndex, "videoUrl", url)}
+                                                        //     accept="video/*"
+                                                        // />
+                                                        // )
+                                                    }
 
                                                     <div className="space-y-2">
                                                         <Label>Content</Label>
@@ -219,12 +227,10 @@ export default function ChapterLessonStep({ onNext, onPrev }: ChapterLessonStepP
                     Add Chapter
                 </Button>
 
-                <div className="flex justify-between">
-                    <Button variant="outline" onClick={onPrev}>
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        Previous
-                    </Button>
-                    <Button onClick={handleSaveAndContinue}>Save & Continue</Button>
+                <div className="flex justify-end">
+                    <LoadingButton isLoading={isLoading} title="Saving Changes...">
+                        <Button onClick={handleSaveAndContinue}>Save Changes</Button>
+                    </LoadingButton>
                 </div>
             </CardContent>
         </Card>

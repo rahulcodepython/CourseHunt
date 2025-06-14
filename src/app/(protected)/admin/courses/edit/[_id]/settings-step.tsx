@@ -1,27 +1,40 @@
 "use client"
 
+import updateCourseSettings from "@/api/update.course.settings.api"
+import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { ChevronLeft, Save } from "lucide-react"
+import { useApiHandler } from "@/hooks/useApiHandler"
+import { CourseSettingsFormType } from "@/types/course.form.type"
+import { CourseType } from "@/types/course.type"
 import { useState } from "react"
+import { toast } from "sonner"
 
 interface SettingsStepProps {
-    onPrev: () => void
+    courseData: CourseType
+    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
 }
 
-export default function SettingsStep({ onPrev }: SettingsStepProps) {
-    const [formData, setFormData] = useState({
-        isPublished: false,
+export default function SettingsStep({ courseData, setCourseData }: SettingsStepProps) {
+    const [formData, setFormData] = useState<CourseSettingsFormType>({
+        isPublished: courseData.isPublished || false,
     })
+    const { isLoading, callApi } = useApiHandler()
 
     const handleSwitchChange = (field: string, value: boolean) => {
         setFormData((prev: any) => ({ ...prev, [field]: value }))
     }
 
-    const handleSaveAndFinish = () => {
-        alert("Course saved successfully!")
+    const handleSaveAndContinue = async () => {
+        const updatedCourseData = await callApi(() => updateCourseSettings(formData, courseData._id), () => {
+            toast.success("Course settings updated successfully")
+        }
+        )
+        if (updatedCourseData) {
+            setCourseData(updatedCourseData)
+        }
     }
 
     return (
@@ -57,15 +70,10 @@ export default function SettingsStep({ onPrev }: SettingsStepProps) {
                     </div>
                 </div>
 
-                <div className="flex justify-between">
-                    <Button variant="outline" onClick={onPrev}>
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        Previous
-                    </Button>
-                    <Button onClick={handleSaveAndFinish}>
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Course
-                    </Button>
+                <div className="flex justify-end">
+                    <LoadingButton isLoading={isLoading} title="Saving Changes...">
+                        <Button onClick={handleSaveAndContinue}>Save Changes</Button>
+                    </LoadingButton>
                 </div>
             </CardContent>
         </Card>

@@ -1,3 +1,14 @@
+export type ImageUrlType = {
+    url: string;
+    thumbnailUrl: string; // Optional for cases where a thumbnail is not provided
+    fileType: string; // Optional for cases where the file type is not needed
+}
+export type VideoUrlType = {
+    url: string;
+    thumbnailUrl: string; // Optional for cases where a thumbnail is not provided
+    fileType: string; // Optional for cases where the file type is not needed
+}
+
 export interface CourseCardType {
     _id: string; // Optional for cases where the ID is not needed
     title: string;
@@ -10,8 +21,8 @@ export interface CourseCardType {
     originalPrice: number;
     category: string;
     discount: string;
-    imageUrl: string;
-    previewVideoUrl: string;
+    imageUrl: ImageUrlType;
+    previewVideoUrl: VideoUrlType;
 }
 
 export type ChapterType = {
@@ -25,7 +36,7 @@ export type LessonType = {
     title: string
     duration: string
     type: "video" | "reading"
-    videoUrl?: string
+    videoUrl?: VideoUrlType
     content: string
 }
 
@@ -37,9 +48,9 @@ export type ResourcesType = {
 }
 
 export interface CourseType extends CourseCardType {
-    videoUrl: string;
+    videoUrl: VideoUrlType;
     longDescription: string;
-    whatYoullLearn: string[];
+    whatYouWillLearn: string[];
     prerequisites: string[];
     requirements: string[];
     chapters: ChapterType[];

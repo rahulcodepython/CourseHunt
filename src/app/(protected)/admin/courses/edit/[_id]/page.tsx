@@ -11,6 +11,10 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import BasicStep from "./basic-step"
+import ChapterLessonStep from "./chapter-lesson-step"
+import DetailsStep from "./details-step"
+import FAQStep from "./faq-step"
+import SettingsStep from "./settings-step"
 
 const steps = ["Basic", "Details", "Chapter & Lesson", "FAQ", "Resources", "Settings"]
 
@@ -58,6 +62,10 @@ export default function CourseEditForm() {
     }
 
     const renderStep = () => {
+        if (!courseData) {
+            return
+        }
+
         switch (currentStep) {
             case 0:
                 return <BasicStep
@@ -65,30 +73,27 @@ export default function CourseEditForm() {
                     courseData={courseData}
                     setCourseData={setCourseData}
                 />
-            // case 1:
-            //     return (
-            //         <DetailsStep
-            //             courseData={courseData}
-            //             onNext={nextStep}
-            //             onPrev={prevStep}
-            //         />
-            //     )
-            // case 2:
-            //     return (
-            //         <ChapterLessonStep
-            //             courseData={courseData}
-            //             onNext={nextStep}
-            //             onPrev={prevStep}
-            //         />
-            //     )
-            // case 3:
-            //     return (
-            //         <FAQStep
-            //             courseData={courseData}
-            //             onNext={nextStep}
-            //             onPrev={prevStep}
-            //         />
-            //     )
+            case 1:
+                return (
+                    <DetailsStep
+                        courseData={courseData}
+                        setCourseData={setCourseData}
+                    />
+                )
+            case 2:
+                return (
+                    <ChapterLessonStep
+                        courseData={courseData}
+                        setCourseData={setCourseData}
+                    />
+                )
+            case 3:
+                return (
+                    <FAQStep
+                        courseData={courseData}
+                        setCourseData={setCourseData}
+                    />
+                )
             // case 4:
             //     return (
             //         <ResourcesStep
@@ -97,13 +102,13 @@ export default function CourseEditForm() {
             //             onPrev={prevStep}
             //         />
             //     )
-            // case 5:
-            //     return (
-            //         <SettingsStep
-            //             courseData={courseData}
-            //             onPrev={prevStep}
-            //         />
-            //     )
+            case 5:
+                return (
+                    <SettingsStep
+                        courseData={courseData}
+                        setCourseData={setCourseData}
+                    />
+                )
             default:
                 return null
         }

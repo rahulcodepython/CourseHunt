@@ -1,25 +1,30 @@
 "use client"
 
+import updateCourseDetails from "@/api/update.course.details.api"
+import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronLeft, Plus, X } from "lucide-react"
+import { useApiHandler } from "@/hooks/useApiHandler"
+import { CourseDetailsFormType } from "@/types/course.form.type"
+import { CourseType } from "@/types/course.type"
+import { Plus, X } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 
-interface DetailsStepProps {
-    onNext: () => void
-    onPrev: () => void
-}
-
-export default function DetailsStep({ onNext, onPrev }: DetailsStepProps) {
-    const [formData, setFormData] = useState({
-        longDescription: "",
-        whatYouWillLearn: [""],
-        prerequisites: [""],
-        requirements: [""],
+export default function DetailsStep({ courseData, setCourseData }: {
+    courseData: CourseType
+    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
+}) {
+    const [formData, setFormData] = useState<CourseDetailsFormType>({
+        longDescription: courseData.longDescription || "",
+        whatYouWillLearn: courseData.whatYouWillLearn || [""],
+        prerequisites: courseData.prerequisites || [""],
+        requirements: courseData.requirements || [""],
     })
+    const { isLoading, callApi } = useApiHandler()
 
     const handleInputChange = (field: string, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }))
@@ -88,8 +93,14 @@ export default function DetailsStep({ onNext, onPrev }: DetailsStepProps) {
         }))
     }
 
-    const handleSaveAndContinue = () => {
-        onNext()
+    const handleSaveAndContinue = async () => {
+        const updatedCourseData = await callApi(() => updateCourseDetails(formData, courseData._id), () => {
+            toast.success("Course details updated successfully")
+        }
+        )
+        if (updatedCourseData) {
+            setCourseData(updatedCourseData)
+        }
     }
 
     return (
@@ -181,12 +192,10 @@ export default function DetailsStep({ onNext, onPrev }: DetailsStepProps) {
                     </Button>
                 </div>
 
-                <div className="flex justify-between">
-                    <Button variant="outline" onClick={onPrev}>
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        Previous
-                    </Button>
-                    <Button onClick={handleSaveAndContinue}>Save & Continue</Button>
+                <div className="flex justify-end">
+                    <LoadingButton isLoading={isLoading} title="Saving Changes...">
+                        <Button onClick={handleSaveAndContinue}>Save Changes</Button>
+                    </LoadingButton>
                 </div>
             </CardContent>
         </Card>

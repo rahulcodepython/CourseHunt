@@ -24,7 +24,7 @@ export default function CourseSingle() {
         imageUrl: "/placeholder.svg?height=400&width=600",
         longDescription:
             "This comprehensive web development course will take you from beginner to advanced level. You'll learn the latest technologies including React, Node.js, Express, MongoDB, and much more. By the end of this course, you'll have built multiple real-world projects and have the skills to work as a professional web developer.",
-        whatYoullLearn: [
+        whatYouWillLearn: [
             "Build responsive websites using HTML5, CSS3, and JavaScript",
             "Master React.js and create dynamic single-page applications",
             "Develop backend APIs with Node.js and Express",
@@ -222,7 +222,7 @@ export default function CourseSingle() {
                         <section>
                             <h2 className="text-2xl font-bold mb-6">What You'll Learn</h2>
                             <div className="grid md:grid-cols-2 gap-3">
-                                {course.whatYoullLearn.map((item, index) => (
+                                {course.whatYouWillLearn.map((item, index) => (
                                     <div key={index} className="flex items-start gap-3">
                                         <Check className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                                         <span className="text-sm">{item}</span>
