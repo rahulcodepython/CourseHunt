@@ -34,12 +34,10 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
         category: courseData.category || "",
         imageUrl: {
             url: courseData.imageUrl?.url || "",
-            thumbnailUrl: courseData.imageUrl?.thumbnailUrl || "",
             fileType: courseData.imageUrl.fileType || ""
         },
         previewVideoUrl: {
             url: courseData.previewVideoUrl?.url || "",
-            thumbnailUrl: courseData.previewVideoUrl?.thumbnailUrl || "",
             fileType: courseData.previewVideoUrl.fileType || ""
         }
     })
@@ -55,12 +53,11 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
         setCourseData(updatedCourseData)
     }
 
-    const handleMediaUpload = (field: string, url: string, thumbnailUrl: string, fileType?: string) => {
+    const handleMediaUpload = (field: string, url: string, fileType?: string) => {
         setFormData((prev: CourseBasicFormType) => ({
             ...prev,
             [field]: {
                 url,
-                thumbnailUrl,
                 fileType
             }
         }))
@@ -154,7 +151,7 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
                         label="Course Image *"
                         onChange={handleMediaUpload}
                         field="imageUrl"
-                        accept="image/*"
+                        accept="image"
                         value={formData.imageUrl}
                     />
 
@@ -162,7 +159,7 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
                         label="Preview Video *"
                         onChange={handleMediaUpload}
                         field="previewVideoUrl"
-                        accept="video/*"
+                        accept="video"
                         value={formData.previewVideoUrl}
                     />
                 </div>

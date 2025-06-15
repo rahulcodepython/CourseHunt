@@ -1,36 +1,51 @@
 "use client"
 
+import updateCourseResources from "@/api/update.course.resources.api"
+import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ResourcesType } from "@/types/course.type"
-import { ChevronLeft, Plus, X } from "lucide-react"
+import { useApiHandler } from "@/hooks/useApiHandler"
+import { CourseType, MediaUrlType, ResourcesType } from "@/types/course.type"
+import { Plus, X } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 import FileUpload from "./file-upload"
 
 interface ResourcesStepProps {
-    onNext: () => void
-    onPrev: () => void
+    courseData: CourseType
+    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
 }
 
-export default function ResourcesStep({ onNext, onPrev }: ResourcesStepProps) {
-    const [resources, setResources] = useState<ResourcesType[]>([{ title: "", fileUrl: "" }])
+export default function ResourcesStep({ courseData, setCourseData }: ResourcesStepProps) {
+    const [resources, setResources] = useState<ResourcesType[]>(courseData.resources || [{ title: "", fileUrl: { url: "", fileType: "" } }])
+
+    const { isLoading, callApi } = useApiHandler()
 
     const addResource = () => {
-        setResources((prev) => [...prev, { title: "", fileUrl: "" }])
+        setResources((prev) => [...prev, { title: "", fileUrl: { url: "", fileType: "" } }])
     }
 
     const removeResource = (index: number) => {
         setResources((prev) => prev.filter((_, i) => i !== index))
     }
 
-    const updateResource = (index: number, field: string, value: string) => {
+    const updateResource = (index: number, field: string, value: string | MediaUrlType) => {
         setResources((prev) => prev.map((resource, i) => (i === index ? { ...resource, [field]: value } : resource)))
     }
 
-    const handleSaveAndContinue = () => {
-        onNext()
+    const updateResourceFile = (field: string, url: string, fileType: string) => {
+        setResources((prev) => prev.map((resource, i) => (i === Number(field) ? { ...resource, fileUrl: { url, fileType } } : resource)))
+    }
+
+    const handleSaveAndContinue = async () => {
+        const updatedCourseData = await callApi(() => updateCourseResources({ resources: resources }, courseData._id), () => {
+            toast.success("Course Resources updated successfully")
+        })
+        if (updatedCourseData) {
+            setCourseData(updatedCourseData)
+        }
     }
 
     return (
@@ -40,36 +55,38 @@ export default function ResourcesStep({ onNext, onPrev }: ResourcesStepProps) {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-4">
-                    {resources.map((resource, index) => (
-                        <Card key={index} className="p-4">
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="font-medium">Resource {index + 1}</h4>
-                                    {resources.length > 1 && (
-                                        <Button type="button" variant="outline" size="sm" onClick={() => removeResource(index)}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </div>
+                    {
+                        resources.map((resource, index) => (
+                            <Card key={index} className="p-4">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-medium">Resource {index + 1}</h4>
+                                        {resources.length > 1 && (
+                                            <Button type="button" variant="outline" size="sm" onClick={() => removeResource(index)}>
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </div>
 
-                                <div className="space-y-2">
-                                    <Label>Resource Title</Label>
-                                    <Input
-                                        value={resource.title}
-                                        onChange={(e) => updateResource(index, "title", e.target.value)}
-                                        placeholder="Enter resource title"
+                                    <div className="space-y-2">
+                                        <Label>Resource Title</Label>
+                                        <Input
+                                            value={resource.title}
+                                            onChange={(e) => updateResource(index, "title", e.target.value)}
+                                            placeholder="Enter resource title"
+                                        />
+                                    </div>
+                                    <FileUpload
+                                        label="Resource File"
+                                        value={resource.fileUrl}
+                                        onChange={updateResourceFile}
+                                        accept="document"
+                                        field={String(index)}
                                     />
                                 </div>
-
-                                <FileUpload
-                                    label="Resource File"
-                                    value={resource.fileUrl}
-                                    onChange={(url) => updateResource(index, "fileUrl", url)}
-                                    accept="*/*"
-                                />
-                            </div>
-                        </Card>
-                    ))}
+                            </Card>
+                        ))
+                    }
                 </div>
 
                 <Button type="button" variant="outline" onClick={addResource} className="w-full">
@@ -77,12 +94,10 @@ export default function ResourcesStep({ onNext, onPrev }: ResourcesStepProps) {
                     Add Resource
                 </Button>
 
-                <div className="flex justify-between">
-                    <Button variant="outline" onClick={onPrev}>
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        Previous
-                    </Button>
-                    <Button onClick={handleSaveAndContinue}>Save & Continue</Button>
+                <div className="flex justify-end">
+                    <LoadingButton isLoading={isLoading} title="Saving Changes...">
+                        <Button onClick={handleSaveAndContinue}>Save Changes</Button>
+                    </LoadingButton>
                 </div>
             </CardContent>
         </Card>

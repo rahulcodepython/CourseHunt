@@ -1,6 +1,5 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
-import { ImageKitProvider } from "@imagekit/next";
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import { Toaster } from "sonner";
@@ -31,10 +30,8 @@ export default function RootLayout({
 						enableSystem
 						disableTransitionOnChange
 					>
-						<ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!}>
-							{children}
-							<Toaster />
-						</ImageKitProvider>
+						{children}
+						<Toaster />
 					</ThemeProvider>
 				</body>
 			</html>

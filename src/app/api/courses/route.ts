@@ -40,7 +40,7 @@ export async function POST(request: Request) {
                 thumbnailUrl: "",
                 fileType: "",
             },
-            videoUrl: {
+            previewVideoUrl: {
                 url: "",
                 thumbnailUrl: "",
                 fileType: "",

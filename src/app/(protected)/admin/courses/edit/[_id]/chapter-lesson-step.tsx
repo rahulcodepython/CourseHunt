@@ -15,12 +15,188 @@ import { ChapterType, CourseType } from "@/types/course.type"
 import { Plus, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import FileUpload from "./file-upload"
+
+// LessonCard.tsx
+interface LessonCardProps {
+    lesson: any
+    index: number
+    onLessonChange: (field: string, value: any) => void
+    onRemove: () => void
+    showRemove: boolean
+}
+
+function LessonCard({ lesson, index, onLessonChange, onRemove, showRemove }: LessonCardProps) {
+    return (
+        <Card className="p-4">
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h5 className="font-medium">Lesson {index + 1}</h5>
+                    {showRemove && (
+                        <Button type="button" variant="outline" size="sm" onClick={onRemove}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label>Lesson Title</Label>
+                        <Input
+                            value={lesson.title}
+                            onChange={(e) => onLessonChange("title", e.target.value)}
+                            placeholder="Enter lesson title"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Duration</Label>
+                        <Input
+                            value={lesson.duration}
+                            onChange={(e) => onLessonChange("duration", e.target.value)}
+                            placeholder="e.g., 15 min"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Type</Label>
+                        <Select
+                            value={lesson.type}
+                            onValueChange={(value) => onLessonChange("type", value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="video">Video</SelectItem>
+                                <SelectItem value="reading">Reading</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+                {
+                    lesson.type === "video" && (
+                        <FileUpload
+                            label="Upload Video"
+                            onChange={(field, url, fileType) => onLessonChange("videoUrl", { url, fileType })}
+                            field="videoUrl"
+                            accept="video"
+                            value={lesson.videoUrl}
+                        />
+                    )
+                }
+
+                <div className="space-y-2">
+                    <Label>Content</Label>
+                    <Textarea
+                        value={lesson.content}
+                        onChange={(e) => onLessonChange("content", e.target.value)}
+                        placeholder="Enter lesson content or description"
+                        rows={3}
+                    />
+                </div>
+            </div>
+        </Card>
+    )
+}
+
+// ChapterAccordionItem.tsx
+interface ChapterAccordionItemProps {
+    chapter: ChapterType
+    index: number
+    onChapterChange: (field: string, value: any) => void
+    onLessonChange: (lessonIndex: number, field: string, value: any) => void
+    onAddLesson: () => void
+    onRemoveChapter: () => void
+    onRemoveLesson: (lessonIndex: number) => void
+    showRemove: boolean
+}
+
+function ChapterAccordionItem({
+    chapter,
+    index,
+    onChapterChange,
+    onLessonChange,
+    onAddLesson,
+    onRemoveChapter,
+    onRemoveLesson,
+    showRemove
+}: ChapterAccordionItemProps) {
+    return (
+        <AccordionItem value={`chapter-${index}`} className="border last:border-b rounded-lg">
+            <AccordionTrigger className="px-4">
+                <div className="flex items-center justify-between w-full mr-4">
+                    <span>
+                        Chapter {index + 1}: {chapter.title || "Untitled Chapter"}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                        {chapter.lessons.length} lesson{chapter.lessons.length !== 1 ? "s" : ""}
+                    </span>
+                </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Chapter Title</Label>
+                            <Input
+                                value={chapter.title}
+                                onChange={(e) => onChapterChange("title", e.target.value)}
+                                placeholder="Enter chapter title"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Total Lessons</Label>
+                            <Input value={chapter.lessons.length} readOnly className="bg-muted" />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                        <Switch
+                            checked={chapter.preview}
+                            onCheckedChange={(checked) => onChapterChange("preview", checked)}
+                        />
+                        <Label>Preview Chapter</Label>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h4 className="font-medium">Lessons</h4>
+                            <Button type="button" variant="outline" size="sm" onClick={onAddLesson}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Lesson
+                            </Button>
+                        </div>
+
+                        {chapter.lessons.map((lesson, lessonIndex) => (
+                            <LessonCard
+                                key={lessonIndex}
+                                lesson={lesson}
+                                index={lessonIndex}
+                                onLessonChange={(field, value) => onLessonChange(lessonIndex, field, value)}
+                                onRemove={() => onRemoveLesson(lessonIndex)}
+                                showRemove={chapter.lessons.length > 1}
+                            />
+                        ))}
+                    </div>
+
+                    {showRemove && (
+                        <Button type="button" variant="destructive" size="sm" onClick={onRemoveChapter}>
+                            <X className="h-4 w-4 mr-2" />
+                            Remove Chapter
+                        </Button>
+                    )}
+                </div>
+            </AccordionContent>
+        </AccordionItem>
+    )
+}
 
 interface ChapterLessonStepProps {
     courseData: CourseType
     setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
 }
 
+// Updated ChapterLessonStep.tsx
 export default function ChapterLessonStep({ courseData, setCourseData }: ChapterLessonStepProps) {
     const [chapters, setChapters] = useState<ChapterType[]>(courseData.chapters || [])
     const { isLoading, callApi } = useApiHandler()
@@ -89,136 +265,17 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
             <CardContent className="space-y-6">
                 <Accordion type="multiple" className="space-y-4">
                     {chapters.map((chapter, chapterIndex) => (
-                        <AccordionItem key={chapterIndex} value={`chapter-${chapterIndex}`} className="border last:border-b rounded-lg">
-                            <AccordionTrigger className="px-4">
-                                <div className="flex items-center justify-between w-full mr-4">
-                                    <span>
-                                        Chapter {chapterIndex + 1}: {chapter.title || "Untitled Chapter"}
-                                    </span>
-                                    <span className="text-sm text-muted-foreground">
-                                        {chapter.lessons.length} lesson{chapter.lessons.length !== 1 ? "s" : ""}
-                                    </span>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="px-4 pb-4">
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label>Chapter Title</Label>
-                                            <Input
-                                                value={chapter.title}
-                                                onChange={(e) => updateChapter(chapterIndex, "title", e.target.value)}
-                                                placeholder="Enter chapter title"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Total Lessons</Label>
-                                            <Input value={chapter.lessons.length} readOnly className="bg-muted" />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center space-x-2">
-                                        <Switch
-                                            checked={chapter.preview}
-                                            onCheckedChange={(checked) => updateChapter(chapterIndex, "preview", checked)}
-                                        />
-                                        <Label>Preview Chapter</Label>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="font-medium">Lessons</h4>
-                                            <Button type="button" variant="outline" size="sm" onClick={() => addLesson(chapterIndex)}>
-                                                <Plus className="h-4 w-4 mr-2" />
-                                                Add Lesson
-                                            </Button>
-                                        </div>
-
-                                        {chapter.lessons.map((lesson, lessonIndex) => (
-                                            <Card key={lessonIndex} className="p-4">
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <h5 className="font-medium">Lesson {lessonIndex + 1}</h5>
-                                                        {chapter.lessons.length > 1 && (
-                                                            <Button
-                                                                type="button"
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => removeLesson(chapterIndex, lessonIndex)}
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                        <div className="space-y-2">
-                                                            <Label>Lesson Title</Label>
-                                                            <Input
-                                                                value={lesson.title}
-                                                                onChange={(e) => updateLesson(chapterIndex, lessonIndex, "title", e.target.value)}
-                                                                placeholder="Enter lesson title"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <Label>Duration</Label>
-                                                            <Input
-                                                                value={lesson.duration}
-                                                                onChange={(e) => updateLesson(chapterIndex, lessonIndex, "duration", e.target.value)}
-                                                                placeholder="e.g., 15 min"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <Label>Type</Label>
-                                                            <Select
-                                                                value={lesson.type}
-                                                                onValueChange={(value) => updateLesson(chapterIndex, lessonIndex, "type", value)}
-                                                            >
-                                                                <SelectTrigger>
-                                                                    <SelectValue />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectItem value="video">Video</SelectItem>
-                                                                    <SelectItem value="reading">Reading</SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </div>
-                                                    </div>
-
-                                                    {
-                                                        // lesson.type === "video" && (
-                                                        // <FileUpload
-                                                        //     label="Video File"
-                                                        //     value={lesson.videoUrl || ""}
-                                                        //     onChange={(url) => updateLesson(chapterIndex, lessonIndex, "videoUrl", url)}
-                                                        //     accept="video/*"
-                                                        // />
-                                                        // )
-                                                    }
-
-                                                    <div className="space-y-2">
-                                                        <Label>Content</Label>
-                                                        <Textarea
-                                                            value={lesson.content}
-                                                            onChange={(e) => updateLesson(chapterIndex, lessonIndex, "content", e.target.value)}
-                                                            placeholder="Enter lesson content or description"
-                                                            rows={3}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </Card>
-                                        ))}
-                                    </div>
-
-                                    {chapters.length > 1 && (
-                                        <Button type="button" variant="destructive" size="sm" onClick={() => removeChapter(chapterIndex)}>
-                                            <X className="h-4 w-4 mr-2" />
-                                            Remove Chapter
-                                        </Button>
-                                    )}
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
+                        <ChapterAccordionItem
+                            key={chapterIndex}
+                            chapter={chapter}
+                            index={chapterIndex}
+                            onChapterChange={(field, value) => updateChapter(chapterIndex, field, value)}
+                            onLessonChange={(lessonIndex, field, value) => updateLesson(chapterIndex, lessonIndex, field, value)}
+                            onAddLesson={() => addLesson(chapterIndex)}
+                            onRemoveChapter={() => removeChapter(chapterIndex)}
+                            onRemoveLesson={(lessonIndex) => removeLesson(chapterIndex, lessonIndex)}
+                            showRemove={chapters.length > 1}
+                        />
                     ))}
                 </Accordion>
 

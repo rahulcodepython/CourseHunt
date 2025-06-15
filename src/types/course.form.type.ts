@@ -1,4 +1,4 @@
-import { ImageUrlType, VideoUrlType } from "./course.type";
+import { MediaUrlType } from "./course.type";
 
 export interface CourseBasicFormType {
     title: string;
@@ -7,8 +7,8 @@ export interface CourseBasicFormType {
     price: number;
     originalPrice: number;
     category: string;
-    imageUrl: ImageUrlType;
-    previewVideoUrl: VideoUrlType;
+    imageUrl: MediaUrlType;
+    previewVideoUrl: MediaUrlType;
 }
 
 export interface CourseDetailsFormType {

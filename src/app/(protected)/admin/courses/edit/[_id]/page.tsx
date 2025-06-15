@@ -14,6 +14,7 @@ import BasicStep from "./basic-step"
 import ChapterLessonStep from "./chapter-lesson-step"
 import DetailsStep from "./details-step"
 import FAQStep from "./faq-step"
+import ResourcesStep from "./resources-step"
 import SettingsStep from "./settings-step"
 
 const steps = ["Basic", "Details", "Chapter & Lesson", "FAQ", "Resources", "Settings"]
@@ -94,14 +95,13 @@ export default function CourseEditForm() {
                         setCourseData={setCourseData}
                     />
                 )
-            // case 4:
-            //     return (
-            //         <ResourcesStep
-            //             courseData={courseData}
-            //             onNext={nextStep}
-            //             onPrev={prevStep}
-            //         />
-            //     )
+            case 4:
+                return (
+                    <ResourcesStep
+                        courseData={courseData}
+                        setCourseData={setCourseData}
+                    />
+                )
             case 5:
                 return (
                     <SettingsStep

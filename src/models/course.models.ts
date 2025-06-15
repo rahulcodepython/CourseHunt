@@ -14,17 +14,10 @@ const courseSchema = new Schema({
     discount: { type: String },
     imageUrl: {
         url: { type: String, required: false, default: '' },
-        thumbnailUrl: { type: String, required: false, default: '' },
-        fileType: { type: String, required: false, default: '' },
-    },
-    videoUrl: {
-        url: { type: String, required: false, default: '' },
-        thumbnailUrl: { type: String, required: false, default: '' },
         fileType: { type: String, required: false, default: '' },
     },
     previewVideoUrl: {
         url: { type: String, required: false, default: '' },
-        thumbnailUrl: { type: String, required: false, default: '' },
         fileType: { type: String, required: false, default: '' },
     },
     longDescription: { type: String },
@@ -42,7 +35,6 @@ const courseSchema = new Schema({
                     type: { type: String, enum: ['video', 'reading'] },
                     videoUrl: {
                         url: { type: String, required: false, default: '' },
-                        thumbnailUrl: { type: String, required: false, default: '' },
                         fileType: { type: String, required: false, default: '' },
                     },
                     content: { type: String },
@@ -63,7 +55,10 @@ const courseSchema = new Schema({
     resources: [
         {
             title: { type: String },
-            fileUrl: { type: String },
+            fileUrl: {
+                url: { type: String, required: false, default: '' },
+                fileType: { type: String, required: false, default: '' },
+            },
         },
     ],
     createdAt: { type: Date, default: Date.now },

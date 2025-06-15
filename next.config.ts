@@ -11,7 +11,14 @@ const nextConfig: NextConfig = {
                 port: '',
                 pathname: '/egg4kxv60/**',
             },
+            {
+                protocol: "https",
+                hostname: "raw.githubusercontent.com",
+                port: '',
+                pathname: '/rahulcodepython/file-storage/main/**',
+            },
         ],
+
     },
 };
 

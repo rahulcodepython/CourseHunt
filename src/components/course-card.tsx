@@ -17,7 +17,7 @@ export default function CourseCard({ courseData, edit = null, study = null }: {
                 <CardHeader className="p-0">
                     <div className="relative">
                         <Image
-                            src={courseData.imageUrl.length !== 0 ? courseData.imageUrl : "/placeholder.svg"}
+                            src={courseData.imageUrl.url.length !== 0 ? courseData.imageUrl.url : "/placeholder.svg"}
                             alt={courseData.title}
                             width={400}
                             height={200}
