@@ -41,11 +41,32 @@ export type ResourcesType = {
     fileUrl: MediaUrlType
 }
 
-export interface CourseType extends CourseCardType {
+interface CourseDetails {
     longDescription: string;
     whatYouWillLearn: string[];
     prerequisites: string[];
     requirements: string[];
+}
+
+export interface CourseSingleType extends CourseCardType, CourseDetails {
+    chapters: {
+        title: string
+        preview: boolean
+        lessons: {
+            title: string
+            duration: string
+            type: "video" | "reading"
+        }[]
+        totallessons: number
+    }[];
+    chaptersCount: number;
+    lessonsCount: number;
+    faq: FAQType[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface CourseType extends CourseCardType, CourseDetails {
     chapters: ChapterType[];
     chaptersCount: number;
     lessonsCount: number;

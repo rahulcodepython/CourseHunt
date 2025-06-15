@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { courseData } from "@/const/course.const"
+import { CourseCardType } from "@/types/course.type"
+import { getBaseUrl } from "@/utils/getBaseUrl"
 import { ArrowRight, Award, BookOpen, CheckCircle, Download, Play, Star, Users } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -42,7 +43,17 @@ const brands = [
     { name: "Netflix", logo: "/placeholder.svg?height=60&width=120" },
 ]
 
-export default function Home() {
+export default async function Home() {
+    const baseurl = await getBaseUrl()
+
+    const response = await fetch(`${baseurl}/api/courses/all`, {
+        next: {
+            revalidate: 60, // Revalidate every 60 seconds
+        },
+    })
+
+    const courses: CourseCardType[] = response.ok ? await response.json() : []
+
     return (
         <div className="min-h-screen bg-background">
             {/* Hero Section */}
@@ -244,16 +255,20 @@ export default function Home() {
                             Discover our most popular courses chosen by thousands of students.
                         </p>
                     </div>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        {
-                            courseData.map((course, index) => (
-                                <CourseCard
-                                    key={index}
-                                    courseData={course}
-                                />
-                            ))
-                        }
-                    </div>
+                    {
+                        courses.length === 0 ? <div className="text-center py-2">
+                            <h3 className="text-xl font-semibold">No courses found</h3>
+                        </div> : <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                            {
+                                courses.map((course, index) => (
+                                    <CourseCard
+                                        key={index}
+                                        courseData={course}
+                                    />
+                                ))
+                            }
+                        </div>
+                    }
                     <div className="text-center mt-12">
                         <Link href="/courses">
                             <Button size="lg" variant="outline" className="cursor-pointer">
