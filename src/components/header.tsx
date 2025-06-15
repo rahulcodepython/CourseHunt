@@ -1,6 +1,7 @@
 'use client'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/store/authStore'
 import { BookOpen, Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
@@ -13,6 +14,8 @@ const menuItems = [
 const Header = () => {
     const [menuState, setMenuState] = React.useState(false)
     const [isScrolled, setIsScrolled] = React.useState(false)
+
+    const { isAuthenticated, user } = useAuthStore()
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -77,15 +80,27 @@ const Header = () => {
                                 </ul>
                             </div>
                             <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-
-                                <Button
-                                    asChild
-                                    variant="outline"
-                                    size="sm"
-                                    className={''}
-                                >
-                                    <span>Sign In</span>
-                                </Button>
+                                {isAuthenticated ? (
+                                    <Link href={user?.role === 'admin' ? '/admin' : '/user'}>
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            size="sm"
+                                            className={''}
+                                        >
+                                            <span>Profile</span>
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <Button
+                                        asChild
+                                        variant="outline"
+                                        size="sm"
+                                        className={''}
+                                    >
+                                        <span>Sign In</span>
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </div>

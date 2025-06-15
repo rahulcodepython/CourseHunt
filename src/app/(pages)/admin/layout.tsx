@@ -90,7 +90,6 @@ const data: NavbarDataType = {
     ],
 };
 
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     return (
         <SidebarProvider>

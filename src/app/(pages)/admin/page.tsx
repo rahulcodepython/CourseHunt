@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useAuthStore } from "@/store/authStore"
 import {
     BarChart3,
     BookOpen,
@@ -92,6 +93,9 @@ const recentStudents = [
 ]
 
 export default function Admin() {
+    const { isAuthenticated, user } = useAuthStore()
+
+    console.log(isAuthenticated, user)
     return (
         <div className="flex-1 space-y-6 p-6">
             {/* Welcome Section */}
