@@ -1,11 +1,15 @@
 "use client"
 
+import { deleteCoupon } from "@/api/delete.coupon.api"
+import toggleCoupon from "@/api/toggle.coupon.api"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { useApiHandler } from "@/hooks/useApiHandler"
 import { Coupon } from "@/types/coupon.type"
 import { Calendar, Edit, Percent, Power, PowerOff, Trash2, Users } from "lucide-react"
+import { toast } from "sonner"
 
 interface CouponCardProps {
     coupon: Coupon
@@ -17,6 +21,16 @@ interface CouponCardProps {
 export default function CouponCard({ coupon, onEdit, onDelete, onToggleActive }: CouponCardProps) {
     const usagePercentage = (coupon.usage / coupon.maxUsage) * 100
     const isExpired = new Date(coupon.expiryDate) < new Date()
+
+    const { callApi } = useApiHandler()
+
+    const handleToggleActive = async (_id: string, status: boolean) => {
+        const responseData = await callApi(() => toggleCoupon(_id, !status))
+
+        if (responseData) {
+            onToggleActive(_id)
+        }
+    }
 
     const getStatusBadge = () => {
         if (isExpired) {
@@ -89,7 +103,7 @@ export default function CouponCard({ coupon, onEdit, onDelete, onToggleActive }:
                         Edit
                     </Button>
 
-                    <Button variant="outline" size="sm" onClick={() => onToggleActive(coupon.id)} className="flex-1 cursor-pointer">
+                    <Button variant="outline" size="sm" onClick={() => coupon._id && handleToggleActive(coupon._id, coupon.isActive)} className="flex-1 cursor-pointer">
                         {coupon.isActive ? (
                             <>
                                 <PowerOff className="h-3 w-3 mr-1" />
@@ -102,17 +116,34 @@ export default function CouponCard({ coupon, onEdit, onDelete, onToggleActive }:
                             </>
                         )}
                     </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onDelete(coupon.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                    >
-                        <Trash2 className="h-3 w-3" />
-                    </Button>
+                    {
+                        coupon._id && <DeleteButton id={coupon._id} onDelete={onDelete} />
+                    }
                 </div>
             </CardFooter>
         </Card>
     )
+}
+
+const DeleteButton = ({ id, onDelete }: { id: string; onDelete: (id: string) => void }) => {
+    const { isLoading, callApi } = useApiHandler()
+
+    const handleDelete = async (id: string) => {
+        const responseData = await callApi(() => deleteCoupon(id))
+
+        if (responseData) {
+            toast.success(responseData.message || "Coupon deleted successfully")
+            onDelete(id)
+        }
+    }
+
+    return <Button
+        variant="outline"
+        size="sm"
+        onClick={() => id && handleDelete(id)}
+        disabled={isLoading}
+        className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+    >
+        <Trash2 className="h-3 w-3" />
+    </Button>
 }

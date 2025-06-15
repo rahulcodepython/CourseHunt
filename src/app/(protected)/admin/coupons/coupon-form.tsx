@@ -1,23 +1,27 @@
 "use client"
 
-import type React from "react"
 
+import createCoupon from "@/api/create.coupon.api"
+import updateCoupon from "@/api/update.coupon.api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { useApiHandler } from "@/hooks/useApiHandler"
 import { Coupon } from "@/types/coupon.type"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 interface CouponFormProps {
-    onSave: (coupon: Omit<Coupon, "id">) => void
+    onSave: (coupon: Coupon) => void
     onCancel: () => void
     initialData: Coupon | null
 }
 
 export default function CouponForm({ onSave, onCancel, initialData }: CouponFormProps) {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<Coupon>({
+        _id: null, // Optional, only used when editing an existing coupon
         code: "",
         expiryDate: "",
         usage: 0,
@@ -26,12 +30,12 @@ export default function CouponForm({ onSave, onCancel, initialData }: CouponForm
         isActive: true,
         description: "",
     })
-
-    const [errors, setErrors] = useState<Record<string, string>>({})
+    const { isLoading, callApi } = useApiHandler()
 
     useEffect(() => {
         if (initialData) {
             setFormData({
+                _id: initialData._id, // Include _id if editing an existing coupon
                 code: initialData.code,
                 expiryDate: initialData.expiryDate,
                 usage: initialData.usage,
@@ -44,58 +48,76 @@ export default function CouponForm({ onSave, onCancel, initialData }: CouponForm
     }, [initialData])
 
     const validateForm = () => {
-        const newErrors: Record<string, string> = {}
-
         if (!formData.code.trim()) {
-            newErrors.code = "Coupon code is required"
+            toast.warning("Coupon code is required")
+            return false
         } else if (formData.code.length < 3) {
-            newErrors.code = "Coupon code must be at least 3 characters"
+            toast.warning("Coupon code must be at least 3 characters")
+            return false
         }
 
         if (!formData.expiryDate) {
-            newErrors.expiryDate = "Expiry date is required"
+            toast.warning("Expiry date is required")
+            return false
         } else if (new Date(formData.expiryDate) <= new Date()) {
-            newErrors.expiryDate = "Expiry date must be in the future"
+            toast.warning("Expiry date must be in the future")
+            return false
         }
 
         if (formData.offerValue <= 0 || formData.offerValue > 100) {
-            newErrors.offerValue = "Offer value must be between 1 and 100"
+            toast.warning("Offer value must be between 1 and 100")
+            return false
         }
 
         if (formData.maxUsage <= 0) {
-            newErrors.maxUsage = "Max usage must be greater than 0"
+            toast.warning("Max usage must be greater than 0")
+            return false
         }
 
         if (formData.usage < 0) {
-            newErrors.usage = "Usage cannot be negative"
+            toast.warning("Usage cannot be negative")
+            return false
         }
 
         if (formData.usage > formData.maxUsage) {
-            newErrors.usage = "Usage cannot exceed max usage"
+            toast.warning("Usage cannot exceed max usage")
+            return false
         }
 
-        setErrors(newErrors)
-        return Object.keys(newErrors).length === 0
+        return true
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-
+    const handleSubmit = async () => {
         if (validateForm()) {
-            onSave(formData)
+
+            if (initialData) {
+                if (initialData._id === null) {
+                    toast.error("Invalid coupon ID for update")
+                    return
+                }
+
+                const responseData: { message: string, coupon: Coupon } = await callApi(() => updateCoupon(formData, initialData._id))
+                if (responseData) {
+                    onSave(responseData.coupon)
+                    toast.success(responseData.message || "Coupon updated successfully")
+                }
+            } else {
+                const { _id, ...newFormData } = formData;
+                const responseData: { message: string, coupon: Coupon } = await callApi(() => createCoupon(newFormData))
+                if (responseData) {
+                    onSave(responseData.coupon)
+                    toast.success(responseData.message || "Coupon created successfully")
+                }
+            }
         }
     }
 
     const handleInputChange = (field: string, value: any) => {
         setFormData((prev) => ({ ...prev, [field]: value }))
-        // Clear error when user starts typing
-        if (errors[field]) {
-            setErrors((prev) => ({ ...prev, [field]: "" }))
-        }
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
             {/* Coupon Code */}
             <div className="space-y-2">
                 <Label htmlFor="code">Coupon Code *</Label>
@@ -104,9 +126,7 @@ export default function CouponForm({ onSave, onCancel, initialData }: CouponForm
                     value={formData.code}
                     onChange={(e) => handleInputChange("code", e.target.value.toUpperCase())}
                     placeholder="e.g., SAVE20"
-                    className={errors.code ? "border-red-500" : ""}
                 />
-                {errors.code && <p className="text-sm text-red-500">{errors.code}</p>}
             </div>
 
             {/* Description */}
@@ -131,9 +151,7 @@ export default function CouponForm({ onSave, onCancel, initialData }: CouponForm
                     max="100"
                     value={formData.offerValue}
                     onChange={(e) => handleInputChange("offerValue", Number.parseInt(e.target.value) || 0)}
-                    className={errors.offerValue ? "border-red-500" : ""}
                 />
-                {errors.offerValue && <p className="text-sm text-red-500">{errors.offerValue}</p>}
             </div>
 
             {/* Expiry Date */}
@@ -144,9 +162,7 @@ export default function CouponForm({ onSave, onCancel, initialData }: CouponForm
                     type="date"
                     value={formData.expiryDate}
                     onChange={(e) => handleInputChange("expiryDate", e.target.value)}
-                    className={errors.expiryDate ? "border-red-500" : ""}
                 />
-                {errors.expiryDate && <p className="text-sm text-red-500">{errors.expiryDate}</p>}
             </div>
 
             {/* Usage Limits */}
@@ -160,9 +176,7 @@ export default function CouponForm({ onSave, onCancel, initialData }: CouponForm
                         value={formData.usage}
                         readOnly // Make usage read-only if editing an existing coupon
                         onChange={(e) => handleInputChange("usage", Number.parseInt(e.target.value) || 0)}
-                        className={errors.usage ? "border-red-500" : ""}
                     />
-                    {errors.usage && <p className="text-sm text-red-500">{errors.usage}</p>}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="maxUsage">Max Usage *</Label>
@@ -172,9 +186,7 @@ export default function CouponForm({ onSave, onCancel, initialData }: CouponForm
                         min="1"
                         value={formData.maxUsage}
                         onChange={(e) => handleInputChange("maxUsage", Number.parseInt(e.target.value) || 0)}
-                        className={errors.maxUsage ? "border-red-500" : ""}
                     />
-                    {errors.maxUsage && <p className="text-sm text-red-500">{errors.maxUsage}</p>}
                 </div>
             </div>
 
@@ -190,13 +202,13 @@ export default function CouponForm({ onSave, onCancel, initialData }: CouponForm
 
             {/* Form Actions */}
             <div className="flex gap-3 pt-4">
-                <Button type="submit" className="flex-1 cursor-pointer">
+                <Button type="submit" className="flex-1 cursor-pointer" onClick={handleSubmit} disabled={isLoading}>
                     {initialData ? "Update Coupon" : "Create Coupon"}
                 </Button>
                 <Button type="button" variant="outline" onClick={onCancel} className="flex-1 cursor-pointer">
                     Cancel
                 </Button>
             </div>
-        </form>
+        </div>
     )
 }

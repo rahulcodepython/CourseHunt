@@ -1,5 +1,5 @@
 export interface Coupon {
-    id: string
+    _id: string | null
     code: string
     expiryDate: string
     usage: number

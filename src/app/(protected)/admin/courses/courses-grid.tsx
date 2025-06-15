@@ -21,11 +21,17 @@ const CoursesGrid = ({
     }
 
     return (
-        <div className='flex flex-col'>
-            <h1 className='text-3xl font-bold text-center my-6'>Manage Courses</h1>
-            <div className='flex justify-end mb-4'>
+        <div className='container mx-auto p-6'>
+            <div className="flex justify-between items-center mb-8 w-full px-4">
+                <div>
+                    <h1 className="text-3xl font-bold">Course Management</h1>
+                    <p className="mt-2">Manage your courses and their details</p>
+                </div>
                 <CreateCourse onCreate={addCourse} />
             </div>
+            {/* <h1 className='text-3xl font-bold text-center my-6'>Manage Courses</h1>
+            <div className='flex justify-end mb-4'>
+            </div> */}
             {
                 courseData.length === 0 && (
                     <div className='text-center text-gray-500'>

@@ -5,7 +5,7 @@ import CouponForm from "./coupon-form"
 interface CouponModalProps {
     isOpen: boolean
     onClose: () => void
-    onSave: (coupon: Omit<Coupon, "id">) => void
+    onSave: (coupon: Coupon) => void
     editingCoupon: Coupon | null
 }
 
