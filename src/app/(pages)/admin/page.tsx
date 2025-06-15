@@ -95,7 +95,6 @@ const recentStudents = [
 export default function Admin() {
     const { isAuthenticated, user } = useAuthStore()
 
-    console.log(isAuthenticated, user)
     return (
         <div className="flex-1 space-y-6 p-6">
             {/* Welcome Section */}

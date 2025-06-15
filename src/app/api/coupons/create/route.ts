@@ -14,8 +14,7 @@ export async function POST(req: Request) {
             message: "Coupon created successfully",
             coupon: coupon
         }), { status: 201 })
-    } catch (error) {
-        console.error("Error creating coupon:", error);
+    } catch {
         return new Response(JSON.stringify({
             message: "Error creating coupon"
         }), { status: 500 })

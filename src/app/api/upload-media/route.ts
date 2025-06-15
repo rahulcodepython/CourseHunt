@@ -59,8 +59,7 @@ export async function POST(request: Request) {
             htmlUrl: data.content.html_url,
             status: uploadRes.status,
         }));
-    } catch (error) {
-        console.error("Error generating upload auth params:", error);
+    } catch {
         return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
     }
 }

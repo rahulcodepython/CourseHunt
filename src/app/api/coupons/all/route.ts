@@ -8,8 +8,7 @@ export async function GET() {
         const coupons = await Coupon.find();
 
         return new Response(JSON.stringify(coupons), { status: 200 });
-    } catch (error) {
-        console.error("Error fetching coupons:", error);
+    } catch {
         return new Response(JSON.stringify({
             message: "Error fetching coupons"
         }), { status: 500 });

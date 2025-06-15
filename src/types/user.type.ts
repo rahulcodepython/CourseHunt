@@ -4,6 +4,6 @@ export type User = {
     email: string;
     role: 'admin' | 'user';
     avatar: string;
-    password: string;
+    password?: string;
     createdAt: Date;
 };
