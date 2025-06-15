@@ -199,6 +199,8 @@ interface ChapterLessonStepProps {
 // Updated ChapterLessonStep.tsx
 export default function ChapterLessonStep({ courseData, setCourseData }: ChapterLessonStepProps) {
     const [chapters, setChapters] = useState<ChapterType[]>(courseData.chapters || [])
+    const [chaptersCount, setChaptersCount] = useState<number>(courseData.chaptersCount || 0)
+    const [lessonsCount, setLessonsCount] = useState<number>(courseData.lessonsCount || 0)
     const { isLoading, callApi } = useApiHandler()
 
     const addChapter = () => {
@@ -206,10 +208,12 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
             ...prev,
             { title: "", totallessons: 0, preview: false, lessons: [{ title: "", duration: "", type: "video", content: "" }] },
         ])
+        setChaptersCount((prev) => prev + 1)
     }
 
     const removeChapter = (chapterIndex: number) => {
         setChapters((prev) => prev.filter((_, i) => i !== chapterIndex))
+        setChaptersCount((prev) => prev - 1)
     }
 
     const updateChapter = (chapterIndex: number, field: string, value: any) => {
@@ -224,6 +228,7 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
                     : chapter,
             ),
         )
+        setLessonsCount((prev) => prev + 1)
     }
 
     const removeLesson = (chapterIndex: number, lessonIndex: number) => {
@@ -232,6 +237,7 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
                 i === chapterIndex ? { ...chapter, totallessons: chapter.totallessons - 1, lessons: chapter.lessons.filter((_, j) => j !== lessonIndex) } : chapter,
             ),
         )
+        setLessonsCount((prev) => prev - 1)
     }
 
     const updateLesson = (chapterIndex: number, lessonIndex: number, field: string, value: any) => {

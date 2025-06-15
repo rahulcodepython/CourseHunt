@@ -94,7 +94,7 @@ export default async function CourseSingle({ params }: { params: Promise<{ _id: 
                                 </div>
 
                                 <div className="flex-1 aspect-video">
-                                    <video controls className="w-full rounded-lg h-[500px]" src={'/demo-video.mp4'} />
+                                    <video controls className="w-full rounded-lg h-[500px]" src={course.previewVideoUrl.url || '/demo-video.mp4'} />
                                 </div>
                             </div>
 
@@ -159,8 +159,8 @@ export default async function CourseSingle({ params }: { params: Promise<{ _id: 
                             <section>
                                 <h2 className="text-2xl font-bold mb-6">Course Content</h2>
                                 <div className="mb-4 text-sm text-muted-foreground">
-                                    {course.chapters.length} sections •{" "}
-                                    {course.chapters.reduce((acc, chapter) => acc + chapter.lessons.length, 0)} lectures • {course.duration}{" "}
+                                    {course.chaptersCount} sections •{" "}
+                                    {course.lessonsCount} lectures • {course.duration}{" "}
                                     total length
                                 </div>
 
