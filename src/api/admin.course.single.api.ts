@@ -1,5 +1,5 @@
 const getAdminCourseSingle = async (_id: string) => {
-    const response = await fetch(`/api/courses/${_id}`)
+    const response = await fetch(`/api/courses/admin/edit/${_id}`)
 
     if (!response.ok) {
         const data = await response.json()

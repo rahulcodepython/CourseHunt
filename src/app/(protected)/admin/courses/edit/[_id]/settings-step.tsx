@@ -1,6 +1,6 @@
 "use client"
 
-import updateCourseSettings from "@/api/update.course.settings.api"
+import updateCourse from "@/api/update.course.api"
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,11 +28,10 @@ export default function SettingsStep({ courseData, setCourseData }: SettingsStep
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await callApi(() => updateCourseSettings(formData, courseData._id), () => {
-            toast.success("Course settings updated successfully")
-        }
-        )
+        const updatedCourseData = await callApi(() => updateCourse(formData, courseData._id))
+
         if (updatedCourseData) {
+            toast.success("Course settings saved successfully")
             setCourseData(updatedCourseData)
         }
     }

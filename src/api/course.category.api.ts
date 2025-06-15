@@ -2,7 +2,7 @@ import { CourseCategoryType } from "@/types/course.category.type";
 
 const getCourseCategory = async (): Promise<CourseCategoryType[]> => {
     try {
-        const response = await fetch("/api/course-category");
+        const response = await fetch("/api/courses/category");
 
         if (!response.ok) {
             return [];

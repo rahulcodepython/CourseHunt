@@ -28,10 +28,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 title: "Courses",
                                 url: "/admin/courses",
                             },
-                            {
-                                title: "Course Edit",
-                                url: "/admin/courses/edit",
-                            },
                         ],
                     },
                     {

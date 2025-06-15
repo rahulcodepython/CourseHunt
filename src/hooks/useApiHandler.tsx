@@ -14,7 +14,7 @@ export function useApiHandler<T = any>() {
                 const result = await apiFunction();
                 return result;
             } catch (error: any) {
-                toast.error(error as string);
+                toast.error(error.message as string);
                 return null;
             } finally {
                 setIsLoading(false);

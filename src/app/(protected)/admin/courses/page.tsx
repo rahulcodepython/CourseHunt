@@ -5,7 +5,7 @@ import CoursesGrid from './courses-grid';
 const Courses = async () => {
     const baseurl = await getBaseUrl();
 
-    const response = await fetch(`${baseurl}/api/courses`, {
+    const response = await fetch(`${baseurl}/api/courses/admin/all`, {
         method: 'GET',
         cache: 'no-store',
     });

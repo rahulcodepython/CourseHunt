@@ -1,6 +1,6 @@
 "use client"
 
-import updateCourseChapterLessons from "@/api/update.course.chapterlessons.api"
+import updateCourse from "@/api/update.course.api"
 import LoadingButton from "@/components/loading-button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
@@ -248,11 +248,10 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await callApi(() => updateCourseChapterLessons({ chapters }, courseData._id), () => {
-            toast.success("Course chapters & lessons updated successfully")
-        }
-        )
+        const updatedCourseData = await callApi(() => updateCourse({ chapters }, courseData._id))
+
         if (updatedCourseData) {
+            toast.success("Course chapters & lessons saved successfully")
             setCourseData(updatedCourseData)
         }
     }

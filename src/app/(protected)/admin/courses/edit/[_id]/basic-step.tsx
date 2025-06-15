@@ -1,6 +1,6 @@
 "use client"
 
-import updateCourseBasic from "@/api/update.course.basic.api"
+import updateCourse from "@/api/update.course.api"
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,10 +47,12 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await callApi(() => updateCourseBasic(formData, courseData._id), () => {
-            toast.success("Basic information saved successfully")
-        })
-        setCourseData(updatedCourseData)
+        const updatedCourseData = await callApi(() => updateCourse(formData, courseData._id))
+
+        if (updatedCourseData) {
+            toast.success("Course basic information saved successfully")
+            setCourseData(updatedCourseData)
+        }
     }
 
     const handleMediaUpload = (field: string, url: string, fileType?: string) => {

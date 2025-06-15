@@ -1,6 +1,6 @@
 "use client"
 
-import updateCourseResources from "@/api/update.course.resources.api"
+import updateCourse from "@/api/update.course.api"
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,10 +40,10 @@ export default function ResourcesStep({ courseData, setCourseData }: ResourcesSt
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await callApi(() => updateCourseResources({ resources: resources }, courseData._id), () => {
-            toast.success("Course Resources updated successfully")
-        })
+        const updatedCourseData = await callApi(() => updateCourse({ resources: resources }, courseData._id))
+
         if (updatedCourseData) {
+            toast.success("Course resources saved successfully")
             setCourseData(updatedCourseData)
         }
     }

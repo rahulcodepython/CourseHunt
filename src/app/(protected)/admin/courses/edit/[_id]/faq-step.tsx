@@ -1,6 +1,6 @@
 "use client"
 
-import updateCourseFAQ from "@/api/update.course.faq.api"
+import updateCourse from "@/api/update.course.api"
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,11 +35,10 @@ export default function FAQStep({ courseData, setCourseData }: FAQStepProps) {
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await callApi(() => updateCourseFAQ({ faq: faqs }, courseData._id), () => {
-            toast.success("Course FAQ updated successfully")
-        }
-        )
+        const updatedCourseData = await callApi(() => updateCourse({ faq: faqs }, courseData._id))
+
         if (updatedCourseData) {
+            toast.success("Course FAQ saved successfully")
             setCourseData(updatedCourseData)
         }
     }
