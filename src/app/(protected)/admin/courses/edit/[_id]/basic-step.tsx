@@ -47,7 +47,12 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await callApi(() => updateCourse(formData, courseData._id))
+        const discount = (formData.originalPrice - formData.price) / formData.originalPrice * 100
+
+        const updatedCourseData = await callApi(() => updateCourse({
+            ...formData,
+            discount: `${isNaN(discount) ? 0 : Math.round(discount)}%`,
+        }, courseData._id))
 
         if (updatedCourseData) {
             toast.success("Course basic information saved successfully")

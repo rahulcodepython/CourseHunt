@@ -70,8 +70,8 @@ export default function CourseCard({ courseData, edit = null, study = null }: {
                 <CardFooter className="p-4 pt-0">
                     <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold text-green-600">${courseData.price}</span>
-                            <span className="text-sm text-muted-foreground line-through">${courseData.originalPrice}</span>
+                            <span className="text-2xl font-bold text-green-600">₹{courseData.price}</span>
+                            <span className="text-sm text-muted-foreground line-through">₹{courseData.originalPrice}</span>
                         </div>
                         {
                             edit ? edit : study ? study : <Button className="bg-green-600 hover:bg-green-700 text-white cursor-pointer">

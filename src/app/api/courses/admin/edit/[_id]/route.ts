@@ -30,3 +30,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ _i
         return new Response(JSON.stringify({ error: "Failed to update course" }), { status: 400 });
     }
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ _id: string }> }) {
+    const { _id } = await params;
+
+    await connectDB();
+
+    try {
+        await Course.findByIdAndDelete(_id);
+
+        return new Response(JSON.stringify({ message: "Course deleted successfully" }), { status: 200 });
+    } catch {
+        return new Response(JSON.stringify({ error: "Failed to delete course" }), { status: 400 });
+    }
+}

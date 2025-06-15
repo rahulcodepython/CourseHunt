@@ -1,6 +1,9 @@
 "use client"
+import deleteCourse from '@/api/delete.course.api'
 import CourseCard from '@/components/course-card'
+import LoadingButton from '@/components/loading-button'
 import { Button } from '@/components/ui/button'
+import { useApiHandler } from '@/hooks/useApiHandler'
 import { CourseCardType } from '@/types/course.type'
 import Link from 'next/link'
 import React from 'react'
@@ -40,15 +43,32 @@ const CoursesGrid = ({
                                         Edit
                                     </Button>
                                 </Link>
-                                <Button className="bg-red-600 hover:bg-red-700 text-white cursor-pointer">
-                                    Delete
-                                </Button>
+                                <DeleteButton courseId={course._id} setCourseData={setCourseData} />
                             </div>
                         } />
                     ))}
                 </div>
             }
         </div>
+    )
+}
+
+const DeleteButton = ({ courseId, setCourseData }: { courseId: string, setCourseData: React.Dispatch<React.SetStateAction<CourseCardType[]>> }) => {
+    const { isLoading, callApi } = useApiHandler()
+
+    const handleDelete = async () => {
+        const deleted = await callApi(() => deleteCourse(courseId))
+        if (deleted) {
+            setCourseData((prev) => prev.filter(course => course._id !== courseId));
+        }
+    }
+
+    return (
+        <LoadingButton isLoading={isLoading} className="bg-red-600 hover:bg-red-700 text-white cursor-pointer">
+            <Button className="bg-red-600 hover:bg-red-700 text-white cursor-pointer" onClick={handleDelete}>
+                Delete
+            </Button>
+        </LoadingButton>
     )
 }
 

@@ -113,9 +113,9 @@ export default async function CourseSingle({ params }: { params: Promise<{ _id: 
 
                                         <div className="mb-4">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <span className="text-3xl font-bold">${course.price}</span>
+                                                <span className="text-3xl font-bold">₹{course.price}</span>
                                                 <span className="text-lg text-muted-foreground line-through">${course.originalPrice}</span>
-                                                <Badge variant="destructive">{course.discount}% off</Badge>
+                                                <Badge variant="destructive">{course.discount} off</Badge>
                                             </div>
                                             <p className="text-sm text-muted-foreground">Limited time offer!</p>
                                         </div>
