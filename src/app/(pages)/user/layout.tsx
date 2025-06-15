@@ -5,12 +5,8 @@ import { NavbarDataType } from "@/types/navbar.type";
 import { SquareTerminal } from "lucide-react";
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
+
     const data: NavbarDataType = {
-        user: {
-            name: "shadcn",
-            email: "m@example.com",
-            avatar: "/avatars/shadcn.jpg",
-        },
         navMain: [
             {
                 title: "Platform",

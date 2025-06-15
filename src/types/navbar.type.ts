@@ -23,6 +23,5 @@ interface NavGroup {
 }
 
 export interface NavbarDataType {
-    user: User;
     navMain: NavGroup[];
 }

@@ -21,6 +21,8 @@ const Header = () => {
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
+
+
     return (
         <header className=''>
             <nav
@@ -75,14 +77,14 @@ const Header = () => {
                                 </ul>
                             </div>
                             <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+
                                 <Button
                                     asChild
                                     variant="outline"
                                     size="sm"
-                                    className={''}>
-                                    <Link href="#">
-                                        <span>Sign In</span>
-                                    </Link>
+                                    className={''}
+                                >
+                                    <span>Sign In</span>
                                 </Button>
                             </div>
                         </div>
