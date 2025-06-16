@@ -1,9 +1,12 @@
+import { connectDB } from "@/lib/db.connect";
 import { Course } from "@/models/course.models";
 import { User } from "@/models/user.models";
 import { cookies } from "next/headers";
 
 export async function GET(request: Request, { params }: { params: Promise<{ _id: string }> }) {
     try {
+        await connectDB();
+
         const cookieStore = await cookies();
 
         if (!cookieStore.has("session_id")) {

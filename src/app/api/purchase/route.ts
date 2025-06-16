@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db.connect";
 import { Coupon } from "@/models/coupon.models";
 import { Course } from "@/models/course.models";
+import { Transaction } from "@/models/transaction.models";
 import { User } from "@/models/user.models";
 import { cookies } from "next/headers";
 

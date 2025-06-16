@@ -1,6 +1,6 @@
 "use client"
 
-import { useAuthStore } from '@/store/authStore'
+import { useAuthStore } from '@/store/auth.store'
 import { Loader2 } from 'lucide-react'
 import React, { useEffect } from 'react'
 
@@ -23,8 +23,12 @@ export default function PagesLayout({ children }: { children: React.ReactNode })
 
                 const { user } = data;
 
-                setIsAuthenticated(true)
-                setUser(user)
+                if (user) {
+                    setIsAuthenticated(true)
+                    setUser(user)
+                }
+                setIsAuthenticated(false)
+                setUser(null)
             } else {
                 setIsAuthenticated(false)
                 setUser(null)

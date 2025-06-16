@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from '@/lib/utils'
-import { useAuthStore } from '@/store/authStore'
+import { useAuthStore } from '@/store/auth.store'
 import { useRouter } from 'next/navigation'
 import { Button } from './ui/button'
 

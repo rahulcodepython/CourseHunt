@@ -1,7 +1,7 @@
+import { getBaseUrl } from '@/action';
 import CourseCard from '@/components/course-card';
 import { Input } from '@/components/ui/input';
 import { CourseCardType } from '@/types/course.type';
-import { getBaseUrl } from '@/utils/getBaseUrl';
 
 const Courses = async () => {
     const baseurl = await getBaseUrl()

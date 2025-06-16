@@ -1,5 +1,5 @@
+import { getBaseUrl } from '@/action';
 import { CourseCardType } from '@/types/course.type';
-import { getBaseUrl } from '@/utils/getBaseUrl';
 import CoursesGrid from './courses-grid';
 
 const Courses = async () => {

@@ -1,4 +1,4 @@
-import { getBaseUrl } from '@/utils/getBaseUrl';
+import { getBaseUrl } from '@/action';
 import CouponLayout from './coupon-layout';
 
 const CouponPage = async () => {

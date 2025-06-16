@@ -1,7 +1,7 @@
 'use client'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useAuthStore } from '@/store/authStore'
+import { useAuthStore } from '@/store/auth.store'
 import { BookOpen, Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
@@ -92,14 +92,16 @@ const Header = () => {
                                         </Button>
                                     </Link>
                                 ) : (
-                                    <Button
-                                        asChild
-                                        variant="outline"
-                                        size="sm"
-                                        className={''}
-                                    >
-                                        <span>Sign In</span>
-                                    </Button>
+                                    <Link href="/auth/login">
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            size="sm"
+                                            className={''}
+                                        >
+                                            <span>Sign In</span>
+                                        </Button>
+                                    </Link>
                                 )}
                             </div>
                         </div>

@@ -1,8 +1,22 @@
+import { getBaseUrl } from "@/action"
 
-const Courses = () => {
+const MyCourses = async () => {
+    const baseurl = await getBaseUrl()
+
+    const response = await fetch(`${baseurl}/api/courses/my-course`, {
+        cache: 'no-store',
+    })
+
+    const courseData = await response.json()
+
+    console.log("My Courses Data:", courseData)
+
     return (
         <div className='flex flex-col'>
-            <h1 className='text-3xl font-bold text-center my-6'>My Courses</h1>
+            <div>
+                <h1 className="text-3xl font-bold">My Courses</h1>
+                <p className="mt-2">Manage your courses and their details</p>
+            </div>
             <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4'>
                 {
                     // courseData.map((course, index) => (
@@ -20,4 +34,4 @@ const Courses = () => {
     )
 }
 
-export default Courses
+export default MyCourses

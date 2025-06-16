@@ -1,13 +1,13 @@
 import { Check, Clock, Play, Star, Users } from "lucide-react"
 import Image from "next/image"
 
+import { getBaseUrl } from "@/action"
 import EnrollButton from "@/components/enroll-button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CourseSingleType } from "@/types/course.type"
-import { getBaseUrl } from "@/utils/getBaseUrl"
 
 export default async function CourseSingle({ params }: { params: Promise<{ _id: string }> }) {
     const baseurl = await getBaseUrl()

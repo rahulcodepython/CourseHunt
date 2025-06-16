@@ -44,7 +44,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { useAuthStore } from "@/store/authStore"
+import { useAuthStore } from "@/store/auth.store"
 import { NavbarDataType } from "@/types/navbar.type"
 import Link from "next/link"
 

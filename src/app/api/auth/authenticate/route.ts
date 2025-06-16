@@ -1,9 +1,12 @@
+import { connectDB } from "@/lib/db.connect";
 import { User } from "@/models/user.models";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
     try {
+        await connectDB();
+
         const cookieStore = await cookies()
 
         const sessionId = cookieStore.get("session_id")?.value;
