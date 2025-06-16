@@ -1,5 +1,6 @@
 "use client"
 import { AppSidebar } from "@/components/app-sidebar";
+import BreadcrumbComponent from "@/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { NavbarDataType } from "@/types/navbar.type";
 import { SquareTerminal } from "lucide-react";
@@ -58,7 +59,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
             <main className="w-full min-h-screen">
                 <header className="flex items-center justify-start gap-4 p-2">
                     <SidebarTrigger />
-                    <h1>User Dashboard</h1>
+                    <BreadcrumbComponent />
                 </header>
                 <section className="p-8 flex">
                     {children}

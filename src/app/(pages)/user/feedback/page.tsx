@@ -31,9 +31,6 @@ export default function CreateFeedbackPage() {
     })
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        // Handle form submission here
-        console.log({ ...formData, rating })
         alert("Feedback submitted successfully!")
     }
 

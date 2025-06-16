@@ -1,10 +1,12 @@
 "use client"
 
 import { useAuthStore } from '@/store/authStore'
+import { Loader2 } from 'lucide-react'
 import React, { useEffect } from 'react'
 
 export default function PagesLayout({ children }: { children: React.ReactNode }) {
-    const { setIsAuthenticated, setUser } = useAuthStore()
+    const [isloading, setIsLoading] = React.useState(true)
+    const { setIsAuthenticated, setUser, user, isAuthenticated } = useAuthStore()
 
     useEffect(() => {
         const handler = async () => {
@@ -17,7 +19,10 @@ export default function PagesLayout({ children }: { children: React.ReactNode })
             })
 
             if (res.ok) {
-                const { user } = await res.json()
+                const data = await res.json();
+
+                const { user } = data;
+
                 setIsAuthenticated(true)
                 setUser(user)
             } else {
@@ -26,9 +31,17 @@ export default function PagesLayout({ children }: { children: React.ReactNode })
             }
         }
 
-        handler()
+        handler().finally(() => {
+            setIsLoading(false)
+        })
     }, [])
-    return (
-        children
-    )
+
+    return isloading ? <main className='h-screen flex items-center justify-center'>
+        <div className="flex gap-2 items-center justify-center">
+            <Loader2 className="animate-spin h-6 w-6" />
+            <p>Loading...</p>
+        </div>
+    </main>
+        : children
+
 }

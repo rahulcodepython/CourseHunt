@@ -1,14 +1,13 @@
 import { Check, Clock, Play, Star, Users } from "lucide-react"
 import Image from "next/image"
 
+import EnrollButton from "@/components/enroll-button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CourseSingleType } from "@/types/course.type"
 import { getBaseUrl } from "@/utils/getBaseUrl"
-import Link from "next/link"
 
 export default async function CourseSingle({ params }: { params: Promise<{ _id: string }> }) {
     const baseurl = await getBaseUrl()
@@ -120,11 +119,7 @@ export default async function CourseSingle({ params }: { params: Promise<{ _id: 
                                             <p className="text-sm text-muted-foreground">Limited time offer!</p>
                                         </div>
 
-                                        <Link href={'/checkout'}>
-                                            <Button className="w-full mb-3 cursor-pointer text-white bg-green-600 hover:bg-green-700" size="lg">
-                                                Enroll Now
-                                            </Button>
-                                        </Link>
+                                        <EnrollButton _id={course._id} className="w-full" />
                                         <div className="text-center text-sm text-muted-foreground">30-day money-back guarantee</div>
                                     </CardContent>
                                 </Card>

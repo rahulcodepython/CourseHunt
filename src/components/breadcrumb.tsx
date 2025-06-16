@@ -17,19 +17,21 @@ function BreadcrumbComponent() {
     return (
         <Breadcrumb>
             <BreadcrumbList>
-                {pathParts.map((part, index) => {
-                    const href = `/${pathParts.slice(0, index + 1).join("/")}`
-                    return (
-                        <React.Fragment key={index}>
-                            <BreadcrumbItem>
-                                <Link href={href}>
-                                    {part.charAt(0).toUpperCase() + part.slice(1)}
-                                </Link>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="last:hidden" />
-                        </React.Fragment>
-                    )
-                })}
+                {
+                    pathParts.map((part, index) => {
+                        const href = `/${pathParts.slice(0, index + 1).join("/")}`
+                        return (
+                            <React.Fragment key={index}>
+                                <BreadcrumbItem>
+                                    <Link href={href} className="text-base">
+                                        {part.charAt(0).toUpperCase() + part.slice(1)}
+                                    </Link>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator className="last:hidden" />
+                            </React.Fragment>
+                        )
+                    })
+                }
             </BreadcrumbList>
         </Breadcrumb>
     )

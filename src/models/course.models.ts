@@ -63,6 +63,19 @@ const courseSchema = new Schema({
     ],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
+    enrolledStudents: [
+        {
+            _id: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+                required: false,
+            },
+            email: {
+                type: String,
+                required: false,
+            },
+        }
+    ],
 });
 
 

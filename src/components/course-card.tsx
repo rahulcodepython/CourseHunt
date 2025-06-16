@@ -1,10 +1,10 @@
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { CourseCardType } from "@/types/course.type"
 import { Clock, Star, Users } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import EnrollButton from "./enroll-button"
 
 export default function CourseCard({ courseData, edit = null, study = null }: {
     courseData: CourseCardType,
@@ -74,9 +74,7 @@ export default function CourseCard({ courseData, edit = null, study = null }: {
                             <span className="text-sm text-muted-foreground line-through">₹{courseData.originalPrice}</span>
                         </div>
                         {
-                            edit ? edit : study ? study : <Button className="bg-green-600 hover:bg-green-700 text-white cursor-pointer">
-                                Enroll Now
-                            </Button>
+                            edit ? edit : study ? study : <EnrollButton _id={courseData._id} />
                         }
                     </div>
                 </CardFooter>

@@ -208,7 +208,7 @@ export function TeamSwitcher() {
                             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
                             asChild
                         >
-                            <Link href="/admin">
+                            <Link href="/">
                                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                                     <MountainIcon className="size-4" />
                                 </div>
