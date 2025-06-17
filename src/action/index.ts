@@ -1,5 +1,6 @@
 import { connectDB } from '@/lib/db.connect';
-import { User, UserDocumentType } from '@/models/user.models';
+import { User } from '@/models/user.models';
+import { UserType } from '@/types/user.type';
 import { cookies, headers } from 'next/headers';
 
 export const getBaseUrl = async () => {
@@ -25,7 +26,7 @@ export const routeHandlerWrapper = <T extends Record<string, any>>(
     }
 };
 
-export const checkAuthencticatedUserRequest = async (): Promise<null | UserDocumentType> => {
+export const checkAuthencticatedUserRequest = async (): Promise<null | UserType> => {
     const cookieStore = await cookies();
     const sessionId = cookieStore.get('session_id');
 
@@ -39,19 +40,24 @@ export const checkAuthencticatedUserRequest = async (): Promise<null | UserDocum
         return null;
     }
 
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return user
 }
 
-export const checkAdminUserRequest = async (): Promise<null | UserDocumentType> => {
+export const checkAdminUserRequest = async (): Promise<null | UserType> => {
+    console.log("Checking admin user request...");
+
     const cookieStore = await cookies();
+    console.log("Cookie Store:", cookieStore);
+
     const sessionId = cookieStore.get('session_id');
+    console.log("Session ID:", sessionId?.value);
 
     if (!sessionId) {
         return null;
     }
 
     const user = await User.findById(sessionId.value);
+    console.log("User:", user);
 
     if (!user) {
         return null;
@@ -61,6 +67,5 @@ export const checkAdminUserRequest = async (): Promise<null | UserDocumentType> 
         return null;
     }
 
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return user
 }

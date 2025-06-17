@@ -7,7 +7,7 @@ const Courses = async () => {
 
     const response = await fetch(`${baseurl}/api/courses/admin/all`, {
         method: 'GET',
-        cache: 'no-store',
+        credentials: 'include',
     });
 
     const courseData: CourseCardType[] = await response.json();

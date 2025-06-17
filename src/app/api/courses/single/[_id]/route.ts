@@ -1,8 +1,8 @@
 import { routeHandlerWrapper } from "@/action";
 import { Course } from "@/models/course.models";
 
-export const GET = routeHandlerWrapper(async (request: Request, { params }: { params: Promise<{ _id: string }> }) => {
-    const { _id } = await params;
+export const GET = routeHandlerWrapper(async (request: Request, params: { _id: string }) => {
+    const { _id } = params;
 
     const course = await Course.findById(_id, {
         _id: 1,

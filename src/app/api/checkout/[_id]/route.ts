@@ -49,7 +49,5 @@ export const GET = routeHandlerWrapper(async (req: Request, params: { _id: strin
         zip: user.zip ?? "",
     }
 
-    console.log("User Response:", userResponse);
-
     return NextResponse.json({ course: courseResponse, user: userResponse }, { status: 200 });
 })

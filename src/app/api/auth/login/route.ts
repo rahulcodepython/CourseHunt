@@ -22,7 +22,14 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
 
     const cookieStore = await cookies()
 
-    cookieStore.set('session_id', user._id)
+    cookieStore.set({
+        name: 'session_id',
+        value: user._id,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+    });
 
     return NextResponse.json({
         message: 'Login successful',
