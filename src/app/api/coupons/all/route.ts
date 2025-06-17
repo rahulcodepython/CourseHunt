@@ -1,16 +1,9 @@
-import { connectDB } from "@/lib/db.connect";
+import { routeHandlerWrapper } from "@/action";
 import { Coupon } from "@/models/coupon.models";
+import { NextResponse } from "next/server";
 
-export async function GET() {
-    try {
-        await connectDB();
+export const GET = routeHandlerWrapper(async (request: Request) => {
+    const coupons = await Coupon.find();
 
-        const coupons = await Coupon.find();
-
-        return new Response(JSON.stringify(coupons), { status: 200 });
-    } catch {
-        return new Response(JSON.stringify({
-            message: "Error fetching coupons"
-        }), { status: 500 });
-    }
-}
+    return NextResponse.json(coupons, { status: 200 });
+});

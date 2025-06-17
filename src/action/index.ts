@@ -1,6 +1,5 @@
 import { connectDB } from '@/lib/db.connect';
 import { headers } from 'next/headers';
-import { NextResponse } from "next/server";
 
 export const getBaseUrl = async () => {
     const headersList = await headers();
@@ -11,17 +10,16 @@ export const getBaseUrl = async () => {
 };
 
 export const routeHandlerWrapper = <T extends Record<string, any>>(
-    handler: (req: Request, params: T) => Promise<NextResponse>
-) => async (req: Request, context: { params: Promise<T> }): Promise<NextResponse> => {
+    handler: (req: Request, params: T) => Promise<Response>
+) => async (req: Request, context: { params: Promise<T> }): Promise<Response> => {
     try {
         await connectDB();
         const params = await context.params;
         return await handler(req, params);
     } catch (error) {
         console.log(`API Error from: ${req.url}:`, error);
-        return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 }
-        );
+        return new Response(JSON.stringify(
+            { error: "Internal Server Error" }
+        ), { status: 500 });
     }
 };

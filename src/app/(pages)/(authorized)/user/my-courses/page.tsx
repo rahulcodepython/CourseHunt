@@ -9,8 +9,6 @@ const MyCourses = async () => {
 
     const courseData = await response.json()
 
-    console.log("My Courses Data:", courseData)
-
     return (
         <div className='flex flex-col'>
             <div>

@@ -86,7 +86,6 @@ export default function CheckoutPage() {
             const responseData = await callApi(() => getCheckout(courseId))
 
             if (responseData) {
-                console.log("Checkout Data:", responseData.user)
                 setCourse(responseData.course)
                 setFinalPrice(parseFloat(responseData.course.price))
                 setFormData(responseData.user)

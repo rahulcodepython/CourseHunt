@@ -1,46 +1,37 @@
+// middleware.ts
 import { cookies } from 'next/headers';
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-const adminRoute = "/admin";
-
-const protectedRoutes = [
-    '/user',
-    '/checkout',
-]
-
-const unauthenticatedRoute = "/auth"
+const protectedRoutes = ['/admin', '/user', '/checkout'];
+const unauthenticatedRoutePrefix = '/auth';
 
 export async function middleware(request: NextRequest) {
-    const { pathname } = request.nextUrl
+    const { pathname } = request.nextUrl;
 
     const cookieStore = await cookies()
+    const sessionId = cookieStore.get('session_id');
 
-    const isAuthenticated = cookieStore.has('session_id')
-    const isAdmin = cookieStore.get('role')?.value === 'admin'
+    const isAuthenticated = !!sessionId;
 
+    // Redirect unauthenticated users from protected routes
     if (protectedRoutes.some(route => pathname.startsWith(route)) && !isAuthenticated) {
-        return NextResponse.redirect(new URL('/auth/login', request.url));
+        const loginUrl = new URL('/auth/login', request.url);
+        return NextResponse.redirect(loginUrl);
     }
 
-    if (pathname.startsWith(adminRoute)) {
-        if (!isAuthenticated) {
-            return NextResponse.redirect(new URL('/auth/login', request.url));
-        }
-
-        if (!isAdmin) {
-            return NextResponse.redirect(new URL('/user', request.url));
-        }
+    // Redirect authenticated users away from the login/signup pages
+    if (pathname.startsWith(unauthenticatedRoutePrefix) && isAuthenticated) {
+        const homeUrl = new URL('/', request.url);
+        return NextResponse.redirect(homeUrl);
     }
 
-    if (pathname.startsWith(unauthenticatedRoute) && isAuthenticated) {
-        return NextResponse.redirect(new URL('/', request.url));
-    }
-
-    return NextResponse.next()
+    return NextResponse.next();
 }
 
 // See "Matching Paths" below to learn more
 export const config = {
-    matcher: '/(.*)',
-}
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};
+
+
+

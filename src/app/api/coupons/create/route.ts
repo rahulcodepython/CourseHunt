@@ -1,22 +1,17 @@
-import { connectDB } from "@/lib/db.connect";
+import { routeHandlerWrapper } from "@/action";
 import { Coupon } from "@/models/coupon.models";
 
-export async function POST(req: Request) {
-    try {
-        await connectDB();
+export const POST = routeHandlerWrapper(async (req: Request) => {
+    const body = await req.json();
 
-        const body = await req.json()
+    const coupon = new Coupon(body);
+    await coupon.save();
 
-        const coupon = new Coupon(body)
-        await coupon.save()
-
-        return new Response(JSON.stringify({
+    return new Response(
+        JSON.stringify({
             message: "Coupon created successfully",
-            coupon: coupon
-        }), { status: 201 })
-    } catch {
-        return new Response(JSON.stringify({
-            message: "Error creating coupon"
-        }), { status: 500 })
-    }
-}
+            coupon: coupon,
+        }),
+        { status: 201 }
+    );
+});

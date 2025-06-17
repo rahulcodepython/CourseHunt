@@ -3,10 +3,12 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import BreadcrumbComponent from "@/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { useAuthStore } from "@/store/auth.store";
 import { NavbarDataType } from "@/types/navbar.type";
 import {
     SquareTerminal
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 const data: NavbarDataType = {
@@ -92,6 +94,20 @@ const data: NavbarDataType = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    const { user } = useAuthStore()
+
+    const router = useRouter()
+
+    if (!user) {
+        router.push('/auth/login')
+        return <></>
+    }
+
+    if (user.role !== 'admin') {
+        router.push('/user')
+        return <></>
+    }
+
     return (
         <SidebarProvider>
             <AppSidebar data={data} />
