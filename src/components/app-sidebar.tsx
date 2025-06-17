@@ -19,35 +19,37 @@ import {
     SidebarMenuSubButton,
     SidebarMenuSubItem,
     SidebarRail,
-    useSidebar,
+    useSidebar
 } from "@/components/ui/sidebar"
 import {
-    BadgeCheck,
     ChevronRight,
-    ChevronsUpDown,
     LogOut,
     MountainIcon,
     type LucideIcon
 } from "lucide-react"
 
+import { logout } from "@/api/logout.api"
 import {
     Avatar,
-    AvatarFallback,
-    AvatarImage,
+    AvatarFallback
 } from "@/components/ui/avatar"
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
+import { useApiHandler } from "@/hooks/useApiHandler"
 import { useAuthStore } from "@/store/auth.store"
 import { NavbarDataType } from "@/types/navbar.type"
+import {
+    Settings2,
+    User
+} from "lucide-react"
 import Link from "next/link"
-
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export function AppSidebar({ data }: { data: NavbarDataType }) {
     return (
@@ -65,8 +67,6 @@ export function AppSidebar({ data }: { data: NavbarDataType }) {
         </Sidebar>
     )
 }
-
-
 
 export function NavMain({
     items,
@@ -134,60 +134,62 @@ export function NavMain({
     )
 }
 
-
 export function NavUser() {
     const { isMobile } = useSidebar()
     const { user } = useAuthStore()
+
+    const { isLoading, callApi } = useApiHandler()
+
+    const router = useRouter()
+
+    const handleLogout = async () => {
+        const response = await callApi(logout)
+
+        if (response) {
+            router.push("/auth/login")
+            toast.success(response.message || "Logged out successfully")
+        }
+    }
 
     return (
         <SidebarMenu>
             <SidebarMenuItem>
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild className="cursor-pointer">
-                        <SidebarMenuButton
-                            size="lg"
-                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                        >
-                            <Avatar className="h-8 w-8 rounded-lg">
-                                <AvatarImage src={user?.avatar} alt={user?.name} />
-                                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                            </Avatar>
-                            <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-medium">{user?.name}</span>
-                                <span className="truncate text-xs">{user?.email}</span>
-                            </div>
-                            <ChevronsUpDown className="ml-auto size-4" />
-                        </SidebarMenuButton>
+                    <DropdownMenuTrigger className="flex items-center gap-3">
+                        <Avatar>
+                            <AvatarFallback className="bg-primary text-primary-foreground">
+                                MW
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="text-start flex flex-col">
+                            <p className="text-sm font-medium">{user?.name}</p>
+                            <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        </div>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                        side={isMobile ? "bottom" : "right"}
-                        align="end"
-                        sideOffset={4}
-                    >
-                        <DropdownMenuLabel className="p-0 font-normal">
-                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                <Avatar className="h-8 w-8 rounded-lg">
-                                    <AvatarImage src={user?.avatar} alt={user?.name} />
-                                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                                </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-medium">{user?.name}</span>
-                                    <span className="truncate text-xs">{user?.email}</span>
-                                </div>
+                    <DropdownMenuContent className="mt-2 w-72">
+                        <DropdownMenuItem className="py-3">
+                            <Avatar>
+                                <AvatarFallback className="bg-primary text-primary-foreground">
+                                    MW
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="ml-1 flex flex-col">
+                                <p className="text-sm font-medium">{user?.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {user?.email}
+                                </p>
                             </div>
-                        </DropdownMenuLabel>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem className="cursor-pointer">
-                                <BadgeCheck />
-                                Account
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
+                        <DropdownMenuItem>
+                            <User className="mr-1" /> Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <Settings2 className="mr-1" /> Settings
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="cursor-pointer text-red-500 hover:text-red-500">
-                            <LogOut />
-                            Log out
+                        <DropdownMenuItem disabled={isLoading} onClick={handleLogout}>
+                            <LogOut className="mr-1" /> Log out
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

@@ -1,5 +1,6 @@
 import { connectDB } from '@/lib/db.connect';
-import { headers } from 'next/headers';
+import { User, UserDocumentType } from '@/models/user.models';
+import { cookies, headers } from 'next/headers';
 
 export const getBaseUrl = async () => {
     const headersList = await headers();
@@ -23,3 +24,43 @@ export const routeHandlerWrapper = <T extends Record<string, any>>(
         ), { status: 500 });
     }
 };
+
+export const checkAuthencticatedUserRequest = async (): Promise<null | UserDocumentType> => {
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get('session_id');
+
+    if (!sessionId) {
+        return null;
+    }
+
+    const user = await User.findById(sessionId.value);
+
+    if (!user) {
+        return null;
+    }
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+}
+
+export const checkAdminUserRequest = async (): Promise<null | UserDocumentType> => {
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get('session_id');
+
+    if (!sessionId) {
+        return null;
+    }
+
+    const user = await User.findById(sessionId.value);
+
+    if (!user) {
+        return null;
+    }
+
+    if (user.role !== 'admin') {
+        return null;
+    }
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+}

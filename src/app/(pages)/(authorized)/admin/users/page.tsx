@@ -2,7 +2,7 @@ import { getBaseUrl } from "@/action"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { User as UserType } from "@/types/user.type"
+import { UserType } from "@/types/user.type"
 import { Mail } from "lucide-react"
 
 // const users: UserType[] = [

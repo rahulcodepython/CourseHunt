@@ -1,28 +1,25 @@
-import { routeHandlerWrapper } from "@/action";
+import { checkAuthencticatedUserRequest, routeHandlerWrapper } from "@/action";
 import { Course } from "@/models/course.models";
-import { User } from "@/models/user.models";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-export const GET = routeHandlerWrapper(async (req: Request, { params }: { params: Promise<{ _id: string }> }) => {
+export const GET = routeHandlerWrapper(async (req: Request, params: { _id: string }) => {
+    const user = await checkAuthencticatedUserRequest()
+
+    if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const cookieStore = await cookies();
 
     if (!cookieStore.has("session_id")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { _id } = await params;
+    const { _id } = params;
 
     if (!_id) {
         return NextResponse.json({ error: "Course ID is required" }, { status: 400 });
-    }
-
-    const userId = cookieStore.get("session_id")?.value;
-
-    const user = await User.findById(userId)
-
-    if (!user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const course = await Course.findById(_id)
@@ -51,6 +48,8 @@ export const GET = routeHandlerWrapper(async (req: Request, { params }: { params
         country: user.country ?? "",
         zip: user.zip ?? "",
     }
+
+    console.log("User Response:", userResponse);
 
     return NextResponse.json({ course: courseResponse, user: userResponse }, { status: 200 });
 })

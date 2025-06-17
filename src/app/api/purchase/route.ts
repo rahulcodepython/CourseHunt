@@ -1,11 +1,15 @@
-import { routeHandlerWrapper } from "@/action";
+import { checkAuthencticatedUserRequest, routeHandlerWrapper } from "@/action";
 import { Coupon } from "@/models/coupon.models";
 import { Course } from "@/models/course.models";
 import { Transaction } from "@/models/transaction.models";
-import { User } from "@/models/user.models";
-import { cookies } from "next/headers";
 
 export const POST = routeHandlerWrapper(async (request: Request) => {
+    const user = await checkAuthencticatedUserRequest()
+
+    if (!user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+
     const {
         courseId,
         couponId,
@@ -23,26 +27,13 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
         return new Response(JSON.stringify({ error: 'Course ID is required' }), { status: 400 });
     }
 
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('session_id')?.value;
-
-    if (!userId) {
-        return new Response(JSON.stringify({ error: 'User not authenticated' }), { status: 401 });
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-        return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
-    }
-
     const course = await Course.findById(courseId);
 
     if (!course) {
         return new Response(JSON.stringify({ error: 'Course not found' }), { status: 404 });
     }
 
-    if (user.purchasedCourses.some((course: any) => course._id === course._id)) {
+    if (user.purchasedCourses?.some((course: any) => course._id === course._id)) {
         return new Response(JSON.stringify({ error: 'You have already purchased this course' }), { status: 400 });
     }
 
@@ -67,11 +58,11 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
     }
 
     const transaction = await new Transaction({
-        transactionId: 'txn_' + courseId + userId + Date.now(),
+        transactionId: 'txn_' + courseId + user._id + Date.now(),
         createdAt: new Date(),
         courseId: courseId,
         courseName: course.title,
-        userId: userId,
+        userId: user._id,
         userEmail: user.email,
         couponId: couponId,
         couponCode: coupon ? coupon.code : "",
@@ -91,7 +82,7 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
     user.city = city || user.city;
     user.zip = zip || user.zip;
     user.country = country || user.country;
-    user.purchasedCourses.push({
+    user.purchasedCourses?.push({
         _id: courseId,
         name: course.title
     });
@@ -99,7 +90,7 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
 
     course.students += 1;
     course.enrolledStudents.push({
-        _id: userId,
+        _id: user._id,
         email: user.email
     });
     await course.save();

@@ -1,20 +1,12 @@
-import { routeHandlerWrapper } from "@/action";
-import { User } from "@/models/user.models";
-import { cookies } from "next/headers";
+import { checkAuthencticatedUserRequest, routeHandlerWrapper } from "@/action";
 
 export const GET = routeHandlerWrapper(async (request: Request) => {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('session_id')?.value;
-
-    if (!userId) {
-        return new Response(JSON.stringify({ error: 'User not authenticated' }), { status: 401 });
-    }
-
-    const user = await User.findById(userId);
+    const user = await checkAuthencticatedUserRequest()
 
     if (!user) {
-        return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
+
 
     const purchasedCourses = user.purchasedCourses || [];
 
