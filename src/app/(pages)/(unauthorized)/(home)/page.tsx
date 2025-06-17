@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { CourseCardType } from "@/types/course.type"
 import { ArrowRight, Award, BookOpen, CheckCircle, Download, Play, Star, Users } from "lucide-react"
+import { cookies } from "next/headers"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -45,10 +46,12 @@ const brands = [
 
 export default async function Home() {
     const baseurl = await getBaseUrl()
+    const cookieStore = await cookies();
 
     const response = await fetch(`${baseurl}/api/courses/all`, {
-        next: {
-            revalidate: 60, // Revalidate every 60 seconds
+        headers: {
+            'Content-Type': 'application/json',
+            'Cookie': cookieStore.getAll().map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
         },
     })
 

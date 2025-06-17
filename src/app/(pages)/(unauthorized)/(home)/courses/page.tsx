@@ -2,13 +2,16 @@ import { getBaseUrl } from '@/action';
 import CourseCard from '@/components/course-card';
 import { Input } from '@/components/ui/input';
 import { CourseCardType } from '@/types/course.type';
+import { cookies } from 'next/headers';
 
 const Courses = async () => {
     const baseurl = await getBaseUrl()
+    const cookieStore = await cookies();
 
     const response = await fetch(`${baseurl}/api/courses/all`, {
-        next: {
-            revalidate: 60, // Revalidate every 60 seconds
+        headers: {
+            'Content-Type': 'application/json',
+            'Cookie': cookieStore.getAll().map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
         },
     })
 

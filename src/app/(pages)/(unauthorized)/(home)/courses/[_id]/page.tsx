@@ -8,14 +8,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CourseSingleType } from "@/types/course.type"
+import { cookies } from "next/headers"
 
 export default async function CourseSingle({ params }: { params: Promise<{ _id: string }> }) {
     const baseurl = await getBaseUrl()
     const { _id } = await params;
 
+    const cookieStore = await cookies();
+
     const response = await fetch(`${baseurl}/api/courses/single/${_id}`, {
-        next: {
-            revalidate: 60, // Revalidate every 60 seconds
+        headers: {
+            'Content-Type': 'application/json',
+            'Cookie': cookieStore.getAll().map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
         },
     })
 

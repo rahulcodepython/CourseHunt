@@ -4,75 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { UserType } from "@/types/user.type"
 import { Mail } from "lucide-react"
-
-// const users: UserType[] = [
-//     {
-//         _id: 1,
-//         name: "John Doe",
-//         email: "john.doe@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-//     {
-//         _id: 2,
-//         name: "Sarah Johnson",
-//         email: "sarah.j@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-//     {
-//         _id: 3,
-//         name: "Mike Chen",
-//         email: "mike.chen@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-//     {
-//         _id: 4,
-//         name: "Emily Davis",
-//         email: "emily.davis@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-//     {
-//         _id: 5,
-//         name: "Alex Rodriguez",
-//         email: "alex.r@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-//     {
-//         _id: 6,
-//         name: "Lisa Wang",
-//         email: "lisa.wang@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-//     {
-//         _id: 7,
-//         name: "David Wilson",
-//         email: "david.wilson@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-//     {
-//         _id: 8,
-//         name: "Jennifer Brown",
-//         email: "jennifer.b@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-//     {
-//         _id: 9,
-//         name: "Robert Taylor",
-//         email: "robert.taylor@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-//     {
-//         _id: 10,
-//         name: "Amanda Garcia",
-//         email: "amanda.garcia@example.com",
-//         avatar: "/placeholder.svg?height=40&width=40",
-//     },
-// ];
+import { cookies } from "next/headers"
 
 export default async function UsersPage() {
     const baseurl = await getBaseUrl()
 
+    const cookieStore = await cookies();
+
     const response = await fetch(`${baseurl}/api/users/all`, {
-        next: { revalidate: 60 }, // Revalidate every 60 seconds
+        headers: {
+            'Content-Type': 'application/json',
+            'Cookie': cookieStore.getAll().map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
+        },
     })
 
     const users: UserType[] = await response.json()

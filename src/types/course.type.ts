@@ -16,7 +16,6 @@ export interface CourseCardType {
     category: string;
     discount: string;
     imageUrl: MediaUrlType;
-    previewVideoUrl: MediaUrlType;
 }
 
 export type ChapterType = {
@@ -61,6 +60,7 @@ export interface CourseSingleType extends CourseCardType, CourseDetails {
     }[];
     chaptersCount: number;
     lessonsCount: number;
+    previewVideoUrl: MediaUrlType;
     faq: FAQType[];
     createdAt: Date;
     updatedAt: Date;
