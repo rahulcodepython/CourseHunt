@@ -24,8 +24,7 @@ import {
 import {
     ChevronRight,
     LogOut,
-    MountainIcon,
-    type LucideIcon
+    MountainIcon
 } from "lucide-react"
 
 import { logout } from "@/api/logout.api"
@@ -42,9 +41,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useApiHandler } from "@/hooks/useApiHandler"
 import { useAuthStore } from "@/store/auth.store"
-import { NavbarDataType } from "@/types/navbar.type"
+import { NavbarDataType, NavGroupType } from "@/types/navbar.type"
 import {
-    Settings2,
     User
 } from "lucide-react"
 import Link from "next/link"
@@ -68,23 +66,7 @@ export function AppSidebar({ data }: { data: NavbarDataType }) {
     )
 }
 
-export function NavMain({
-    items,
-}: {
-    items: {
-        title: string
-        children: {
-            title: string
-            url: string
-            icon?: LucideIcon
-            isActive?: boolean
-            items?: {
-                title: string
-                url: string
-            }[]
-        }[]
-    }[]
-}) {
+export function NavMain({ items }: { items: NavGroupType[] }) {
     return (
         <SidebarContent>
             {
@@ -94,37 +76,46 @@ export function NavMain({
                             {item.title}
                         </SidebarGroupLabel>
                         <SidebarMenu>
-                            {item.children.map((item) => (
-                                <Collapsible
-                                    key={item.title}
-                                    asChild
-                                    defaultOpen={item.isActive}
-                                    className="group/collapsible"
-                                >
-                                    <SidebarMenuItem>
-                                        <CollapsibleTrigger asChild className="cursor-pointer">
-                                            <SidebarMenuButton tooltip={item.title}>
-                                                {item.icon && <item.icon />}
+                            {
+                                item.children.map((item) => (
+                                    !item.items || item.items.length <= 0 ? <SidebarMenuSubItem key={item.title} className="ml-4">
+                                        <SidebarMenuSubButton asChild>
+                                            <Link href={item.url}>
                                                 <span>{item.title}</span>
-                                                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                                            </SidebarMenuButton>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleContent>
-                                            <SidebarMenuSub>
-                                                {item.items?.map((subItem) => (
-                                                    <SidebarMenuSubItem key={subItem.title}>
-                                                        <SidebarMenuSubButton asChild>
-                                                            <Link href={subItem.url}>
-                                                                <span>{subItem.title}</span>
-                                                            </Link>
-                                                        </SidebarMenuSubButton>
-                                                    </SidebarMenuSubItem>
-                                                ))}
-                                            </SidebarMenuSub>
-                                        </CollapsibleContent>
-                                    </SidebarMenuItem>
-                                </Collapsible>
-                            ))}
+                                            </Link>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem> :
+                                        <Collapsible
+                                            key={item.title}
+                                            asChild
+                                            defaultOpen={item.isActive}
+                                            className="group/collapsible"
+                                        >
+                                            <SidebarMenuItem>
+                                                <CollapsibleTrigger asChild className="cursor-pointer">
+                                                    <SidebarMenuButton tooltip={item.title}>
+                                                        {item.icon && <item.icon />}
+                                                        <span>{item.title}</span>
+                                                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                    </SidebarMenuButton>
+                                                </CollapsibleTrigger>
+                                                <CollapsibleContent>
+                                                    <SidebarMenuSub>
+                                                        {item.items?.map((subItem) => (
+                                                            <SidebarMenuSubItem key={subItem.title}>
+                                                                <SidebarMenuSubButton asChild>
+                                                                    <Link href={subItem.url}>
+                                                                        <span>{subItem.title}</span>
+                                                                    </Link>
+                                                                </SidebarMenuSubButton>
+                                                            </SidebarMenuSubItem>
+                                                        ))}
+                                                    </SidebarMenuSub>
+                                                </CollapsibleContent>
+                                            </SidebarMenuItem>
+                                        </Collapsible>
+                                ))
+                            }
                         </SidebarMenu>
                     </SidebarGroup>
                 ))
@@ -157,8 +148,8 @@ export function NavUser() {
                 <DropdownMenu>
                     <DropdownMenuTrigger className="flex items-center gap-3">
                         <Avatar>
-                            <AvatarFallback className="bg-primary text-primary-foreground">
-                                MW
+                            <AvatarFallback className="">
+                                CV
                             </AvatarFallback>
                         </Avatar>
                         <div className="text-start flex flex-col">
@@ -169,8 +160,8 @@ export function NavUser() {
                     <DropdownMenuContent className="mt-2 w-72">
                         <DropdownMenuItem className="py-3">
                             <Avatar>
-                                <AvatarFallback className="bg-primary text-primary-foreground">
-                                    MW
+                                <AvatarFallback className="">
+                                    CV
                                 </AvatarFallback>
                             </Avatar>
                             <div className="ml-1 flex flex-col">
@@ -183,9 +174,6 @@ export function NavUser() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>
                             <User className="mr-1" /> Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Settings2 className="mr-1" /> Settings
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem disabled={isLoading} onClick={handleLogout}>

@@ -1,11 +1,5 @@
 import { LucideIcon } from "lucide-react";
 
-interface User {
-    name: string;
-    email: string;
-    avatar: string;
-}
-
 interface NavItem {
     title: string;
     url: string;
@@ -17,11 +11,11 @@ interface NavItem {
     }[];
 }
 
-interface NavGroup {
+export interface NavGroupType {
     title: string;
     children: NavItem[];
 }
 
 export interface NavbarDataType {
-    navMain: NavGroup[];
+    navMain: NavGroupType[];
 }

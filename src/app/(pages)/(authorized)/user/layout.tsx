@@ -3,7 +3,6 @@ import { AppSidebar } from "@/components/app-sidebar";
 import BreadcrumbComponent from "@/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { NavbarDataType } from "@/types/navbar.type";
-import { SquareTerminal } from "lucide-react";
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
 
@@ -13,40 +12,16 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                 title: "Platform",
                 children: [
                     {
-                        title: "Course",
-                        url: "#",
-                        icon: SquareTerminal,
-                        isActive: true,
-                        items: [
-                            {
-                                title: "My Courses",
-                                url: "/user/courses",
-                            },
-                        ],
+                        title: "My Courses",
+                        url: "/user/courses",
                     },
                     {
                         title: "Feedback",
-                        url: "#",
-                        icon: SquareTerminal,
-                        isActive: true,
-                        items: [
-                            {
-                                title: "Feedback",
-                                url: "/user/feedback",
-                            },
-                        ],
+                        url: "/user/feedback",
                     },
                     {
-                        title: "Transaction",
-                        url: "#",
-                        icon: SquareTerminal,
-                        isActive: true,
-                        items: [
-                            {
-                                title: "Transactions",
-                                url: "/user/transactions",
-                            },
-                        ],
+                        title: "Transactions",
+                        url: "/user/transactions",
                     },
                 ]
             }

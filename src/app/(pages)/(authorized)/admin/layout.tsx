@@ -14,79 +14,36 @@ import React from "react";
 const data: NavbarDataType = {
     navMain: [
         {
-            title: "Platform",
+            title: "Admin Panel",
             children: [
                 {
-                    title: "Course",
-                    url: "#",
+                    title: "Admin Panel",
+                    url: "/admin",
                     icon: SquareTerminal,
-                    isActive: true,
-                    items: [
-                        {
-                            title: "Courses",
-                            url: "/admin/courses",
-                        },
-                    ],
                 },
                 {
-                    title: "Coupon",
-                    url: "#",
-                    icon: SquareTerminal,
-                    isActive: true,
-                    items: [
-                        {
-                            title: "Coupons",
-                            url: "/admin/coupons",
-                        },
-                    ],
+                    title: "Courses",
+                    url: "/admin/courses",
                 },
                 {
-                    title: "Feedback",
-                    url: "#",
-                    icon: SquareTerminal,
-                    isActive: true,
-                    items: [
-                        {
-                            title: "Feedback",
-                            url: "/admin/feedback",
-                        },
-                    ],
+                    title: "Coupons",
+                    url: "/admin/coupons",
                 },
                 {
-                    title: "Transaction",
-                    url: "#",
-                    icon: SquareTerminal,
-                    isActive: true,
-                    items: [
-                        {
-                            title: "Transactions",
-                            url: "/admin/transactions",
-                        },
-                    ],
+                    title: "Feedbacks",
+                    url: "/admin/feedback",
                 },
                 {
-                    title: "User",
-                    url: "#",
-                    icon: SquareTerminal,
-                    isActive: true,
-                    items: [
-                        {
-                            title: "Users",
-                            url: "/admin/users",
-                        },
-                    ],
+                    title: "Transactions",
+                    url: "/admin/transactions",
+                },
+                {
+                    title: "Users",
+                    url: "/admin/users",
                 },
                 {
                     title: "User Dashboard",
-                    url: "#",
-                    icon: SquareTerminal,
-                    isActive: true,
-                    items: [
-                        {
-                            title: "User",
-                            url: "/user",
-                        },
-                    ],
+                    url: "/user",
                 },
             ]
         }
