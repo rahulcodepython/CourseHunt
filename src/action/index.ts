@@ -44,20 +44,15 @@ export const checkAuthencticatedUserRequest = async (): Promise<null | UserType>
 }
 
 export const checkAdminUserRequest = async (): Promise<null | UserType> => {
-    console.log("Checking admin user request...");
-
     const cookieStore = await cookies();
-    console.log("Cookie Store:", cookieStore);
 
     const sessionId = cookieStore.get('session_id');
-    console.log("Session ID:", sessionId?.value);
 
     if (!sessionId) {
         return null;
     }
 
     const user = await User.findById(sessionId.value);
-    console.log("User:", user);
 
     if (!user) {
         return null;
