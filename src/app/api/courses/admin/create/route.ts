@@ -1,13 +1,8 @@
 import { checkAdminUserRequest, routeHandlerWrapper } from "@/action";
 import { Course } from "@/models/course.models";
-import { NextResponse } from "next/server";
 
 export const POST = routeHandlerWrapper(async (request: Request) => {
-    const user = await checkAdminUserRequest()
-
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await checkAdminUserRequest()
 
     const body = await request.json();
     const { title } = body;

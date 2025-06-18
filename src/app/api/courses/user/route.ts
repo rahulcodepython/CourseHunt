@@ -5,8 +5,8 @@ import { Types } from "mongoose";
 export const GET = routeHandlerWrapper(async (request: Request) => {
     const user = await checkAuthencticatedUserRequest()
 
-    if (!user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    if (user instanceof Response) {
+        return user;
     }
 
     const purchasedCourses = user.purchasedCourses || [];

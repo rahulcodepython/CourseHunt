@@ -2,11 +2,7 @@ import { checkAuthencticatedUserRequest, routeHandlerWrapper } from "@/action";
 import { cookies } from "next/headers";
 
 export const DELETE = routeHandlerWrapper(async () => {
-    const auth = await checkAuthencticatedUserRequest()
-
-    if (!auth) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-    }
+    await checkAuthencticatedUserRequest()
 
     const cookieStore = await cookies();
 

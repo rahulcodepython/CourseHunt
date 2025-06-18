@@ -5,8 +5,8 @@ import { NextResponse } from "next/server";
 export const GET = routeHandlerWrapper(async () => {
     const user = await checkAuthencticatedUserRequest()
 
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (user instanceof NextResponse) {
+        return user;
     }
 
     const transactions = await Transaction.find({ userId: user._id }, {

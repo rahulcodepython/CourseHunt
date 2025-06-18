@@ -2,6 +2,7 @@ import { connectDB } from '@/lib/db.connect';
 import { User } from '@/models/user.models';
 import { UserType } from '@/types/user.type';
 import { cookies, headers } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export const getBaseUrl = async () => {
     const headersList = await headers();
@@ -19,47 +20,47 @@ export const routeHandlerWrapper = <T extends Record<string, any>>(
         const params = await context.params;
         return await handler(req, params);
     } catch (error) {
-        console.log(`API Error from: ${req.url}:`, error);
+        console.error(`API Error from: ${req.url}:`, error);
         return new Response(JSON.stringify(
             { error: "Internal Server Error" }
         ), { status: 500 });
     }
 };
 
-export const checkAuthencticatedUserRequest = async (): Promise<null | UserType> => {
+export const checkAuthencticatedUserRequest = async (): Promise<NextResponse | UserType> => {
     const cookieStore = await cookies();
     const sessionId = cookieStore.get('session_id');
 
     if (!sessionId) {
-        return null;
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await User.findById(sessionId.value).select('-password -__v');
 
     if (!user) {
-        return null;
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     return user
 }
 
-export const checkAdminUserRequest = async (): Promise<null | UserType> => {
+export const checkAdminUserRequest = async (): Promise<NextResponse | UserType> => {
     const cookieStore = await cookies();
 
     const sessionId = cookieStore.get('session_id');
 
     if (!sessionId) {
-        return null;
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await User.findById(sessionId.value).select('-password -__v');
 
     if (!user) {
-        return null;
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (user.role !== 'admin') {
-        return null;
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     return user

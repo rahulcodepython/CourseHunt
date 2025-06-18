@@ -1,13 +1,8 @@
 import { checkAdminUserRequest, routeHandlerWrapper } from "@/action";
 import { Course } from "@/models/course.models";
-import { NextResponse } from "next/server";
 
 export const GET = routeHandlerWrapper(async (request: Request, { params }: { params: Promise<{ _id: string }> }) => {
-    const user = await checkAdminUserRequest()
-
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await checkAdminUserRequest()
 
     const { _id } = await params;
     const course = await Course.findById(_id);
@@ -15,11 +10,7 @@ export const GET = routeHandlerWrapper(async (request: Request, { params }: { pa
 });
 
 export const PATCH = routeHandlerWrapper(async (request: Request, { params }: { params: Promise<{ _id: string }> }) => {
-    const user = await checkAdminUserRequest()
-
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await checkAdminUserRequest()
 
     const { _id } = await params;
     const courseData = await request.json();
@@ -28,11 +19,7 @@ export const PATCH = routeHandlerWrapper(async (request: Request, { params }: { 
 });
 
 export const DELETE = routeHandlerWrapper(async (request: Request, { params }: { params: Promise<{ _id: string }> }) => {
-    const user = await checkAdminUserRequest()
-
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await checkAdminUserRequest()
 
     const { _id } = await params;
     await Course.findByIdAndDelete(_id);

@@ -1,14 +1,9 @@
 
 import { checkAdminUserRequest, routeHandlerWrapper } from "@/action";
 import { Coupon } from "@/models/coupon.models";
-import { NextResponse } from "next/server";
 
 export const PATCH = routeHandlerWrapper(async (req: Request, { params }: { params: Promise<{ _id: string }> }) => {
-    const user = await checkAdminUserRequest()
-
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await checkAdminUserRequest()
 
     const { _id } = await params;
     const body = await req.json();
@@ -28,11 +23,7 @@ export const PATCH = routeHandlerWrapper(async (req: Request, { params }: { para
 });
 
 export const DELETE = routeHandlerWrapper(async (req: Request, { params }: { params: Promise<{ _id: string }> }) => {
-    const user = await checkAdminUserRequest()
-
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await checkAdminUserRequest()
 
     const { _id } = await params;
 

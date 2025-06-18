@@ -79,7 +79,6 @@ export default function Component() {
     }
 
     const handleSubmit = async () => {
-        console.log("Submitting form data:", formData)
         const responseData = await callApi(() => updateUser(formData))
 
         if (responseData) {

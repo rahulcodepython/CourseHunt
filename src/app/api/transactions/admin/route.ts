@@ -3,13 +3,9 @@ import { Transaction } from "@/models/transaction.models";
 import { NextResponse } from "next/server";
 
 export const GET = routeHandlerWrapper(async () => {
-    const user = await checkAdminUserRequest()
+    await checkAdminUserRequest()
 
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const transactions = await Transaction.find({ userId: user._id }, {
+    const transactions = await Transaction.find({}, {
         _id: 1,
         transactionId: 1,
         createdAt: 1,

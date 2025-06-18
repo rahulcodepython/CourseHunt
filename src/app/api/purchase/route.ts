@@ -2,12 +2,13 @@ import { checkAuthencticatedUserRequest, routeHandlerWrapper } from "@/action";
 import { Coupon } from "@/models/coupon.models";
 import { Course } from "@/models/course.models";
 import { Transaction } from "@/models/transaction.models";
+import { User } from "@/models/user.models";
 
 export const POST = routeHandlerWrapper(async (request: Request) => {
     const user = await checkAuthencticatedUserRequest()
 
-    if (!user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    if (user instanceof Response) {
+        return user;
     }
 
     const {
@@ -75,18 +76,15 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
         return new Response(JSON.stringify({ error: 'Error saving transaction' }), { status: 500 });
     }
 
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
-    user.phone = phone || user.phone;
-    user.address = address || user.address;
-    user.city = city || user.city;
-    user.zip = zip || user.zip;
-    user.country = country || user.country;
-    user.purchasedCourses?.push({
-        _id: courseId,
-        name: course.title
-    });
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(user._id, {
+        firstName: firstName || user.firstName,
+        lastName: lastName || user.lastName,
+        phone: phone || user.phone,
+        address: address || user.address,
+        city: city || user.city,
+        zip: zip || user.zip,
+        country: country || user.country,
+    }, { new: true });
 
     course.students += 1;
     course.enrolledStudents.push({

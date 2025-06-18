@@ -21,8 +21,6 @@ export default async function FeedbackPage() {
 
     const feedbacks: FeedbackType[] = await response.json().then(data => data.feedbacks || [])
 
-    console.log("Feedbacks:", feedbacks)
-
     const renderStars = (rating: number) => {
         return (
             <div className="flex items-center gap-1">
