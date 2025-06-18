@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Transaction } from "@/types/transaction.type"
 import { Calendar, DollarSign, Download, Filter, Search, ShoppingCart } from "lucide-react"
 
-const transactions: Transaction[] = [
+const transactions = [
     {
         id: "TXN-2024-001",
         date: "2024-01-15",

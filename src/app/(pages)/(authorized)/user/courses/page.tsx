@@ -10,7 +10,7 @@ const MyCourses = async () => {
 
     const cookieStore = await cookies();
 
-    const response = await fetch(`${baseurl}/api/courses/my-course`, {
+    const response = await fetch(`${baseurl}/api/courses/user`, {
         headers: {
             'Content-Type': 'application/json',
             'Cookie': cookieStore.getAll().map(cookie => `${cookie.name}=${cookie.value}`).join('; ')

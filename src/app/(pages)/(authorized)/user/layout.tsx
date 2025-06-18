@@ -20,7 +20,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                         items: [
                             {
                                 title: "My Courses",
-                                url: "/user/my-courses",
+                                url: "/user/courses",
                             },
                         ],
                     },
