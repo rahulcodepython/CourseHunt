@@ -3,7 +3,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { UserType } from "@/types/user.type"
-import { Mail } from "lucide-react"
 import { cookies } from "next/headers"
 
 export default async function UsersPage() {
@@ -19,15 +18,6 @@ export default async function UsersPage() {
     })
 
     const users: UserType[] = await response.json()
-
-
-    const getInitials = (name: string) => {
-        return name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-    }
 
     return (
         <div className="min-h-screen bg-background">
@@ -53,7 +43,14 @@ export default async function UsersPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>User</TableHead>
-                                    <TableHead>Email</TableHead>
+                                    <TableHead>Role</TableHead>
+                                    <TableHead>Joined</TableHead>
+                                    <TableHead>Enrolled Courses</TableHead>
+                                    <TableHead>Address</TableHead>
+                                    <TableHead>City</TableHead>
+                                    <TableHead>Country</TableHead>
+                                    <TableHead>ZIP</TableHead>
+                                    <TableHead>Phone</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -63,18 +60,60 @@ export default async function UsersPage() {
                                             <div className="flex items-center gap-3">
                                                 <Avatar>
                                                     <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                                                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                                                    <AvatarFallback>{`CV`}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
                                                     <div className="font-medium">{user.name}</div>
-                                                    <div className="text-sm text-muted-foreground">ID: {user._id}</div>
+                                                    <div className="text-sm text-muted-foreground">Email: {user.email}</div>
                                                 </div>
                                             </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                <Mail className="h-4 w-4 text-muted-foreground" />
-                                                {user.email}
+                                                {
+                                                    user.role === 'admin' ? (
+                                                        <span className="text-white bg-green-600 rounded-full px-2 py-1 font-semibold">Admin</span>
+                                                    ) : user.role === 'user' ? (
+                                                        <span className="text-white bg-blue-600 rounded-full px-2 py-1 font-semibold">User</span>
+                                                    ) : null
+                                                }
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {
+                                                    new Date(user.createdAt).toLocaleDateString()
+                                                }
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {user.purchasedCourses && user.purchasedCourses.length}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 truncate">
+                                                {user.address?.slice(0, 15) || 'N/A'}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {user.city || 'N/A'}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {user.country || 'N/A'}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {user.zip || 'N/A'}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {user.phone || 'N/A'}
                                             </div>
                                         </TableCell>
                                     </TableRow>
