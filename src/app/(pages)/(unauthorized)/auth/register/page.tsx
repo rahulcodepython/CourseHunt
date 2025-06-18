@@ -1,6 +1,6 @@
 "use client"
 
-import loginUser from '@/api/login.api'
+import registerNewUser from '@/api/create.user.api'
 import LoadingButton from '@/components/loading-button'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,9 @@ import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
 
-export default function LoginPage() {
+export default function RegisterPage() {
+    const [firstName, setFirstName] = React.useState('')
+    const [lastName, setLastName] = React.useState('')
     const [email, setEmail] = React.useState('')
     const [password, setPassword] = React.useState('')
 
@@ -23,13 +25,15 @@ export default function LoginPage() {
     const router = useRouter()
 
     const handleSubmit = async () => {
-        const response = await callApi(() => loginUser(email, password), () => {
+        const response = await callApi(() => registerNewUser(firstName, lastName, email, password), () => {
             setEmail('')
             setPassword('')
+            setFirstName('')
+            setLastName('')
         })
 
         if (response) {
-            toast.success(response.message || 'Login successful')
+            toast.success(response.message || 'Registration successful')
 
             setUser(response.user)
             setIsAuthenticated(true)
@@ -46,11 +50,45 @@ export default function LoginPage() {
                 className="bg-card m-auto h-fit w-full max-w-md rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]">
                 <div className="p-8 pb-6 flex flex-col gap-8">
                     <div className="text-center">
-                        <h1 className="mb-1 text-xl font-semibold">Sign In to CourseHunt</h1>
-                        <p className="text-sm">Welcome back! Sign in to continue</p>
+                        <h1 className="mb-1 text-xl font-semibold">Sign Up to CourseHunt</h1>
+                        <p className="text-sm">Welcome aboard! Create your account to continue</p>
                     </div>
 
                     <div className="space-y-6">
+                        <div className="space-y-2">
+                            <Label
+                                htmlFor="firstName"
+                                className="block text-sm">
+                                First Name
+                            </Label>
+                            <Input
+                                type="text"
+                                required
+                                name="firstName"
+                                id="firstName"
+                                placeholder='Enter your first name'
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label
+                                htmlFor="lastName"
+                                className="block text-sm">
+                                Last Name
+                            </Label>
+                            <Input
+                                type="text"
+                                required
+                                name="lastName"
+                                id="lastName"
+                                placeholder='Enter your last name'
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                            />
+                        </div>
+
                         <div className="space-y-2">
                             <Label
                                 htmlFor="email"
@@ -80,8 +118,8 @@ export default function LoginPage() {
                                 type="password"
                                 required
                                 name="pwd"
-                                id="pwd"
                                 placeholder='********'
+                                id="pwd"
                                 className="input sz-md variant-mixed"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -97,9 +135,9 @@ export default function LoginPage() {
                 <div className="bg-muted rounded-(--radius) border p-3">
                     <p className="text-accent-foreground text-center text-sm space-x-4">
                         <span>
-                            Don't have an account ?
+                            Do have an account ?
                         </span>
-                        <Link href="/auth/register">Create account</Link>
+                        <Link href="/auth/login">Log In</Link>
                     </p>
                 </div>
             </div>

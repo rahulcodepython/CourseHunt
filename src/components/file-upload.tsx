@@ -1,6 +1,5 @@
 "use client"
 
-
 import uploadMedia from "@/api/upload.media.api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -64,7 +63,7 @@ export default function FileUpload({ label, onChange, field, accept, value }: Fi
                 </Button>
             </div>
             {
-                previousValue && !isLoading && previousValue.fileType === 'image' ? <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                previousValue && previousValue.url.length > 2 && !isLoading && previousValue.fileType === 'image' ? <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
                     <Image src={previousValue.url} alt="Uploaded file" width={50} height={50} />
                     <span className="flex-1 text-sm truncate">{previousValue.url}</span>
                 </div> : previousValue.fileType === 'video' ? <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">

@@ -2,6 +2,7 @@
 
 import getCourseName from "@/api/course.name.api"
 import createFeedback from "@/api/create.feedback.api"
+import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -122,14 +123,16 @@ export default function CreateFeedbackPage() {
                             </div>
 
                             <div className="flex gap-4 justify-end">
-                                <Button
-                                    type="submit"
-                                    className="cursor-pointer"
-                                    disabled={!rating || formData.message.length < 20}
-                                    onClick={handleSubmit}
-                                >
-                                    Submit Feedback
-                                </Button>
+                                <LoadingButton isLoading={isLoading} title="Submitting...">
+                                    <Button
+                                        type="submit"
+                                        className="cursor-pointer"
+                                        disabled={!rating || formData.message.length < 20}
+                                        onClick={handleSubmit}
+                                    >
+                                        Submit Feedback
+                                    </Button>
+                                </LoadingButton>
                             </div>
                         </div>
                     </CardContent>

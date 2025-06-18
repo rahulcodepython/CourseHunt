@@ -10,8 +10,11 @@ const UserSchema = new Schema({
     country: { type: String, required: false },
     zip: { type: String, required: false },
     email: { type: String, required: true, unique: true },
-    role: { type: String, enum: ['admin', 'user'], required: true },
-    avatar: { type: String, required: false },
+    role: { type: String, enum: ['admin', 'user'], required: true, default: 'user' },
+    avatar: {
+        url: { type: String, required: false, default: '' },
+        fileType: { type: String, required: false, default: '' },
+    },
     password: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     purchasedCourses: [

@@ -1,6 +1,7 @@
 "use client"
 
 import updateCourse from "@/api/update.course.api"
+import FileUpload from "@/components/file-upload"
 import LoadingButton from "@/components/loading-button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
@@ -15,7 +16,6 @@ import { ChapterType, CourseType } from "@/types/course.type"
 import { Plus, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
-import FileUpload from "./file-upload"
 
 // LessonCard.tsx
 interface LessonCardProps {

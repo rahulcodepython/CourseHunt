@@ -34,7 +34,7 @@ export const checkAuthencticatedUserRequest = async (): Promise<null | UserType>
         return null;
     }
 
-    const user = await User.findById(sessionId.value);
+    const user = await User.findById(sessionId.value).select('-password -__v');
 
     if (!user) {
         return null;
@@ -52,7 +52,7 @@ export const checkAdminUserRequest = async (): Promise<null | UserType> => {
         return null;
     }
 
-    const user = await User.findById(sessionId.value);
+    const user = await User.findById(sessionId.value).select('-password -__v');
 
     if (!user) {
         return null;

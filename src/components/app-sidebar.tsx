@@ -173,7 +173,9 @@ export function NavUser() {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>
-                            <User className="mr-1" /> Profile
+                            <Link href="/user/profile">
+                                <User className="mr-1" /> Profile
+                            </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem disabled={isLoading} onClick={handleLogout}>
