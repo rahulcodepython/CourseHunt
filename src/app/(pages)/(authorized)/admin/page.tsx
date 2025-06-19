@@ -1,21 +1,34 @@
-"use client"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { getBaseUrl } from "@/action"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
     BarChart3,
     BookOpen,
     DollarSign,
     Home,
-    MoreHorizontal,
-    Plus,
     Settings,
     Users,
     Video
 } from "lucide-react"
+import { cookies } from "next/headers"
 
+interface DashboardResponseData {
+    students: {
+        _id: string;
+        name: string;
+        email: string;
+        createdAt: Date;
+        purchasedCourses: string[];
+    }[];
+    activeCourses: {
+        _id: string;
+        title: string;
+        students: number;
+        totalRevenue: number;
+    }[];
+    monthlyRevenue: number;
+    totalRevenue: number;
+}
 const adminMenuItems = [
     { title: "Dashboard", url: "#", icon: Home, active: true },
     { title: "Courses", url: "#", icon: BookOpen },
@@ -91,7 +104,22 @@ const recentStudents = [
     },
 ]
 
-export default function Admin() {
+export default async function Admin() {
+    const baseurl = await getBaseUrl()
+
+    const cookieStore = await cookies()
+
+    const response = await fetch(`${baseurl}/api/dashboard/admin`, {
+        method: "GET",
+        headers: {
+            'Content-Type': 'application/json',
+            'Cookie': cookieStore.getAll().map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
+        },
+    })
+
+    const responseData: DashboardResponseData = await response.json()
+
+    // console.log("Response Data:", responseData);
 
     return (
         <div className="flex-1 space-y-6 p-6">
@@ -109,8 +137,9 @@ export default function Admin() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">1,234</div>
-                        <p className="text-xs text-muted-foreground">+12% from last month</p>
+                        <div className="text-2xl font-bold">
+                            {responseData.students.length}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -119,8 +148,9 @@ export default function Admin() {
                         <BookOpen className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">24</div>
-                        <p className="text-xs text-muted-foreground">+3 new this month</p>
+                        <div className="text-2xl font-bold">
+                            {responseData.activeCourses.length}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -129,18 +159,20 @@ export default function Admin() {
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">$45,231</div>
-                        <p className="text-xs text-muted-foreground">+15% from last month</p>
+                        <div className="text-2xl font-bold">
+                            ₹{responseData.monthlyRevenue}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
                         <Video className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">78%</div>
-                        <p className="text-xs text-muted-foreground">+5% from last month</p>
+                        <div className="text-2xl font-bold">
+                            ₹{responseData.totalRevenue}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -159,43 +191,22 @@ export default function Admin() {
                                     <TableHead>Course</TableHead>
                                     <TableHead>Students</TableHead>
                                     <TableHead>Revenue</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {recentCourses.map((course) => (
-                                    <TableRow key={course.id}>
-                                        <TableCell>
-                                            <div>
-                                                <div className="font-medium">{course.title}</div>
-                                                <div className="text-sm text-muted-foreground">by {course.instructor}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{course.students}</TableCell>
-                                        <TableCell>${course.revenue.toLocaleString()}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={course.status === "Published" ? "default" : "secondary"}>
-                                                {course.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem>Edit Course</DropdownMenuItem>
-                                                    <DropdownMenuItem>View Analytics</DropdownMenuItem>
-                                                    <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                {
+                                    responseData.activeCourses.map((course) => (
+                                        <TableRow key={course._id}>
+                                            <TableCell>
+                                                <div>
+                                                    <div className="font-medium">{course.title}</div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{course.students}</TableCell>
+                                            <TableCell>₹{course.totalRevenue}</TableCell>
+                                        </TableRow>
+                                    ))
+                                }
                             </TableBody>
                         </Table>
                     </CardContent>
@@ -214,76 +225,28 @@ export default function Admin() {
                                     <TableHead>Student</TableHead>
                                     <TableHead>Courses</TableHead>
                                     <TableHead>Joined</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {recentStudents.map((student) => (
-                                    <TableRow key={student.id}>
-                                        <TableCell>
-                                            <div>
-                                                <div className="font-medium">{student.name}</div>
-                                                <div className="text-sm text-muted-foreground">{student.email}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{student.courses}</TableCell>
-                                        <TableCell>{student.joinDate}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={student.status === "Active" ? "default" : "secondary"}>
-                                                {student.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem>View Profile</DropdownMenuItem>
-                                                    <DropdownMenuItem>Send Message</DropdownMenuItem>
-                                                    <DropdownMenuItem>View Progress</DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-destructive">Suspend Account</DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                {
+                                    responseData.students.map((student) => (
+                                        <TableRow key={student._id}>
+                                            <TableCell>
+                                                <div>
+                                                    <div className="font-medium">{student.name}</div>
+                                                    <div className="text-sm text-muted-foreground">{student.email}</div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{student.purchasedCourses}</TableCell>
+                                            <TableCell>{new Date(student.createdAt).toLocaleDateString()}</TableCell>
+                                        </TableRow>
+                                    ))
+                                }
                             </TableBody>
                         </Table>
                     </CardContent>
                 </Card>
             </div>
-
-            {/* Quick Actions */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                    <CardDescription>Common administrative tasks</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Button className="h-20 flex-col gap-2">
-                            <Plus className="h-5 w-5" />
-                            Create Course
-                        </Button>
-                        <Button variant="outline" className="h-20 flex-col gap-2">
-                            <Users className="h-5 w-5" />
-                            Manage Students
-                        </Button>
-                        <Button variant="outline" className="h-20 flex-col gap-2">
-                            <BarChart3 className="h-5 w-5" />
-                            View Analytics
-                        </Button>
-                        <Button variant="outline" className="h-20 flex-col gap-2">
-                            <Settings className="h-5 w-5" />
-                            Platform Settings
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     )
 }

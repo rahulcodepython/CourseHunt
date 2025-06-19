@@ -6,6 +6,7 @@ const CourseRecordSchema = new Schema({
         ref: 'User',
         required: true,
     },
+    completedLessons: { type: Number, default: 0 },
     courses: [
         {
             courseId: {

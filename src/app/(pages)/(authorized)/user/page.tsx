@@ -1,213 +1,170 @@
-"use client"
-import { Badge } from "@/components/ui/badge"
+import { getBaseUrl } from "@/action"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { BookOpen, Calendar, Clock, Home, Play, Settings, Star, Trophy, User, Video } from "lucide-react"
+import { Play } from "lucide-react"
+import { cookies } from "next/headers"
+import Link from "next/link"
 
-const studentMenuItems = [
-    { title: "Dashboard", url: "#", icon: Home, active: true },
-    { title: "My Courses", url: "#", icon: BookOpen },
-    { title: "Schedule", url: "#", icon: Calendar },
-    { title: "Achievements", url: "#", icon: Trophy },
-    { title: "Profile", url: "#", icon: User },
-    { title: "Settings", url: "#", icon: Settings },
-]
+interface ResponseDataType {
+    user: {
+        name: string;
+    };
+    courses: {
+        imageUrl: { url: string, fileType: string },
+        title: string,
+        completedLessons: number,
+        totalLessons: number,
+        _id: string
+    }[];
+    enrolledCourses: string[];
+    completedLessons: number;
+}
 
-const enrolledCourses = [
+const Notices = [
     {
-        id: 1,
-        title: "React Fundamentals",
-        instructor: "Sarah Johnson",
-        progress: 75,
-        totalLessons: 24,
-        completedLessons: 18,
-        nextLesson: "State Management with Hooks",
-        rating: 4.8,
-        thumbnail: "/placeholder.svg?height=120&width=200",
+        id: "1",
+        title: "New Course Available: Advanced React",
+        description: "Explore the latest course on advanced React techniques and patterns.",
+        date: "2023-10-01",
     },
     {
-        id: 2,
-        title: "Advanced JavaScript",
-        instructor: "Mike Chen",
-        progress: 45,
-        totalLessons: 32,
-        completedLessons: 14,
-        nextLesson: "Async/Await Patterns",
-        rating: 4.9,
-        thumbnail: "/placeholder.svg?height=120&width=200",
+        id: "2",
+        title: "Scheduled Maintenance",
+        description: "Our platform will undergo maintenance on 2023-10-05 from 12:00 AM to 4:00 AM.",
+        date: "2023-10-03",
     },
     {
-        id: 3,
-        title: "UI/UX Design Principles",
-        instructor: "Emma Davis",
-        progress: 90,
-        totalLessons: 18,
-        completedLessons: 16,
-        nextLesson: "Design Systems",
-        rating: 4.7,
-        thumbnail: "/placeholder.svg?height=120&width=200",
+        id: "3",
+        title: "Certificate Updates",
+        description: "Certificates for completed courses have been updated. Check your profile for details.",
+        date: "2023-10-02",
     },
-]
+];
 
-const upcomingDeadlines = [
-    { course: "React Fundamentals", task: "Final Project", dueDate: "Dec 15", priority: "high" },
-    { course: "Advanced JavaScript", task: "Quiz 3", dueDate: "Dec 18", priority: "medium" },
-    { course: "UI/UX Design", task: "Portfolio Review", dueDate: "Dec 20", priority: "low" },
-]
+export default async function StudentDashboard() {
+    const baseurl = await getBaseUrl()
 
-const recentActivity = [
-    { action: "Completed lesson", course: "React Fundamentals", time: "2 hours ago" },
-    { action: "Started new course", course: "Advanced JavaScript", time: "1 day ago" },
-    { action: "Earned certificate", course: "HTML & CSS Basics", time: "3 days ago" },
-    { action: "Submitted assignment", course: "UI/UX Design", time: "5 days ago" },
-]
+    const cookieStore = await cookies()
 
-export default function StudentDashboard() {
+    const response = await fetch(`${baseurl}/api/dashboard/user`, {
+        method: "GET",
+        headers: {
+            'Content-Type': 'application/json',
+            'Cookie': cookieStore.getAll().map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
+        },
+    })
+
+    const responseData: ResponseDataType = await response.json()
+
     return (
         <div className="flex-1 space-y-6 p-6">
             {/* Welcome Section */}
             <div className="space-y-2">
-                <h2 className="text-2xl font-bold">Welcome back, John! 👋</h2>
+                <h2 className="text-2xl font-bold">Welcome back, {responseData.user.name}! 👋</h2>
                 <p className="text-muted-foreground">You're making great progress. Keep up the excellent work!</p>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 lg:grid-cols-2">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Enrolled Courses</CardTitle>
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader>
+                        <CardTitle>My Courses</CardTitle>
+                        <CardDescription>Continue your learning journey</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">3</div>
-                        <p className="text-xs text-muted-foreground">+1 from last month</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Completed Lessons</CardTitle>
-                        <Video className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">48</div>
-                        <p className="text-xs text-muted-foreground">+12 this week</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Study Hours</CardTitle>
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">24.5</div>
-                        <p className="text-xs text-muted-foreground">This month</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Certificates</CardTitle>
-                        <Trophy className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">2</div>
-                        <p className="text-xs text-muted-foreground">Earned</p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid gap-6 lg:grid-cols-3">
-                {/* My Courses */}
-                <div className="lg:col-span-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>My Courses</CardTitle>
-                            <CardDescription>Continue your learning journey</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {enrolledCourses.map((course) => (
-                                <div key={course.id} className="flex items-center space-x-4 rounded-lg border p-4">
+                    <CardContent className="space-y-4">
+                        {
+                            responseData.courses.map((course) => (
+                                <div key={course._id} className="flex items-center gap-4 rounded-lg border p-4">
                                     <img
-                                        src={course.thumbnail || "/placeholder.svg"}
+                                        src={course.imageUrl?.url || "/placeholder.svg"}
                                         alt={course.title}
                                         className="h-16 w-24 rounded object-cover"
                                     />
                                     <div className="flex-1 space-y-2">
                                         <div className="flex items-center justify-between">
                                             <h3 className="font-medium">{course.title}</h3>
-                                            <div className="flex items-center gap-1">
-                                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                <span className="text-xs text-muted-foreground">{course.rating}</span>
-                                            </div>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">by {course.instructor}</p>
                                         <div className="space-y-1">
                                             <div className="flex justify-between text-xs">
                                                 <span>
                                                     {course.completedLessons}/{course.totalLessons} lessons
                                                 </span>
-                                                <span>{course.progress}%</span>
+                                                <span>{(course.completedLessons / course.totalLessons * 100).toFixed(2)}%</span>
                                             </div>
-                                            <Progress value={course.progress} className="h-2" />
+                                            <Progress value={(course.completedLessons / course.totalLessons * 100)} className="h-2" />
                                         </div>
-                                        <p className="text-xs text-muted-foreground">Next: {course.nextLesson}</p>
+                                        <div className="w-full flex justify-end">
+                                            <Link href={`/study/${course._id}`}>
+                                                <Button size="sm">
+                                                    <Play className="h-3 w-3 mr-1" />
+                                                    Continue
+                                                </Button>
+                                            </Link>
+                                        </div>
                                     </div>
-                                    <Button size="sm">
-                                        <Play className="h-3 w-3 mr-1" />
-                                        Continue
-                                    </Button>
                                 </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                </div>
+                            ))
+                        }
+                    </CardContent>
+                </Card>
 
-                {/* Sidebar Content */}
-                <div className="space-y-6">
-                    {/* Upcoming Deadlines */}
+                <div className="grid grid-cols-1 gap-6">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <Card className="flex flex-col justify-between">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Enrolled Courses</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">
+                                    {responseData.enrolledCourses}
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="flex flex-col justify-between">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Completed Lessons</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">
+                                    {responseData.completedLessons}
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="flex flex-col justify-between">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Certificates</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">
+                                    0
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
                     <Card>
                         <CardHeader>
-                            <CardTitle>Upcoming Deadlines</CardTitle>
+                            <CardTitle>Notices</CardTitle>
+                            <CardDescription>
+                                Stay updated with the latest announcements and course updates.
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                            {upcomingDeadlines.map((deadline, index) => (
-                                <div key={index} className="flex items-center justify-between">
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium">{deadline.task}</p>
-                                        <p className="text-xs text-muted-foreground">{deadline.course}</p>
+                        <CardContent className="space-y-4">
+                            {
+                                Notices.map((notice) => (
+                                    <div key={notice.id} className="flex items-center space-x-4 rounded-lg border p-4">
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="font-medium">{notice.title}</h3>
+                                                <span className="text-sm text-gray-500">{notice.date}</span>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground">
+                                                {notice.description}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <Badge
-                                            variant={
-                                                deadline.priority === "high"
-                                                    ? "destructive"
-                                                    : deadline.priority === "medium"
-                                                        ? "default"
-                                                        : "secondary"
-                                            }
-                                        >
-                                            {deadline.dueDate}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-
-                    {/* Recent Activity */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Recent Activity</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            {recentActivity.map((activity, index) => (
-                                <div key={index} className="space-y-1">
-                                    <p className="text-sm">{activity.action}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {activity.course} • {activity.time}
-                                    </p>
-                                </div>
-                            ))}
+                                ))
+                            }
                         </CardContent>
                     </Card>
                 </div>
