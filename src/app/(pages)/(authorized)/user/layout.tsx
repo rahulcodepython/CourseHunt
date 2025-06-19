@@ -12,6 +12,10 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                 title: "Platform",
                 children: [
                     {
+                        title: "Dashboard",
+                        url: "/user",
+                    },
+                    {
                         title: "My Courses",
                         url: "/user/courses",
                     },

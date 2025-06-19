@@ -21,6 +21,8 @@ export default async function Transaction() {
 
     const transactions: UserTransactionType[] = await response.json()
 
+    console.log(transactions)
+
     return (
         <div className="bg-background w-full">
             <div className="container mx-auto px-4 py-8">
@@ -48,40 +50,46 @@ export default async function Transaction() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {transactions.map((transaction) => (
-                                    <TableRow key={transaction._id}>
-                                        <TableCell>
-                                            <div className="font-mono text-sm truncate">{transaction.transactionId.slice(0, 40)}...</div>
+                                {
+                                    transactions.length === 0 ? <TableRow>
+                                        <TableCell className="text-center" colSpan={6}>
+                                            <p>You have not made any transactions yet.</p>
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                                {new Date(transaction.createdAt).toLocaleDateString()}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div>
-                                                <div className="font-medium text-sm">{transaction.courseName}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div>
-                                                <div className="font-medium text-sm">{transaction.couponCode}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="font-bold">${transaction.amount}</div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Button variant="outline" size="sm">
-                                                    <Download className="h-4 w-4 mr-1" />
-                                                    Invoice
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                    </TableRow> : transactions.map((transaction) => (
+                                        <TableRow key={transaction._id}>
+                                            <TableCell>
+                                                <div className="font-mono text-sm truncate">{transaction.transactionId.slice(0, 40)}...</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                                    {new Date(transaction.createdAt).toLocaleDateString()}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div>
+                                                    <div className="font-medium text-sm">{transaction.courseName}</div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div>
+                                                    <div className="font-medium text-sm">{transaction.couponCode}</div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="font-bold">${transaction.amount}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Button variant="outline" size="sm">
+                                                        <Download className="h-4 w-4 mr-1" />
+                                                        Invoice
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                }
                             </TableBody>
                         </Table>
                     </CardContent>

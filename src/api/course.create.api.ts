@@ -1,5 +1,5 @@
 const createCourse = async (title: string) => {
-    const response = await fetch('/api/courses/create', {
+    const response = await fetch('/api/courses/admin/create', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

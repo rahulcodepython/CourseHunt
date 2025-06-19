@@ -2,7 +2,7 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-const protectedRoutes = ['/admin', '/user', '/checkout'];
+const protectedRoutes = ['/admin', '/user', '/checkout', '/study'];
 const unauthenticatedRoutePrefix = '/auth';
 
 export async function middleware(request: NextRequest) {

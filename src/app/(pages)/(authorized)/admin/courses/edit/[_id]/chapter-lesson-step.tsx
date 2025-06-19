@@ -254,7 +254,11 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await callApi(() => updateCourse({ chapters }, courseData._id))
+        const updatedCourseData = await callApi(() => updateCourse({
+            chapters,
+            chaptersCount: chaptersCount,
+            lessonsCount: lessonsCount,
+        }, courseData._id))
 
         if (updatedCourseData) {
             toast.success("Course chapters & lessons saved successfully")

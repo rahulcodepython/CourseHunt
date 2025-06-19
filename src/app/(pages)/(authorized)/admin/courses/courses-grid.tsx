@@ -29,9 +29,6 @@ const CoursesGrid = ({
                 </div>
                 <CreateCourse onCreate={addCourse} />
             </div>
-            {/* <h1 className='text-3xl font-bold text-center my-6'>Manage Courses</h1>
-            <div className='flex justify-end mb-4'>
-            </div> */}
             {
                 courseData.length === 0 && (
                     <div className='text-center text-gray-500'>

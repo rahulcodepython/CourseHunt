@@ -54,7 +54,7 @@ export default function CreateFeedbackPage() {
 
     return (
         <div className="bg-background h-full flex items-center justify-center flex-1">
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto px-4 py-8 max-w-3xl">
                 <div className="flex items-center gap-4 mb-8 justify-between">
                     <div>
                         <h1 className="text-3xl font-bold">Share Your Feedback</h1>
@@ -64,49 +64,47 @@ export default function CreateFeedbackPage() {
 
                 <Card>
                     <CardContent>
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4 w-full">
-                                <div className="space-y-2">
-                                    <Label htmlFor="course">Course *</Label>
-                                    <Select onValueChange={(value) => handleInputChange("courseId", value)} value={formData.courseId} required>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select the course you want to review" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {
-                                                courses && courses.map((course) => (
-                                                    <SelectItem key={course._id} value={course._id}>
-                                                        {course.title}
-                                                    </SelectItem>
-                                                ))
-                                            }
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                        <div className="flex flex-col gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="course">Course *</Label>
+                                <Select onValueChange={(value) => handleInputChange("courseId", value)} value={formData.courseId} required>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select the course you want to review" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {
+                                            courses && courses.map((course) => (
+                                                <SelectItem key={course._id} value={course._id}>
+                                                    {course.title}
+                                                </SelectItem>
+                                            ))
+                                        }
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                                <div className="space-y-2">
-                                    <Label>Rating *</Label>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <button
-                                                    key={star}
-                                                    type="button"
-                                                    className="p-1 hover:scale-110 transition-transform"
-                                                    onClick={() => setRating(star)}
-                                                    onMouseEnter={() => setHoveredRating(star)}
-                                                    onMouseLeave={() => setHoveredRating(0)}
-                                                >
-                                                    <Star
-                                                        className={`h-6 w-6 ${star <= (hoveredRating || rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                    />
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <span className="text-sm text-muted-foreground ml-2">{rating > 0 && `${rating}/5 stars`}</span>
+                            <div className="space-y-2">
+                                <Label>Rating *</Label>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                type="button"
+                                                className="p-1 hover:scale-110 transition-transform"
+                                                onClick={() => setRating(star)}
+                                                onMouseEnter={() => setHoveredRating(star)}
+                                                onMouseLeave={() => setHoveredRating(0)}
+                                            >
+                                                <Star
+                                                    className={`h-6 w-6 ${star <= (hoveredRating || rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                />
+                                            </button>
+                                        ))}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">Click on the stars to rate your experience</p>
+                                    <span className="text-sm text-muted-foreground ml-2">{rating > 0 && `${rating}/5 stars`}</span>
                                 </div>
+                                <p className="text-xs text-muted-foreground">Click on the stars to rate your experience</p>
                             </div>
 
                             <div className="space-y-2">

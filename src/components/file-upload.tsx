@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { useApiHandler } from "@/hooks/useApiHandler"
 import { Upload } from "lucide-react"
 import Image from "next/image"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 interface FileUploadProps {
@@ -22,11 +22,19 @@ interface FileUploadProps {
 }
 
 export default function FileUpload({ label, onChange, field, accept, value }: FileUploadProps) {
-    const [previousValue, setPreviousValue] = useState(value)
+    const [previousValue, setPreviousValue] = useState<{ url: string; fileType: string } | null>(null)
 
     const { isLoading, callApi } = useApiHandler()
 
     const fileRef = useRef<HTMLInputElement>(null)
+
+    useEffect(() => {
+        if (value && value.url && value.fileType) {
+            setPreviousValue(value);
+        } else {
+            setPreviousValue(null);
+        }
+    }, [value])
 
     const handleFileChange = async () => {
         const selectedFile = fileRef.current?.files?.[0]
@@ -63,7 +71,7 @@ export default function FileUpload({ label, onChange, field, accept, value }: Fi
                 </Button>
             </div>
             {
-                previousValue && previousValue.url.length > 2 && !isLoading && previousValue.fileType === 'image' ? <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                previousValue ? previousValue.url.length > 2 && !isLoading && previousValue.fileType === 'image' ? <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
                     <Image src={previousValue.url} alt="Uploaded file" width={50} height={50} />
                     <span className="flex-1 text-sm truncate">{previousValue.url}</span>
                 </div> : previousValue.fileType === 'video' ? <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
@@ -71,7 +79,7 @@ export default function FileUpload({ label, onChange, field, accept, value }: Fi
                     <span className="flex-1 text-sm truncate">{previousValue.url}</span>
                 </div> : previousValue.fileType === 'document' ? <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
                     <span className="flex-1 text-sm truncate">{previousValue.url}</span>
-                </div> : null
+                </div> : null : null
             }
         </div>
     )

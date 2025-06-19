@@ -446,7 +446,7 @@ const CouponForm = ({ setAppliedCoupon }: {
         </div>
         {
             applied && (
-                <div className="text-sm text-green-600">✓ Coupon "{couponCode}" applied successfully!</div>
+                <div className="text-sm text-green-600">✓ Coupon "{couponCode.toUpperCase()}" applied successfully!</div>
             )
         }
         {
@@ -495,7 +495,9 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionSucce
                             </div>
                             <div className="flex items-center gap-2 truncate">
                                 <code className="px-2 py-1 rounded text-sm font-mono">
-                                    {transaction.transactionId.length <= 30 ? transaction.transactionId : `${transaction.transactionId.slice(0, 30)}...`}
+                                    {
+                                        transaction.transactionId.length <= 30 ? transaction.transactionId : `${transaction.transactionId.slice(0, 30)}...`
+                                    }
                                 </code>
                                 <Button
                                     variant="ghost"
@@ -593,7 +595,7 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionSucce
 
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-4">
-                        <Link href={`/user/study/${transaction.courseId}`} className="flex-1">
+                        <Link href={`/study/${transaction.courseId}`} className="flex-1">
                             <Button className="flex-1">Access Course</Button>
                         </Link>
                         <Button variant="outline" className="flex-1">
@@ -601,6 +603,7 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionSucce
                         </Button>
                     </div>
                 </CardContent>
+
             </Card>
         </div>
     )

@@ -51,54 +51,47 @@ export default async function FeedbackPage() {
                     </Link>
                 </div>
 
-                <div className="grid gap-6">
-                    {
-                        feedbacks.map((feedback) => (
-                            <Card key={feedback._id} className="hover:shadow-md transition-shadow">
-                                <CardHeader>
-                                    <div className="flex items-start justify-between">
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex items-center gap-2">
-                                                    <User className="h-4 w-4 text-muted-foreground" />
-                                                    <span className="font-semibold">{feedback.userName}</span>
-                                                </div>
-                                                <Badge className={getRatingColor(feedback.rating)}>{feedback.rating}/5</Badge>
-                                            </div>
-                                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                <div className="flex items-center gap-1">
-                                                    <Mail className="h-4 w-4" />
-                                                    {feedback.userEmail}
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Calendar className="h-4 w-4" />
-                                                    {new Date(feedback.createdAt).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                            <Badge variant="outline">{feedback.courseName}</Badge>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-2">{renderStars(feedback.rating)}</div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-muted-foreground leading-relaxed">{feedback.message}</p>
-                                </CardContent>
-                            </Card>
-                        ))
-                    }
-                </div>
-
                 {
-                    feedbacks.length === 0 && (
-                        <Card className="text-center py-12">
-                            <CardContent>
-                                <p className="text-muted-foreground">No feedback available yet.</p>
-                                <Link href="/feedback/create">
-                                    <Button className="mt-4">Be the first to leave feedback</Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-                    )
+                    feedbacks.length === 0 ? (
+                        <div className='text-center text-gray-500'>
+                            No feedback available yet.
+                        </div>
+                    ) : <div className="grid gap-6">
+                        {
+                            feedbacks.map((feedback) => (
+                                <Card key={feedback._id} className="hover:shadow-md transition-shadow">
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <User className="h-4 w-4 text-muted-foreground" />
+                                                        <span className="font-semibold">{feedback.userName}</span>
+                                                    </div>
+                                                    <Badge className={getRatingColor(feedback.rating)}>{feedback.rating}/5</Badge>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                                    <div className="flex items-center gap-1">
+                                                        <Mail className="h-4 w-4" />
+                                                        {feedback.userEmail}
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <Calendar className="h-4 w-4" />
+                                                        {new Date(feedback.createdAt).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                                <Badge variant="outline">{feedback.courseName}</Badge>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-2">{renderStars(feedback.rating)}</div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-muted-foreground leading-relaxed">{feedback.message}</p>
+                                    </CardContent>
+                                </Card>
+                            ))
+                        }
+                    </div>
                 }
             </div>
         </div>

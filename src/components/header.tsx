@@ -1,10 +1,24 @@
 'use client'
+import { logout } from "@/api/logout.api"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from '@/components/ui/button'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
+import { useApiHandler } from "@/hooks/useApiHandler"
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { BookOpen, Menu, X } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from "next/navigation"
 import React from 'react'
+import { toast } from "sonner"
 
 const menuItems = [
     { name: 'Home', href: '/' },
@@ -24,6 +38,19 @@ const Header = () => {
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
+
+    const { isLoading, callApi } = useApiHandler()
+
+    const router = useRouter()
+
+    const handleLogout = async () => {
+        const response = await callApi(logout)
+
+        if (response) {
+            router.push("/auth/login")
+            toast.success(response.message || "Logged out successfully")
+        }
+    }
 
 
     return (
@@ -80,29 +107,56 @@ const Header = () => {
                                 </ul>
                             </div>
                             <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                                {isAuthenticated ? (
-                                    <Link href={user?.role === 'admin' ? '/admin' : '/user'}>
-                                        <Button
-                                            asChild
-                                            variant="outline"
-                                            size="sm"
-                                            className={''}
-                                        >
-                                            <span>Profile</span>
-                                        </Button>
-                                    </Link>
-                                ) : (
-                                    <Link href="/auth/login">
-                                        <Button
-                                            asChild
-                                            variant="outline"
-                                            size="sm"
-                                            className={''}
-                                        >
-                                            <span>Sign In</span>
-                                        </Button>
-                                    </Link>
-                                )}
+                                {
+                                    isAuthenticated ? (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild className="cursor-pointer">
+                                                <Avatar>
+                                                    <AvatarImage src={user?.avatar.url} />
+                                                    <AvatarFallback>CN</AvatarFallback>
+                                                </Avatar>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-56" align="start">
+                                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                                <DropdownMenuGroup>
+                                                    <Link href="/user">
+                                                        <DropdownMenuItem>
+                                                            Dashboard
+                                                        </DropdownMenuItem>
+                                                    </Link>
+                                                    <Link href="/user/profile">
+                                                        <DropdownMenuItem>
+                                                            Profile
+                                                        </DropdownMenuItem>
+                                                    </Link>
+                                                    {
+                                                        user?.role === 'admin' && (
+                                                            <Link href="/admin">
+                                                                <DropdownMenuItem>
+                                                                    Admin Panel
+                                                                </DropdownMenuItem>
+                                                            </Link>
+                                                        )
+                                                    }
+                                                </DropdownMenuGroup>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem disabled={isLoading} onClick={handleLogout}>
+                                                    Log out
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    ) : (
+                                        <Link href="/auth/login">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className={''}
+                                            >
+                                                Sign In
+                                            </Button>
+                                        </Link>
+                                    )
+                                }
                             </div>
                         </div>
                     </div>

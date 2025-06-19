@@ -30,12 +30,14 @@ import {
 import { logout } from "@/api/logout.api"
 import {
     Avatar,
-    AvatarFallback
+    AvatarFallback,
+    AvatarImage
 } from "@/components/ui/avatar"
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
@@ -143,40 +145,48 @@ export function NavUser() {
     }
 
     return (
-        <SidebarMenu>
+        user && <SidebarMenu>
             <SidebarMenuItem>
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarFallback className="">
-                                CV
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="text-start flex flex-col">
-                            <p className="text-sm font-medium">{user?.name}</p>
-                            <p className="text-xs text-muted-foreground">{user?.email}</p>
-                        </div>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="mt-2 w-72">
-                        <DropdownMenuItem className="py-3">
-                            <Avatar>
-                                <AvatarFallback className="">
-                                    CV
-                                </AvatarFallback>
+                    <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton
+                            size="lg"
+                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                        >
+                            <Avatar className="h-8 w-8 rounded-lg">
+                                <AvatarImage src={user.avatar.url} alt={user.name} className="rounded-full" />
+                                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                             </Avatar>
-                            <div className="ml-1 flex flex-col">
-                                <p className="text-sm font-medium">{user?.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {user?.email}
-                                </p>
+                            <div className="grid flex-1 text-left text-sm leading-tight">
+                                <span className="truncate font-medium">{user.name}</span>
+                                <span className="truncate text-xs">{user.email}</span>
                             </div>
-                        </DropdownMenuItem>
+                        </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                        side={isMobile ? "bottom" : "right"}
+                        align="end"
+                        sideOffset={4}
+                    >
+                        <DropdownMenuLabel className="p-0 font-normal">
+                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                                <Avatar className="h-8 w-8 rounded-lg">
+                                    <AvatarImage src={user.avatar.url} alt={user.name} className="rounded-full" />
+                                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                                </Avatar>
+                                <div className="grid flex-1 text-left text-sm leading-tight">
+                                    <span className="truncate font-medium">{user.name}</span>
+                                    <span className="truncate text-xs">{user.email}</span>
+                                </div>
+                            </div>
+                        </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <Link href="/user/profile">
+                        <Link href="/user/profile" className="w-full">
+                            <DropdownMenuItem>
                                 <User className="mr-1" /> Profile
-                            </Link>
-                        </DropdownMenuItem>
+                            </DropdownMenuItem>
+                        </Link>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem disabled={isLoading} onClick={handleLogout}>
                             <LogOut className="mr-1" /> Log out

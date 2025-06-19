@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useApiHandler } from "@/hooks/useApiHandler"
+import { useAuthStore } from "@/store/auth.store"
 import { UserProfileType } from "@/types/user.type"
 import { Save } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -33,6 +34,8 @@ export default function Component() {
     })
 
     const { isLoading, callApi } = useApiHandler()
+
+    const { setUser } = useAuthStore()
 
     useEffect(() => {
         const handler = async () => {
@@ -83,6 +86,11 @@ export default function Component() {
 
         if (responseData) {
             toast.success(responseData.message || "Profile updated successfully")
+            setUser(responseData.user)
+            setFormData((prev) => ({
+                ...prev,
+                name: responseData.user.name || prev.name,
+            }))
         }
     }
 
@@ -96,7 +104,6 @@ export default function Component() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-8">
-                            {/* Avatar Section */}
                             <FileUpload
                                 label="Profile Picture"
                                 onChange={handleAvatarChange}

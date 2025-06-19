@@ -17,7 +17,7 @@ const MyCourses = async () => {
         },
     })
 
-    const courseData: { courses: CourseCardType[] } = await response.json()
+    const courses: CourseCardType[] = await response.json().then(data => data.courses)
 
     return (
         <div className='flex flex-col w-full gap-4'>
@@ -25,19 +25,30 @@ const MyCourses = async () => {
                 <h1 className="text-3xl font-bold">My Courses</h1>
                 <p className="mt-2">Manage your courses and their details</p>
             </div>
-            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4'>
-                {
-                    courseData.courses.map((course, index) => (
-                        <CourseCard key={index} courseData={course} study={
-                            <Link href={`/user/study/${course._id}`}>
-                                <Button className="bg-green-600 hover:bg-green-700 text-white cursor-pointer">
-                                    Study
-                                </Button>
-                            </Link>
-                        } />
-                    ))
-                }
-            </div>
+            {
+                courses.length === 0 ? (
+                    <div className="text-center text-gray-500 flex flex-col gap-3">
+                        <p>You have not enrolled in any courses yet.</p>
+                        <Link href="/courses" className="">
+                            <Button>
+                                Browse Courses
+                            </Button>
+                        </Link>
+                    </div>
+                ) : <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4'>
+                    {
+                        courses.map((course, index) => (
+                            <CourseCard key={index} courseData={course} study={
+                                <Link href={`/study/${course._id}`}>
+                                    <Button className="bg-green-600 hover:bg-green-700 text-white cursor-pointer">
+                                        Study
+                                    </Button>
+                                </Link>
+                            } />
+                        ))
+                    }
+                </div>
+            }
         </div>
     )
 }

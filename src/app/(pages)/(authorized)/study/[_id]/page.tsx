@@ -1,10 +1,8 @@
 "use client"
 
-import { CardDescription } from "@/components/ui/card"
-
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Progress } from "@/components/ui/progress"
 import { CheckCircle, ChevronDown, ChevronRight, Download, FileText, Lock, Play, Video } from "lucide-react"
@@ -202,7 +200,10 @@ export default function StudyPage() {
                                 {selectedLesson.completed && <Badge className="bg-green-100 text-green-800">Completed</Badge>}
                             </div>
                         </div>
-                        <Button variant="outline">Mark as Complete</Button>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline">Return to Dashboard</Button>
+                            <Button variant="outline">Mark as Complete</Button>
+                        </div>
                     </div>
 
                     {/* Video Player */}

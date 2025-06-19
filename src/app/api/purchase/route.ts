@@ -1,6 +1,8 @@
 import { checkAuthencticatedUserRequest, routeHandlerWrapper } from "@/action";
 import { Coupon } from "@/models/coupon.models";
 import { Course } from "@/models/course.models";
+import { CourseRecord } from "@/models/course.record.models";
+import { Stats } from "@/models/stats.models";
 import { Transaction } from "@/models/transaction.models";
 import { User } from "@/models/user.models";
 
@@ -34,8 +36,12 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
         return new Response(JSON.stringify({ error: 'Course not found' }), { status: 404 });
     }
 
-    if (user.purchasedCourses?.some((course: any) => course._id === course._id)) {
-        return new Response(JSON.stringify({ error: 'You have already purchased this course' }), { status: 400 });
+    const previousPurchasedCourses = await CourseRecord.findOne({ userId: user._id });
+
+    if (previousPurchasedCourses) {
+        if (previousPurchasedCourses.courses.some((c: { courseId: string }) => c.courseId.toString() === course._id.toString())) {
+            return new Response(JSON.stringify({ error: 'You have already purchased this course' }), { status: 400 });
+        }
     }
 
     const coupon = couponId ? await Coupon.findById(couponId) : null;
@@ -86,7 +92,11 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
         country: country || user.country,
     }, { new: true });
 
+    updatedUser.purchasedCourses += 1;
+    await updatedUser.save();
+
     course.students += 1;
+    course.totalRevenue += price;
     course.enrolledStudents.push({
         _id: user._id,
         email: user.email
@@ -98,5 +108,50 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
         await coupon.save();
     }
 
-    return new Response(JSON.stringify({ message: "Course purchased successfully", transaction: "transactionSaved" }), { status: 201 });
+    if (previousPurchasedCourses) {
+        previousPurchasedCourses.courses.push({
+            courseId: course._id,
+            totalLessons: course.lessonsCount,
+            completedLessons: 0,
+            lastViewedLessonId: '',
+            viewed: []
+        });
+        await previousPurchasedCourses.save();
+    } else {
+        const courseRecord = new CourseRecord({
+            userId: user._id,
+            courses: [
+                {
+                    courseId: course._id,
+                    totalLessons: course.lessonsCount,
+                    completedLessons: 0,
+                    lastViewedLessonId: '',
+                    viewed: []
+                }
+            ]
+        });
+        await courseRecord.save();
+    }
+
+    const stats = await Stats.findOne().sort({ lastUpdated: -1 }).limit(1);
+
+    if (stats.month !== new Date().toLocaleString('default', { month: 'long' }) || stats.year !== new Date().getFullYear().toString()) {
+        const newStats = new Stats({
+            totalStudents: stats.totalStudents,
+            activeCourses: stats.activeCourses,
+            monthlyRevenue: price,
+            totalRevenue: stats.totalRevenue + price,
+            month: new Date().toLocaleString('default', { month: 'long' }),
+            year: new Date().getFullYear().toString(),
+        });
+        await newStats.save();
+    } else {
+        stats.lastUpdated = new Date();
+        stats.totalRevenue += price;
+        stats.monthlyRevenue += price;
+        await stats.save();
+    }
+
+
+    return new Response(JSON.stringify({ message: "Course purchased successfully", transaction: transactionSaved }), { status: 201 });
 });

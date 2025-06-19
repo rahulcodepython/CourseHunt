@@ -17,19 +17,7 @@ const UserSchema = new Schema({
     },
     password: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
-    purchasedCourses: [
-        {
-            _id: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Course',
-                required: true,
-            },
-            name: {
-                type: String,
-                required: true,
-            },
-        }
-    ]
+    purchasedCourses: { type: Number, default: 0 },
 });
 
 export const User = mongoose.models.User || mongoose.model('User', UserSchema);

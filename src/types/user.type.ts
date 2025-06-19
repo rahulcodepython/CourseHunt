@@ -16,10 +16,7 @@ export type UserType = {
     };
     password?: string;
     createdAt: Date;
-    purchasedCourses?: Array<{
-        _id: string;
-        name: string;
-    }>;
+    purchasedCourses: number;
 };
 
 export interface UserProfileType {

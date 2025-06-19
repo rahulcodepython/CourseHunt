@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress"
 import { useApiHandler } from "@/hooks/useApiHandler"
 import { Coupon } from "@/types/coupon.type"
 import { Calendar, Edit, Percent, Power, PowerOff, Trash2, Users } from "lucide-react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 interface CouponCardProps {
@@ -20,7 +21,7 @@ interface CouponCardProps {
 
 export default function CouponCard({ coupon, onEdit, onDelete, onToggleActive }: CouponCardProps) {
     const usagePercentage = (coupon.usage / coupon.maxUsage) * 100
-    const isExpired = new Date(coupon.expiryDate) < new Date()
+    const [isExpired, setIsExpired] = useState(new Date(coupon.expiryDate) < new Date())
 
     const { callApi } = useApiHandler()
 

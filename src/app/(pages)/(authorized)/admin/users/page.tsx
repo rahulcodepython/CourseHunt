@@ -27,10 +27,6 @@ export default async function UsersPage() {
                         <h1 className="text-3xl font-bold">User Management</h1>
                         <p className="text-muted-foreground mt-2">Manage and view all registered users</p>
                     </div>
-                    <div className="flex items-center gap-4 text-lg">
-                        <div>Total Users</div>
-                        <div className="font-bold">{users.length}</div>
-                    </div>
                 </div>
 
                 {/* Users Table */}
@@ -59,7 +55,7 @@ export default async function UsersPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <Avatar>
-                                                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                                                    <AvatarImage src={user.avatar.url || "/placeholder.svg"} alt={user.name} />
                                                     <AvatarFallback>{`CV`}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
@@ -88,7 +84,7 @@ export default async function UsersPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                {user.purchasedCourses && user.purchasedCourses.length}
+                                                {user.purchasedCourses}
                                             </div>
                                         </TableCell>
                                         <TableCell>

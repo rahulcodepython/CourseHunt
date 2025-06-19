@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db.connect";
 import { encryptPassword } from "@/lib/encryption";
+import { Stats } from "@/models/stats.models";
 import { User } from "@/models/user.models";
 import { cookies } from "next/headers";
 
@@ -33,6 +34,36 @@ export async function POST(request: Request) {
             name: `${firstName} ${lastName}`,
         })
         await newUser.save();
+
+        const stats = await Stats.findOne().sort({ lastUpdated: -1 }).limit(1);
+
+        if (!stats) {
+            const newStats = new Stats({
+                totalStudents: 1,
+                activeCourses: 0,
+                monthlyRevenue: 0,
+                totalRevenue: 0,
+                month: new Date().toLocaleString('default', { month: 'long' }),
+                year: new Date().getFullYear().toString(),
+            });
+            await newStats.save();
+        } else {
+            if (stats.month !== new Date().toLocaleString('default', { month: 'long' }) || stats.year !== new Date().getFullYear().toString()) {
+                const newStats = new Stats({
+                    totalStudents: stats.totalStudents + 1,
+                    activeCourses: stats.activeCourses,
+                    monthlyRevenue: 0,
+                    totalRevenue: stats.totalRevenue,
+                    month: new Date().toLocaleString('default', { month: 'long' }),
+                    year: new Date().getFullYear().toString(),
+                });
+                await newStats.save();
+            } else {
+                stats.totalStudents += 1;
+                stats.lastUpdated = new Date();
+                await stats.save();
+            }
+        }
 
         const cookieStore = await cookies()
 

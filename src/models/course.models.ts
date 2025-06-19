@@ -12,6 +12,7 @@ const courseSchema = new Schema({
     originalPrice: { type: Number },
     category: { type: String },
     discount: { type: String },
+    totalRevenue: { type: Number, default: 0, required: false },
     imageUrl: {
         url: { type: String, required: false, default: '' },
         fileType: { type: String, required: false, default: '' },
@@ -26,10 +27,12 @@ const courseSchema = new Schema({
     requirements: [String],
     chapters: [
         {
+            _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
             title: { type: String },
             preview: { type: Boolean },
             lessons: [
                 {
+                    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
                     title: { type: String },
                     duration: { type: String },
                     type: { type: String, enum: ['video', 'reading'] },

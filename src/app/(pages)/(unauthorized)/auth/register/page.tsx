@@ -126,8 +126,8 @@ export default function RegisterPage() {
                             />
                         </div>
 
-                        <LoadingButton isLoading={isLoading} title="Signing in..." className="w-full">
-                            <Button className="w-full" onClick={handleSubmit}>Sign In</Button>
+                        <LoadingButton isLoading={isLoading} title="Registering..." className="w-full">
+                            <Button className="w-full" onClick={handleSubmit}>Register</Button>
                         </LoadingButton>
                     </div>
                 </div>

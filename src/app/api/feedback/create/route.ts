@@ -22,6 +22,12 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
         return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
+    const updatedRating = ((course.rating * course.reviews) + rating) / (course.reviews + 1);
+
+    course.rating = updatedRating;
+    course.reviews += 1;
+    await course.save();
+
     const feedback = new Feedback({
         userId: user._id,
         userName: user.name,

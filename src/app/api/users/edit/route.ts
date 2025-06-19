@@ -29,8 +29,10 @@ export const PATCH = routeHandlerWrapper(async (request: Request) => {
         return NextResponse.json({ error: "Email already exists" }, { status: 400 });
     }
 
+    const newName = `${firstName} ${lastName}`.trim();
+
     const updatedUser = await User.findByIdAndUpdate(user._id, {
-        name,
+        name: newName,
         firstName,
         lastName,
         phone,
@@ -43,5 +45,5 @@ export const PATCH = routeHandlerWrapper(async (request: Request) => {
     }, { new: true });
     await updatedUser.save();
 
-    return NextResponse.json({ message: "User updated successfully" }, { status: 200 });
+    return NextResponse.json({ message: "User updated successfully", user: updatedUser }, { status: 200 });
 })
