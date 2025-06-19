@@ -1,9 +1,9 @@
-import { User } from '@/types/user.type'
+import { UserType } from '@/types/user.type'
 import { create } from 'zustand'
 
 type State = {
     isAuthenticated: boolean
-    user: Omit<User, 'password'> | null
+    user: Omit<UserType, 'password'> | null
 }
 
 type Actions = {

@@ -18,9 +18,7 @@ import { toast } from "sonner"
 
 interface BasicStepProps {
     categories: CourseCategoryType[]
-    courseData: CourseBasicFormType & {
-        _id: string
-    }
+    courseData: CourseType
     setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
 }
 

@@ -21,8 +21,6 @@ export default async function Transaction() {
 
     const transactions: UserTransactionType[] = await response.json()
 
-    console.log(transactions)
-
     return (
         <div className="bg-background w-full">
             <div className="container mx-auto px-4 py-8">

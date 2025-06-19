@@ -67,6 +67,7 @@ export interface CourseSingleType extends CourseCardType, CourseDetails {
 }
 
 export interface CourseType extends CourseCardType, CourseDetails {
+    previewVideoUrl: MediaUrlType;
     chapters: ChapterType[];
     chaptersCount: number;
     lessonsCount: number;
