@@ -17,21 +17,19 @@ const CourseRecordSchema = new Schema({
             totalLessons: { type: Number, default: 0 },
             completedLessons: { type: Number, default: 0 },
             lastViewedLessonId: { type: String, default: '' },
-            viewed: [
-                {
-                    chapters: [
-                        {
-                            chapterId: { type: String, required: true },
-                            lessons: [
-                                {
-                                    lessonId: { type: String, required: true },
-                                    viewedAt: { type: Date, default: Date.now },
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
+            viewed: [{
+                chapters: [
+                    {
+                        chapterId: { type: String, required: true },
+                        lessons: [
+                            {
+                                lessonId: { type: String, required: true },
+                                viewedAt: { type: Date, default: Date.now },
+                            },
+                        ],
+                    },
+                ],
+            }],
         },
     ],
 });
