@@ -11,6 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Progress } from "@/components/ui/progress"
 import { useApiHandler } from "@/hooks/useApiHandler"
 import { CheckCircle, ChevronDown, ChevronRight, Download, FileText, Lock, Play, Video } from "lucide-react"
+import Link from "next/link"
 import { useParams } from "next/navigation"
 import React, { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -185,9 +186,11 @@ export default function StudyPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button variant="outline">Return to Dashboard</Button>
+                                <Link href={'/user'}>
+                                    <Button variant="outline">Return to Dashboard</Button>
+                                </Link>
                                 {
-                                    selectedChapterId && <MarkAsReadButton
+                                    selectedChapterId && !selectedLesson.isCompleted && <MarkAsReadButton
                                         courseId={params._id as string}
                                         chapterId={selectedChapterId}
                                         lessonId={selectedLesson._id}

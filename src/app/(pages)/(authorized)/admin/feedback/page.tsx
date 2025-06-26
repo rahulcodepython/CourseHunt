@@ -1,11 +1,9 @@
 import { getBaseUrl } from "@/action"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { FeedbackType } from "@/types/feedback.type"
 import { Calendar, Mail, Star, User } from "lucide-react"
 import { cookies } from "next/headers"
-import Link from "next/link"
 
 export default async function FeedbackPage() {
     const baseurl = await getBaseUrl()
@@ -46,9 +44,6 @@ export default async function FeedbackPage() {
                         <h1 className="text-3xl font-bold">Student Feedback</h1>
                         <p className="text-muted-foreground mt-2">View all feedback and reviews from our students</p>
                     </div>
-                    <Link href="/feedback/create">
-                        <Button>Add Feedback</Button>
-                    </Link>
                 </div>
 
                 {

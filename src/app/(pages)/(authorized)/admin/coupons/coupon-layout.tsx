@@ -41,10 +41,14 @@ export default function CouponLayout({ initialCoupons }: { initialCoupons: Coupo
                     <h1 className="text-3xl font-bold">Coupon Management</h1>
                     <p className="mt-2">Manage your discount codes and promotional offers</p>
                 </div>
-                <Button onClick={() => {
-                    setEditingCoupon(null)
-                    setIsModalOpen(true)
-                }} className="flex items-center gap-2 text-white cursor-pointer">
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        setEditingCoupon(null)
+                        setIsModalOpen(true)
+                    }}
+                    className="flex items-center gap-2 text-white cursor-pointer"
+                >
                     <Plus className="h-4 w-4" />
                     Create Coupon
                 </Button>

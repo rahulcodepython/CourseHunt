@@ -45,7 +45,7 @@ const CreateCourse = ({ onCreate }: { onCreate: (course: CourseCardType) => void
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline" className='cursor-pointer'>
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4" />
                     Add Course
                 </Button>
             </DialogTrigger>
