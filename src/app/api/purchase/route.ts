@@ -36,12 +36,10 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
         return new Response(JSON.stringify({ error: 'Course not found' }), { status: 404 });
     }
 
-    const previousPurchasedCourses = await CourseRecord.findOne({ userId: user._id });
+    const previousPurchasedCourses = await CourseRecord.findOne({ userId: user._id, courseId: course._id });
 
     if (previousPurchasedCourses) {
-        if (previousPurchasedCourses.courses.some((c: { courseId: string }) => c.courseId.toString() === course._id.toString())) {
-            return new Response(JSON.stringify({ error: 'You have already purchased this course' }), { status: 400 });
-        }
+        return new Response(JSON.stringify({ error: 'You have already purchased this course' }), { status: 400 });
     }
 
     const coupon = couponId ? await Coupon.findById(couponId) : null;
@@ -108,30 +106,11 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
         await coupon.save();
     }
 
-    if (previousPurchasedCourses) {
-        previousPurchasedCourses.courses.push({
-            courseId: course._id,
-            totalLessons: course.lessonsCount,
-            completedLessons: 0,
-            lastViewedLessonId: '',
-            viewed: []
-        });
-        await previousPurchasedCourses.save();
-    } else {
-        const courseRecord = new CourseRecord({
-            userId: user._id,
-            courses: [
-                {
-                    courseId: course._id,
-                    totalLessons: course.lessonsCount,
-                    completedLessons: 0,
-                    lastViewedLessonId: '',
-                    viewed: []
-                }
-            ]
-        });
-        await courseRecord.save();
-    }
+    const courseRecord = new CourseRecord({
+        userId: user._id,
+        courseId: course._id
+    });
+    await courseRecord.save();
 
     const stats = await Stats.findOne().sort({ lastUpdated: -1 }).limit(1);
 

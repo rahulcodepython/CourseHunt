@@ -12,16 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useApiHandler } from "@/hooks/useApiHandler"
-import { ChapterType, CourseType } from "@/types/course.type"
+import { ChapterType, CourseType, LessonType } from "@/types/course.type"
 import { Plus, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
+type LessonInputType = string | { url: string, fileType: string }
+type ChapterInputType = string | boolean | LessonInputType[] | number
+
 // LessonCard.tsx
 interface LessonCardProps {
-    lesson: any
+    lesson: LessonType
     index: number
-    onLessonChange: (field: string, value: any) => void
+    onLessonChange: (field: string, value: LessonInputType) => void
     onRemove: () => void
     showRemove: boolean
 }
@@ -74,7 +77,7 @@ function LessonCard({ lesson, index, onLessonChange, onRemove, showRemove }: Les
                 </div>
 
                 {
-                    lesson.type === "video" && (
+                    lesson.type === "video" && lesson.videoUrl && (
                         <FileUpload
                             label="Upload Video"
                             onChange={(field, url, fileType) => onLessonChange("videoUrl", { url, fileType })}
@@ -103,8 +106,8 @@ function LessonCard({ lesson, index, onLessonChange, onRemove, showRemove }: Les
 interface ChapterAccordionItemProps {
     chapter: ChapterType
     index: number
-    onChapterChange: (field: string, value: any) => void
-    onLessonChange: (lessonIndex: number, field: string, value: any) => void
+    onChapterChange: (field: string, value: ChapterInputType) => void
+    onLessonChange: (lessonIndex: number, field: string, value: LessonInputType) => void
     onAddLesson: () => void
     onRemoveChapter: () => void
     onRemoveLesson: (lessonIndex: number) => void
@@ -167,24 +170,28 @@ function ChapterAccordionItem({
                             </Button>
                         </div>
 
-                        {chapter.lessons.map((lesson, lessonIndex) => (
-                            <LessonCard
-                                key={lessonIndex}
-                                lesson={lesson}
-                                index={lessonIndex}
-                                onLessonChange={(field, value) => onLessonChange(lessonIndex, field, value)}
-                                onRemove={() => onRemoveLesson(lessonIndex)}
-                                showRemove={chapter.lessons.length > 1}
-                            />
-                        ))}
+                        {
+                            chapter.lessons.map((lesson, lessonIndex) => (
+                                <LessonCard
+                                    key={lessonIndex}
+                                    lesson={lesson}
+                                    index={lessonIndex}
+                                    onLessonChange={(field, value) => onLessonChange(lessonIndex, field, value)}
+                                    onRemove={() => onRemoveLesson(lessonIndex)}
+                                    showRemove={chapter.lessons.length > 1}
+                                />
+                            ))
+                        }
                     </div>
 
-                    {showRemove && (
-                        <Button type="button" variant="destructive" size="sm" onClick={onRemoveChapter}>
-                            <X className="h-4 w-4 mr-2" />
-                            Remove Chapter
-                        </Button>
-                    )}
+                    {
+                        showRemove && (
+                            <Button type="button" variant="destructive" size="sm" onClick={onRemoveChapter}>
+                                <X className="h-4 w-4 mr-2" />
+                                Remove Chapter
+                            </Button>
+                        )
+                    }
                 </div>
             </AccordionContent>
         </AccordionItem>
@@ -206,17 +213,20 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
     const addChapter = () => {
         setChapters((prev) => [
             ...prev,
-            { title: "", totallessons: 0, preview: false, lessons: [{ title: "", duration: "", type: "video", content: "" }] },
+            { title: "", totallessons: 1, preview: false, lessons: [{ title: "", duration: "", type: "video", content: "" }] },
         ])
         setChaptersCount((prev) => prev + 1)
+        setLessonsCount((prev) => prev + 1)
     }
 
     const removeChapter = (chapterIndex: number) => {
+        const lessonsToRemove = chapters[chapterIndex].totallessons
         setChapters((prev) => prev.filter((_, i) => i !== chapterIndex))
         setChaptersCount((prev) => prev - 1)
+        setLessonsCount((prev) => prev - lessonsToRemove)
     }
 
-    const updateChapter = (chapterIndex: number, field: string, value: any) => {
+    const updateChapter = (chapterIndex: number, field: string, value: ChapterInputType) => {
         setChapters((prev) => prev.map((chapter, i) => (i === chapterIndex ? { ...chapter, [field]: value } : chapter)))
     }
 
@@ -240,7 +250,7 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
         setLessonsCount((prev) => prev - 1)
     }
 
-    const updateLesson = (chapterIndex: number, lessonIndex: number, field: string, value: any) => {
+    const updateLesson = (chapterIndex: number, lessonIndex: number, field: string, value: LessonInputType) => {
         setChapters((prev) =>
             prev.map((chapter, i) =>
                 i === chapterIndex
@@ -273,19 +283,21 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
             </CardHeader>
             <CardContent className="space-y-6">
                 <Accordion type="multiple" className="space-y-4">
-                    {chapters.map((chapter, chapterIndex) => (
-                        <ChapterAccordionItem
-                            key={chapterIndex}
-                            chapter={chapter}
-                            index={chapterIndex}
-                            onChapterChange={(field, value) => updateChapter(chapterIndex, field, value)}
-                            onLessonChange={(lessonIndex, field, value) => updateLesson(chapterIndex, lessonIndex, field, value)}
-                            onAddLesson={() => addLesson(chapterIndex)}
-                            onRemoveChapter={() => removeChapter(chapterIndex)}
-                            onRemoveLesson={(lessonIndex) => removeLesson(chapterIndex, lessonIndex)}
-                            showRemove={chapters.length > 1}
-                        />
-                    ))}
+                    {
+                        chapters.map((chapter, chapterIndex) => (
+                            <ChapterAccordionItem
+                                key={chapterIndex}
+                                chapter={chapter}
+                                index={chapterIndex}
+                                onChapterChange={(field, value) => updateChapter(chapterIndex, field, value)}
+                                onLessonChange={(lessonIndex, field, value) => updateLesson(chapterIndex, lessonIndex, field, value)}
+                                onAddLesson={() => addLesson(chapterIndex)}
+                                onRemoveChapter={() => removeChapter(chapterIndex)}
+                                onRemoveLesson={(lessonIndex) => removeLesson(chapterIndex, lessonIndex)}
+                                showRemove={chapters.length > 1}
+                            />
+                        ))
+                    }
                 </Accordion>
 
                 <Button type="button" variant="outline" onClick={addChapter} className="w-full">

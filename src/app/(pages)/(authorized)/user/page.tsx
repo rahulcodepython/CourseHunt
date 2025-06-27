@@ -18,7 +18,6 @@ interface ResponseDataType {
         _id: string
     }[];
     enrolledCourses: string[];
-    completedLessons: number;
 }
 
 const Notices = [
@@ -109,7 +108,7 @@ export default async function StudentDashboard() {
                 </Card>
 
                 <div className="grid grid-cols-1 gap-6">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
                         <Card className="flex flex-col justify-between">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Enrolled Courses</CardTitle>
@@ -117,16 +116,6 @@ export default async function StudentDashboard() {
                             <CardContent>
                                 <div className="text-2xl font-bold">
                                     {responseData.enrolledCourses}
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card className="flex flex-col justify-between">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Completed Lessons</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">
-                                    {responseData.completedLessons}
                                 </div>
                             </CardContent>
                         </Card>

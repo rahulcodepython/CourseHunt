@@ -15,50 +15,26 @@ export const GET = routeHandlerWrapper(async (request: Request, params: { _id: s
         return new Response("Invalid ID", { status: 400 });
     }
 
-    const courseRecord = await CourseRecord.findOne({ userId: user._id })
+    const course = await Course.findById(_id);
 
-    const courseData = courseRecord?.courses.find((c: any) => c.courseId.toString() === _id);
-    const viewedLessonIds = new Set<string>();
+    if (!course) {
+        return new Response("Course not found", { status: 404 });
+    }
 
-    if (!courseData) {
+    const courseRecord = await CourseRecord.findOne({ userId: user._id, courseId: course._id });
+
+    if (!courseRecord) {
         return new Response("You haven't purchased the course", { status: 404 });
     }
-
-    if (courseData) {
-        courseData.viewed?.forEach((view: any) => {
-            view.chapters.forEach((chapter: any) => {
-                chapter.lessons.forEach((lesson: any) => {
-                    viewedLessonIds.add(lesson.lessonId);
-                });
-            });
-        });
-    }
-
-    const course: any = await Course.findById(_id).lean(); // ✅ Already correct!
-
-    const chaptersWithProgress = course?.chapters?.map((chapter: any) => ({
-        _id: chapter._id.toString(),
-        title: chapter.title,
-        preview: chapter.preview,
-        totallessons: chapter.totallessons,
-        lessons: chapter.lessons.map((lesson: any) => ({
-            _id: lesson._id.toString(),
-            title: lesson.title,
-            duration: lesson.duration,
-            type: lesson.type,
-            videoUrl: lesson.videoUrl,
-            content: lesson.content,
-            isCompleted: viewedLessonIds.has(lesson._id.toString()),
-        })),
-    }));
 
     const responseData = {
         _id: course._id,
         title: course.title,
-        totalLessons: courseData.totalLessons,
-        completedLessons: courseData.completedLessons,
-        lastViewedLessonId: courseData.lastViewedLessonId,
-        chapters: chaptersWithProgress,
+        totalLessons: course.lessonsCount,
+        completedLessons: courseRecord.completedLessons,
+        lastViewedLessonId: courseRecord.lastViewedLessonId,
+        viewedLessons: courseRecord.viewedLessons || [],
+        chapters: course.chapters,
         resources: course.resources,
 
     }

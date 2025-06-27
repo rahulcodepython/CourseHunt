@@ -6,30 +6,18 @@ const CourseRecordSchema = new Schema({
         ref: 'User',
         required: true,
     },
+    courseId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course',
+        required: true,
+    },
     completedLessons: { type: Number, default: 0 },
-    courses: [
+    lastViewedLessonId: { type: String, default: '' },
+    viewedLessons: [
         {
-            courseId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Course',
-                required: true,
-            },
-            totalLessons: { type: Number, default: 0 },
-            completedLessons: { type: Number, default: 0 },
-            lastViewedLessonId: { type: String, default: '' },
-            viewed: [{
-                chapters: [
-                    {
-                        chapterId: { type: String, required: true },
-                        lessons: [
-                            {
-                                lessonId: { type: String, required: true },
-                                viewedAt: { type: Date, default: Date.now },
-                            },
-                        ],
-                    },
-                ],
-            }],
+            chapterId: { type: String, required: true },
+            lessonId: { type: String, required: true },
+            viewedAt: { type: Date, default: Date.now },
         },
     ],
 });

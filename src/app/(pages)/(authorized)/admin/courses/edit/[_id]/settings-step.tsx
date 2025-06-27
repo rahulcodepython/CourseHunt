@@ -24,7 +24,7 @@ export default function SettingsStep({ courseData, setCourseData }: SettingsStep
     const { isLoading, callApi } = useApiHandler()
 
     const handleSwitchChange = (field: string, value: boolean) => {
-        setFormData((prev: any) => ({ ...prev, [field]: value }))
+        setFormData((prev: CourseSettingsFormType) => ({ ...prev, [field]: value }))
     }
 
     const handleSaveAndContinue = async () => {

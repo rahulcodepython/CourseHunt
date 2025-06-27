@@ -1,6 +1,6 @@
 import { checkAuthencticatedUserRequest, routeHandlerWrapper } from "@/action";
-import { Course } from "@/models/course.models";
 import { CourseRecord } from "@/models/course.record.models";
+import { Types } from "mongoose";
 import { NextResponse } from "next/server";
 
 interface EnrolledCourse {
@@ -18,27 +18,29 @@ export const GET = routeHandlerWrapper(async () => {
         return user;
     }
 
-    const courseRecord = await CourseRecord.find({ userId: user._id }).lean();
-
-    let enrolledCourses: EnrolledCourse[] = [];
-
-    if (!courseRecord) {
-        enrolledCourses = [];
-    } else {
-        enrolledCourses = await Promise.all(courseRecord.map(async (record) => {
-            return Promise.all(record.courses.map(async (recordCourse: { courseId: string, completedLessons: number, totalLessons: number }) => {
-                const course = await Course.findById(recordCourse.courseId).lean();
-
-                return {
-                    _id: recordCourse.courseId,
-                    completedLessons: recordCourse.completedLessons,
-                    totalLessons: recordCourse.totalLessons,
-                    title: (course as any)?.title,
-                    imageUrl: (course as any)?.imageUrl
-                };
-            }));
-        })).then(results => results.flat());
-    }
+    const enrolledCourses = await CourseRecord.aggregate([
+        {
+            $match: { userId: new Types.ObjectId(user._id) }
+        },
+        {
+            $lookup: {
+                from: 'courses', // matches the name of the Course collection (should be lowercase plural)
+                localField: 'courseId',
+                foreignField: '_id',
+                as: 'courseInfo'
+            }
+        },
+        { $unwind: '$courseInfo' },
+        {
+            $project: {
+                _id: '$courseInfo._id',
+                title: '$courseInfo.title',
+                imageUrl: '$courseInfo.imageUrl',
+                totalLessons: '$courseInfo.chaptersCount',
+                completedLessons: '$completedLessons',
+            }
+        }
+    ]);
 
     const responseData = {
         user: {
@@ -46,7 +48,6 @@ export const GET = routeHandlerWrapper(async () => {
         },
         courses: enrolledCourses,
         enrolledCourses: user.purchasedCourses,
-        completedLessons: (courseRecord as any)?.completedLessons || 0,
     };
 
     return NextResponse.json(responseData, { status: 200 });

@@ -41,7 +41,7 @@ export const checkAuthencticatedUserRequest = async (): Promise<NextResponse | U
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return user
+    return user as UserType;
 }
 
 export const checkAdminUserRequest = async (): Promise<NextResponse | UserType> => {
@@ -63,5 +63,5 @@ export const checkAdminUserRequest = async (): Promise<NextResponse | UserType> 
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return user
+    return user as UserType
 }

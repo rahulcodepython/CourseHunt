@@ -7,21 +7,22 @@ import { NextResponse } from "next/server";
 export const GET = routeHandlerWrapper(async () => {
     await checkAuthencticatedUserRequest();
 
-    const students: any = await User.find({ role: 'user' }, {
+    const students = await User.find({ role: 'user' }, {
         _id: 1,
         name: 1,
         email: 1,
         createdAt: 1,
         purchasedCourses: 1,
     }).lean();
-    const courses: any = await Course.find({ isPublished: true }, {
+
+    const courses = await Course.find({ isPublished: true }, {
         _id: 1,
         title: 1,
         students: 1,
         totalRevenue: 1,
     }).lean();
 
-    const stats: any = await Stats.find().sort({ createdAt: -1 }).limit(1).lean();
+    const stats = await Stats.find().sort({ createdAt: -1 }).limit(1).lean();
 
     const responseData = {
         students: students,

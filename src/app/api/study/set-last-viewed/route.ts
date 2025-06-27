@@ -1,5 +1,7 @@
 import { checkAuthencticatedUserRequest, routeHandlerWrapper } from "@/action";
+import { Course } from "@/models/course.models";
 import { CourseRecord } from "@/models/course.record.models";
+import { isValidObjectId } from "mongoose";
 
 export const POST = routeHandlerWrapper(async (request: Request) => {
     const user = await checkAuthencticatedUserRequest();
@@ -10,19 +12,27 @@ export const POST = routeHandlerWrapper(async (request: Request) => {
 
     const { lessonId, courseId } = await request.json();
 
+    if (!lessonId || !courseId) {
+        return new Response("Missing lessonId or courseId", { status: 400 });
+    }
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+        return new Response("Course not found", { status: 404 });
+    }
+
+    if (!isValidObjectId(lessonId)) {
+        return new Response("Invalid lessonId", { status: 400 });
+    }
+
     const courseRecord = await CourseRecord.findOne({ userId: user._id });
 
     if (!courseRecord) {
         return new Response("No course record found", { status: 404 });
     }
 
-    const courseIndex = courseRecord.courses.findIndex((c: any) => c.courseId.toString() === courseId);
-
-    if (courseIndex === -1) {
-        return new Response("Course not found in record", { status: 404 });
-    }
-
-    courseRecord.courses[courseIndex].lastViewedLessonId = lessonId;
+    courseRecord.lastViewedLessonId = lessonId;
     await courseRecord.save();
 
 

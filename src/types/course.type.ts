@@ -3,22 +3,8 @@ export type MediaUrlType = {
     fileType: string; // Optional for cases where the file type is not needed
 }
 
-export interface CourseCardType {
-    _id: string; // Optional for cases where the ID is not needed
-    title: string;
-    description: string;
-    duration: string;
-    students: number;
-    rating: number;
-    reviews: number;
-    price: number;
-    originalPrice: number;
-    category: string;
-    discount: string;
-    imageUrl: MediaUrlType;
-}
-
 export type ChapterType = {
+    _id?: string // Optional for cases where the ID is not needed
     title: string
     preview: boolean
     lessons: LessonType[]
@@ -26,6 +12,7 @@ export type ChapterType = {
 }
 
 export type LessonType = {
+    _id?: string // Optional for cases where the ID is not needed
     title: string
     duration: string
     type: "video" | "reading"
@@ -76,4 +63,19 @@ export interface CourseType extends CourseCardType, CourseDetails {
     resources: ResourcesType[];
     createdAt: Date;
     updatedAt: Date;
+}
+
+export interface CourseCardType {
+    _id: string; // Optional for cases where the ID is not needed
+    title: string;
+    description: string;
+    duration: string;
+    students: number;
+    rating: number;
+    reviews: number;
+    price: number;
+    originalPrice: number;
+    category: string;
+    discount: string;
+    imageUrl: MediaUrlType;
 }

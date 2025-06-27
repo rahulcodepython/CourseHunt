@@ -1,5 +1,4 @@
 import { checkAuthencticatedUserRequest, routeHandlerWrapper } from "@/action";
-import { Course } from "@/models/course.models";
 import { CourseRecord } from "@/models/course.record.models";
 import { Types } from "mongoose";
 import { NextResponse } from "next/server";
@@ -11,18 +10,28 @@ export const GET = routeHandlerWrapper(async (request: Request) => {
         return user;
     }
 
-    const courseRecord = await CourseRecord.findOne({ userId: user._id });
-
-    if (!courseRecord) {
-        return NextResponse.json({ courses: [] }, { status: 200 });
-    }
-
-    const objectIds = courseRecord.courses.map((item: { courseId: string }) => new Types.ObjectId(item.courseId));
-
-    const courses = await Course.find({ _id: { $in: objectIds } }, {
-        _id: 1,
-        title: 1,
-    });
+    const courses = await CourseRecord.aggregate([
+        {
+            $match: { userId: new Types.ObjectId(user._id) }
+        },
+        {
+            $lookup: {
+                from: 'courses', // matches the name of the Course collection (should be lowercase plural)
+                localField: 'courseId',
+                foreignField: '_id',
+                as: 'courseInfo'
+            }
+        },
+        { $unwind: '$courseInfo' },
+        {
+            $project: {
+                _id: '$courseInfo._id',
+                title: '$courseInfo.title',
+                totalLessons: '$courseInfo.chaptersCount',
+                completedLessons: '$completedLessons',
+            }
+        }
+    ]);
 
     return NextResponse.json({ courses }, { status: 200 });
 });
