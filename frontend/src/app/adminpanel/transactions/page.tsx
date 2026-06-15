@@ -1,9 +1,13 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAdminTransactionsQuery, useAcceptRefundMutation, useRejectRefundMutation } from "@/hooks/api"
-import { IconCalendar, IconDownload, IconCheck, IconX, IconRefresh } from "@tabler/icons-react";
+import { toast } from "sonner";
+import Loading from "@/components/loading";
+
 import { Badge } from "@/components/ui/badge"
 
 export default function Transaction() {
@@ -11,7 +15,7 @@ export default function Transaction() {
     const acceptMutation = useAcceptRefundMutation()
     const rejectMutation = useRejectRefundMutation()
 
-    if (isLoading) return <div className="p-8">Loading transactions...</div>
+    if (isLoading) return <Loading />
 
     const transactionList = responseData?.transactions ?? [];
     const stats = responseData?.stats;
@@ -79,7 +83,7 @@ export default function Transaction() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <IconCalendar className="h-4 w-4 text-muted-foreground" />
+                                                    <Icon name="IconCalendar" className="h-5 w-5 text-muted-foreground" />
                                                     {new Date(transaction.createdAt).toLocaleDateString()}
                                                 </div>
                                             </TableCell>
@@ -115,7 +119,7 @@ export default function Transaction() {
                                                                 onClick={() => acceptMutation.mutate(transaction.id)}
                                                                 disabled={acceptMutation.isPending}
                                                             >
-                                                                <IconCheck className="h-4 w-4 mr-1" />
+                                                                <Icon name="IconCheck" className="h-5 w-5 mr-1" />
                                                                 Accept
                                                             </Button>
                                                             <Button 
@@ -125,13 +129,13 @@ export default function Transaction() {
                                                                 onClick={() => rejectMutation.mutate(transaction.id)}
                                                                 disabled={rejectMutation.isPending}
                                                             >
-                                                                <IconX className="h-4 w-4 mr-1" />
+                                                                <Icon name="IconX" className="h-5 w-5 mr-1" />
                                                                 Reject
                                                             </Button>
                                                         </>
                                                     )}
                                                     <Button variant="outline" size="sm">
-                                                        <IconDownload className="h-4 w-4 mr-1" />
+                                                        <Icon name="IconDownload" className="h-5 w-5 mr-1" />
                                                         Invoice
                                                     </Button>
                                                 </div>

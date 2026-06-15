@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import { AppSidebar } from "@/components/app-sidebar";
 import BreadcrumbComponent from "@/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -6,14 +7,8 @@ import { NavbarDataType } from "@/types/navbar.type";
 
 export default function UserLayout({
     children,
-    stats,
-    courses,
-    updates,
 }: {
     children: React.ReactNode;
-    stats: React.ReactNode;
-    courses: React.ReactNode;
-    updates: React.ReactNode;
 }) {
 
     const data: NavbarDataType = {
@@ -46,19 +41,8 @@ export default function UserLayout({
                     <SidebarTrigger />
                     <BreadcrumbComponent />
                 </header>
-                <div className="p-6 space-y-8">
+                <div className="p-6">
                     {children}
-                    <div className="space-y-8">
-                        {stats}
-                        <div className="grid gap-8 lg:grid-cols-3">
-                            <div className="lg:col-span-2">
-                                {courses}
-                            </div>
-                            <div>
-                                {updates}
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </main>
         </SidebarProvider>

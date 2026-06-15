@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import CourseCard from '@/components/course-card'
 import LoadingButton from '@/components/loading-button'
 import { Button } from '@/components/ui/button'

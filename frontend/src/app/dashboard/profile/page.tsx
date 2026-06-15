@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import FileUpload from "@/components/file-upload"
 import LoadingButton from "@/components/loading-button"
@@ -10,9 +13,11 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { useUpdateUserMutation, useUserDetailsQuery } from "@/hooks/api"
 import { UserProfileType } from "@/types/user.type"
-import { IconDeviceFloppy, IconUser, IconMapPin, IconPhone, IconMail, IconAward, IconBook, IconCircleCheck } from "@tabler/icons-react";
-import { useEffect, useState } from "react"
+
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
+import Image from "next/image"
+import { useUploadMediaMutation } from "@/hooks/api"
 
 export default function Component() {
     const [formData, setFormData] = useState<UserProfileType>({
@@ -39,7 +44,10 @@ export default function Component() {
 
     const userDetailsQuery = useUserDetailsQuery()
     const updateUserMutation = useUpdateUserMutation()
-    const isLoading = userDetailsQuery.isLoading || updateUserMutation.isPending
+    const { isPending: isUploading, uploadMedia } = useUploadMediaMutation()
+    const isLoading = userDetailsQuery.isLoading || updateUserMutation.isPending || isUploading
+
+    const fileRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const userDetails = userDetailsQuery.data
@@ -76,14 +84,21 @@ export default function Component() {
         }))
     }
 
-    const handleAvatarChange = (field: string, url: string, fileType: string) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: {
-                url,
-                fileType,
-            },
-        }))
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0]
+        if (selectedFile) {
+            const uploadResponse = await uploadMedia({
+                file: selectedFile,
+                fileType: "image",
+            })
+            if (uploadResponse) {
+                setFormData((prev) => ({
+                    ...prev,
+                    avatar: { url: uploadResponse.downloadUrl, fileType: "image" }
+                }))
+                toast.success("Profile picture updated");
+            }
+        }
     }
 
     const handleSubmit = async () => {
@@ -99,27 +114,35 @@ export default function Component() {
     }
 
     return (
-        <div className="min-h-screen w-full py-8 px-4">
-            <div className="max-w-5xl mx-auto space-y-8">
-                <div className="flex flex-col md:flex-row gap-8">
+        <div className="w-full pb-8 pt-4">
+            <div className="max-w-5xl mx-auto space-y-6">
+                <div className="flex flex-col md:flex-row gap-6">
                     {/* Sidebar Info */}
                     <div className="w-full md:w-80 space-y-6">
-                        <Card className="overflow-hidden border-none shadow-md">
+                        <Card className="overflow-hidden border-none shadow-md mt-0">
                             <div className="h-24 bg-gradient-to-r from-primary to-primary/60" />
-                            <CardContent className="pt-0 -mt-12 flex flex-col items-center">
-                                <div className="p-1 bg-background rounded-full">
-                                    <FileUpload
-                                        label=""
-                                        onChange={handleAvatarChange}
-                                        field="avatar"
-                                        value={formData.avatar}
-                                        accept="image"
-                                        className="h-24 w-24 rounded-full"
-                                    />
+                            <CardContent className="pt-0 -mt-10 flex flex-col items-center">
+                                <div className="relative group">
+                                    <div 
+                                        className="h-24 w-24 rounded-full border-4 border-background bg-muted flex items-center justify-center overflow-hidden cursor-pointer relative"
+                                        onClick={() => fileRef.current?.click()}
+                                    >
+                                        {formData.avatar?.url ? (
+                                            <Image src={formData.avatar.url} alt="Profile" fill className="object-cover" />
+                                        ) : (
+                                            <span className="text-3xl font-bold text-muted-foreground uppercase">
+                                                {formData.name ? formData.name.charAt(0) : 'U'}
+                                            </span>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Icon name="IconUpload" className="text-white w-6 h-6" />
+                                        </div>
+                                    </div>
+                                    <input type="file" ref={fileRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
                                 </div>
-                                <h2 className="mt-4 text-xl font-bold">{formData.name || 'Your Name'}</h2>
+                                <h2 className="mt-3 text-xl font-bold">{formData.name || 'Your Name'}</h2>
                                 <Badge variant="secondary" className="mt-1 capitalize">{formData.role}</Badge>
-                                
+
                                 <div className="w-full grid grid-cols-2 gap-4 mt-8 pt-6 border-t">
                                     <div className="text-center">
                                         <div className="text-xl font-bold">{formData.purchasedCourses}</div>
@@ -136,7 +159,7 @@ export default function Component() {
                         <Card className="border-none shadow-sm">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                    <IconAward className="w-4 h-4 text-primary" />
+                                    <Icon name="IconAward" className="w-5 h-5 text-primary" />
                                     Badges
                                 </CardTitle>
                             </CardHeader>
@@ -153,12 +176,12 @@ export default function Component() {
                             <CardTitle className="text-2xl font-bold">Edit Profile</CardTitle>
                             <CardDescription>Update your personal information and account settings</CardDescription>
                         </CardHeader>
-                        <CardContent className="pt-8">
-                            <div className="space-y-10">
+                        <CardContent className="pt-6">
+                            <div className="space-y-8">
                                 {/* Basic Information */}
-                                <div className="space-y-6">
+                                <div className="space-y-4">
                                     <div className="flex items-center gap-2 text-primary font-semibold">
-                                        <IconUser className="w-5 h-5" />
+                                        <Icon name="IconUser" className="w-5 h-5" />
                                         <h3>Basic Information</h3>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -175,7 +198,7 @@ export default function Component() {
                                         <div className="space-y-2">
                                             <Label htmlFor="email">Email Address</Label>
                                             <div className="relative">
-                                                <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Icon name="IconMail" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                                 <Input
                                                     id="email"
                                                     type="email"
@@ -213,7 +236,7 @@ export default function Component() {
                                     <div className="space-y-2">
                                         <Label htmlFor="phone">IconPhone Number</Label>
                                         <div className="relative">
-                                            <IconPhone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Icon name="IconPhone" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                             <Input
                                                 id="phone"
                                                 type="tel"
@@ -231,7 +254,7 @@ export default function Component() {
                                 {/* Address Information */}
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-2 text-primary font-semibold">
-                                        <IconMapPin className="w-5 h-5" />
+                                        <Icon name="IconMapPin" className="w-5 h-5" />
                                         <h3>Address Information</h3>
                                     </div>
                                     <div className="space-y-2">
@@ -282,7 +305,7 @@ export default function Component() {
                                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
                                     <LoadingButton isLoading={isLoading} title="Saving Changes..." className="flex-1">
                                         <Button type="submit" className="w-full h-11 text-white bg-green-600 hover:bg-green-700 font-bold" onClick={handleSubmit}>
-                                            <IconDeviceFloppy className="w-4 h-4 mr-2" />
+                                            <Icon name="IconDeviceFloppy" className="w-5 h-5 mr-2" />
                                             Update Profile
                                         </Button>
                                     </LoadingButton>

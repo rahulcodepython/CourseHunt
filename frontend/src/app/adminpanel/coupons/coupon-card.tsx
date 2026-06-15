@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -6,7 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { useDeleteCouponMutation, useUpdateCouponMutation } from "@/hooks/api"
 import { Coupon } from "@/types/coupon.type"
-import { IconCalendar, IconEdit, IconPercentage, IconPower, IconPower, IconTrash, IconUsers } from "@tabler/icons-react";
+
 import { toast } from "sonner"
 
 interface CouponCardProps {
@@ -70,14 +73,14 @@ export default function CouponCard({ coupon, onEdit }: CouponCardProps) {
             <CardContent className="space-y-4">
                 {/* Offer Value */}
                 <div className="flex items-center gap-2">
-                    <IconPercentage className="h-4 w-4 text-green-600" />
+                    <Icon name="IconPercentage" className="h-5 w-5 text-green-600" />
                     <span className="text-2xl font-bold text-green-600">{coupon.offerValue}</span>
                     <span className="">OFF</span>
                 </div>
 
                 {/* Expiry Date */}
                 <div className="flex items-center gap-2 ">
-                    <IconCalendar className="h-4 w-4" />
+                    <Icon name="IconCalendar" className="h-5 w-5" />
                     <span className="text-sm">Expires: {formatDate(coupon.expiryDate)}</span>
                 </div>
 
@@ -85,7 +88,7 @@ export default function CouponCard({ coupon, onEdit }: CouponCardProps) {
                 <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
-                            <IconUsers className="h-4 w-4" />
+                            <Icon name="IconUsers" className="h-5 w-5" />
                             <span>Usage</span>
                         </div>
                         <span className="font-medium">
@@ -100,19 +103,19 @@ export default function CouponCard({ coupon, onEdit }: CouponCardProps) {
             <CardFooter className="pt-3 border-t">
                 <div className="flex gap-2 w-full">
                     <Button variant="outline" size="sm" onClick={() => onEdit(coupon)} className="flex-1 cursor-pointer">
-                        <IconEdit className="h-3 w-3 mr-1" />
+                        <Icon name="IconEdit" className="h-3 w-3 mr-1" />
                         IconEdit
                     </Button>
 
                     <Button variant="outline" size="sm" onClick={() => coupon._id && handleToggleActive(coupon._id, coupon.isActive)} className="flex-1 cursor-pointer">
                         {coupon.isActive ? (
                             <>
-                                <IconPower className="h-3 w-3 mr-1" />
+                                <Icon name="IconPower" className="h-3 w-3 mr-1" />
                                 Deactivate
                             </>
                         ) : (
                             <>
-                                <IconPower className="h-3 w-3 mr-1" />
+                                <Icon name="IconPower" className="h-3 w-3 mr-1" />
                                 Activate
                             </>
                         )}
@@ -144,6 +147,6 @@ const DeleteButton = ({ id }: { id: number }) => {
         disabled={isPending}
         className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
     >
-        <IconTrash className="h-3 w-3" />
+        <Icon name="IconTrash" className="h-3 w-3" />
     </Button>
 }

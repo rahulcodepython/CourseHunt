@@ -1,9 +1,12 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import { useAdminCouponsQuery } from "@/hooks/api"
 import { Button } from "@/components/ui/button"
 import { Coupon } from "@/types/coupon.type"
-import { IconPlus } from "@tabler/icons-react";
+
 import { useState } from "react"
 import CouponCard from "./coupon-card"
 import CouponModal from "./coupon-modal"
@@ -34,7 +37,7 @@ export default function CouponLayout() {
                     }}
                     className="flex items-center gap-2 text-white cursor-pointer"
                 >
-                    <IconPlus className="h-4 w-4" />
+                    <Icon name="IconPlus" className="h-5 w-5" />
                     Create Coupon
                 </Button>
             </div>

@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
@@ -14,7 +17,7 @@ import {
 import { useCreateCourseMutation } from "@/hooks/api"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { IconPlus } from "@tabler/icons-react";
+
 import React from 'react'
 import { toast } from "sonner"
 
@@ -41,7 +44,7 @@ const CreateCourse = () => {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline" className='cursor-pointer'>
-                    <IconPlus className="w-4 h-4" />
+                    <Icon name="IconPlus" className="w-5 h-5" />
                     Add Course
                 </Button>
             </DialogTrigger>

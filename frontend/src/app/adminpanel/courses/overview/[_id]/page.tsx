@@ -1,10 +1,13 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { IconChartBar, IconCalendar, IconCurrencyDollar, IconTrendingUp, IconUsers } from "@tabler/icons-react";
+
 import { useState } from "react"
 import { Bar, BarChart, Line, LineChart as RechartsLineChart, XAxis, YAxis } from "recharts"
 
@@ -118,7 +121,7 @@ export default function CourseStatsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Enrolled</CardTitle>
-                            <IconUsers className="h-4 w-4 text-muted-foreground" />
+                            <Icon name="IconUsers" className="h-5 w-5 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{courseData.totalEnrolled.toLocaleString()}</div>
@@ -128,7 +131,7 @@ export default function CourseStatsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                            <IconCurrencyDollar className="h-4 w-4 text-muted-foreground" />
+                            <Icon name="IconCurrencyDollar" className="h-5 w-5 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">${courseData.totalRevenue.toLocaleString()}</div>
@@ -138,7 +141,7 @@ export default function CourseStatsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-                            <IconTrendingUp className="h-4 w-4 text-muted-foreground" />
+                            <Icon name="IconTrendingUp" className="h-5 w-5 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{courseData.averageRating}/5</div>
@@ -148,7 +151,7 @@ export default function CourseStatsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-                            <IconChartBar className="h-4 w-4 text-muted-foreground" />
+                            <Icon name="IconChartBar" className="h-5 w-5 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{courseData.completionRate}%</div>
@@ -163,19 +166,19 @@ export default function CourseStatsPage() {
                         <h2 className="text-2xl font-bold">Course Analytics</h2>
                         <TabsList>
                             <TabsTrigger value="daily" className="flex items-center gap-2">
-                                <IconCalendar className="h-4 w-4" />
+                                <Icon name="IconCalendar" className="h-5 w-5" />
                                 Daily
                             </TabsTrigger>
                             <TabsTrigger value="monthly" className="flex items-center gap-2">
-                                <IconChartBar className="h-4 w-4" />
+                                <Icon name="IconChartBar" className="h-5 w-5" />
                                 Monthly
                             </TabsTrigger>
                             <TabsTrigger value="yearly" className="flex items-center gap-2">
-                                <IconTrendingUp className="h-4 w-4" />
+                                <Icon name="IconTrendingUp" className="h-5 w-5" />
                                 Yearly
                             </TabsTrigger>
                             <TabsTrigger value="enrollment" className="flex items-center gap-2">
-                                <IconUsers className="h-4 w-4" />
+                                <Icon name="IconUsers" className="h-5 w-5" />
                                 Enrollment
                             </TabsTrigger>
                         </TabsList>

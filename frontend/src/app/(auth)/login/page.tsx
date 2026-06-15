@@ -1,9 +1,12 @@
 "use client";
 
+import { Icon } from "@/components/icon";
+
+
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { IconBrandGoogle } from "@tabler/icons-react";
+
 import React from "react";
 import { toast } from "sonner";
 
@@ -47,13 +50,13 @@ export default function LoginPage() {
                         type="button"
                         disabled={isLoading}
                         onClick={handleGoogleLogin}
-                        className="w-full h-12 bg-white hover:bg-zinc-100 text-zinc-950 font-medium transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+                        className="w-full h-10 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                         {
-                            isLoading ? <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-950 border-t-transparent" /> : <>
-                                <IconBrandGoogle className="mr-2 h-5 w-5" />
+                            isLoading ? <Icon name="IconLoader" className="h-5 w-5 animate-spin" /> : <span className="flex items-center justify-center gap-4">
+                                <Icon name="IconBrandGoogle" />
                                 Sign in with Google
-                            </>
+                            </span>
                         }
                     </Button>
 

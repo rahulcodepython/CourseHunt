@@ -1,9 +1,13 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useAdminFeedbackQuery, usePinFeedbackMutation, useDeleteFeedbackMutation } from "@/hooks/api"
-import { IconCalendar, IconMail, IconStar, IconUser, IconPin, IconPinFilled, IconTrash } from "@tabler/icons-react";
+
 import { Button } from "@/components/ui/button"
+import Loading from "@/components/loading";
 
 export default function FeedbackPage() {
     const { data: responseData, isLoading } = useAdminFeedbackQuery()
@@ -16,7 +20,7 @@ export default function FeedbackPage() {
         return (
             <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
-                    <IconStar key={i} className={`h-4 w-4 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+                    <Icon name="IconStar" key={i} className={`h-5 w-5 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
                 ))}
             </div>
         )
@@ -29,7 +33,7 @@ export default function FeedbackPage() {
         return "bg-red-100 text-red-800"
     }
 
-    if (isLoading) return <div className="p-8">Loading feedback...</div>
+    if (isLoading) return <Loading />
 
     return (
         <div className="min-h-screen bg-background">
@@ -55,18 +59,18 @@ export default function FeedbackPage() {
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex items-center gap-2">
-                                                        <IconUser className="h-4 w-4 text-muted-foreground" />
+                                                        <Icon name="IconUser" className="h-5 w-5 text-muted-foreground" />
                                                         <span className="font-semibold">{feedback.userName}</span>
                                                     </div>
                                                     <Badge className={getRatingColor(feedback.rating)}>{feedback.rating}/5</Badge>
                                                 </div>
                                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                                     <div className="flex items-center gap-1">
-                                                        <IconMail className="h-4 w-4" />
+                                                        <Icon name="IconMail" className="h-5 w-5" />
                                                         {feedback.userEmail}
                                                     </div>
                                                     <div className="flex items-center gap-1">
-                                                        <IconCalendar className="h-4 w-4" />
+                                                        <Icon name="IconCalendar" className="h-5 w-5" />
                                                         {new Date(feedback.createdAt).toLocaleDateString()}
                                                     </div>
                                                 </div>
@@ -82,7 +86,7 @@ export default function FeedbackPage() {
                                                         onClick={() => pinMutation.mutate({ id: feedback.id, pinned: !feedback.isPinned })}
                                                         disabled={pinMutation.isPending}
                                                     >
-                                                        {feedback.isPinned ? <IconPinFilled className="w-4 h-4 mr-1" /> : <IconPin className="w-4 h-4 mr-1" />}
+                                                        {feedback.isPinned ? <Icon name="IconPinFilled" className="w-5 h-5 mr-1" /> : <Icon name="IconPin" className="w-5 h-5 mr-1" />}
                                                         {feedback.isPinned ? "Unpin" : "IconPin"}
                                                     </Button>
                                                     <Button 
@@ -92,7 +96,7 @@ export default function FeedbackPage() {
                                                         onClick={() => deleteMutation.mutate(feedback.id)}
                                                         disabled={deleteMutation.isPending}
                                                     >
-                                                        <IconTrash className="w-4 h-4" />
+                                                        <Icon name="IconTrash" className="w-5 h-5" />
                                                     </Button>
                                                 </div>
                                             </div>

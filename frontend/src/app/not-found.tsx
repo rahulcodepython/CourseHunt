@@ -1,6 +1,9 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 import { Button } from "@/components/ui/button"
-import { IconArrowLeft } from "@tabler/icons-react";
+
 import Link from "next/link"
 
 export default function NotFound() {
@@ -15,7 +18,7 @@ export default function NotFound() {
             <div className="mt-10 flex flex-col sm:flex-row sm:items-center sm:justify-center gap-y-3 gap-x-6">
                 <Button variant="secondary" asChild className="group">
                     <Button onClick={() => window.history.back()} className="flex items-center">
-                        <IconArrowLeft
+                        <Icon name="IconArrowLeft"
                             className="me-2 ms-0 opacity-60 transition-transform group-hover:-translate-x-0.5"
                             size={16}
                             strokeWidth={2}

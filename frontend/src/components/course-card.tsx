@@ -1,3 +1,4 @@
+import { Icon } from "@/components/icon";
 import { Badge } from "@/components/ui/badge";
 import {
 	Card,
@@ -6,7 +7,7 @@ import {
 	CardHeader,
 } from "@/components/ui/card";
 import { CourseCardType } from "@/types/course.type";
-import { IconClock, IconStar, IconUsers } from "@tabler/icons-react";
+
 import Image from "next/image";
 import Link from "next/link";
 import EnrollButton from "./enroll-button";
@@ -59,11 +60,11 @@ export default function CourseCard({
 
 						<div className="flex items-center gap-4 text-sm text-muted-foreground">
 							<div className="flex items-center gap-1">
-								<IconClock className="w-4 h-4" />
+								<Icon name="IconClock" className="w-5 h-5" />
 								<span>{courseData.duration}</span>
 							</div>
 							<div className="flex items-center gap-1">
-								<IconUsers className="w-4 h-4" />
+								<Icon name="IconUsers" className="w-5 h-5" />
 								<span>{courseData.students} students</span>
 							</div>
 						</div>
@@ -71,9 +72,9 @@ export default function CourseCard({
 						<div className="flex items-center gap-2">
 							<div className="flex items-center">
 								{[1, 2, 3, 4, 5].map((star) => (
-									<IconStar
+									<Icon name="IconStar"
 										key={star}
-										className={`w-4 h-4 ${
+										className={`w-5 h-5 ${
 											star <= Math.round(rating)
 												? "fill-yellow-400 text-yellow-400"
 												: "fill-gray-200 text-gray-200"

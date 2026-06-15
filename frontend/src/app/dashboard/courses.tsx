@@ -1,5 +1,8 @@
 "use client";
 
+import { Icon } from "@/components/icon";
+
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useUserDashboardQuery, type UserCourseType } from "@/hooks/api";
-import { IconBook, IconPlayerPlay } from "@tabler/icons-react";
+
 import Link from "next/link";
 
 export default function DashboardCoursesSlot() {
@@ -45,7 +48,7 @@ export default function DashboardCoursesSlot() {
 									className="w-full h-full object-cover transition-transform group-hover:scale-110"
 								/>
 								<div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-									<IconPlayerPlay className="w-8 h-8 text-white fill-white" />
+									<Icon name="IconPlayerPlay" className="w-8 h-8 text-white fill-white" />
 								</div>
 							</div>
 							<div className="flex-1 w-full space-y-3">
@@ -79,7 +82,7 @@ export default function DashboardCoursesSlot() {
 											size="sm"
 											className="h-8 px-4 font-semibold text-white bg-primary hover:bg-primary/90"
 										>
-											<IconPlayerPlay className="h-3.5 w-3.5 mr-1.5 fill-current" />
+											<Icon name="IconPlayerPlay" className="h-3.5 w-3.5 mr-1.5 fill-current" />
 											{course.completed ? "Review" : "Resume"}
 										</Button>
 									</Link>
@@ -90,7 +93,7 @@ export default function DashboardCoursesSlot() {
 				})}
 				{responseData.courses.length === 0 && (
 					<div className="text-center py-12 border-2 border-dashed rounded-2xl bg-muted/10">
-						<IconBook className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+						<Icon name="IconBook" className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
 						<p className="text-muted-foreground font-medium">
 							You haven't enrolled in any courses yet.
 						</p>

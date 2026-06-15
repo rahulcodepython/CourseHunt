@@ -1,5 +1,8 @@
 "use client";
 
+import { Icon } from "@/components/icon";
+
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +39,8 @@ import {
 	useUpdateUpdateMutation,
 	type RecentUpdate,
 } from "@/hooks/api/updates-hooks";
-import { IconPlus, IconPencil, IconTrash, IconCalendar } from "@tabler/icons-react";
+import Loading from "@/components/loading";
+
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -106,7 +110,7 @@ export default function AdminUpdatesPage() {
 		}
 	};
 
-	if (isLoading) return <div className="p-8 text-white">Loading updates...</div>;
+	if (isLoading) return <Loading />;
 
 	return (
 		<div className="p-8 space-y-8">
@@ -116,7 +120,7 @@ export default function AdminUpdatesPage() {
 					<p className="text-muted-foreground">Manage platform announcements</p>
 				</div>
 				<Button onClick={handleOpenCreate} className="bg-primary hover:bg-primary/90">
-					<IconPlus className="w-4 h-4 mr-2" />
+					<Icon name="IconPlus" className="w-5 h-5 mr-2" />
 					New Update
 				</Button>
 			</div>
@@ -141,7 +145,7 @@ export default function AdminUpdatesPage() {
 								<TableRow key={update.id} className="border-muted hover:bg-muted/10">
 									<TableCell className="font-mono text-xs">
 										<div className="flex items-center gap-2">
-											<IconCalendar className="w-3 h-3 text-primary" />
+											<Icon name="IconCalendar" className="w-3 h-3 text-primary" />
 											{new Date(update.date).toLocaleDateString()}
 										</div>
 									</TableCell>
@@ -157,7 +161,7 @@ export default function AdminUpdatesPage() {
 												onClick={() => handleOpenEdit(update)}
 												className="hover:bg-primary/10 hover:text-primary"
 											>
-												<IconPencil className="w-4 h-4" />
+												<Icon name="IconPencil" className="w-5 h-5" />
 											</Button>
 											<Button
 												variant="ghost"
@@ -165,7 +169,7 @@ export default function AdminUpdatesPage() {
 												onClick={() => handleDelete(update.id)}
 												className="hover:bg-red-500/10 hover:text-red-500"
 											>
-												<IconTrash className="w-4 h-4" />
+												<Icon name="IconTrash" className="w-5 h-5" />
 											</Button>
 										</div>
 									</TableCell>

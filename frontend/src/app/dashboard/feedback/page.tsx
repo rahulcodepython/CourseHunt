@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
@@ -7,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useCourseNamesQuery, useCreateFeedbackMutation } from "@/hooks/api"
-import { IconStar } from "@tabler/icons-react";
+
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -57,7 +60,7 @@ export default function CreateFeedbackPage() {
                         <div className="flex flex-col gap-6 pt-6">
                             <div className="space-y-2">
                                 <Label htmlFor="course">Course *</Label>
-                                <Select onValueChange={(value) => handleInputChange("courseId", value)} value={formData.courseId} required>
+                                <Select onValueChange={(value) => handleInputChange("courseId", value || "")} value={formData.courseId} required>
                                     <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Select the course you want to review" />
                                     </SelectTrigger>
@@ -85,7 +88,7 @@ export default function CreateFeedbackPage() {
                                                 onMouseEnter={() => setHoveredRating(star)}
                                                 onMouseLeave={() => setHoveredRating(0)}
                                             >
-                                                <IconStar
+                                                <Icon name="IconStar"
                                                     className={`h-6 w-6 ${star <= (hoveredRating || rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
                                                 />
                                             </button>

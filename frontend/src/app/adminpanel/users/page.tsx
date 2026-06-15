@@ -1,13 +1,17 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import Loading from "@/components/loading"
 import { Button } from "@/components/ui/button"
 import { useAdminUsersQuery, useBanUserMutation, useUnbanUserMutation, useSwitchUserRoleMutation, type AdminUserType } from "@/hooks/api"
-import { IconSearch, IconUserCog, IconDotsVertical, IconShieldExclamation, IconShieldCheck, IconUserCheck, IconShield } from "@tabler/icons-react";
+
 import { useState } from "react"
 
 export default function UsersPage() {
@@ -23,7 +27,7 @@ export default function UsersPage() {
         user.email?.toLowerCase().includes(searchQuery.toLowerCase())
     ) || []
 
-    if (isLoading) return <div className="p-8">Loading users...</div>
+    if (isLoading) return <Loading />
 
     return (
         <div className="min-h-screen bg-background">
@@ -31,13 +35,13 @@ export default function UsersPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <div>
                         <h1 className="text-3xl font-bold flex items-center gap-2">
-                            <IconUserCog className="w-8 h-8 text-primary" />
+                            <Icon name="IconUserCog" className="w-8 h-8 text-primary" />
                             User Management
                         </h1>
                         <p className="text-muted-foreground mt-2">Manage and view all registered users</p>
                     </div>
                     <div className="relative w-full md:w-72">
-                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Icon name="IconSearch" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                             placeholder="IconSearch by name or email..."
                             className="pl-10"
@@ -119,26 +123,26 @@ export default function UsersPage() {
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="ghost" size="icon">
-                                                            <IconDotsVertical className="h-4 w-4" />
+                                                            <Icon name="IconDotsVertical" className="h-5 w-5" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuItem onClick={() => switchRoleMutation.mutate({ id: user._id, role: user.role === 'tutor' ? 'student' : 'tutor' })}>
-                                                            <IconUserCheck className="mr-2 h-4 w-4" />
+                                                            <Icon name="IconUserCheck" className="mr-2 h-5 w-5" />
                                                             {user.role === 'tutor' ? 'Make Student' : 'Make Tutor'}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem onClick={() => switchRoleMutation.mutate({ id: user._id, role: user.role === 'admin' ? 'student' : 'admin' })}>
-                                                            <IconShield className="mr-2 h-4 w-4" />
+                                                            <Icon name="IconShield" className="mr-2 h-5 w-5" />
                                                             {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
                                                         </DropdownMenuItem>
                                                         {user.banned ? (
                                                             <DropdownMenuItem onClick={() => unbanUser(user._id)} className="text-green-600">
-                                                                <IconShieldCheck className="mr-2 h-4 w-4" />
+                                                                <Icon name="IconShieldCheck" className="mr-2 h-5 w-5" />
                                                                 Unban User
                                                             </DropdownMenuItem>
                                                         ) : (
                                                             <DropdownMenuItem onClick={() => banUser(user._id)} className="text-destructive">
-                                                                <IconShieldExclamation className="mr-2 h-4 w-4" />
+                                                                <Icon name="IconShieldExclamation" className="mr-2 h-5 w-5" />
                                                                 Ban User
                                                             </DropdownMenuItem>
                                                         )}

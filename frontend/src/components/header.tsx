@@ -1,4 +1,7 @@
-'use client'
+"use client";
+
+import { Icon } from "@/components/icon";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from '@/components/ui/button'
 import {
@@ -12,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { signOut, useSession } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
-import { IconBook, IconMenu2, IconX } from "@tabler/icons-react";
+
 import Link from 'next/link'
 import { useRouter } from "next/navigation"
 import React from 'react'
@@ -68,7 +71,7 @@ const Header = () => {
                                 href="/"
                                 aria-label="home"
                                 className="flex items-center gap-2">
-                                <IconBook className="h-8 w-8 text-primary" />
+                                <Icon name="IconBook" className="h-8 w-8 text-primary" />
                                 CourseHunt
                             </Link>
 
@@ -76,8 +79,8 @@ const Header = () => {
                                 onClick={() => setMenuState(!menuState)}
                                 aria-label={menuState == true ? 'Close IconMenu2' : 'Open IconMenu2'}
                                 className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden">
-                                <IconMenu2 className="in-data-[state=active]:rotate-180 in-data-[state=active]:scale-0 in-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
-                                <IconX className="in-data-[state=active]:rotate-0 in-data-[state=active]:scale-100 in-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
+                                <Icon name="IconMenu2" className="in-data-[state=active]:rotate-180 in-data-[state=active]:scale-0 in-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
+                                <Icon name="IconX" className="in-data-[state=active]:rotate-0 in-data-[state=active]:scale-100 in-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
                             </button>
                         </div>
 
@@ -111,19 +114,20 @@ const Header = () => {
                             </div>
                             <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
                                 {
-                                    isSessionPending ? (
-                                        <div className="h-10 w-10 animate-pulse bg-muted rounded-full" />
-                                    ) : isAuthenticated ? (
-                                        <DropdownMenu>
+                                    isSessionPending ?
+                                        <div className="h-10 w-10 animate-pulse bg-muted rounded-full" /> :
+                                        isAuthenticated ? <DropdownMenu>
                                             <DropdownMenuTrigger asChild className="cursor-pointer">
-                                                <Avatar>
-                                                    <AvatarImage src={user?.image || undefined} />
-                                                    <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
-                                                </Avatar>
+                                                <button className="rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                                                    <Avatar>
+                                                        <AvatarImage src={user?.image || undefined} />
+                                                        <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
+                                                    </Avatar>
+                                                </button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent className="w-56" align="start">
-                                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
                                                 <DropdownMenuGroup>
+                                                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
                                                     <Link href="/dashboard">
                                                         <DropdownMenuItem>Dashboard</DropdownMenuItem>
                                                     </Link>
@@ -145,18 +149,9 @@ const Header = () => {
                                                     Log out
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    ) : (
-                                        <Link href="/login">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className={''}
-                                            >
-                                                Sign In
-                                            </Button>
+                                        </DropdownMenu> : <Link href="/login">
+                                            <Button variant="outline">Sign In</Button>
                                         </Link>
-                                    )
                                 }
                             </div>
                         </div>

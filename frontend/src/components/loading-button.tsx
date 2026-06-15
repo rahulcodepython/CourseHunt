@@ -1,5 +1,6 @@
+import { Icon } from "@/components/icon";
 import { Button } from '@/components/ui/button';
-import { IconLoader2 } from "@tabler/icons-react";
+
 import React from 'react';
 
 const LoadingButton = ({
@@ -15,7 +16,7 @@ const LoadingButton = ({
 }) => {
     return (
         isLoading ? <Button className={className} disabled={true}>
-            <IconLoader2 className="animate-spin inline-block w-4 h-4" />
+            <Icon name="IconLoader2" className="animate-spin inline-block w-5 h-5" />
             <span className="">
                 {title || 'Loading...'}
             </span>

@@ -1,9 +1,12 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import { Button } from "@/components/ui/button"
 import { useAdminCourseSingleQuery, useCourseCategoriesQuery } from "@/hooks/api"
 import { CourseType } from "@/types/course.type"
-import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
+
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -144,7 +147,7 @@ export default function CourseEditForm() {
                     disabled={currentStep === 0}
                     className="w-32"
                 >
-                    <IconArrowLeft className="w-4 h-4" />
+                    <Icon name="IconArrowLeft" className="w-5 h-5" />
                     Previous
                 </Button>
                 <Button
@@ -153,7 +156,7 @@ export default function CourseEditForm() {
                     className="w-32"
                 >
                     {currentStep === steps.length - 1 ? "Finish" : "Next"}
-                    <IconArrowRight className="w-4 h-4" />
+                    <Icon name="IconArrowRight" className="w-5 h-5" />
                 </Button>
             </div>
         </div>

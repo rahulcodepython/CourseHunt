@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 import Loading from "@/components/loading"
 import LoadingButton from "@/components/loading-button"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +18,7 @@ import {
 } from "@/hooks/api"
 import { ChapterType, LessonType, ResourcesType } from "@/types/course.type"
 import { CourseProgressType, ViewedLessonType } from "@/types/study.type"
-import { IconCircleCheck, IconChevronDown, IconChevronRight, IconDownload, IconFileText, IconLock, IconPlayerPlay, IconVideo, IconSend } from "@tabler/icons-react";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
@@ -165,8 +168,8 @@ const Chapters = ({ chapter, setSelectedLesson, selectedLesson, courseId, setSel
         <CollapsibleTrigger className="flex items-center justify-between w-full p-3 text-left hover:bg-muted rounded-lg">
             <div className="flex items-center gap-3">
                 {
-                    openChapters.includes(chapter._id) ? <IconChevronDown className="h-4 w-4" />
-                        : <IconChevronRight className="h-4 w-4" />
+                    openChapters.includes(chapter._id) ? <Icon name="IconChevronDown" className="h-5 w-5" />
+                        : <Icon name="IconChevronRight" className="h-5 w-5" />
                 }
                 <div>
                     <div className="font-medium text-sm">{chapter.title}</div>
@@ -227,11 +230,11 @@ const Lessons = ({ lesson, setSelectedLesson, selectedLesson, courseId, setSelec
     >
         <div className="flex items-center gap-2">
             {
-                lesson.type === "video" ? <IconVideo className="h-3 w-3 text-muted-foreground" />
-                    : <IconFileText className="h-3 w-3 text-muted-foreground" />
+                lesson.type === "video" ? <Icon name="IconVideo" className="h-3 w-3 text-muted-foreground" />
+                    : <Icon name="IconFileText" className="h-3 w-3 text-muted-foreground" />
             }
             {
-                isLessonViewed ? <IconCircleCheck className="h-3 w-3 text-green-600" />
+                isLessonViewed ? <Icon name="IconCircleCheck" className="h-3 w-3 text-green-600" />
                     : <div className="h-3 w-3 border border-muted-foreground rounded-full" />
 
             }
@@ -240,7 +243,7 @@ const Lessons = ({ lesson, setSelectedLesson, selectedLesson, courseId, setSelec
             <div className="text-sm">{lesson.title}</div>
             <div className="text-xs text-muted-foreground">{lesson.duration}</div>
         </div>
-        {!isLessonViewed && <IconLock className="h-3 w-3 text-muted-foreground" />}
+        {!isLessonViewed && <Icon name="IconLock" className="h-3 w-3 text-muted-foreground" />}
     </button>
 }
 
@@ -340,7 +343,7 @@ const SelectedLessonContent = ({
                         selectedLesson.type === 'video' ? (
                             <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
                                 <div className="text-center text-white">
-                                    <IconPlayerPlay className="h-16 w-16 mx-auto mb-4 opacity-80" />
+                                    <Icon name="IconPlayerPlay" className="h-16 w-16 mx-auto mb-4 opacity-80" />
                                     <p className="text-lg">IconVideo Player</p>
                                     <p className="text-sm opacity-60">Click to play: {selectedLesson.title}</p>
                                 </div>
@@ -348,7 +351,7 @@ const SelectedLessonContent = ({
                         ) : (
                             <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                                 <div className="text-center">
-                                    <IconFileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                                    <Icon name="IconFileText" className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                                     <p className="text-lg font-medium">No video for this lesson</p>
                                     <p className="text-sm text-muted-foreground">Please refer to the written content below</p>
                                 </div>
@@ -363,7 +366,7 @@ const SelectedLessonContent = ({
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <IconDownload className="h-5 w-5" />
+                        <Icon name="IconDownload" className="h-5 w-5" />
                         Study Materials
                     </CardTitle>
                     <CardDescription>IconDownload additional resources to supplement your learning</CardDescription>
@@ -378,14 +381,14 @@ const SelectedLessonContent = ({
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-primary/10 rounded">
-                                            <IconFileText className="h-4 w-4 text-primary" />
+                                            <Icon name="IconFileText" className="h-5 w-5 text-primary" />
                                         </div>
                                         <div>
                                             <div className="font-medium text-sm">{resource.title}</div>
                                         </div>
                                     </div>
                                     <Button size="sm" variant="outline" onClick={() => handleDownload(index)}>
-                                        <IconDownload className="h-4 w-4 mr-1" />
+                                        <Icon name="IconDownload" className="h-5 w-5 mr-1" />
                                         IconDownload
                                     </Button>
                                 </div>
@@ -479,7 +482,7 @@ const DiscussionsTab = ({ lessonId, courseId }: { lessonId: number, courseId: nu
                             onClick={handleSend}
                             disabled={!message.trim() || createDiscussion.isPending}
                         >
-                            {createDiscussion.isPending ? "..." : <IconSend className="h-4 w-4" />}
+                            {createDiscussion.isPending ? "..." : <Icon name="IconSend" className="h-5 w-5" />}
                         </Button>
                     </div>
                 </div>

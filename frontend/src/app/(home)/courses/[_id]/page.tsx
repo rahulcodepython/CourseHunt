@@ -1,7 +1,12 @@
-"use client"
-import { IconCheck, IconClock, IconPlayerPlay, IconStar, IconUsers } from "@tabler/icons-react";
+"use client";
+
+import { Icon } from "@/components/icon";
+
+
 import Image from "next/image"
 import React from "react"
+import { Skeleton } from "@/components/ui/skeleton"
+import Loading from "@/components/loading"
 import EnrollButton from "@/components/enroll-button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -37,7 +42,7 @@ export default function CourseSingle({ params }: { params: Promise<{ _id: string
         },
     ]
 
-    if (isLoading) return <div className="p-8">Loading course details...</div>
+    if (isLoading) return <Loading />
 
     return (
         !course ? <div className="min-h-screen bg-background flex items-start justify-center my-12">
@@ -61,9 +66,9 @@ export default function CourseSingle({ params }: { params: Promise<{ _id: string
                                         <span className="font-semibold text-lg">{course.rating}</span>
                                         <div className="flex">
                                             {[...Array(5)].map((_, i) => (
-                                                <IconStar
+                                                <Icon name="IconStar"
                                                     key={i}
-                                                    className={`w-4 h-4 ${i < Math.floor(course.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                                    className={`w-5 h-5 ${i < Math.floor(course.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
                                                         }`}
                                                 />
                                             ))}
@@ -72,12 +77,12 @@ export default function CourseSingle({ params }: { params: Promise<{ _id: string
                                     </div>
 
                                     <div className="flex items-center gap-1">
-                                        <IconUsers className="w-4 h-4 text-muted-foreground" />
+                                        <Icon name="IconUsers" className="w-5 h-5 text-muted-foreground" />
                                         <span className="text-sm">{course.students.toLocaleString()} students</span>
                                     </div>
 
                                     <div className="flex items-center gap-1">
-                                        <IconClock className="w-4 h-4 text-muted-foreground" />
+                                        <Icon name="IconClock" className="w-5 h-5 text-muted-foreground" />
                                         <span className="text-sm">{course.duration} total</span>
                                     </div>
                                 </div>
@@ -131,7 +136,7 @@ export default function CourseSingle({ params }: { params: Promise<{ _id: string
                                 <div className="grid md:grid-cols-2 gap-3">
                                     {course.whatYouWillLearn.map((item, index) => (
                                         <div key={index} className="flex items-start gap-3">
-                                            <IconCheck className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                                            <Icon name="IconCheck" className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                                             <span className="text-sm">{item}</span>
                                         </div>
                                     ))}
@@ -161,7 +166,7 @@ export default function CourseSingle({ params }: { params: Promise<{ _id: string
                                                             className="flex items-center justify-between py-2 px-4 hover:bg-muted/50 rounded-md"
                                                         >
                                                             <div className="flex items-center gap-3">
-                                                                <IconPlayerPlay className="w-4 h-4 text-muted-foreground" />
+                                                                <Icon name="IconPlayerPlay" className="w-5 h-5 text-muted-foreground" />
                                                                 <span className="text-sm">{lesson.title}</span>
                                                             </div>
                                                             <span className="text-sm text-muted-foreground">{lesson.duration}</span>
@@ -195,7 +200,7 @@ export default function CourseSingle({ params }: { params: Promise<{ _id: string
                                                             <h4 className="font-semibold">{testimonial.name}</h4>
                                                             <div className="flex">
                                                                 {[...Array(testimonial.rating)].map((_, i) => (
-                                                                    <IconStar key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                                                    <Icon name="IconStar" key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -258,7 +263,7 @@ export default function CourseSingle({ params }: { params: Promise<{ _id: string
                                             <span className="text-muted-foreground">Rating:</span>
                                             <div className="flex items-center gap-1">
                                                 <span>4.9</span>
-                                                <IconStar className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                                <Icon name="IconStar" className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                                             </div>
                                         </div>
                                     </div>

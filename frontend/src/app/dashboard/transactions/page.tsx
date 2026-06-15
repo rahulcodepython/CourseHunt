@@ -1,14 +1,19 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useUserTransactionsQuery } from "@/hooks/api"
-import { IconCalendar, IconDownload } from "@tabler/icons-react";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import Loading from "@/components/loading";
 
 export default function Transaction() {
     const { data: transactions, isLoading } = useUserTransactionsQuery()
 
-    if (isLoading) return <div className="p-8">Loading transactions...</div>
+    if (isLoading) return <Loading />
 
     const transactionList = transactions ?? [];
 
@@ -51,7 +56,7 @@ export default function Transaction() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <IconCalendar className="h-4 w-4 text-muted-foreground" />
+                                                    <Icon name="IconCalendar" className="h-5 w-5 text-muted-foreground" />
                                                     {new Date(transaction.createdAt).toLocaleDateString()}
                                                 </div>
                                             </TableCell>
@@ -71,7 +76,7 @@ export default function Transaction() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Button variant="outline" size="sm">
-                                                        <IconDownload className="h-4 w-4 mr-1" />
+                                                        <Icon name="IconDownload" className="h-5 w-5 mr-1" />
                                                         Invoice
                                                     </Button>
                                                 </div>

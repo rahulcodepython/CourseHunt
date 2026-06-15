@@ -1,10 +1,13 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useUploadMediaMutation } from "@/hooks/api"
-import { IconUpload } from "@tabler/icons-react";
+
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -70,7 +73,7 @@ export default function FileUpload({ label, onChange, field, accept, value, clas
                     onClick={handleFileChange}
                     disabled={isPending}
                 >
-                    <IconUpload className="h-4 w-4" />
+                    <Icon name="IconUpload" className="h-5 w-5" />
                 </Button>
             </div>
             {

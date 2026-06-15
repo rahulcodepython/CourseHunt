@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import FileUpload from "@/components/file-upload"
 import LoadingButton from "@/components/loading-button"
@@ -93,7 +93,7 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
                         <Label htmlFor="category">
                             Category *
                         </Label>
-                        <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+                        <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value || "")}>
                             <SelectTrigger className={`w-full`}>
                                 <SelectValue placeholder="Select category" />
                             </SelectTrigger>

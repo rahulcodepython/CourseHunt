@@ -1,12 +1,15 @@
-"use client"
+"use client";
+
 import CourseCard from '@/components/course-card';
 import { Input } from '@/components/ui/input';
 import { usePublicCoursesQuery } from '@/hooks/api';
+import { Skeleton } from '@/components/ui/skeleton';
+import Loading from '@/components/loading';
 
 const Courses = () => {
     const { data: courses, isLoading } = usePublicCoursesQuery()
 
-    if (isLoading) return <div className="p-8">Loading courses...</div>
+    if (isLoading) return <Loading />
 
     const courseList = courses ?? [];
 

@@ -1,6 +1,7 @@
-"use client"
+"use client";
 
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/app-sidebar"
+import Loading from "@/components/loading";
 import BreadcrumbComponent from "@/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useSession } from "@/lib/auth-client";
@@ -25,7 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }, [user, isPending, router])
 
     if (isPending) {
-        return <div className="h-screen w-full flex items-center justify-center">Loading...</div>
+        return <Loading />
     }
 
     if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {

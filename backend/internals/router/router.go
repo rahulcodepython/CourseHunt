@@ -54,7 +54,7 @@ func Setup(app *fiber.App) {
 
 func setupPublicRoutes(r fiber.Router, h *Handlers) {
 	courses := r.Group("/public/courses")
-	courses.Get("/", h.Courses.PublicCourses)
+	courses.Get("", h.Courses.PublicCourses)
 	courses.Get("/category", h.Courses.Categories)
 	courses.Get("/single/:id", h.Courses.Course)
 

@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import FileUpload from "@/components/file-upload"
 import LoadingButton from "@/components/loading-button"
@@ -8,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useUpdateCourseMutation } from "@/hooks/api"
 import { CourseType, MediaUrlType, ResourcesType } from "@/types/course.type"
-import { IconPlus, IconX } from "@tabler/icons-react";
+
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -65,7 +68,7 @@ export default function ResourcesStep({ courseData, setCourseData }: ResourcesSt
                                         <h4 className="font-medium">Resource {index + 1}</h4>
                                         {resources.length > 1 && (
                                             <Button type="button" variant="outline" size="sm" onClick={() => removeResource(index)}>
-                                                <IconX className="h-4 w-4" />
+                                                <Icon name="IconX" className="h-5 w-5" />
                                             </Button>
                                         )}
                                     </div>
@@ -92,7 +95,7 @@ export default function ResourcesStep({ courseData, setCourseData }: ResourcesSt
                 </div>
 
                 <Button type="button" variant="outline" onClick={addResource} className="w-full">
-                    <IconPlus className="h-4 w-4 mr-2" />
+                    <Icon name="IconPlus" className="h-5 w-5 mr-2" />
                     Add Resource
                 </Button>
 

@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import type React from "react"
 
@@ -21,7 +24,7 @@ import {
 } from "@/types/purchase.type"
 import { TransactionType } from "@/types/transaction.type"
 import { CouponType } from "@/types/coupon.type"
-import { IconBook, IconCalendar, IconCircleCheck, IconCopy, IconCreditCard, IconLock, IconMail, IconMapPin, IconPhone, IconTag, IconUser } from "@tabler/icons-react";
+
 import Image from "next/image"
 import Link from "next/link"
 import { useParams } from "next/navigation"
@@ -131,7 +134,7 @@ export default function CheckoutPage() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
-                                        <IconUser className="h-5 w-5" />
+                                        <Icon name="IconUser" className="h-5 w-5" />
                                         Billing Information
                                     </CardTitle>
                                     <CardDescription>Please provide your billing details</CardDescription>
@@ -164,7 +167,7 @@ export default function CheckoutPage() {
                                         <div className="space-y-2">
                                             <Label htmlFor="email">Email Address *</Label>
                                             <div className="relative">
-                                                <IconMail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Icon name="IconMail" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                                 <Input
                                                     id="email"
                                                     type="email"
@@ -180,7 +183,7 @@ export default function CheckoutPage() {
                                         <div className="space-y-2">
                                             <Label htmlFor="phone">IconPhone Number</Label>
                                             <div className="relative">
-                                                <IconPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Icon name="IconPhone" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                                 <Input
                                                     id="phone"
                                                     placeholder="+1 (555) 123-4567"
@@ -195,7 +198,7 @@ export default function CheckoutPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="address">Address</Label>
                                         <div className="relative">
-                                            <IconMapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                            <Icon name="IconMapPin" className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                                             <Input
                                                 id="address"
                                                 placeholder="123 Main Street"
@@ -300,13 +303,13 @@ export default function CheckoutPage() {
                                             size="lg"
                                             onClick={handleSubmit}
                                         >
-                                            <IconLock className="h-4 w-4 mr-2" />
+                                            <Icon name="IconLock" className="h-5 w-5 mr-2" />
                                             Complete Purchase
                                         </Button>
                                     </LoadingButton>
 
                                     <div className="text-xs text-muted-foreground text-center">
-                                        <IconLock className="h-3 w-3 inline mr-1" />
+                                        <Icon name="IconLock" className="h-3 w-3 inline mr-1" />
                                         Secure checkout powered by SSL encryption
                                     </div>
                                 </CardContent>
@@ -353,7 +356,7 @@ const CouponForm = ({ setAppliedCoupon, courseId }: {
 
     return <div className="space-y-3">
         <Label className="flex items-center gap-2">
-            <IconTag className="h-4 w-4" />
+            <Icon name="IconTag" className="h-5 w-5" />
             Coupon Code
         </Label>
         <div className="flex gap-2">
@@ -384,7 +387,7 @@ const CouponForm = ({ setAppliedCoupon, courseId }: {
         {
             message && (
                 <div className={`text-sm flex items-center gap-2 ${message.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
-                    {message.type === 'success' ? <IconCircleCheck className="h-3 w-3" /> : <IconTag className="h-3 w-3" />}
+                    {message.type === 'success' ? <Icon name="IconCircleCheck" className="h-3 w-3" /> : <Icon name="IconTag" className="h-3 w-3" />}
                     {message.text}
                 </div>
             )
@@ -430,7 +433,7 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionType 
                 <CardHeader className="text-center pb-4">
                     <div className="flex justify-center mb-4">
                         <div className="rounded-full p-3">
-                            <IconCircleCheck className="h-8 w-8 text-green-600" />
+                            <Icon name="IconCircleCheck" className="h-8 w-8 text-green-600" />
                         </div>
                     </div>
                     <CardTitle className="text-2xl font-bold text-green-700">Payment Successful!</CardTitle>
@@ -442,7 +445,7 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionType 
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <IconCreditCard className="h-4 w-4 text-gray-500" />
+                                <Icon name="IconCreditCard" className="h-5 w-5 text-gray-500" />
                                 <span className="font-medium">Transaction ID</span>
                             </div>
                             <div className="flex items-center gap-2 truncate">
@@ -457,14 +460,14 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionType 
                                     onClick={() => transaction.transactionId && copyToClipboard(transaction.transactionId)}
                                     className="h-6 w-6 p-0"
                                 >
-                                    <IconCopy className="h-3 w-3" />
+                                    <Icon name="IconCopy" className="h-3 w-3" />
                                 </Button>
                             </div>
                         </div>
 
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <IconCalendar className="h-4 w-4 text-gray-500" />
+                                <Icon name="IconCalendar" className="h-5 w-5 text-gray-500" />
                                 <span className="font-medium">Date & Time</span>
                             </div>
                             <span className="text-sm text-gray-600">{formatDate(transaction.createdAt)}</span>
@@ -472,7 +475,7 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionType 
 
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <IconTag className="h-4 w-4 text-gray-500" />
+                                <Icon name="IconTag" className="h-5 w-5 text-gray-500" />
                                 <span className="font-medium">Amount</span>
                             </div>
                             <span className="text-xl font-bold text-green-600">₹{transaction.amount.toFixed(2)}</span>
@@ -484,7 +487,7 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionType 
                     {/* Course Details */}
                     <div className="space-y-4">
                         <h3 className="font-semibold text-lg flex items-center gap-2">
-                            <IconBook className="h-5 w-5" />
+                            <Icon name="IconBook" className="h-5 w-5" />
                             Course Details
                         </h3>
 
@@ -503,7 +506,7 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionType 
                     {/* IconUser Details */}
                     <div className="space-y-4">
                         <h3 className="font-semibold text-lg flex items-center gap-2">
-                            <IconUser className="h-5 w-5" />
+                            <Icon name="IconUser" className="h-5 w-5" />
                             IconUser Information
                         </h3>
 
@@ -525,7 +528,7 @@ function TransactionSuccessCard({ transaction }: { transaction: TransactionType 
                             <Separator />
                             <div className="space-y-4">
                                 <h3 className="font-semibold text-lg flex items-center gap-2">
-                                    <IconTag className="h-5 w-5" />
+                                    <Icon name="IconTag" className="h-5 w-5" />
                                     Discount Applied
                                 </h3>
 

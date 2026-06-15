@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
@@ -8,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useUpdateCourseMutation } from "@/hooks/api"
 import { CourseType, FAQType } from "@/types/course.type"
-import { IconPlus, IconX } from "@tabler/icons-react";
+
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -59,7 +62,7 @@ export default function FAQStep({ courseData, setCourseData }: FAQStepProps) {
                                     <h4 className="font-medium">FAQ {index + 1}</h4>
                                     {faqs.length > 1 && (
                                         <Button type="button" variant="outline" size="sm" onClick={() => removeFAQ(index)}>
-                                            <IconX className="h-4 w-4" />
+                                            <Icon name="IconX" className="h-5 w-5" />
                                         </Button>
                                     )}
                                 </div>
@@ -88,7 +91,7 @@ export default function FAQStep({ courseData, setCourseData }: FAQStepProps) {
                 </div>
 
                 <Button type="button" variant="outline" onClick={addFAQ} className="w-full">
-                    <IconPlus className="h-4 w-4 mr-2" />
+                    <Icon name="IconPlus" className="h-5 w-5 mr-2" />
                     Add FAQ
                 </Button>
 

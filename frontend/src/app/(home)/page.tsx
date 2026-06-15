@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 import CourseCard from "@/components/course-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -6,9 +9,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { usePublicCoursesQuery } from "@/hooks/api"
-import { IconArrowRight, IconAward, IconBook, IconCircleCheck, IconDownload, IconPlayerPlay, IconStar, IconUsers } from "@tabler/icons-react";
+
 import Image from "next/image"
 import Link from "next/link"
+import { Skeleton } from "@/components/ui/skeleton"
+import Loading from "@/components/loading"
 
 const testimonials = [
     {
@@ -64,9 +69,9 @@ export default function Home() {
                                 </p>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <Button size="lg" className="text-lg px-8 text-white bg-green-600 hover:bg-green-700 cursor-pointer">
+                                <Button className="text-lg p-4 text-white bg-green-600 hover:bg-green-700 cursor-pointer">
                                     Start Learning Today
-                                    <IconArrowRight className="ml-2 h-5 w-5" />
+                                    <Icon name="IconArrowRight" className="ml-2 h-5 w-5" />
                                 </Button>
                             </div>
                             <div className="flex items-center gap-8 pt-4">
@@ -90,7 +95,8 @@ export default function Home() {
                                 alt="Learning illustration"
                                 width={600}
                                 height={500}
-                                className="rounded-2xl shadow-2xl"
+                                className="rounded-2xl shadow-2xl w-full h-auto"
+                                priority
                             />
                         </div>
                     </div>
@@ -117,19 +123,19 @@ export default function Home() {
                             </p>
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
-                                    <IconCircleCheck className="h-5 w-5 text-green-500" />
+                                    <Icon name="IconCircleCheck" className="h-5 w-5 text-green-500" />
                                     <span>Expert-curated curriculum</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <IconCircleCheck className="h-5 w-5 text-green-500" />
+                                    <Icon name="IconCircleCheck" className="h-5 w-5 text-green-500" />
                                     <span>Hands-on projects and assignments</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <IconCircleCheck className="h-5 w-5 text-green-500" />
+                                    <Icon name="IconCircleCheck" className="h-5 w-5 text-green-500" />
                                     <span>24/7 community support</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <IconCircleCheck className="h-5 w-5 text-green-500" />
+                                    <Icon name="IconCircleCheck" className="h-5 w-5 text-green-500" />
                                     <span>Lifetime access to course materials</span>
                                 </div>
                             </div>
@@ -140,7 +146,7 @@ export default function Home() {
                                 alt="About us"
                                 width={500}
                                 height={400}
-                                className="rounded-lg"
+                                className="rounded-lg w-full h-auto"
                             />
                         </div>
                     </div>
@@ -159,7 +165,7 @@ export default function Home() {
                     <div className="grid md:grid-cols-3 gap-8">
                         <Card className="text-center">
                             <CardHeader>
-                                <IconUsers className="h-12 w-12 text-primary mx-auto mb-4" />
+                                <Icon name="IconUsers" className="h-12 w-12 text-primary mx-auto mb-4" />
                                 <CardTitle>Accessibility</CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -170,7 +176,7 @@ export default function Home() {
                         </Card>
                         <Card className="text-center">
                             <CardHeader>
-                                <IconAward className="h-12 w-12 text-primary mx-auto mb-4" />
+                                <Icon name="IconAward" className="h-12 w-12 text-primary mx-auto mb-4" />
                                 <CardTitle>Excellence</CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -181,7 +187,7 @@ export default function Home() {
                         </Card>
                         <Card className="text-center">
                             <CardHeader>
-                                <IconBook className="h-12 w-12 text-primary mx-auto mb-4" />
+                                <Icon name="IconBook" className="h-12 w-12 text-primary mx-auto mb-4" />
                                 <CardTitle>Innovation</CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -206,7 +212,7 @@ export default function Home() {
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                         <div className="text-center space-y-4">
                             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                                <IconPlayerPlay className="h-8 w-8 text-primary" />
+                                <Icon name="IconPlayerPlay" className="h-8 w-8 text-primary" />
                             </div>
                             <h3 className="text-xl font-semibold">HD Video Content</h3>
                             <p className="text-muted-foreground">
@@ -215,21 +221,21 @@ export default function Home() {
                         </div>
                         <div className="text-center space-y-4">
                             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                                <IconDownload className="h-8 w-8 text-primary" />
+                                <Icon name="IconDownload" className="h-8 w-8 text-primary" />
                             </div>
                             <h3 className="text-xl font-semibold">Offline Access</h3>
                             <p className="text-muted-foreground">IconDownload courses and learn offline, anywhere, anytime.</p>
                         </div>
                         <div className="text-center space-y-4">
                             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                                <IconAward className="h-8 w-8 text-primary" />
+                                <Icon name="IconAward" className="h-8 w-8 text-primary" />
                             </div>
                             <h3 className="text-xl font-semibold">Certificates</h3>
                             <p className="text-muted-foreground">Earn industry-recognized certificates upon course completion.</p>
                         </div>
                         <div className="text-center space-y-4">
                             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                                <IconUsers className="h-8 w-8 text-primary" />
+                                <Icon name="IconUsers" className="h-8 w-8 text-primary" />
                             </div>
                             <h3 className="text-xl font-semibold">Community</h3>
                             <p className="text-muted-foreground">Join a vibrant community of learners and instructors.</p>
@@ -248,25 +254,25 @@ export default function Home() {
                         </p>
                     </div>
                     {
-                        isLoading ? <div className="text-center py-20">Loading courses...</div> :
-                        courseList.length === 0 ? <div className="text-center py-2">
-                            <h3 className="text-xl font-semibold">No courses found</h3>
-                        </div> : <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                            {
-                                courseList.map((course, index) => (
-                                    <CourseCard
-                                        key={index}
-                                        courseData={course}
-                                    />
-                                ))
-                            }
-                        </div>
+                        isLoading ? <Loading /> :
+                            courseList.length === 0 ? <div className="text-center py-2">
+                                <h3 className="text-xl font-semibold">No courses found</h3>
+                            </div> : <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                                {
+                                    courseList.map((course, index) => (
+                                        <CourseCard
+                                            key={index}
+                                            courseData={course}
+                                        />
+                                    ))
+                                }
+                            </div>
                     }
                     <div className="text-center mt-12">
                         <Link href="/courses">
                             <Button size="lg" variant="outline" className="cursor-pointer">
                                 View All Courses
-                                <IconArrowRight className="ml-2 h-5 w-5" />
+                                <Icon name="IconArrowRight" className="ml-2 h-5 w-5" />
                             </Button>
                         </Link>
                     </div>
@@ -301,7 +307,7 @@ export default function Home() {
                                     </div>
                                     <div className="flex items-center gap-1">
                                         {[...Array(testimonial.rating)].map((_, i) => (
-                                            <IconStar key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                            <Icon name="IconStar" key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                                         ))}
                                     </div>
                                 </CardHeader>
@@ -329,6 +335,7 @@ export default function Home() {
                                 alt={brand.name}
                                 width={120}
                                 height={60}
+                                style={{ width: "auto", height: "auto" }}
                                 className="grayscale hover:grayscale-0 transition-all"
                             />
                         ))}

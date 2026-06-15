@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import FileUpload from "@/components/file-upload"
 import LoadingButton from "@/components/loading-button"
@@ -12,7 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useUpdateCourseMutation } from "@/hooks/api"
 import { ChapterType, CourseType, LessonType } from "@/types/course.type"
-import { IconPlus, IconX } from "@tabler/icons-react";
+
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -36,7 +39,7 @@ function LessonCard({ lesson, index, onLessonChange, onRemove, showRemove }: Les
                     <h5 className="font-medium text-sm text-muted-foreground">Lesson {index + 1}</h5>
                     {showRemove && (
                         <Button type="button" variant="outline" size="sm" onClick={onRemove}>
-                            <IconX className="h-4 w-4" />
+                            <Icon name="IconX" className="h-5 w-5" />
                         </Button>
                     )}
                 </div>
@@ -62,7 +65,7 @@ function LessonCard({ lesson, index, onLessonChange, onRemove, showRemove }: Les
                         <Label>Type</Label>
                         <Select
                             value={lesson.type}
-                            onValueChange={(value) => onLessonChange("type", value)}
+                            onValueChange={(value) => onLessonChange("type", value || "")}
                         >
                             <SelectTrigger>
                                 <SelectValue />
@@ -164,7 +167,7 @@ function ChapterAccordionItem({
                         <div className="flex items-center justify-between border-b pb-2">
                             <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Lessons</h4>
                             <Button type="button" variant="outline" size="sm" onClick={onAddLesson} className="h-8">
-                                <IconPlus className="h-3 w-3 mr-2" />
+                                <Icon name="IconPlus" className="h-3 w-3 mr-2" />
                                 Add Lesson
                             </Button>
                         </div>
@@ -189,7 +192,7 @@ function ChapterAccordionItem({
                         showRemove && (
                             <div className="pt-4 border-t flex justify-end">
                                 <Button type="button" variant="destructive" size="sm" onClick={onRemoveChapter} className="h-8">
-                                    <IconX className="h-3 w-3 mr-2" />
+                                    <Icon name="IconX" className="h-3 w-3 mr-2" />
                                     Remove Chapter
                                 </Button>
                             </div>
@@ -334,7 +337,7 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
                 </Accordion>
 
                 <Button type="button" variant="outline" onClick={addChapter} className="w-full border-dashed py-6 h-auto hover:bg-primary/5 hover:border-primary">
-                    <IconPlus className="h-5 w-5 mr-2" />
+                    <Icon name="IconPlus" className="h-5 w-5 mr-2" />
                     Add New Chapter
                 </Button>
 

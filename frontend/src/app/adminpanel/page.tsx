@@ -1,13 +1,18 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAdminDashboardQuery } from "@/hooks/api"
-import { IconBook, IconCurrencyDollar, IconUsers, IconVideo } from "@tabler/icons-react";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import Loading from "@/components/loading";
 
 const Admin = () => {
     const { data: responseData, isLoading } = useAdminDashboardQuery()
 
-    if (isLoading) return <div className="p-6">Loading dashboard...</div>
+    if (isLoading) return <Loading />
     if (!responseData) return <div className="p-6">Failed to load dashboard.</div>
 
     return (
@@ -21,7 +26,7 @@ const Admin = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                        <IconUsers className="h-4 w-4 text-muted-foreground" />
+                        <Icon name="IconUsers" className="h-5 w-5 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
@@ -32,7 +37,7 @@ const Admin = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
-                        <IconBook className="h-4 w-4 text-muted-foreground" />
+                        <Icon name="IconBook" className="h-5 w-5 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
@@ -43,7 +48,7 @@ const Admin = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Enrollments</CardTitle>
-                        <IconCurrencyDollar className="h-4 w-4 text-muted-foreground" />
+                        <Icon name="IconCurrencyDollar" className="h-5 w-5 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
@@ -54,7 +59,7 @@ const Admin = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                        <IconVideo className="h-4 w-4 text-muted-foreground" />
+                        <Icon name="IconVideo" className="h-5 w-5 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">

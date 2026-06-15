@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"

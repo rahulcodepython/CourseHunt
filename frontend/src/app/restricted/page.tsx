@@ -1,7 +1,12 @@
 "use client";
 
+import { Icon } from "@/components/icon";
+
+
+import { Separator } from "@/components/ui/separator";
+import Loading from "@/components/loading";
 import { Button } from "@/components/ui/button";
-import { IconShieldExclamation } from "@tabler/icons-react";
+
 import { useSession } from "@/lib/auth-client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -18,11 +23,11 @@ export default function RestrictedPage() {
 		}
 	}, [session, isPending, router]);
 
-	if (isPending) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+	if (isPending) return <Loading />;
 
 	return (
 		<div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
-			<IconShieldExclamation className="w-24 h-24 text-destructive mb-6" />
+			<Icon name="IconShieldExclamation" className="w-24 h-24 text-destructive mb-6" />
 			<h1 className="text-4xl font-bold tracking-tight mb-4">Account Suspended</h1>
 			<p className="text-muted-foreground text-lg max-w-md mb-8 leading-relaxed">
 				Your account has been temporarily or permanently restricted due to a violation of our terms of service. 

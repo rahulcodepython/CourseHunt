@@ -1,14 +1,17 @@
-import { IconLoader2 } from "@tabler/icons-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const Loading = () => {
+export default function Loading() {
     return (
-        <main className='h-screen flex items-center justify-center'>
-            <div className="flex gap-2 items-center justify-center">
-                <IconLoader2 className="animate-spin h-6 w-6" />
-                <p>Loading...</p>
+        <div className="w-full min-h-[400px] p-6 space-y-6">
+            <div className="space-y-4">
+                <Skeleton className="h-10 w-[300px]" />
+                <Skeleton className="h-4 w-[250px]" />
             </div>
-        </main>
-    )
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-[250px] w-full rounded-xl" />
+                ))}
+            </div>
+        </div>
+    );
 }
-
-export default Loading

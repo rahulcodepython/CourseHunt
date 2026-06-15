@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+import { Icon } from "@/components/icon";
+
 
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@/components/ui/button"
@@ -9,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useUpdateCourseMutation } from "@/hooks/api"
 import { CourseDetailsFormType } from "@/types/course.form.type"
 import { CourseType } from "@/types/course.type"
-import { IconPlus, IconX } from "@tabler/icons-react";
+
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -134,13 +137,13 @@ export default function DetailsStep({ courseData, setCourseData }: {
                             />
                             {formData.whatYouWillLearn.length > 1 && (
                                 <Button type="button" variant="outline" size="icon" onClick={() => removeWhatYouWillLearn(index)}>
-                                    <IconX className="h-4 w-4" />
+                                    <Icon name="IconX" className="h-5 w-5" />
                                 </Button>
                             )}
                         </div>
                     ))}
                     <Button type="button" variant="outline" size="sm" onClick={addWhatYouWillLearn} className="w-full">
-                        <IconPlus className="h-4 w-4 mr-2" />
+                        <Icon name="IconPlus" className="h-5 w-5 mr-2" />
                         Add Learning Outcome
                     </Button>
                 </div>
@@ -158,13 +161,13 @@ export default function DetailsStep({ courseData, setCourseData }: {
                             />
                             {formData.prerequisites.length > 1 && (
                                 <Button type="button" variant="outline" size="icon" onClick={() => removePrerequisites(index)}>
-                                    <IconX className="h-4 w-4" />
+                                    <Icon name="IconX" className="h-5 w-5" />
                                 </Button>
                             )}
                         </div>
                     ))}
                     <Button type="button" variant="outline" size="sm" onClick={addPrerequisites} className="w-full">
-                        <IconPlus className="h-4 w-4 mr-2" />
+                        <Icon name="IconPlus" className="h-5 w-5 mr-2" />
                         Add Prerequisite
                     </Button>
                 </div>
@@ -182,13 +185,13 @@ export default function DetailsStep({ courseData, setCourseData }: {
                             />
                             {formData.requirements.length > 1 && (
                                 <Button type="button" variant="outline" size="icon" onClick={() => removeRequirements(index)}>
-                                    <IconX className="h-4 w-4" />
+                                    <Icon name="IconX" className="h-5 w-5" />
                                 </Button>
                             )}
                         </div>
                     ))}
                     <Button type="button" variant="outline" size="sm" onClick={addRequirements} className="w-full">
-                        <IconPlus className="h-4 w-4 mr-2" />
+                        <Icon name="IconPlus" className="h-5 w-5 mr-2" />
                         Add Requirement
                     </Button>
                 </div>
