@@ -17,10 +17,8 @@ type Config struct {
 	MinioBucket    string
 	MinioSecure    bool
 	MinioBaseURL   string
-	AuthSecret     string
 	AllowedOrigins string
 	JWKSURL        string
-	AuthCookieKey  string
 }
 
 var CFG *Config
@@ -42,11 +40,9 @@ func LoadConfig() (*Config, error) {
 		MinioSecret:    getEnv("MINIO_SECRET_KEY", "minioadmin"),
 		MinioBucket:    getEnv("MINIO_BUCKET", "coursehunt"),
 		MinioBaseURL:   getEnv("MINIO_BASE_URL", "http://localhost:9000/coursehunt"),
-		AuthSecret:     getEnv("BETTER_AUTH_SECRET", ""),
 		MinioSecure:    getEnvAsBool("MINIO_SECURE", "false"),
 		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "http://localhost:3000"),
 		JWKSURL:        getEnv("JWKS_URL", "http://localhost:3000/api/auth/jwks"),
-		AuthCookieKey:  getEnv("BETTER_AUTH_COOKIE_NAME", "better-auth.session_token"),
 	}
 
 	if err := validateConfig(CFG); err != nil {
@@ -58,9 +54,6 @@ func LoadConfig() (*Config, error) {
 
 // validateConfig ensures required fields are present and stops server if invalid
 func validateConfig(cfg *Config) error {
-	if cfg.AuthSecret == "" {
-		panic("missing required environment variable: BETTER_AUTH_SECRET")
-	}
 	if cfg.MinioBucket == "" {
 		panic("missing required environment variable: MINIO_BUCKET")
 	}

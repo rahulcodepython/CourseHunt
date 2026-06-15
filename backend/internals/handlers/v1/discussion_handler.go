@@ -1,10 +1,12 @@
 package v1
 
 import (
+	"coursehunt-backend/internals/middlewares"
 	"coursehunt-backend/internals/services"
 	"coursehunt-backend/internals/utils"
-	"github.com/gofiber/fiber/v2"
 	"strconv"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type DiscussionHandler struct {
@@ -36,7 +38,8 @@ func (h *DiscussionHandler) Create(c *fiber.Ctx) error {
 	if err := c.BodyParser(&body); err != nil || body.LessonID == 0 || body.Message == "" {
 		return utils.BadRequest(c, "Missing required fields")
 	}
-	discussion, err := h.Service.Create(body.LessonID, authUserID(c), body.Message, body.ParentID)
+	userID := c.Locals("user").(middlewares.UserContext).UserID
+	discussion, err := h.Service.Create(body.LessonID, userID, body.Message, body.ParentID)
 	if err != nil {
 		return utils.InternalError(c, "Failed to create discussion")
 	}
@@ -44,7 +47,7 @@ func (h *DiscussionHandler) Create(c *fiber.Ctx) error {
 }
 
 func (h *DiscussionHandler) Delete(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid discussion ID")
 	}

@@ -19,8 +19,8 @@ func NewFeedbackService() *FeedbackService {
 	}
 }
 
-func (s *FeedbackService) List(userID string, position string) ([]models.Feedback, error) {
-	return s.Feedbacks.List(userID, position)
+func (s *FeedbackService) List(userID string, filterByCreator bool) ([]models.Feedback, error) {
+	return s.Feedbacks.List(userID, filterByCreator)
 }
 
 func (s *FeedbackService) Create(userID string, courseID int, message string, rating int) error {

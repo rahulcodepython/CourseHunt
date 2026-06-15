@@ -34,7 +34,7 @@ func (r *CourseRepository) Categories() ([]models.Category, error) {
 	return categories, rows.Err()
 }
 
-func (r *CourseRepository) Summaries(publishedOnly bool, limit int, userID string, position string) ([]models.CourseSummary, error) {
+func (r *CourseRepository) Summaries(publishedOnly bool, limit int, userID string, filterByCreator bool) ([]models.CourseSummary, error) {
 	query := `
 		SELECT id, COALESCE(creator_id, ''), title, COALESCE(description,''), COALESCE(duration,''), COALESCE(students,0),
 			COALESCE(rating,0), COALESCE(reviews,0), COALESCE(price,0),
@@ -47,7 +47,7 @@ func (r *CourseRepository) Summaries(publishedOnly bool, limit int, userID strin
 	if publishedOnly {
 		query += ` AND is_published = true`
 	}
-	if position == "tutor" {
+	if filterByCreator {
 		args = append(args, userID)
 		query += fmt.Sprintf(` AND creator_id = $%d`, len(args))
 	}

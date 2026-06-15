@@ -1,8 +1,11 @@
 package v1
 
 import (
+	"coursehunt-backend/internals/middlewares"
 	"coursehunt-backend/internals/services"
 	"coursehunt-backend/internals/utils"
+	"slices"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,7 +27,7 @@ func (h *CourseHandler) PublicCourses(c *fiber.Ctx) error {
 }
 
 func (h *CourseHandler) Course(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid course ID")
 	}
@@ -44,7 +47,10 @@ func (h *CourseHandler) Categories(c *fiber.Ctx) error {
 }
 
 func (h *CourseHandler) AdminCourses(c *fiber.Ctx) error {
-	courses, err := h.Courses.AdminCourses(authUserID(c), authPosition(c))
+	user := c.Locals("user").(middlewares.UserContext)
+	// If user does not have courses:list-all permission, filter by creator
+	filterByCreator := !slices.Contains(user.Permissions, "courses:list-all")
+	courses, err := h.Courses.AdminCourses(user.UserID, filterByCreator)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch courses")
 	}
@@ -58,7 +64,8 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 	if err := c.BodyParser(&body); err != nil {
 		return utils.BadRequest(c, "Invalid request body")
 	}
-	course, err := h.Courses.Create(body.Title, authUserID(c))
+	userID := c.Locals("user").(middlewares.UserContext).UserID
+	course, err := h.Courses.Create(body.Title, userID)
 	if err != nil {
 		return utils.BadRequest(c, err.Error())
 	}
@@ -66,7 +73,7 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 }
 
 func (h *CourseHandler) UpdateCourse(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid course ID")
 	}
@@ -90,7 +97,7 @@ func (h *CourseHandler) UpdateCourse(c *fiber.Ctx) error {
 }
 
 func (h *CourseHandler) DeleteCourse(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid course ID")
 	}

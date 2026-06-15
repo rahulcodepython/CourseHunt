@@ -26,7 +26,7 @@ func (s *DashboardService) Admin() (models.AdminDashboardResponse, error) {
 	if err != nil {
 		return models.AdminDashboardResponse{}, err
 	}
-	courses, err := s.Courses.Summaries(true, 0, "", "")
+	courses, err := s.Courses.Summaries(true, 0, "", false)
 	if err != nil {
 		return models.AdminDashboardResponse{}, err
 	}

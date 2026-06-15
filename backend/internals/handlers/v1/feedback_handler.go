@@ -1,8 +1,12 @@
 package v1
 
 import (
+	"coursehunt-backend/internals/middlewares"
 	"coursehunt-backend/internals/services"
 	"coursehunt-backend/internals/utils"
+	"slices"
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -15,7 +19,9 @@ func NewFeedbackHandler() *FeedbackHandler {
 }
 
 func (h *FeedbackHandler) FeedbacksList(c *fiber.Ctx) error {
-	feedbacks, err := h.Feedbacks.List(authUserID(c), authPosition(c))
+	user := c.Locals("user").(middlewares.UserContext)
+	filterByCreator := !slices.Contains(user.Permissions, "feedback:list-all")
+	feedbacks, err := h.Feedbacks.List(user.UserID, filterByCreator)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch feedback")
 	}
@@ -31,14 +37,15 @@ func (h *FeedbackHandler) CreateFeedback(c *fiber.Ctx) error {
 	if err := c.BodyParser(&body); err != nil || body.CourseID == 0 || body.Message == "" {
 		return utils.BadRequest(c, "Missing required fields")
 	}
-	if err := h.Feedbacks.Create(authUserID(c), body.CourseID, body.Message, body.Rating); err != nil {
+	userID := c.Locals("user").(middlewares.UserContext).UserID
+	if err := h.Feedbacks.Create(userID, body.CourseID, body.Message, body.Rating); err != nil {
 		return utils.InternalError(c, "Failed to submit feedback")
 	}
 	return utils.OK(c, "Feedback submitted successfully", fiber.Map{"message": "Feedback submitted successfully"})
 }
 
 func (h *FeedbackHandler) PinFeedback(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid feedback ID")
 	}
@@ -55,7 +62,7 @@ func (h *FeedbackHandler) PinFeedback(c *fiber.Ctx) error {
 }
 
 func (h *FeedbackHandler) DeleteFeedback(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid feedback ID")
 	}

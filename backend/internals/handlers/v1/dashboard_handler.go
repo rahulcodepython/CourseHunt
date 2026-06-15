@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"coursehunt-backend/internals/middlewares"
 	"coursehunt-backend/internals/services"
 	"coursehunt-backend/internals/utils"
 	"github.com/gofiber/fiber/v2"
@@ -24,7 +25,8 @@ func (h *DashboardHandler) DashboardAdmin(c *fiber.Ctx) error {
 }
 
 func (h *DashboardHandler) DashboardUser(c *fiber.Ctx) error {
-	data, err := h.Dashboard.User(authUserID(c))
+	userID := c.Locals("user").(middlewares.UserContext).UserID
+	data, err := h.Dashboard.User(userID)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch dashboard")
 	}

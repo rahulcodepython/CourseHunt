@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"strconv"
 	"time"
 
+	"coursehunt-backend/internals/middlewares"
 	"coursehunt-backend/internals/services"
 	"coursehunt-backend/internals/utils"
 
@@ -48,7 +50,7 @@ func (h *UpdateHandler) CreateUpdate(c *fiber.Ctx) error {
 }
 
 func (h *UpdateHandler) UpdateUpdate(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid update ID")
 	}
@@ -75,7 +77,7 @@ func (h *UpdateHandler) UpdateUpdate(c *fiber.Ctx) error {
 }
 
 func (h *UpdateHandler) DeleteUpdate(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid update ID")
 	}
@@ -86,7 +88,8 @@ func (h *UpdateHandler) DeleteUpdate(c *fiber.Ctx) error {
 }
 
 func (h *UpdateHandler) UnseenUpdates(c *fiber.Ctx) error {
-	updates, err := h.Service.GetUnseenAndMarkSeen(authUserID(c))
+	userID := c.Locals("user").(middlewares.UserContext).UserID
+	updates, err := h.Service.GetUnseenAndMarkSeen(userID)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch unseen updates")
 	}

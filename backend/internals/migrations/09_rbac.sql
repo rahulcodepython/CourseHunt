@@ -54,9 +54,11 @@ INSERT INTO permissions (name, description) VALUES
     ('users:ban',                    'Ban a user'),
     ('users:unban',                  'Unban a user'),
     ('users:assign-role',            'Change a user''s role'),
+    ('users:revoke-role',            'Revoke a user''s role'),
 
     -- Courses (admin / tutor)
-    ('courses:list-admin',           'View all courses in admin panel'),
+    ('courses:list-admin',           'View own courses in admin panel (for tutors)'),
+    ('courses:list-all',            'View all courses in admin panel (global)'),
     ('courses:create',               'Create a new course'),
     ('courses:update',               'Update an existing course'),
     ('courses:delete',               'Delete a course'),
@@ -72,7 +74,8 @@ INSERT INTO permissions (name, description) VALUES
     ('coupons:delete',               'Delete a coupon'),
 
     -- Feedback
-    ('feedback:list',                'List all feedback'),
+    ('feedback:list',                'List own feedback (for tutors)'),
+    ('feedback:list-all',            'List all feedback (global)'),
     ('feedback:create',              'Submit feedback'),
     ('feedback:pin',                 'Pin/unpin feedback'),
     ('feedback:delete',              'Delete feedback'),

@@ -4,6 +4,8 @@ import (
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/services"
 	"coursehunt-backend/internals/utils"
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -50,7 +52,7 @@ func (h *CouponHandler) CreateCoupon(c *fiber.Ctx) error {
 }
 
 func (h *CouponHandler) UpdateCoupon(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid coupon ID")
 	}
@@ -66,7 +68,7 @@ func (h *CouponHandler) UpdateCoupon(c *fiber.Ctx) error {
 }
 
 func (h *CouponHandler) DeleteCoupon(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid coupon ID")
 	}

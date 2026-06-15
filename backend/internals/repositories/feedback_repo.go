@@ -15,14 +15,14 @@ func NewFeedbackRepository() *FeedbackRepository {
 	return &FeedbackRepository{DB: database.DB}
 }
 
-func (r *FeedbackRepository) List(userID string, position string) ([]models.Feedback, error) {
+func (r *FeedbackRepository) List(userID string, filterByCreator bool) ([]models.Feedback, error) {
 	query := `
 		SELECT f.id, f.user_id, f.user_name, f.user_email, f.rating, f.course_id, f.course_name, f.message, COALESCE(f.is_pinned, FALSE), f.created_at 
 		FROM feedbacks f
 	`
 	args := []interface{}{}
 
-	if position == "tutor" {
+	if filterByCreator {
 		query += ` JOIN courses c ON f.course_id = c.id WHERE c.creator_id = $1`
 		args = append(args, userID)
 	}

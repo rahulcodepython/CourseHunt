@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"strconv"
+
+	"coursehunt-backend/internals/middlewares"
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/services"
 	"coursehunt-backend/internals/utils"
@@ -28,7 +31,8 @@ func (h *TransactionHandler) TransactionsAdmin(c *fiber.Ctx) error {
 }
 
 func (h *TransactionHandler) TransactionsUser(c *fiber.Ctx) error {
-	transactions, err := h.Transactions.ListUser(authUserID(c))
+	userID := c.Locals("user").(middlewares.UserContext).UserID
+	transactions, err := h.Transactions.ListUser(userID)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch transactions")
 	}
@@ -36,11 +40,12 @@ func (h *TransactionHandler) TransactionsUser(c *fiber.Ctx) error {
 }
 
 func (h *TransactionHandler) Checkout(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid course ID")
 	}
-	data, err := h.Transactions.Checkout(authUserID(c), id)
+	userID := c.Locals("user").(middlewares.UserContext).UserID
+	data, err := h.Transactions.Checkout(userID, id)
 	if err != nil {
 		return utils.BadRequest(c, "Course not found")
 	}
@@ -63,8 +68,9 @@ func (h *TransactionHandler) Purchase(c *fiber.Ctx) error {
 	if err := c.BodyParser(&body); err != nil || body.CourseID == 0 {
 		return utils.BadRequest(c, "Course ID is required")
 	}
+	userID := c.Locals("user").(middlewares.UserContext).UserID
 	user := &models.User{FirstName: body.FirstName, LastName: body.LastName, Phone: body.Phone, Address: body.Address, City: body.City, Zip: body.Zip, Country: body.Country}
-	transaction, err := h.Transactions.Purchase(authUserID(c), body.CourseID, body.CouponID, body.Price, user)
+	transaction, err := h.Transactions.Purchase(userID, body.CourseID, body.CouponID, body.Price, user)
 	if err != nil {
 		return utils.BadRequest(c, err.Error())
 	}
@@ -72,7 +78,7 @@ func (h *TransactionHandler) Purchase(c *fiber.Ctx) error {
 }
 
 func (h *TransactionHandler) InitiateRefund(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid transaction ID")
 	}
@@ -83,7 +89,7 @@ func (h *TransactionHandler) InitiateRefund(c *fiber.Ctx) error {
 }
 
 func (h *TransactionHandler) AcceptRefund(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid transaction ID")
 	}
@@ -94,7 +100,7 @@ func (h *TransactionHandler) AcceptRefund(c *fiber.Ctx) error {
 }
 
 func (h *TransactionHandler) RejectRefund(c *fiber.Ctx) error {
-	id, err := idParam(c)
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return utils.BadRequest(c, "Invalid transaction ID")
 	}

@@ -20,11 +20,11 @@ func (s *CourseService) Categories() ([]models.Category, error) {
 }
 
 func (s *CourseService) PublicCourses(limit int) ([]models.CourseSummary, error) {
-	return s.Courses.Summaries(true, limit, "", "")
+	return s.Courses.Summaries(true, limit, "", false)
 }
 
-func (s *CourseService) AdminCourses(userID string, position string) ([]models.CourseSummary, error) {
-	return s.Courses.Summaries(false, 0, userID, position)
+func (s *CourseService) AdminCourses(userID string, filterByCreator bool) ([]models.CourseSummary, error) {
+	return s.Courses.Summaries(false, 0, userID, filterByCreator)
 }
 
 func (s *CourseService) Course(id int) (*models.CourseDetail, error) {
