@@ -143,7 +143,7 @@ type Certificate struct {
 	UserID         string    `json:"userId"`
 	CourseID       int       `json:"courseId"`
 	CertificateURL string    `json:"certificateUrl"`
-	IssuedAt       time.Time `issuedAt`
+	IssuedAt       time.Time `json:"issuedAt"`
 }
 
 type DashboardStats struct {
@@ -216,14 +216,14 @@ type CheckoutResponse struct {
 }
 
 type Discussion struct {
-	ID        int       `json:"id"`
-	LessonID  int       `json:"lessonId"`
-	UserID    string    `json:"userId"`
-	UserName  string    `json:"userName"`
-	UserImage string    `json:"userImage"`
-	Role      string    `json:"role"`
-	Message   string    `json:"message"`
-	ParentID  *int      `json:"parentId,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID        int          `json:"id"`
+	LessonID  int          `json:"lessonId"`
+	UserID    string       `json:"userId"`
+	UserName  string       `json:"userName"`
+	UserImage string       `json:"userImage"`
+	Role      string       `json:"role"`
+	Message   string       `json:"message"`
+	ParentID  *int         `json:"parentId,omitempty"`
+	CreatedAt time.Time    `json:"createdAt"`
 	Replies   []Discussion `json:"replies,omitempty"`
 }

@@ -69,16 +69,18 @@ func setupProtectedRoutes(r fiber.Router, h *Handlers, cfg *config.Config) {
 	// 1. Dashboard Routes
 	// -------------------------------------------------------------------------
 	dashboard := protected.Group("/dashboard")
-	dashboard.Get("/admin", middlewares.RoleGuard("admin"), h.Dashboard.DashboardAdmin)
-	dashboard.Get("/user", middlewares.RoleGuard("student"), h.Dashboard.DashboardUser)
+	dashboard.Get("/admin", middlewares.PermissionGuard("dashboard:admin"), h.Dashboard.DashboardAdmin)
+	dashboard.Get("/user", middlewares.PermissionGuard("dashboard:user"), h.Dashboard.DashboardUser)
+
 	// -------------------------------------------------------------------------
 	// 2. User Management (Admin & Self)
 	// -------------------------------------------------------------------------
 	users := protected.Group("/users")
-	users.Get("/", middlewares.RoleGuard("admin"), h.Users.UsersList)
-	users.Post("/:id/ban", middlewares.RoleGuard("admin"), h.Users.BanUser)
-	users.Post("/:id/unban", middlewares.RoleGuard("admin"), h.Users.UnbanUser)
-	users.Patch("/:id/role", middlewares.RoleGuard("admin"), h.Users.SwitchRole)
+	users.Get("/", middlewares.PermissionGuard("users:list"), h.Users.UsersList)
+	users.Post("/:id/ban", middlewares.PermissionGuard("users:ban"), h.Users.BanUser)
+	users.Post("/:id/unban", middlewares.PermissionGuard("users:unban"), h.Users.UnbanUser)
+	users.Post("/:id/roles/assign", middlewares.PermissionGuard("users:assign-role"), h.Users.AssignRoles)
+	users.Post("/:id/roles/revoke", middlewares.PermissionGuard("users:revoke-role"), h.Users.RevokeRoles)
 	users.Get("/edit", h.Users.CurrentUser)
 	users.Patch("/edit", h.Users.UpdateUser)
 
@@ -87,16 +89,16 @@ func setupProtectedRoutes(r fiber.Router, h *Handlers, cfg *config.Config) {
 	// -------------------------------------------------------------------------
 	courses := protected.Group("/courses")
 	// Student: My Courses
-	courses.Get("/name", middlewares.RoleGuard("student"), h.Study.UserCourseNames)
-	courses.Get("/user", middlewares.RoleGuard("student"), h.Study.UserCourses)
+	courses.Get("/name", middlewares.PermissionGuard("courses:view-names"), h.Study.UserCourseNames)
+	courses.Get("/user", middlewares.PermissionGuard("courses:list-owned"), h.Study.UserCourses)
 	// Shared: Course details (authenticated)
 	courses.Get("/:id", h.Courses.Course)
-	// Tutor: Creation & Basic Editing
-	courses.Post("/", middlewares.RoleGuard("tutor"), h.Courses.CreateCourse)
-	courses.Put("/:id", middlewares.RoleGuard("tutor"), h.Courses.UpdateCourse)
-	courses.Delete("/:id", middlewares.RoleGuard("tutor"), h.Courses.DeleteCourse)
-	// Tutor: Admin-style Management
-	adminTutorCourses := courses.Group("/admin", middlewares.RoleGuard("tutor"))
+	// Tutor / Admin: Creation & Basic Editing
+	courses.Post("/", middlewares.PermissionGuard("courses:create"), h.Courses.CreateCourse)
+	courses.Put("/:id", middlewares.PermissionGuard("courses:update"), h.Courses.UpdateCourse)
+	courses.Delete("/:id", middlewares.PermissionGuard("courses:delete"), h.Courses.DeleteCourse)
+	// Tutor / Admin: Admin-style Management
+	adminTutorCourses := courses.Group("/admin", middlewares.PermissionGuard("courses:list-admin"))
 	adminTutorCourses.Get("/", h.Courses.AdminCourses)
 	adminTutorCourses.Post("/create", h.Courses.CreateCourse)
 	adminTutorCourses.Get("/edit/:id", h.Courses.Course)
@@ -106,64 +108,65 @@ func setupProtectedRoutes(r fiber.Router, h *Handlers, cfg *config.Config) {
 	// -------------------------------------------------------------------------
 	// 4. Coupon Management (Admin)
 	// -------------------------------------------------------------------------
-	coupons := protected.Group("/coupons", middlewares.RoleGuard("admin"))
+	coupons := protected.Group("/coupons", middlewares.PermissionGuard("coupons:list"))
 	coupons.Get("/", h.Coupons.CouponsList)
-	coupons.Post("/create", h.Coupons.CreateCoupon)
-	coupons.Patch("/edit/:id", h.Coupons.UpdateCoupon)
-	coupons.Delete("/edit/:id", h.Coupons.DeleteCoupon)
+	coupons.Post("/create", middlewares.PermissionGuard("coupons:create"), h.Coupons.CreateCoupon)
+	coupons.Patch("/edit/:id", middlewares.PermissionGuard("coupons:update"), h.Coupons.UpdateCoupon)
+	coupons.Delete("/edit/:id", middlewares.PermissionGuard("coupons:delete"), h.Coupons.DeleteCoupon)
 
 	// -------------------------------------------------------------------------
 	// 5. Feedback & Interactions
 	// -------------------------------------------------------------------------
 	feedback := protected.Group("/feedback")
-	feedback.Get("/", middlewares.RoleGuard("admin"), h.Feedback.FeedbacksList)
-	feedback.Post("/create", middlewares.RoleGuard("student"), h.Feedback.CreateFeedback)
-	feedback.Patch("/:id/pin", middlewares.RoleGuard("admin"), h.Feedback.PinFeedback)
-	feedback.Delete("/:id", middlewares.RoleGuard("admin"), h.Feedback.DeleteFeedback)
+	feedback.Get("/", middlewares.PermissionGuard("feedback:list"), h.Feedback.FeedbacksList)
+	feedback.Post("/create", middlewares.PermissionGuard("feedback:create"), h.Feedback.CreateFeedback)
+	feedback.Patch("/:id/pin", middlewares.PermissionGuard("feedback:pin"), h.Feedback.PinFeedback)
+	feedback.Delete("/:id", middlewares.PermissionGuard("feedback:delete"), h.Feedback.DeleteFeedback)
 
 	// -------------------------------------------------------------------------
 	// 6. Transactions & Commerce
 	// -------------------------------------------------------------------------
 	transactions := protected.Group("/transactions")
-	transactions.Get("/admin", middlewares.RoleGuard("admin"), h.Transactions.TransactionsAdmin)
-	transactions.Patch("/admin/:id/accept", middlewares.RoleGuard("admin"), h.Transactions.AcceptRefund)
-	transactions.Patch("/admin/:id/reject", middlewares.RoleGuard("admin"), h.Transactions.RejectRefund)
-	transactions.Patch("/:id/initiate", middlewares.RoleGuard("student"), h.Transactions.InitiateRefund)
-	transactions.Get("/user", middlewares.RoleGuard("student"), h.Transactions.TransactionsUser)
-	protected.Get("/checkout/:id", middlewares.RoleGuard("student"), h.Transactions.Checkout)
-	protected.Post("/purchase", middlewares.RoleGuard("student"), h.Transactions.Purchase)
+	transactions.Get("/admin", middlewares.PermissionGuard("transactions:list-admin"), h.Transactions.TransactionsAdmin)
+	transactions.Patch("/admin/:id/accept", middlewares.PermissionGuard("transactions:accept-refund"), h.Transactions.AcceptRefund)
+	transactions.Patch("/admin/:id/reject", middlewares.PermissionGuard("transactions:reject-refund"), h.Transactions.RejectRefund)
+	transactions.Patch("/:id/initiate", middlewares.PermissionGuard("transactions:initiate-refund"), h.Transactions.InitiateRefund)
+	transactions.Get("/user", middlewares.PermissionGuard("transactions:list-user"), h.Transactions.TransactionsUser)
+	protected.Get("/checkout/:id", middlewares.PermissionGuard("transactions:checkout"), h.Transactions.Checkout)
+	protected.Post("/purchase", middlewares.PermissionGuard("transactions:purchase"), h.Transactions.Purchase)
 
 	// -------------------------------------------------------------------------
 	// 7. Study Access
 	// -------------------------------------------------------------------------
-	study := protected.Group("/study", middlewares.RoleGuard("student"))
+	study := protected.Group("/study", middlewares.PermissionGuard("study:access"))
 	study.Get("/:id", h.Study.StudyData)
 	study.Post("/mark-read", h.Study.MarkLessonRead)
 	study.Post("/set-last-viewed", h.Study.SetLastViewed)
 
 	// -------------------------------------------------------------------------
-	// 8. Media Uploads (Tutor)
+	// 8. Media Uploads (Tutor / Admin)
 	// -------------------------------------------------------------------------
-	protected.Post("/upload-media", middlewares.RoleGuard("tutor"), h.Storage.UploadMedia)
+	protected.Post("/upload-media", middlewares.PermissionGuard("storage:upload-media"), h.Storage.UploadMedia)
 
 	// -------------------------------------------------------------------------
 	// 9. Recent Updates
 	// -------------------------------------------------------------------------
 	updates := protected.Group("/updates")
-	updates.Get("/unseen", middlewares.RoleGuard("student"), h.Updates.UnseenUpdates)
+	updates.Get("/unseen", middlewares.PermissionGuard("updates:list-unseen"), h.Updates.UnseenUpdates)
 	// Admin CRUD
-	adminUpdates := updates.Group("/admin", middlewares.RoleGuard("admin"))
+	adminUpdates := updates.Group("/admin", middlewares.PermissionGuard("updates:list-admin"))
 	adminUpdates.Get("/", h.Updates.AllUpdates)
 	adminUpdates.Post("/create", h.Updates.CreateUpdate)
 	adminUpdates.Patch("/edit/:id", h.Updates.UpdateUpdate)
 	adminUpdates.Delete("/edit/:id", h.Updates.DeleteUpdate)
+
 	// -------------------------------------------------------------------------
 	// 10. Discussions
 	// -------------------------------------------------------------------------
 	discussions := protected.Group("/discussions")
 	discussions.Get("/lesson/:lessonId", h.Discussions.ListByLesson)
 	discussions.Post("/", h.Discussions.Create)
-	discussions.Delete("/:id", middlewares.RoleGuard("tutor"), h.Discussions.Delete) // Only tutors/admins can delete
+	discussions.Delete("/:id", middlewares.PermissionGuard("discussions:delete"), h.Discussions.Delete)
 }
 
 func setupHandlers() *Handlers {

@@ -11,7 +11,7 @@ type User struct {
 	Email            string    `json:"email"`
 	EmailVerified    bool      `json:"email_verified"`
 	Image            string    `json:"image"`
-	Position         string    `json:"position"` // student, tutor, or admin
+	Roles            []Role    `json:"roles"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 	Phone            string    `json:"phone"`
@@ -22,6 +22,11 @@ type User struct {
 	Banned           bool      `json:"banned"`
 	PurchasedCourses int       `json:"purchasedCourses"`
 	CompletedCourses int       `json:"completedCourses"`
+}
+
+type Role struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 func (u *User) ToResponse() UserResponse {
@@ -36,7 +41,7 @@ func (u *User) ToResponse() UserResponse {
 		Country:          u.Country,
 		Zip:              u.Zip,
 		Email:            u.Email,
-		Role:             u.Position,
+		Roles:            u.Roles,
 		Avatar:           Media{URL: u.Image, FileType: "image"},
 		CreatedAt:        u.CreatedAt,
 		UpdatedAt:        u.UpdatedAt,
@@ -48,7 +53,7 @@ func (u *User) ToResponse() UserResponse {
 type AuthUser struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
-	Position string `json:"position"`
+	Roles []Role `json:"roles"`
 }
 
 type UserResponse struct {
@@ -62,7 +67,7 @@ type UserResponse struct {
 	Country          string    `json:"country"`
 	Zip              string    `json:"zip"`
 	Email            string    `json:"email"`
-	Role             string    `json:"role"`
+	Roles            []Role    `json:"roles"`
 	Avatar           Media     `json:"avatar"`
 	CreatedAt        time.Time `json:"createdAt"`
 	UpdatedAt        time.Time `json:"updatedAt"`

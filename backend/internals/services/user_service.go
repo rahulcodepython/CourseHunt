@@ -33,6 +33,10 @@ func (s *UserService) Unban(id string) error {
 	return s.Users.SetBanStatus(id, false)
 }
 
-func (s *UserService) SwitchRole(id string, role string) error {
-	return s.Users.SetRole(id, role)
+func (s *UserService) AssignRoles(id string, roleIDs []int) error {
+	return s.Users.AssignRoles(id, roleIDs)
+}
+
+func (s *UserService) RevokeRoles(id string, roleIDs []int) error {
+	return s.Users.RevokeRoles(id, roleIDs)
 }

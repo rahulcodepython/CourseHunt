@@ -15,10 +15,32 @@ func NewUserRepository() *UserRepository {
 	return &UserRepository{DB: database.DB}
 }
 
+// userRoles returns the list of roles assigned to the user.
+func (r *UserRepository) userRoles(id string) ([]models.Role, error) {
+	rows, err := r.DB.Query(
+		`SELECT ro.id, ro.name FROM roles ro
+		 INNER JOIN user_roles ur ON ur.role_id = ro.id
+		 WHERE ur.user_id = $1`, id)
+	if err != nil {
+		return []models.Role{}, nil
+	}
+	defer rows.Close()
+
+	var roles []models.Role
+	for rows.Next() {
+		var role models.Role
+		if err := rows.Scan(&role.ID, &role.Name); err != nil {
+			continue
+		}
+		roles = append(roles, role)
+	}
+	return roles, nil
+}
+
 func (r *UserRepository) FindByEmail(email string) (*models.User, error) {
 	row := r.DB.QueryRow(`
 		SELECT u.id, u.name, COALESCE(p.first_name,''), COALESCE(p.last_name,''), u.email, COALESCE(u.image,''),
-			COALESCE(u.role,'student'), COALESCE(p.phone,''), COALESCE(p.address,''), COALESCE(p.city,''),
+			COALESCE(p.phone,''), COALESCE(p.address,''), COALESCE(p.city,''),
 			COALESCE(p.country,''), COALESCE(p.zip,''), COALESCE(u.banned,false),
 			COALESCE(p.purchased_courses,0), COALESCE(p.completed_courses,0), u."createdAt", u."updatedAt"
 		FROM "user" u
@@ -27,15 +49,20 @@ func (r *UserRepository) FindByEmail(email string) (*models.User, error) {
 	`, email)
 
 	var user models.User
-	err := row.Scan(&user.ID, &user.Name, &user.FirstName, &user.LastName, &user.Email, &user.Image, &user.Position, &user.Phone, &user.Address, &user.City, &user.Country, &user.Zip, &user.Banned, &user.PurchasedCourses, &user.CompletedCourses, &user.CreatedAt, &user.UpdatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.FirstName, &user.LastName, &user.Email, &user.Image, &user.Phone, &user.Address, &user.City, &user.Country, &user.Zip, &user.Banned, &user.PurchasedCourses, &user.CompletedCourses, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
 	user.LegacyID = user.ID
-	return &user, err
+	roles, _ := r.userRoles(user.ID)
+	user.Roles = roles
+	return &user, nil
 }
 
 func (r *UserRepository) FindByID(id string) (*models.User, error) {
 	row := r.DB.QueryRow(`
 		SELECT u.id, u.name, COALESCE(p.first_name,''), COALESCE(p.last_name,''), u.email, COALESCE(u.image,''),
-			COALESCE(u.role,'student'), COALESCE(p.phone,''), COALESCE(p.address,''), COALESCE(p.city,''),
+			COALESCE(p.phone,''), COALESCE(p.address,''), COALESCE(p.city,''),
 			COALESCE(p.country,''), COALESCE(p.zip,''), COALESCE(u.banned,false),
 			COALESCE(p.purchased_courses,0), COALESCE(p.completed_courses,0), u."createdAt", u."updatedAt"
 		FROM "user" u
@@ -44,15 +71,20 @@ func (r *UserRepository) FindByID(id string) (*models.User, error) {
 	`, id)
 
 	var user models.User
-	err := row.Scan(&user.ID, &user.Name, &user.FirstName, &user.LastName, &user.Email, &user.Image, &user.Position, &user.Phone, &user.Address, &user.City, &user.Country, &user.Zip, &user.Banned, &user.PurchasedCourses, &user.CompletedCourses, &user.CreatedAt, &user.UpdatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.FirstName, &user.LastName, &user.Email, &user.Image, &user.Phone, &user.Address, &user.City, &user.Country, &user.Zip, &user.Banned, &user.PurchasedCourses, &user.CompletedCourses, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
 	user.LegacyID = user.ID
-	return &user, err
+	roles, _ := r.userRoles(id)
+	user.Roles = roles
+	return &user, nil
 }
 
 func (r *UserRepository) List() ([]models.User, error) {
 	rows, err := r.DB.Query(`
 		SELECT u.id, u.name, COALESCE(p.first_name,''), COALESCE(p.last_name,''), u.email, COALESCE(u.image,''),
-			COALESCE(u.role,'student'), COALESCE(p.phone,''), COALESCE(p.address,''), COALESCE(p.city,''),
+			COALESCE(p.phone,''), COALESCE(p.address,''), COALESCE(p.city,''),
 			COALESCE(p.country,''), COALESCE(p.zip,''), COALESCE(u.banned,false),
 			COALESCE(p.purchased_courses,0), COALESCE(p.completed_courses,0), u."createdAt", u."updatedAt"
 		FROM "user" u
@@ -67,10 +99,12 @@ func (r *UserRepository) List() ([]models.User, error) {
 	users := []models.User{}
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.ID, &user.Name, &user.FirstName, &user.LastName, &user.Email, &user.Image, &user.Position, &user.Phone, &user.Address, &user.City, &user.Country, &user.Zip, &user.Banned, &user.PurchasedCourses, &user.CompletedCourses, &user.CreatedAt, &user.UpdatedAt); err != nil {
+		if err := rows.Scan(&user.ID, &user.Name, &user.FirstName, &user.LastName, &user.Email, &user.Image, &user.Phone, &user.Address, &user.City, &user.Country, &user.Zip, &user.Banned, &user.PurchasedCourses, &user.CompletedCourses, &user.CreatedAt, &user.UpdatedAt); err != nil {
 			return nil, err
 		}
 		user.LegacyID = user.ID
+		roles, _ := r.userRoles(user.ID)
+		user.Roles = roles
 		users = append(users, user)
 	}
 	return users, rows.Err()
@@ -118,7 +152,36 @@ func (r *UserRepository) SetBanStatus(id string, banned bool) error {
 	return err
 }
 
-func (r *UserRepository) SetRole(id string, role string) error {
-	_, err := r.DB.Exec(`UPDATE "user" SET role = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2`, role, id)
-	return err
+// AssignRoles adds the specified roles to the user's roles.
+func (r *UserRepository) AssignRoles(id string, roleIDs []int) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	for _, roleID := range roleIDs {
+		if _, err := tx.Exec(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, id, roleID); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// RevokeRoles removes the specified roles from the user's roles.
+func (r *UserRepository) RevokeRoles(id string, roleIDs []int) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	for _, roleID := range roleIDs {
+		if _, err := tx.Exec(`DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2`, id, roleID); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }

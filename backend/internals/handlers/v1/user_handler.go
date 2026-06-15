@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"coursehunt-backend/internals/middlewares"
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/services"
 	"coursehunt-backend/internals/utils"
@@ -16,7 +17,8 @@ func NewUserHandler() *UserHandler {
 }
 
 func (h *UserHandler) CurrentUser(c *fiber.Ctx) error {
-	user, err := h.Users.Current(authUserID(c))
+	userID := c.Locals("user").(middlewares.UserContext).UserID
+	user, err := h.Users.Current(userID)
 	if err != nil {
 		return utils.Unauthorized(c, "User not found")
 	}
@@ -46,7 +48,8 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		user.Image = body.Avatar.URL
 	}
 
-	updated, err := h.Users.Update(authUserID(c), &user)
+	userID := c.Locals("user").(middlewares.UserContext).UserID
+	updated, err := h.Users.Update(userID, &user)
 	if err != nil {
 		return utils.InternalError(c, "Failed to update user")
 	}
@@ -67,15 +70,32 @@ func (h *UserHandler) UnbanUser(c *fiber.Ctx) error {
 	return utils.OK(c, "User unbanned successfully", nil)
 }
 
-func (h *UserHandler) SwitchRole(c *fiber.Ctx) error {
+func (h *UserHandler) AssignRoles(c *fiber.Ctx) error {
 	var body struct {
-		Role string `json:"role"`
+		RoleIDs []int `json:"roleIds"`
 	}
-	if err := c.BodyParser(&body); err != nil || body.Role == "" {
-		return utils.BadRequest(c, "Invalid role")
+	if err := c.BodyParser(&body); err != nil || len(body.RoleIDs) == 0 {
+		return utils.BadRequest(c, "Invalid request body or empty roleIds")
 	}
-	if err := h.Users.SwitchRole(c.Params("id"), body.Role); err != nil {
-		return utils.InternalError(c, "Failed to switch role")
+
+	if err := h.Users.AssignRoles(c.Params("id"), body.RoleIDs); err != nil {
+		return utils.InternalError(c, "Failed to assign roles")
 	}
-	return utils.OK(c, "User role updated successfully", nil)
+
+	return utils.OK(c, "Roles assigned successfully", nil)
+}
+
+func (h *UserHandler) RevokeRoles(c *fiber.Ctx) error {
+	var body struct {
+		RoleIDs []int `json:"roleIds"`
+	}
+	if err := c.BodyParser(&body); err != nil || len(body.RoleIDs) == 0 {
+		return utils.BadRequest(c, "Invalid request body or empty roleIds")
+	}
+
+	if err := h.Users.RevokeRoles(c.Params("id"), body.RoleIDs); err != nil {
+		return utils.InternalError(c, "Failed to revoke roles")
+	}
+
+	return utils.OK(c, "Roles revoked successfully", nil)
 }

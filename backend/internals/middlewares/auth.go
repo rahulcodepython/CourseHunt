@@ -22,9 +22,10 @@ import (
 // UserContext holds the authenticated user's identity, extracted from the JWT.
 // It is stored in Fiber's request-scoped locals under the key "user".
 type UserContext struct {
-	UserID   string `json:"id"`
-	Email    string `json:"email"`
-	Position string `json:"position"`
+	UserID      string   `json:"user_id"`
+	Email       string   `json:"email"`
+	Roles       []string `json:"roles"`
+	Permissions []string `json:"permissions"`
 }
 
 // =============================================================================
@@ -72,23 +73,41 @@ func parseToken(tokenBytes []byte, keySet jwk.Set) (jwt.Token, error) {
 // Claim Extraction
 // =============================================================================
 
-// extractUserContext builds a UserContext from a validated JWT token.
-// Falls back gracefully when optional claims (email, role) are absent.
-func extractUserContext(token jwt.Token) UserContext {
-	var email, position string
+// extractStringSlice safely reads a []string from a JWT private claim.
+// Returns an empty slice when the claim is absent or of an unexpected type.
+func extractStringSlice(token jwt.Token, key string) []string {
+	raw, ok := token.Get(key)
+	if !ok {
+		return []string{}
+	}
 
+	// Better-Auth encodes arrays as []interface{}
+	rawSlice, ok := raw.([]interface{})
+	if !ok {
+		return []string{}
+	}
+
+	result := make([]string, 0, len(rawSlice))
+	for _, v := range rawSlice {
+		if s, ok := v.(string); ok {
+			result = append(result, s)
+		}
+	}
+	return result
+}
+
+// extractUserContext builds a UserContext from a validated JWT token.
+func extractUserContext(token jwt.Token) UserContext {
+	var email string
 	if raw, ok := token.Get("email"); ok {
 		email = fmt.Sprintf("%v", raw)
 	}
 
-	if raw, ok := token.Get("position"); ok {
-		position = fmt.Sprintf("%v", raw)
-	}
-
 	return UserContext{
-		UserID:   token.Subject(),
-		Email:    email,
-		Position: position,
+		UserID:      token.Subject(),
+		Email:       email,
+		Roles:       extractStringSlice(token, "roles"),
+		Permissions: extractStringSlice(token, "permissions"),
 	}
 }
 
@@ -100,7 +119,7 @@ func extractUserContext(token jwt.Token) UserContext {
 // populates c.Locals("user") with a UserContext on success.
 //
 // This middleware must be mounted before any guard.
-// It does NOT enforce a specific role — use guards for that.
+// It does NOT enforce a specific permission — use PermissionGuard for that.
 func BaseAuthMiddleware(cfg *config.Config) fiber.Handler {
 	// Initialize cache if it hasn't been initialized yet
 	if jwksCache == nil {
@@ -140,32 +159,22 @@ func BaseAuthMiddleware(cfg *config.Config) fiber.Handler {
 	}
 }
 
-// RoleGuard restricts access to users whose role matches the allowed role.
-// It supports role hierarchy (e.g., admin can access tutor/student routes).
-func RoleGuard(allowedRole string) fiber.Handler {
-	allowedRoles := make([]string, 0, 2)
-	switch allowedRole {
-	case "student":
-		allowedRoles = append(allowedRoles, "student", "admin")
-	case "tutor":
-		allowedRoles = append(allowedRoles, "tutor", "admin")
-	case "admin":
-		allowedRoles = append(allowedRoles, "admin")
-	}
-
+// PermissionGuard restricts access to users who have the specified permission
+// embedded in their JWT payload. Use this instead of the old RoleGuard.
+//
+// Example:
+//
+//	routes.Post("/courses", middlewares.PermissionGuard("courses:create"), handler)
+func PermissionGuard(requiredPermission string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user, ok := c.Locals("user").(UserContext)
 		if !ok {
 			return utils.Unauthorized(c, "Unauthorized")
 		}
 
-		if len(allowedRoles) == 0 {
-			return c.Next()
-		}
-
-		if permitted := slices.Contains(allowedRoles, user.Position); !permitted {
+		if !slices.Contains(user.Permissions, requiredPermission) {
 			return c.Status(fiber.StatusForbidden).
-				JSON(fiber.Map{"error": "Permission denied"})
+				JSON(fiber.Map{"error": "Permission denied: " + requiredPermission + " required"})
 		}
 
 		return c.Next()
