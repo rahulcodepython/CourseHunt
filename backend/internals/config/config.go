@@ -9,16 +9,19 @@ import (
 
 // Config holds all application configuration
 type Config struct {
-	Port           string
-	DatabaseURL    string
-	MinioEnd       string
-	MinioAccess    string
-	MinioSecret    string
-	MinioBucket    string
-	MinioSecure    bool
-	MinioBaseURL   string
-	AllowedOrigins string
-	JWKSURL        string
+	Port                  string
+	DatabaseURL           string
+	MinioEnd              string
+	MinioAccess           string
+	MinioSecret           string
+	MinioBucket           string
+	MinioSecure           bool
+	MinioBaseURL          string
+	AllowedOrigins        string
+	JWKSURL               string
+	RazorpayKeyID         string
+	RazorpaySecret        string
+	RazorpayWebhookSecret string
 }
 
 var CFG *Config
@@ -33,16 +36,19 @@ func LoadConfig() (*Config, error) {
 	}
 
 	CFG = &Config{
-		Port:           getEnv("PORT", "8080"),
-		DatabaseURL:    getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/coursehunt?sslmode=disable"),
-		MinioEnd:       getEnv("MINIO_ENDPOINT", "localhost:9000"),
-		MinioAccess:    getEnv("MINIO_ACCESS_KEY", "minioadmin"),
-		MinioSecret:    getEnv("MINIO_SECRET_KEY", "minioadmin"),
-		MinioBucket:    getEnv("MINIO_BUCKET", "coursehunt"),
-		MinioBaseURL:   getEnv("MINIO_BASE_URL", "http://localhost:9000/coursehunt"),
-		MinioSecure:    getEnvAsBool("MINIO_SECURE", "false"),
-		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "http://localhost:3000"),
-		JWKSURL:        getEnv("JWKS_URL", "http://localhost:3000/api/auth/jwks"),
+		Port:                  getEnv("PORT", "8080"),
+		DatabaseURL:           getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/coursehunt?sslmode=disable"),
+		MinioEnd:              getEnv("MINIO_ENDPOINT", "localhost:9000"),
+		MinioAccess:           getEnv("MINIO_ACCESS_KEY", "minioadmin"),
+		MinioSecret:           getEnv("MINIO_SECRET_KEY", "minioadmin"),
+		MinioBucket:           getEnv("MINIO_BUCKET", "coursehunt"),
+		MinioBaseURL:          getEnv("MINIO_BASE_URL", "http://localhost:9000/coursehunt"),
+		MinioSecure:           getEnvAsBool("MINIO_SECURE", "false"),
+		AllowedOrigins:        getEnv("ALLOWED_ORIGINS", "http://localhost:3000"),
+		JWKSURL:               getEnv("JWKS_URL", "http://localhost:3000/api/auth/jwks"),
+		RazorpayKeyID:         getEnv("RAZORPAY_KEY_ID", ""),
+		RazorpaySecret:        getEnv("RAZORPAY_SECRET", ""),
+		RazorpayWebhookSecret: getEnv("RAZORPAY_WEBHOOK_SECRET", ""),
 	}
 
 	if err := validateConfig(CFG); err != nil {
