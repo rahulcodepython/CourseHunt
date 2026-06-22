@@ -1,0 +1,11 @@
+package notes
+
+import (
+	"github.com/gofiber/fiber/v2"
+)
+
+func (m *NotesModule) Routes(protected fiber.Router) {
+	notes := protected.Group("/notes")
+	notes.Get("/lesson/:lessonID", m.ReadController)
+	notes.Post("/lesson/:lessonID", m.UpsertController)
+}

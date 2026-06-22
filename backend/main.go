@@ -9,6 +9,7 @@ import (
 	"coursehunt-backend/internals/config"
 	"coursehunt-backend/internals/database"
 	"coursehunt-backend/internals/routes"
+
 	"coursehunt-backend/internals/storage"
 	"coursehunt-backend/internals/utils"
 
@@ -48,7 +49,8 @@ func main() {
 	})
 
 	// Setup router
-	routes.Setup(app)
+	appRouter := routes.NewAppRouter(app, database.DB, cfg)
+	appRouter.SetUp()
 
 	// Gracefully stop the server on SIGINT or SIGTERM.
 	quit := make(chan os.Signal, 1)
