@@ -1,4 +1,4 @@
-package categories
+package category
 
 func (c *CategoryModule) ListService() ([]CategoryWithSubs, error) {
 	return c.ListRepository()

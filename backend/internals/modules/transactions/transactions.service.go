@@ -2,8 +2,6 @@ package transactions
 
 import (
 	"fmt"
-
-	"coursehunt-backend/internals/config"
 )
 
 func (m *TransactionsModule) InitiateService(userID string, req InitiateTransactionRequest) (*InitiateTransactionResponse, error) {
@@ -60,7 +58,7 @@ func (m *TransactionsModule) InitiateService(userID string, req InitiateTransact
 		RazorpayOrderID: order.ID,
 		Amount:          amount,
 		Currency:        "INR",
-		RazorpayKey:     config.CFG.RazorpayKeyID,
+		RazorpayKey:     m.Config.RazorpayKeyID,
 	}, nil
 }
 

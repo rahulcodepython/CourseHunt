@@ -17,25 +17,17 @@ import (
 )
 
 func main() {
-	// Load application configuration from the environment.
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatalf("[main] config: %v", err)
-	}
+	// Load application configuration
+	cfg := config.Load()
 
-	// Connect to PostgreSQL and close the pool during shutdown.
-	database.ConnectDB()
+	// Connect to the database
+	db := database.Connect(cfg)
 
-	// Close the database connection when the program exits.
-	defer database.Close()
+	// Ensure it closes on application exit
+	defer database.Close(db)
 
-	// Apply SQL migrations before serving requests.
-	if err := database.RunMigrations(); err != nil {
-		log.Fatalf("[main] migrations: %v", err)
-	}
-
-	// Connect to MinIO; the API can still run if file storage is temporarily down.
-	err = storage.SetupMinio()
+	// Initialize MinIO storage, continuing without file storage if initialization fails.
+	err := storage.SetupMinio(cfg)
 	if err != nil {
 		log.Printf("[main] minio connect warning: %v (continuing without file storage)", err)
 	}
@@ -49,8 +41,8 @@ func main() {
 	})
 
 	// Setup router
-	appRouter := routes.NewAppRouter(app, database.DB, cfg)
-	appRouter.SetUp()
+	router := routes.NewRouter(app, db, cfg)
+	router.SetUp()
 
 	// Gracefully stop the server on SIGINT or SIGTERM.
 	quit := make(chan os.Signal, 1)

@@ -1,4 +1,4 @@
-package categories
+package category
 
 import (
 	"database/sql"

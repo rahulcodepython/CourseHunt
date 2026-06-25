@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 	"io/fs"
 	"log"
 	"sort"
@@ -14,42 +13,28 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var DB *sql.DB
-
-func ConnectDB() {
-	var err error
-	cfg := config.CFG
-
-	DB, err = sql.Open("postgres", cfg.DatabaseURL)
+// Connect replaces init() — takes config, returns db, no globals
+func Connect(cfg *config.Config) *sql.DB {
+	db, err := sql.Open("postgres", cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}
 
-	err = DB.Ping()
-	if err != nil {
+	if err = db.Ping(); err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	log.Println("Connected to PostgreSQL")
+	log.Println("[db] Connected to PostgreSQL")
+	runMigrations(db) // separate concern
+	return db         // returns db, no global var
 }
 
-func Close() {
-	if DB == nil {
-		log.Printf("Database is not initialized")
-	}
-
-	if err := DB.Close(); err != nil {
-		log.Printf("[db] database close: %v", err)
-	}
-}
-
-func RunMigrations() error {
+func runMigrations(db *sql.DB) {
 	entries, err := fs.ReadDir(migrations.FS, ".")
 	if err != nil {
-		return fmt.Errorf("read migrations dir: %w", err)
+		log.Fatalf("Failed to read migrations: %v", err)
 	}
 
-	// Sort by filename so migrations run in order 001_, 002_, ...
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Name() < entries[j].Name()
 	})
@@ -59,19 +44,23 @@ func RunMigrations() error {
 			continue
 		}
 
-		path := e.Name()
-		content, err := migrations.FS.ReadFile(path)
+		content, err := migrations.FS.ReadFile(e.Name())
 		if err != nil {
-			return fmt.Errorf("read %s: %w", path, err)
+			log.Fatalf("Failed to read migration %s: %v", e.Name(), err)
 		}
 
-		if _, err = DB.Exec(string(content)); err != nil {
-			return fmt.Errorf("execute %s: %w", e.Name(), err)
+		if _, err = db.Exec(string(content)); err != nil {
+			log.Fatalf("Failed to execute migration %s: %v", e.Name(), err)
 		}
 
 		log.Printf("[db] Migration applied: %s", e.Name())
 	}
 
 	log.Println("[db] All migrations complete")
-	return nil
+}
+
+func Close(db *sql.DB) {
+	if err := db.Close(); err != nil {
+		log.Printf("[db] close error: %v", err)
+	}
 }

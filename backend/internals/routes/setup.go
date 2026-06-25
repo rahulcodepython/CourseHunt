@@ -5,8 +5,8 @@ import (
 
 	"coursehunt-backend/internals/config"
 	"coursehunt-backend/internals/modules/cart"
-	category "coursehunt-backend/internals/modules/category"
-	certificate "coursehunt-backend/internals/modules/certificate"
+	"coursehunt-backend/internals/modules/category"
+	"coursehunt-backend/internals/modules/certificate"
 	"coursehunt-backend/internals/modules/chapters"
 	"coursehunt-backend/internals/modules/coupons"
 	"coursehunt-backend/internals/modules/courses"
@@ -33,7 +33,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-type AppRouter struct {
+type Router struct {
 	App *fiber.App
 	API fiber.Router
 	DB  *sql.DB
@@ -59,57 +59,42 @@ type AppRouter struct {
 	Transactions *transactions.TransactionsModule
 }
 
-func NewAppRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *AppRouter {
-	cartMod := cart.NewCartModule(db)
-	wishlistMod := wishlist.NewWishlistModule(db)
-	categoriesMod := category.NewCategoryModule(db)
-	certificatesMod := certificate.NewCertificateModule(db)
-	notesMod := notes.NewNotesModule(db)
-	discussionsMod := discussions.NewDiscussionsModule(db)
-	usersMod := users.NewUsersModule(db)
-	dashboardMod := dashboard.NewDashboardModule(db)
-	profileMod := profile.NewProfileModule(db)
+func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
+	// Independent modules (no cross-deps)
+	cart := cart.NewCartModule(db)
+	wishlist := wishlist.NewWishlistModule(db)
+	categories := category.NewCategoryModule(db)
+	certificates := certificate.NewCertificateModule(db)
+	notes := notes.NewNotesModule(db)
+	discussions := discussions.NewDiscussionsModule(db)
+	users := users.NewUsersModule(db)
+	dashboard := dashboard.NewDashboardModule(db)
+	profile := profile.NewProfileModule(db)
+	updates := updates.NewUpdatesModule(db)
+	feedbacks := feedbacks.NewFeedbacksModule(db)
+	coupons := coupons.NewCouponsModule(db)
+	quiz := quiz.NewQuizModule(db)
+	enrollments := enrollments.NewEnrollmentsModule(db)
+	chapters := chapters.NewChaptersModule(db)
 
-	updatesMod := updates.NewUpdatesModule(db)
-	feedbacksMod := feedbacks.NewFeedbacksModule(db)
-	couponsMod := coupons.NewCouponsModule(db)
-	quizMod := quiz.NewQuizModule(db)
-	enrollmentsMod := enrollments.NewEnrollmentsModule(db)
-	chaptersMod := chapters.NewChaptersModule(db)
-	lessonsMod := lessons.NewLessonsModule(db, enrollmentsMod, notesMod, quizMod)
-	coursesMod := courses.NewCoursesModule(db, chaptersMod, lessonsMod, enrollmentsMod)
-
+	// Modules with cross-deps — order matters, clearly visible
+	lessons := lessons.NewLessonsModule(db, enrollments, notes, quiz)
+	courses := courses.NewCoursesModule(db, chapters, lessons, enrollments)
 	rzp := razorpaypkg.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret)
-	transactionsMod := transactions.NewTransactionsModule(db, couponsMod, coursesMod, enrollmentsMod, rzp)
+	transactions := transactions.NewTransactionsModule(db, coupons, courses, enrollments, rzp, cfg)
 
-	return &AppRouter{
-		App: app,
-		API: app.Group("/api"),
-		DB:  db,
-		CFG: cfg,
-
-		Cart:         cartMod,
-		Wishlist:     wishlistMod,
-		Categories:   categoriesMod,
-		Certificates: certificatesMod,
-		Notes:        notesMod,
-		Discussions:  discussionsMod,
-		Users:        usersMod,
-		Dashboard:    dashboardMod,
-		Profile:      profileMod,
-		Updates:      updatesMod,
-		Feedbacks:    feedbacksMod,
-		Coupons:      couponsMod,
-		Quiz:         quizMod,
-		Enrollments:  enrollmentsMod,
-		Chapters:     chaptersMod,
-		Lessons:      lessonsMod,
-		Courses:      coursesMod,
-		Transactions: transactionsMod,
+	return &Router{
+		App: app, API: app.Group("/api"), DB: db, CFG: cfg,
+		Cart: cart, Wishlist: wishlist, Categories: categories,
+		Certificates: certificates, Notes: notes, Discussions: discussions,
+		Users: users, Dashboard: dashboard, Profile: profile,
+		Updates: updates, Feedbacks: feedbacks, Coupons: coupons,
+		Quiz: quiz, Enrollments: enrollments, Chapters: chapters,
+		Lessons: lessons, Courses: courses, Transactions: transactions,
 	}
 }
 
-func (r *AppRouter) SetUp() {
+func (r *Router) SetUp() {
 	// Global Middlewares
 	r.App.Use(middlewares.LoggerMiddleware())
 	r.App.Use(middlewares.RateLimiterMiddleware())

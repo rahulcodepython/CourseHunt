@@ -3,6 +3,7 @@ package transactions
 import (
 	"database/sql"
 
+	"coursehunt-backend/internals/config"
 	"coursehunt-backend/internals/modules/coupons"
 	"coursehunt-backend/internals/modules/courses"
 	"coursehunt-backend/internals/modules/enrollments"
@@ -15,6 +16,7 @@ type TransactionsModule struct {
 	Courses     *courses.CoursesModule
 	Enrollments *enrollments.EnrollmentsModule
 	Razorpay    *razorpaypkg.Client
+	Config      *config.Config
 }
 
 func NewTransactionsModule(
@@ -23,6 +25,7 @@ func NewTransactionsModule(
 	crs *courses.CoursesModule,
 	enr *enrollments.EnrollmentsModule,
 	rzp *razorpaypkg.Client,
+	cfg *config.Config,
 ) *TransactionsModule {
 	return &TransactionsModule{
 		DB:          db,
@@ -30,5 +33,6 @@ func NewTransactionsModule(
 		Courses:     crs,
 		Enrollments: enr,
 		Razorpay:    rzp,
+		Config:      cfg,
 	}
 }

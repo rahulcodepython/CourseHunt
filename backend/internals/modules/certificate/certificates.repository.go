@@ -1,4 +1,4 @@
-package certificates
+package certificate
 
 func (c *CertificateModule) IssueRepository(userID, courseID string) (*Certificate, error) {
 	var cert Certificate

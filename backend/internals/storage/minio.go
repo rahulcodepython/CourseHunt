@@ -21,8 +21,7 @@ type MinioStorage struct {
 var MINIO *MinioStorage
 
 // SetupMinio initializes MinIO client and ensures bucket exists
-func SetupMinio() error {
-	cfg := config.CFG
+func SetupMinio(cfg *config.Config) error {
 
 	if cfg.MinioEnd == "" || cfg.MinioAccess == "" || cfg.MinioSecret == "" || cfg.MinioBucket == "" {
 		return fmt.Errorf("minio config is invalid")

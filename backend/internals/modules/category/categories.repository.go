@@ -1,4 +1,4 @@
-package categories
+package category
 
 func (c *CategoryModule) ListRepository() ([]CategoryWithSubs, error) {
 	rows, err := c.DB.Query(`SELECT id, name, created_at FROM categories ORDER BY name`)

@@ -1,4 +1,4 @@
-package categories
+package category
 
 import (
 	"coursehunt-backend/internals/middlewares"
