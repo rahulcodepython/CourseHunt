@@ -9,7 +9,7 @@ func (m *CouponsModule) CreateService(createdBy string, req CreateCouponRequest)
 func (m *CouponsModule) UpdateService(id string, req UpdateCouponRequest) (*Coupon, error) {
 	return m.UpdateRepository(id, req)
 }
-func (m *CouponsModule) DeleteService(id string) error { 
+func (m *CouponsModule) DeleteService(id string) (string, error) { 
 	return m.DeleteRepository(id) 
 }
 func (m *CouponsModule) CheckService(code, courseID string) CouponCheckResponse {

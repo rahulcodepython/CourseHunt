@@ -17,10 +17,11 @@ func (c *CartModule) AddController(ctx *fiber.Ctx) error {
 }
 
 func (c *CartModule) RemoveController(ctx *fiber.Ctx) error {
-	if err := c.RemoveService(utils.GetUserID(ctx), ctx.Params("courseID")); err != nil {
+	id, err := c.RemoveService(utils.GetUserID(ctx), ctx.Params("courseID"))
+	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to remove from cart", nil, err.Error())
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "removed from cart", nil, nil)
+	return utils.JSON(ctx, http.StatusOK, true, "removed from cart", map[string]string{"id": id}, nil)
 }
 
 func (c *CartModule) ListController(ctx *fiber.Ctx) error {
@@ -35,5 +36,5 @@ func (c *CartModule) ClearController(ctx *fiber.Ctx) error {
 	if err := c.ClearService(utils.GetUserID(ctx)); err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to clear cart", nil, err.Error())
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "cart cleared", nil, nil)
+	return utils.JSON(ctx, http.StatusOK, true, "cart cleared", []interface{}{}, nil)
 }

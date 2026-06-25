@@ -1,6 +1,6 @@
 package enrollments
 
-func (m *EnrollmentsModule) CreateService(userID, courseID string) error {
+func (m *EnrollmentsModule) CreateService(userID, courseID string) (*Enrollment, error) {
 	return m.EnrollRepository(userID, courseID)
 }
 

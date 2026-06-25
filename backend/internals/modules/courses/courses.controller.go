@@ -33,7 +33,7 @@ func (m *CoursesModule) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	resp, err := m.CreateService(getUserID(c), req)
+	resp, err := m.CreateService(utils.GetUserID(c), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to create course", nil, err.Error())
 	}
@@ -42,7 +42,7 @@ func (m *CoursesModule) CreateController(c *fiber.Ctx) error {
 
 // GET /api/courses/:slug — public landing page
 func (m *CoursesModule) ReadLandingController(c *fiber.Ctx) error {
-	resp, err := m.ReadLandingService(c.Params("slug"), getUserID(c))
+	resp, err := m.ReadLandingService(c.Params("slug"), utils.GetUserID(c))
 	if err != nil {
 		if err.Error() == "not found" {
 			return utils.JSON(c, http.StatusNotFound, false, "course not found", nil, nil)
@@ -58,23 +58,25 @@ func (m *CoursesModule) UpdateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	if err := m.UpdateService(c.Params("id"), req); err != nil {
+	course, err := m.UpdateService(c.Params("id"), req)
+	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to update course", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "course updated successfully", map[string]string{"id": c.Params("id")}, nil)
+	return utils.JSON(c, http.StatusOK, true, "course updated successfully", course, nil)
 }
 
 // DELETE /api/courses/:id
 func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
-	if err := m.DeleteService(c.Params("id")); err != nil {
+	id, err := m.DeleteService(c.Params("id"))
+	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete course", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "course deleted successfully", map[string]string{"id": c.Params("id")}, nil)
+	return utils.JSON(c, http.StatusOK, true, "course deleted successfully", map[string]string{"id": id}, nil)
 }
 
 // GET /api/courses/:id/study
 func (m *CoursesModule) ReadStudyController(c *fiber.Ctx) error {
-	resp, err := m.ReadStudyService(c.Params("id"), getUserID(c))
+	resp, err := m.ReadStudyService(c.Params("id"), utils.GetUserID(c))
 	if err != nil {
 		if err.Error() == "not enrolled" {
 			return utils.JSON(c, http.StatusForbidden, false, "not enrolled in this course", nil, nil)
@@ -86,18 +88,9 @@ func (m *CoursesModule) ReadStudyController(c *fiber.Ctx) error {
 
 // GET /api/courses/enrolled — enrolled courses
 func (m *CoursesModule) EnrolledController(c *fiber.Ctx) error {
-	list, err := m.EnrolledCoursesService(getUserID(c))
+	list, err := m.EnrolledCoursesService(utils.GetUserID(c))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch enrolled courses", nil, err.Error())
 	}
 	return utils.JSON(c, http.StatusOK, true, "enrolled courses fetched successfully", list, nil)
-}
-
-// getUserID extracts the user ID from locals (assuming auth middleware sets it)
-func getUserID(c *fiber.Ctx) string {
-	val := c.Locals("user_id")
-	if val == nil {
-		return ""
-	}
-	return val.(string)
 }

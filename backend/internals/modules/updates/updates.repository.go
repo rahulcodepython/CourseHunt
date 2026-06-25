@@ -24,9 +24,10 @@ func (m *UpdatesModule) UpdateRepository(id string, message string) (*CourseUpda
 	return &u, err
 }
 
-func (m *UpdatesModule) DeleteRepository(id string) error {
-	_, err := m.DB.Exec(`DELETE FROM course_updates WHERE id = $1`, id)
-	return err
+func (m *UpdatesModule) DeleteRepository(id string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM course_updates WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }
 
 func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateFeedResponse, error) {

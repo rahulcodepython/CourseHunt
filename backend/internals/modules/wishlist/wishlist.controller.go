@@ -17,10 +17,11 @@ func (m *WishlistModule) CreateController(ctx *fiber.Ctx) error {
 }
 
 func (m *WishlistModule) DeleteController(ctx *fiber.Ctx) error {
-	if err := m.DeleteService(utils.GetUserID(ctx), ctx.Params("courseID")); err != nil {
+	id, err := m.DeleteService(utils.GetUserID(ctx), ctx.Params("courseID"))
+	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to remove from wishlist", nil, err.Error())
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "removed from wishlist", nil, nil)
+	return utils.JSON(ctx, http.StatusOK, true, "removed from wishlist", map[string]string{"id": id}, nil)
 }
 
 func (m *WishlistModule) ListController(ctx *fiber.Ctx) error {

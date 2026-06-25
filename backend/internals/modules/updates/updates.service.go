@@ -6,7 +6,7 @@ func (m *UpdatesModule) CreateService(createdBy string, req CreateUpdateRequest)
 func (m *UpdatesModule) UpdateService(id, message string) (*CourseUpdate, error) {
 	return m.UpdateRepository(id, message)
 }
-func (m *UpdatesModule) DeleteService(id string) error { 
+func (m *UpdatesModule) DeleteService(id string) (string, error) { 
 	return m.DeleteRepository(id) 
 }
 func (m *UpdatesModule) FeedService(userID string, page, limit int) (*UpdateFeedResponse, error) {

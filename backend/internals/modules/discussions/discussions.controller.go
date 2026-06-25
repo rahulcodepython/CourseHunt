@@ -47,10 +47,23 @@ func (m *DiscussionsModule) CreateController(ctx *fiber.Ctx) error {
 	return utils.JSON(ctx, http.StatusCreated, true, "discussion posted", d, nil)
 }
 
+func (m *DiscussionsModule) UpdateController(ctx *fiber.Ctx) error {
+	var req UpdateDiscussionRequest
+	if ok, err := utils.Validate(ctx, &req); !ok {
+		return err
+	}
+	d, err := m.UpdateService(ctx.Params("id"), utils.GetUserID(ctx), req.Content)
+	if err != nil {
+		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to update discussion", nil, err.Error())
+	}
+	return utils.JSON(ctx, http.StatusOK, true, "discussion updated", d, nil)
+}
+
 func (m *DiscussionsModule) DeleteController(ctx *fiber.Ctx) error {
 	isAdmin := ctx.Locals("role") == "admin"
-	if err := m.DeleteService(ctx.Params("id"), utils.GetUserID(ctx), isAdmin); err != nil {
+	id, err := m.DeleteService(ctx.Params("id"), utils.GetUserID(ctx), isAdmin)
+	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to delete discussion", nil, err.Error())
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "discussion deleted", nil, nil)
+	return utils.JSON(ctx, http.StatusOK, true, "discussion deleted", map[string]string{"id": id}, nil)
 }

@@ -61,9 +61,10 @@ func (m *LessonsModule) UpdateRepository(id string, req UpdateLessonRequest) (*L
 	return m.ReadRepository(id)
 }
 
-func (m *LessonsModule) DeleteRepository(id string) error {
-	_, err := m.DB.Exec(`DELETE FROM lessons WHERE id = $1`, id)
-	return err
+func (m *LessonsModule) DeleteRepository(id string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM lessons WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }
 
 // ── Video Content ─────────────────────────────────────────────────────────────
@@ -139,9 +140,10 @@ func (m *LessonsModule) ListResourcesRepository(lessonID string) ([]LessonResour
 	return resources, rows.Err()
 }
 
-func (m *LessonsModule) DeleteResourceRepository(id string) error {
-	_, err := m.DB.Exec(`DELETE FROM lesson_resources WHERE id = $1`, id)
-	return err
+func (m *LessonsModule) DeleteResourceRepository(id string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM lesson_resources WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }
 
 // GetChapterIDByLesson returns chapter_id for a lesson.

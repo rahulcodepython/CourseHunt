@@ -3,7 +3,7 @@ package cart
 func (c *CartModule) AddService(userID, courseID string) (*CartItem, error) {
 	return c.AddRepository(userID, courseID)
 }
-func (c *CartModule) RemoveService(userID, courseID string) error {
+func (c *CartModule) RemoveService(userID, courseID string) (string, error) {
 	return c.RemoveRepository(userID, courseID)
 }
 func (c *CartModule) ListService(userID string) ([]CartItem, error) {

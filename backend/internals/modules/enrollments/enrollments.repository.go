@@ -1,12 +1,14 @@
 package enrollments
 
-func (m *EnrollmentsModule) EnrollRepository(userID, courseID string) error {
-	_, err := m.DB.Exec(`
+func (m *EnrollmentsModule) EnrollRepository(userID, courseID string) (*Enrollment, error) {
+	var e Enrollment
+	err := m.DB.QueryRow(`
 		INSERT INTO enrollments (user_id, course_id)
 		VALUES ($1, $2)
-		ON CONFLICT (user_id, course_id) DO UPDATE SET revoked = false`,
-		userID, courseID)
-	return err
+		ON CONFLICT (user_id, course_id) DO UPDATE SET revoked = false
+		RETURNING id, user_id, course_id, completion_percent, completed, last_accessed_lesson_id, revoked, enrolled_at`,
+		userID, courseID).Scan(&e.ID, &e.UserID, &e.CourseID, &e.CompletionPercent, &e.Completed, &e.LastAccessedLessonID, &e.Revoked, &e.EnrolledAt)
+	return &e, err
 }
 
 func (m *EnrollmentsModule) IsEnrolledRepository(userID, courseID string) bool {

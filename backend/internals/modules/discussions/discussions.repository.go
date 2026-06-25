@@ -56,13 +56,25 @@ func (m *DiscussionsModule) CreateRepository(userID, lessonID, courseID string, 
 	return &d, err
 }
 
-func (m *DiscussionsModule) DeleteRepository(id, userID string, isAdmin bool) error {
+func (m *DiscussionsModule) UpdateRepository(id, userID string, content string) (*Discussion, error) {
+	var d Discussion
+	err := m.DB.QueryRow(`
+		UPDATE discussions SET content = $1, updated_at = CURRENT_TIMESTAMP 
+		WHERE id = $2 AND user_id = $3
+		RETURNING id, lesson_id, course_id, user_id, parent_id, content, depth, reply_count, created_at, updated_at`,
+		content, id, userID,
+	).Scan(&d.ID, &d.LessonID, &d.CourseID, &d.UserID, &d.ParentID, &d.Content, &d.Depth, &d.ReplyCount, &d.CreatedAt, &d.UpdatedAt)
+	return &d, err
+}
+
+func (m *DiscussionsModule) DeleteRepository(id, userID string, isAdmin bool) (string, error) {
+	var deletedID string
 	if isAdmin {
-		_, err := m.DB.Exec(`DELETE FROM discussions WHERE id = $1`, id)
-		return err
+		err := m.DB.QueryRow(`DELETE FROM discussions WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+		return deletedID, err
 	}
-	_, err := m.DB.Exec(`DELETE FROM discussions WHERE id = $1 AND user_id = $2`, id, userID)
-	return err
+	err := m.DB.QueryRow(`DELETE FROM discussions WHERE id = $1 AND user_id = $2 RETURNING id`, id, userID).Scan(&deletedID)
+	return deletedID, err
 }
 
 func (m *DiscussionsModule) scanDiscussions(rows *sql.Rows) []DiscussionResponse {

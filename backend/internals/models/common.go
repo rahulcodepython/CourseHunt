@@ -28,3 +28,10 @@ type CategoryInfo struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
+
+// CourseInfo represents basic course details used across modules.
+type CourseInfo struct {
+	ID        string  `json:"id"`
+	Title     string  `json:"title"`
+	Thumbnail *string `json:"thumbnail"`
+}

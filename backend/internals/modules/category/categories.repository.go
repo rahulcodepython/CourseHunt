@@ -54,12 +54,14 @@ func (c *CategoryModule) CreateSubRepository(catID, name string) (*Subcategory, 
 	return &s, err
 }
 
-func (c *CategoryModule) DeleteRepository(id string) error {
-	_, err := c.DB.Exec(`DELETE FROM categories WHERE id = $1`, id)
-	return err
+func (c *CategoryModule) DeleteRepository(id string) (string, error) {
+	var deletedID string
+	err := c.DB.QueryRow(`DELETE FROM categories WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }
 
-func (c *CategoryModule) DeleteSubRepository(id string) error {
-	_, err := c.DB.Exec(`DELETE FROM subcategories WHERE id = $1`, id)
-	return err
+func (c *CategoryModule) DeleteSubRepository(id string) (string, error) {
+	var deletedID string
+	err := c.DB.QueryRow(`DELETE FROM subcategories WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }

@@ -57,9 +57,10 @@ func (m *ChaptersModule) UpdateRepository(id string, req UpdateChapterRequest) (
 	return m.ReadRepository(id)
 }
 
-func (m *ChaptersModule) DeleteRepository(id string) error {
-	_, err := m.DB.Exec(`DELETE FROM chapters WHERE id = $1`, id)
-	return err
+func (m *ChaptersModule) DeleteRepository(id string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM chapters WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }
 
 // GetCourseIDByChapter returns the course_id for ownership checks.

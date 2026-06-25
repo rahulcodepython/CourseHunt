@@ -31,3 +31,23 @@ func (m *NotesModule) ReadController(ctx *fiber.Ctx) error {
 	}
 	return utils.JSON(ctx, http.StatusOK, true, "note fetched", n, nil)
 }
+
+func (m *NotesModule) UpdateController(ctx *fiber.Ctx) error {
+	var req UpsertNoteRequest
+	if ok, err := utils.Validate(ctx, &req); !ok {
+		return err
+	}
+	n, err := m.UpdateService(ctx.Params("id"), utils.GetUserID(ctx), req.Content)
+	if err != nil {
+		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to update note", nil, err.Error())
+	}
+	return utils.JSON(ctx, http.StatusOK, true, "note updated", n, nil)
+}
+
+func (m *NotesModule) DeleteController(ctx *fiber.Ctx) error {
+	id, err := m.DeleteService(ctx.Params("id"), utils.GetUserID(ctx))
+	if err != nil {
+		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to delete note", nil, err.Error())
+	}
+	return utils.JSON(ctx, http.StatusOK, true, "note deleted", map[string]string{"id": id}, nil)
+}

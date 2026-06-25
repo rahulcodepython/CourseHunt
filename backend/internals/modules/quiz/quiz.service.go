@@ -8,7 +8,7 @@ func (m *QuizModule) CreateQuestionService(quizID string, req CreateQuestionRequ
 	return m.CreateQuestionRepository(quizID, req)
 }
 
-func (m *QuizModule) DeleteQuestionService(id string) error { return m.DeleteQuestionRepository(id) }
+func (m *QuizModule) DeleteQuestionService(id string) (string, error) { return m.DeleteQuestionRepository(id) }
 
 func (m *QuizModule) CreateAttemptService(quizID, userID string) (*QuizAttempt, error) {
 	return m.CreateAttemptRepository(quizID, userID)

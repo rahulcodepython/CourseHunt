@@ -87,12 +87,15 @@ func (m *FeedbacksModule) ListRepository(courseID string, page, limit int) ([]Fe
 	return list, total, rows.Err()
 }
 
-func (m *FeedbacksModule) UpdateRepository(id string, pin bool) error {
-	_, err := m.DB.Exec(`UPDATE feedbacks SET is_pinned = $1 WHERE id = $2`, pin, id)
-	return err
+func (m *FeedbacksModule) UpdateRepository(id string, pin bool) (*Feedback, error) {
+	var f Feedback
+	err := m.DB.QueryRow(`UPDATE feedbacks SET is_pinned = $1 WHERE id = $2 RETURNING id, course_id, user_id, rating, content, is_pinned, created_at`, pin, id).
+		Scan(&f.ID, &f.CourseID, &f.UserID, &f.Rating, &f.Content, &f.IsPinned, &f.CreatedAt)
+	return &f, err
 }
 
-func (m *FeedbacksModule) DeleteRepository(id string) error {
-	_, err := m.DB.Exec(`DELETE FROM feedbacks WHERE id = $1`, id)
-	return err
+func (m *FeedbacksModule) DeleteRepository(id string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM feedbacks WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }

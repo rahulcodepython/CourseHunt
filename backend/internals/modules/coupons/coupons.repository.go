@@ -82,9 +82,10 @@ func (m *CouponsModule) UpdateRepository(id string, req UpdateCouponRequest) (*C
 	return m.ReadRepository(id)
 }
 
-func (m *CouponsModule) DeleteRepository(id string) error {
-	_, err := m.DB.Exec(`DELETE FROM coupons WHERE id = $1`, id)
-	return err
+func (m *CouponsModule) DeleteRepository(id string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM coupons WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }
 
 func (m *CouponsModule) RecordUsageRepository(couponID, userID, courseID string) error {

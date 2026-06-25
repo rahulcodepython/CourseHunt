@@ -41,8 +41,9 @@ func (m *ChaptersModule) UpdateController(c *fiber.Ctx) error {
 }
 
 func (m *ChaptersModule) DeleteController(c *fiber.Ctx) error {
-	if err := m.DeleteService(c.Params("id")); err != nil {
+	id, err := m.DeleteService(c.Params("id"))
+	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete chapter", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "chapter deleted successfully", map[string]string{"id": c.Params("id")}, nil)
+	return utils.JSON(c, http.StatusOK, true, "chapter deleted successfully", map[string]string{"id": id}, nil)
 }

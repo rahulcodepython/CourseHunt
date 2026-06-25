@@ -12,6 +12,10 @@ func (m *DiscussionsModule) CreateService(userID, lessonID, courseID string, req
 	return m.CreateRepository(userID, lessonID, courseID, req)
 }
 
-func (m *DiscussionsModule) DeleteService(id, userID string, isAdmin bool) error {
+func (m *DiscussionsModule) UpdateService(id, userID, content string) (*Discussion, error) {
+	return m.UpdateRepository(id, userID, content)
+}
+
+func (m *DiscussionsModule) DeleteService(id, userID string, isAdmin bool) (string, error) {
 	return m.DeleteRepository(id, userID, isAdmin)
 }

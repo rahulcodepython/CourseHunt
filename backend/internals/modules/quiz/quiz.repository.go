@@ -59,9 +59,10 @@ func (m *QuizModule) CreateQuestionRepository(quizID string, req CreateQuestionR
 	return &q, tx.Commit()
 }
 
-func (m *QuizModule) DeleteQuestionRepository(id string) error {
-	_, err := m.DB.Exec(`DELETE FROM quiz_questions WHERE id = $1`, id)
-	return err
+func (m *QuizModule) DeleteQuestionRepository(id string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM quiz_questions WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }
 
 func (m *QuizModule) CreateAttemptRepository(quizID, userID string) (*QuizAttempt, error) {

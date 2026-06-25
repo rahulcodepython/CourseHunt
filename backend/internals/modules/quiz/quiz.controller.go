@@ -36,10 +36,11 @@ func (m *QuizModule) CreateQuestionController(c *fiber.Ctx) error {
 
 // DELETE /api/quiz/questions/:id
 func (m *QuizModule) DeleteQuestionController(c *fiber.Ctx) error {
-	if err := m.DeleteQuestionService(c.Params("id")); err != nil {
+	id, err := m.DeleteQuestionService(c.Params("id"))
+	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete question", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "question deleted successfully", map[string]string{"id": c.Params("id")}, nil)
+	return utils.JSON(c, http.StatusOK, true, "question deleted successfully", map[string]string{"id": id}, nil)
 }
 
 // POST /api/lessons/:lessonID/quiz/start
@@ -49,7 +50,7 @@ func (m *QuizModule) CreateAttemptController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSON(c, http.StatusNotFound, false, "quiz not found for this lesson", nil, nil)
 	}
-	attempt, err := m.CreateAttemptService(qm.ID, getUserID(c))
+	attempt, err := m.CreateAttemptService(qm.ID, utils.GetUserID(c))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to start quiz attempt", nil, err.Error())
 	}
@@ -62,7 +63,7 @@ func (m *QuizModule) ReadNextQuestionController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	resp, err := m.NextQuestionService(c.Params("lessonID"), getUserID(c), req)
+	resp, err := m.NextQuestionService(c.Params("lessonID"), utils.GetUserID(c), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to get next question", nil, err.Error())
 	}
@@ -75,18 +76,9 @@ func (m *QuizModule) CreateSubmitController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	resp, err := m.SubmitService(c.Params("lessonID"), getUserID(c), req)
+	resp, err := m.SubmitService(c.Params("lessonID"), utils.GetUserID(c), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to submit quiz", nil, err.Error())
 	}
 	return utils.JSON(c, http.StatusOK, true, "quiz submitted successfully", resp, nil)
-}
-
-// getUserID extracts the user ID from locals (assuming auth middleware sets it)
-func getUserID(c *fiber.Ctx) string {
-	val := c.Locals("user_id")
-	if val == nil {
-		return ""
-	}
-	return val.(string)
 }

@@ -12,7 +12,7 @@ func (m *ChaptersModule) UpdateService(id string, req UpdateChapterRequest) (*Ch
 	return m.UpdateRepository(id, req)
 }
 
-func (m *ChaptersModule) DeleteService(id string) error { 
+func (m *ChaptersModule) DeleteService(id string) (string, error) { 
 	return m.DeleteRepository(id) 
 }
 

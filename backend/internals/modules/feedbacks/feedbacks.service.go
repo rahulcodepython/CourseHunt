@@ -6,9 +6,9 @@ func (m *FeedbacksModule) CreateService(userID, courseID string, req CreateFeedb
 func (m *FeedbacksModule) ListService(courseID string, page, limit int) ([]FeedbackResponse, int, error) {
 	return m.ListRepository(courseID, page, limit)
 }
-func (m *FeedbacksModule) UpdateService(id string, pin bool) error { 
+func (m *FeedbacksModule) UpdateService(id string, pin bool) (*Feedback, error) { 
 	return m.UpdateRepository(id, pin) 
 }
-func (m *FeedbacksModule) DeleteService(id string) error { 
+func (m *FeedbacksModule) DeleteService(id string) (string, error) { 
 	return m.DeleteRepository(id) 
 }

@@ -8,12 +8,11 @@ import (
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
+	"coursehunt-backend/internals/modules/profile"
 	"coursehunt-backend/internals/modules/users"
 
 	"github.com/lib/pq"
 )
-
-
 
 func (m *CoursesModule) CreateRepository(tutorID string, req CreateCourseRequest) (*CourseCreatedResponse, error) {
 	slug := utils.Slugify(req.Title)
@@ -37,9 +36,9 @@ func (m *CoursesModule) CreateRepository(tutorID string, req CreateCourseRequest
 	return &resp, err
 }
 
-func (m *CoursesModule) UpdateRepository(id string, req UpdateCourseRequest) error {
+func (m *CoursesModule) UpdateRepository(id string, req UpdateCourseRequest) (*Course, error) {
 	setClauses := []string{"updated_at = CURRENT_TIMESTAMP"}
-	args := []interface{}{}
+	var args []interface{}
 	argIdx := 1
 
 	if req.Title != nil {
@@ -120,12 +119,16 @@ func (m *CoursesModule) UpdateRepository(id string, req UpdateCourseRequest) err
 	args = append(args, id)
 	query := fmt.Sprintf("UPDATE courses SET %s WHERE id = $%d", strings.Join(setClauses, ", "), argIdx)
 	_, err := m.DB.Exec(query, args...)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return m.ReadRepository(id)
 }
 
-func (m *CoursesModule) DeleteRepository(id string) error {
-	_, err := m.DB.Exec(`DELETE FROM courses WHERE id = $1`, id)
-	return err
+func (m *CoursesModule) DeleteRepository(id string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM courses WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
+	return deletedID, err
 }
 
 func (m *CoursesModule) ReadRepository(id string) (*Course, error) {
@@ -247,14 +250,14 @@ func (m *CoursesModule) ListRepository(page, limit int, categoryID, level, searc
 }
 
 // GetTutorUserRepository returns the user row for a course's tutor.
-func (m *CoursesModule) GetTutorUserRepository(tutorID string) (*users.User, *users.TutorProfile, error) {
+func (m *CoursesModule) GetTutorUserRepository(tutorID string) (*users.User, *profile.TutorProfile, error) {
 	var u users.User
 	err := m.DB.QueryRow(`SELECT id, name, email, "emailVerified", image, banned, "createdAt", "updatedAt" FROM "user" WHERE id = $1`, tutorID).
 		Scan(&u.ID, &u.Name, &u.Email, &u.EmailVerified, &u.Image, &u.Banned, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
 		return nil, nil, err
 	}
-	var tp users.TutorProfile
+	var tp profile.TutorProfile
 	m.DB.QueryRow(`SELECT id, user_id, headline, bio, website, total_students, rating_avg FROM tutor_profile WHERE user_id = $1`, tutorID).
 		Scan(&tp.ID, &tp.UserID, &tp.Headline, &tp.Bio, &tp.Website, &tp.TotalStudents, &tp.RatingAvg)
 	return &u, &tp, nil

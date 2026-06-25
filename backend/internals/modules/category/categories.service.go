@@ -12,10 +12,10 @@ func (c *CategoryModule) CreateSubService(catID string, req CreateSubcategoryReq
 	return c.CreateSubRepository(catID, req.Name)
 }
 
-func (c *CategoryModule) DeleteService(id string) error {
+func (c *CategoryModule) DeleteService(id string) (string, error) {
 	return c.DeleteRepository(id)
 }
 
-func (c *CategoryModule) DeleteSubService(id string) error {
+func (c *CategoryModule) DeleteSubService(id string) (string, error) {
 	return c.DeleteSubRepository(id)
 }

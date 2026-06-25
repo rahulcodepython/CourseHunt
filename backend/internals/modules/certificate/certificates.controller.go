@@ -26,3 +26,14 @@ func (c *CertificateModule) ListController(ctx *fiber.Ctx) error {
 	}
 	return utils.JSON(ctx, http.StatusOK, true, "certificates fetched", list, nil)
 }
+
+func (c *CertificateModule) GetController(ctx *fiber.Ctx) error {
+	cert, err := c.GetService(utils.GetUserID(ctx), ctx.Params("courseID"))
+	if err != nil {
+		if err.Error() == "certificate not found" {
+			return utils.JSON(ctx, http.StatusNotFound, false, "certificate not found", nil, nil)
+		}
+		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch certificate", nil, err.Error())
+	}
+	return utils.JSON(ctx, http.StatusOK, true, "certificate fetched", cert, nil)
+}

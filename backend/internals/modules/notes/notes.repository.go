@@ -18,3 +18,20 @@ func (m *NotesModule) ReadRepository(userID, lessonID string) (*UserNote, error)
 		Scan(&n.ID, &n.UserID, &n.LessonID, &n.CourseID, &n.Content, &n.UpdatedAt)
 	return &n, err
 }
+
+func (m *NotesModule) UpdateRepository(id, userID, content string) (*NoteResponse, error) {
+	var n NoteResponse
+	err := m.DB.QueryRow(`
+		UPDATE user_notes SET content = $1, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2 AND user_id = $3
+		RETURNING id, content, updated_at`,
+		content, id, userID,
+	).Scan(&n.ID, &n.Content, &n.UpdatedAt)
+	return &n, err
+}
+
+func (m *NotesModule) DeleteRepository(id, userID string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM user_notes WHERE id = $1 AND user_id = $2 RETURNING id`, id, userID).Scan(&deletedID)
+	return deletedID, err
+}

@@ -9,5 +9,6 @@ func (m *DiscussionsModule) Routes(protected fiber.Router) {
 	discussions.Get("/lesson/:lessonID", m.ListController)
 	discussions.Get("/replies/:id", m.ListRepliesController)
 	discussions.Post("/lesson/:lessonID", m.CreateController)
+	discussions.Patch("/:id", m.UpdateController)
 	discussions.Delete("/:id", m.DeleteController)
 }

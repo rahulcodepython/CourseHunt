@@ -28,7 +28,7 @@ func (m *UsersModule) AssignRoleController(ctx *fiber.Ctx) error {
 	if err := m.AssignRoleService(ctx.Params("id"), req.RoleID); err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to assign role", nil, err.Error())
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "role assigned", nil, nil)
+	return utils.JSON(ctx, http.StatusOK, true, "role assigned", map[string]interface{}{"user_id": ctx.Params("id"), "role_id": req.RoleID}, nil)
 }
 
 func (m *UsersModule) DeleteRoleController(ctx *fiber.Ctx) error {
@@ -39,7 +39,7 @@ func (m *UsersModule) DeleteRoleController(ctx *fiber.Ctx) error {
 	if err := m.DeleteRoleService(ctx.Params("id"), req.RoleID); err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to revoke role", nil, err.Error())
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "role revoked", nil, nil)
+	return utils.JSON(ctx, http.StatusOK, true, "role revoked", map[string]interface{}{"user_id": ctx.Params("id"), "role_id": req.RoleID}, nil)
 }
 
 func (m *UsersModule) MeController(ctx *fiber.Ctx) error {

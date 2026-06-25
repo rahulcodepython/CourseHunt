@@ -4,7 +4,7 @@ func (m *WishlistModule) CreateService(userID, courseID string) (*Wishlist, erro
 	return m.CreateRepository(userID, courseID)
 }
 
-func (m *WishlistModule) DeleteService(userID, courseID string) error {
+func (m *WishlistModule) DeleteService(userID, courseID string) (string, error) {
 	return m.DeleteRepository(userID, courseID)
 }
 

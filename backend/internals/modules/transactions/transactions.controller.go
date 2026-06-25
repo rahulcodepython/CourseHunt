@@ -16,7 +16,7 @@ func (m *TransactionsModule) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	resp, err := m.InitiateService(getUserID(c), req)
+	resp, err := m.InitiateService(utils.GetUserID(c), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to initiate transaction", nil, err.Error())
 	}
@@ -87,19 +87,11 @@ func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 // GET /api/transactions/me
 func (m *TransactionsModule) ListOwnController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := m.ListService(page, limit, getUserID(c))
+	list, total, err := m.ListService(page, limit, utils.GetUserID(c))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch your transactions", nil, err.Error())
 	}
 	return utils.JSON(c, http.StatusOK, true, "transactions fetched", models.PaginatedResponse{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
-}
-
-func getUserID(c *fiber.Ctx) string {
-	val := c.Locals("user_id")
-	if val == nil {
-		return ""
-	}
-	return val.(string)
 }

@@ -25,9 +25,10 @@ func (c *CartModule) AddRepository(userID, courseID string) (*CartItem, error) {
 	return &ci, nil
 }
 
-func (c *CartModule) RemoveRepository(userID, courseID string) error {
-	_, err := c.DB.Exec(`DELETE FROM cart_items WHERE user_id = $1 AND course_id = $2`, userID, courseID)
-	return err
+func (c *CartModule) RemoveRepository(userID, courseID string) (string, error) {
+	var id string
+	err := c.DB.QueryRow(`DELETE FROM cart_items WHERE user_id = $1 AND course_id = $2 RETURNING id`, userID, courseID).Scan(&id)
+	return id, err
 }
 
 func (c *CartModule) ListRepository(userID string) ([]CartItem, error) {

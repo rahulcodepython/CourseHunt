@@ -12,11 +12,11 @@ func (m *CoursesModule) CreateService(tutorID string, req CreateCourseRequest) (
 	return m.CreateRepository(tutorID, req)
 }
 
-func (m *CoursesModule) UpdateService(id string, req UpdateCourseRequest) error {
+func (m *CoursesModule) UpdateService(id string, req UpdateCourseRequest) (*Course, error) {
 	return m.UpdateRepository(id, req)
 }
 
-func (m *CoursesModule) DeleteService(id string) error {
+func (m *CoursesModule) DeleteService(id string) (string, error) {
 	return m.DeleteRepository(id)
 }
 

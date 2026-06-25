@@ -18,10 +18,11 @@ func (m *EnrollmentsModule) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	if err := m.CreateService(req.UserID, c.Params("courseID")); err != nil {
+	enrollment, err := m.CreateService(req.UserID, c.Params("courseID"))
+	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to enroll user", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "user enrolled successfully", map[string]string{"course_id": c.Params("courseID"), "user_id": req.UserID}, nil)
+	return utils.JSON(c, http.StatusOK, true, "user enrolled successfully", enrollment, nil)
 }
 
 func (m *EnrollmentsModule) ListController(c *fiber.Ctx) error {
@@ -33,13 +34,4 @@ func (m *EnrollmentsModule) ListController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "enrollments fetched", models.PaginatedResponse{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
-}
-
-// getUserID extracts the user ID from locals (assuming auth middleware sets it)
-func getUserID(c *fiber.Ctx) string {
-	val := c.Locals("user_id")
-	if val == nil {
-		return ""
-	}
-	return val.(string)
 }

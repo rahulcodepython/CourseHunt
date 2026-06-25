@@ -17,7 +17,7 @@ func (m *LessonsModule) UpdateService(id string, req UpdateLessonRequest) (*Less
 	return m.UpdateRepository(id, req)
 }
 
-func (m *LessonsModule) DeleteService(id string) error { return m.DeleteRepository(id) }
+func (m *LessonsModule) DeleteService(id string) (string, error) { return m.DeleteRepository(id) }
 
 func (m *LessonsModule) UpsertVideoContentService(lessonID string, req UpsertVideoContentRequest) (*LessonVideoContent, error) {
 	return m.UpsertVideoContentRepository(lessonID, req)
@@ -35,7 +35,7 @@ func (m *LessonsModule) ListResourcesService(lessonID string) ([]LessonResource,
 	return m.ListResourcesRepository(lessonID)
 }
 
-func (m *LessonsModule) DeleteResourceService(id string) error {
+func (m *LessonsModule) DeleteResourceService(id string) (string, error) {
 	return m.DeleteResourceRepository(id)
 }
 

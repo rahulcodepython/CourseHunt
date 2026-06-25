@@ -12,9 +12,10 @@ func (m *WishlistModule) CreateRepository(userID, courseID string) (*Wishlist, e
 	return &w, err
 }
 
-func (m *WishlistModule) DeleteRepository(userID, courseID string) error {
-	_, err := m.DB.Exec(`DELETE FROM wishlists WHERE user_id = $1 AND course_id = $2`, userID, courseID)
-	return err
+func (m *WishlistModule) DeleteRepository(userID, courseID string) (string, error) {
+	var deletedID string
+	err := m.DB.QueryRow(`DELETE FROM wishlists WHERE user_id = $1 AND course_id = $2 RETURNING id`, userID, courseID).Scan(&deletedID)
+	return deletedID, err
 }
 
 func (m *WishlistModule) ListRepository(userID string) ([]Wishlist, error) {

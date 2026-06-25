@@ -41,10 +41,11 @@ func (m *LessonsModule) UpdateController(c *fiber.Ctx) error {
 }
 
 func (m *LessonsModule) DeleteController(c *fiber.Ctx) error {
-	if err := m.DeleteService(c.Params("id")); err != nil {
+	id, err := m.DeleteService(c.Params("id"))
+	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete lesson", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "lesson deleted successfully", map[string]string{"id": c.Params("id")}, nil)
+	return utils.JSON(c, http.StatusOK, true, "lesson deleted successfully", map[string]string{"id": id}, nil)
 }
 
 func (m *LessonsModule) UpsertVideoContentController(c *fiber.Ctx) error {
@@ -76,7 +77,7 @@ func (m *LessonsModule) ReadContentController(c *fiber.Ctx) error {
 	if courseID == "" {
 		return utils.JSON(c, http.StatusBadRequest, false, "course_id query param required", nil, nil)
 	}
-	resp, err := m.ReadContentService(c.Params("id"), getUserID(c), courseID)
+	resp, err := m.ReadContentService(c.Params("id"), utils.GetUserID(c), courseID)
 	if err != nil {
 		if err.Error() == "not enrolled" {
 			return utils.JSON(c, http.StatusForbidden, false, "not enrolled in this course", nil, nil)
@@ -94,10 +95,10 @@ func (m *LessonsModule) UpdateCompleteController(c *fiber.Ctx) error {
 	if courseID == "" {
 		return utils.JSON(c, http.StatusBadRequest, false, "course_id query param required", nil, nil)
 	}
-	if err := m.UpdateCompleteService(getUserID(c), c.Params("id"), courseID); err != nil {
+	if err := m.UpdateCompleteService(utils.GetUserID(c), c.Params("id"), courseID); err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to mark lesson complete", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "lesson marked as complete", nil, nil)
+	return utils.JSON(c, http.StatusOK, true, "lesson marked as complete", map[string]interface{}{"lesson_id": c.Params("id"), "completed": true}, nil)
 }
 
 func (m *LessonsModule) CreateResourceController(c *fiber.Ctx) error {
@@ -113,16 +114,9 @@ func (m *LessonsModule) CreateResourceController(c *fiber.Ctx) error {
 }
 
 func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
-	if err := m.DeleteResourceService(c.Params("resourceID")); err != nil {
+	id, err := m.DeleteResourceService(c.Params("resourceID"))
+	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete resource", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "resource deleted successfully", map[string]string{"id": c.Params("resourceID")}, nil)
-}
-
-func getUserID(c *fiber.Ctx) string {
-	val := c.Locals("user_id")
-	if val == nil {
-		return ""
-	}
-	return val.(string)
+	return utils.JSON(c, http.StatusOK, true, "resource deleted successfully", map[string]string{"id": id}, nil)
 }
