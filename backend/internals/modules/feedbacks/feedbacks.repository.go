@@ -8,7 +8,7 @@ func (m *FeedbacksModule) CreateRepository(userID, courseID string, req CreateFe
 		ON CONFLICT (course_id, user_id) DO UPDATE SET rating = $3, content = $4
 		RETURNING id, course_id, user_id, rating, content, is_pinned, created_at`,
 		courseID, userID, req.Rating, req.Content,
-	).Scan(&f.ID, &f.CourseID, &f.UserID, &f.Rating, &f.Content, &f.IsPinned, &f.CreatedAt)
+	).Scan(&f.ID, &f.Course.ID, &f.User.ID, &f.Rating, &f.Content, &f.IsPinned, &f.CreatedAt)
 	return &f, err
 }
 
@@ -25,7 +25,7 @@ func (m *FeedbacksModule) ListRepository(courseID string, page, limit int) ([]Fe
 	m.DB.QueryRow("SELECT COUNT(*) FROM feedbacks f WHERE "+where, args...).Scan(&total)
 	offset := (page - 1) * limit
 	args = append(args, limit, offset)
-	
+
 	// Helper for idx format
 	itoa := func(i int) string {
 		importFmt := "fmt"
@@ -40,10 +40,10 @@ func (m *FeedbacksModule) ListRepository(courseID string, page, limit int) ([]Fe
 	// We have:
 	// query: SELECT ... LIMIT $X OFFSET $Y
 	// if courseID is present, X=2, Y=3. if not, X=1, Y=2.
-	
+
 	limitIdx := idx
 	offsetIdx := idx + 1
-	
+
 	// use fmt.Sprintf
 	importFmt := "fmt"
 	_ = importFmt
@@ -90,7 +90,7 @@ func (m *FeedbacksModule) ListRepository(courseID string, page, limit int) ([]Fe
 func (m *FeedbacksModule) UpdateRepository(id string, pin bool) (*Feedback, error) {
 	var f Feedback
 	err := m.DB.QueryRow(`UPDATE feedbacks SET is_pinned = $1 WHERE id = $2 RETURNING id, course_id, user_id, rating, content, is_pinned, created_at`, pin, id).
-		Scan(&f.ID, &f.CourseID, &f.UserID, &f.Rating, &f.Content, &f.IsPinned, &f.CreatedAt)
+		Scan(&f.ID, &f.Course.ID, &f.User.ID, &f.Rating, &f.Content, &f.IsPinned, &f.CreatedAt)
 	return &f, err
 }
 

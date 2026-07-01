@@ -52,7 +52,7 @@ func (m *DiscussionsModule) CreateRepository(userID, lessonID, courseID string, 
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, lesson_id, course_id, user_id, parent_id, content, depth, reply_count, created_at, updated_at`,
 		lessonID, courseID, userID, req.ParentID, req.Content, depth,
-	).Scan(&d.ID, &d.LessonID, &d.CourseID, &d.UserID, &d.ParentID, &d.Content, &d.Depth, &d.ReplyCount, &d.CreatedAt, &d.UpdatedAt)
+	).Scan(&d.ID, &d.LessonID, &d.CourseID, &d.User.ID, &d.ParentID, &d.Content, &d.Depth, &d.ReplyCount, &d.CreatedAt, &d.UpdatedAt)
 	return &d, err
 }
 
@@ -63,7 +63,7 @@ func (m *DiscussionsModule) UpdateRepository(id, userID string, content string) 
 		WHERE id = $2 AND user_id = $3
 		RETURNING id, lesson_id, course_id, user_id, parent_id, content, depth, reply_count, created_at, updated_at`,
 		content, id, userID,
-	).Scan(&d.ID, &d.LessonID, &d.CourseID, &d.UserID, &d.ParentID, &d.Content, &d.Depth, &d.ReplyCount, &d.CreatedAt, &d.UpdatedAt)
+	).Scan(&d.ID, &d.LessonID, &d.CourseID, &d.User.ID, &d.ParentID, &d.Content, &d.Depth, &d.ReplyCount, &d.CreatedAt, &d.UpdatedAt)
 	return &d, err
 }
 

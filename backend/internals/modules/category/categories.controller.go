@@ -36,22 +36,14 @@ func (c *CategoryModule) DeleteController(ctx *fiber.Ctx) error {
 	return utils.JSON(ctx, http.StatusOK, true, "category deleted successfully", map[string]string{"id": id}, nil)
 }
 
-func (c *CategoryModule) CreateSubController(ctx *fiber.Ctx) error {
-	var req CreateSubcategoryRequest
+func (c *CategoryModule) UpdateController(ctx *fiber.Ctx) error {
+	var req UpdateCategoryRequest
 	if ok, err := utils.Validate(ctx, &req); !ok {
 		return err
 	}
-	sub, err := c.CreateSubService(ctx.Params("id"), req)
+	cat, err := c.UpdateService(ctx.Params("id"), req)
 	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to create subcategory", nil, err.Error())
+		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to update category", nil, err.Error())
 	}
-	return utils.JSON(ctx, http.StatusCreated, true, "subcategory created successfully", sub, nil)
-}
-
-func (c *CategoryModule) DeleteSubController(ctx *fiber.Ctx) error {
-	id, err := c.DeleteSubService(ctx.Params("subID"))
-	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to delete subcategory", nil, err.Error())
-	}
-	return utils.JSON(ctx, http.StatusOK, true, "subcategory deleted successfully", map[string]string{"id": id}, nil)
+	return utils.JSON(ctx, http.StatusOK, true, "category updated successfully", cat, nil)
 }

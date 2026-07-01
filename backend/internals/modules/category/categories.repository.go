@@ -1,67 +1,72 @@
 package category
 
-func (c *CategoryModule) ListRepository() ([]CategoryWithSubs, error) {
-	rows, err := c.DB.Query(`SELECT id, name, created_at FROM categories ORDER BY name`)
+func (c *CategoryModule) ListRepository() ([]Category, error) {
+	rows, err := c.DB.Query(`SELECT id, parent_id, name, created_at FROM categories ORDER BY name`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var cats []CategoryWithSubs
+
+	var allCats []Category
 	for rows.Next() {
-		var cat CategoryWithSubs
-		if err := rows.Scan(&cat.ID, &cat.Name, &cat.CreatedAt); err != nil {
+		var cat Category
+		if err := rows.Scan(&cat.ID, &cat.ParentID, &cat.Name, &cat.CreatedAt); err != nil {
 			return nil, err
 		}
-		subs, _ := c.subcategories(cat.ID)
-		cat.Subcategories = subs
-		cats = append(cats, cat)
+		cat.Subcategories = []Category{}
+		allCats = append(allCats, cat)
 	}
-	if cats == nil {
-		cats = []CategoryWithSubs{}
+
+	childrenMap := make(map[string][]Category)
+	var roots []Category
+
+	for _, cat := range allCats {
+		if cat.ParentID == nil {
+			roots = append(roots, cat)
+		} else {
+			childrenMap[*cat.ParentID] = append(childrenMap[*cat.ParentID], cat)
+		}
 	}
-	return cats, rows.Err()
+
+	var buildTree func(cat *Category)
+	buildTree = func(cat *Category) {
+		cat.Subcategories = childrenMap[cat.ID]
+		if cat.Subcategories == nil {
+			cat.Subcategories = []Category{}
+		}
+		for i := range cat.Subcategories {
+			buildTree(&cat.Subcategories[i])
+		}
+	}
+
+	for i := range roots {
+		buildTree(&roots[i])
+	}
+
+	if roots == nil {
+		roots = []Category{}
+	}
+	return roots, nil
 }
 
-func (c *CategoryModule) subcategories(catID string) ([]Subcategory, error) {
-	rows, err := c.DB.Query(`SELECT id, category_id, name, created_at FROM subcategories WHERE category_id = $1 ORDER BY name`, catID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var subs []Subcategory
-	for rows.Next() {
-		var s Subcategory
-		rows.Scan(&s.ID, &s.CategoryID, &s.Name, &s.CreatedAt)
-		subs = append(subs, s)
-	}
-	if subs == nil {
-		subs = []Subcategory{}
-	}
-	return subs, rows.Err()
-}
-
-func (c *CategoryModule) CreateRepository(name string) (*Category, error) {
+func (c *CategoryModule) CreateRepository(name string, parentID *string) (*Category, error) {
 	var cat Category
-	err := c.DB.QueryRow(`INSERT INTO categories (name) VALUES ($1) RETURNING id, name, created_at`, name).
-		Scan(&cat.ID, &cat.Name, &cat.CreatedAt)
+	cat.Subcategories = []Category{}
+	err := c.DB.QueryRow(`INSERT INTO categories (name, parent_id) VALUES ($1, $2) RETURNING id, parent_id, name, created_at`, name, parentID).
+		Scan(&cat.ID, &cat.ParentID, &cat.Name, &cat.CreatedAt)
 	return &cat, err
 }
 
-func (c *CategoryModule) CreateSubRepository(catID, name string) (*Subcategory, error) {
-	var s Subcategory
-	err := c.DB.QueryRow(`INSERT INTO subcategories (category_id, name) VALUES ($1, $2) RETURNING id, category_id, name, created_at`, catID, name).
-		Scan(&s.ID, &s.CategoryID, &s.Name, &s.CreatedAt)
-	return &s, err
+func (c *CategoryModule) UpdateRepository(id, name string) (*Category, error) {
+	var cat Category
+	cat.Subcategories = []Category{}
+	err := c.DB.QueryRow(`UPDATE categories SET name = $1 WHERE id = $2 RETURNING id, parent_id, name, created_at`, name, id).
+		Scan(&cat.ID, &cat.ParentID, &cat.Name, &cat.CreatedAt)
+	return &cat, err
 }
 
 func (c *CategoryModule) DeleteRepository(id string) (string, error) {
 	var deletedID string
 	err := c.DB.QueryRow(`DELETE FROM categories WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
-	return deletedID, err
-}
-
-func (c *CategoryModule) DeleteSubRepository(id string) (string, error) {
-	var deletedID string
-	err := c.DB.QueryRow(`DELETE FROM subcategories WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
 	return deletedID, err
 }

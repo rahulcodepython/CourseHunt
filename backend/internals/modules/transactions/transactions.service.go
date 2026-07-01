@@ -85,12 +85,12 @@ func (m *TransactionsModule) HandleWebhookService(rawBody []byte, signature stri
 			return err
 		}
 		// Register coupon usage
-		if tx.CouponID != nil && tx.UserID != nil && tx.CourseID != nil {
-			m.Coupons.RecordUsageRepository(*tx.CouponID, *tx.UserID, *tx.CourseID)
+		if tx.Coupon.ID != "" && tx.User.ID != "" && tx.Course.ID != "" {
+			m.Coupons.RecordUsageRepository(tx.Coupon.ID, tx.User.ID, tx.Course.ID)
 		}
 		// Enroll user
-		if tx.UserID != nil && tx.CourseID != nil {
-			m.Enrollments.EnrollRepository(*tx.UserID, *tx.CourseID)
+		if tx.User.ID != "" && tx.Course.ID != "" {
+			m.Enrollments.EnrollRepository(tx.User.ID, tx.Course.ID)
 		}
 	case "payment.failed":
 		m.MarkFailedRepository(tx.ID, &payload.ErrorDescription)

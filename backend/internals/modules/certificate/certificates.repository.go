@@ -2,13 +2,31 @@ package certificate
 
 func (c *CertificateModule) IssueRepository(userID, courseID string) (*Certificate, error) {
 	var cert Certificate
-	err := c.DB.QueryRow(`
-		INSERT INTO certificates (user_id, course_id)
-		VALUES ($1, $2)
-		ON CONFLICT (user_id, course_id) DO UPDATE SET issued_at = certificates.issued_at
-		RETURNING id, user_id, course_id, issued_at`,
-		userID, courseID,
-	).Scan(&cert.ID, &cert.UserID, &cert.CourseID, &cert.IssuedAt)
+	query := `
+		WITH inserted AS (
+			INSERT INTO certificates (user_id, course_id)
+			VALUES ($1, $2)
+			ON CONFLICT (user_id, course_id) DO UPDATE SET issued_at = certificates.issued_at
+			RETURNING id, user_id, course_id, issued_at
+		)
+		SELECT 
+			i.id, 
+			i.user_id, 
+			i.course_id, 
+			COALESCE(co.title, '') AS course_title, 
+			co.image_url AS course_thumbnail, 
+			i.issued_at 
+		FROM inserted i
+		LEFT JOIN courses co ON i.course_id = co.id
+	`
+	err := c.DB.QueryRow(query, userID, courseID).Scan(
+		&cert.ID, 
+		&cert.UserID, 
+		&cert.Course.ID, 
+		&cert.Course.Title, 
+		&cert.Course.Thumbnail, 
+		&cert.IssuedAt,
+	)
 	return &cert, err
 }
 
@@ -39,7 +57,25 @@ func (c *CertificateModule) ListRepository(userID string) ([]CertificateResponse
 
 func (c *CertificateModule) GetRepository(userID, courseID string) (*Certificate, error) {
 	var cert Certificate
-	err := c.DB.QueryRow(`SELECT id, user_id, course_id, issued_at FROM certificates WHERE user_id = $1 AND course_id = $2`, userID, courseID).
-		Scan(&cert.ID, &cert.UserID, &cert.CourseID, &cert.IssuedAt)
+	query := `
+		SELECT 
+			c.id, 
+			c.user_id, 
+			c.course_id, 
+			COALESCE(co.title, '') AS course_title, 
+			co.image_url AS course_thumbnail, 
+			c.issued_at 
+		FROM certificates c
+		LEFT JOIN courses co ON c.course_id = co.id
+		WHERE c.user_id = $1 AND c.course_id = $2
+	`
+	err := c.DB.QueryRow(query, userID, courseID).Scan(
+		&cert.ID, 
+		&cert.UserID, 
+		&cert.Course.ID, 
+		&cert.Course.Title, 
+		&cert.Course.Thumbnail, 
+		&cert.IssuedAt,
+	)
 	return &cert, err
 }

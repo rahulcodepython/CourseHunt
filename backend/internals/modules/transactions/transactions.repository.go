@@ -6,21 +6,29 @@ import (
 
 func (m *TransactionsModule) CreateRepository(userID, courseID string, couponID *string, razorpayOrderID string, amount float64) (*Transaction, error) {
 	var t Transaction
+	var dbCouponID *string
 	err := m.DB.QueryRow(`
 		INSERT INTO transactions (user_id, course_id, coupon_id, razorpay_order_id, amount, currency, status)
 		VALUES ($1, $2, $3, $4, $5, 'INR', 'pending')
 		RETURNING id, user_id, course_id, coupon_id, razorpay_order_id, razorpay_payment_id, amount, currency, status, error_description, confirmed_at, created_at`,
 		userID, courseID, couponID, razorpayOrderID, amount,
-	).Scan(&t.ID, &t.UserID, &t.CourseID, &t.CouponID, &t.RazorpayOrderID, &t.RazorpayPaymentID, &t.Amount, &t.Currency, &t.Status, &t.ErrorDescription, &t.ConfirmedAt, &t.CreatedAt)
+	).Scan(&t.ID, &t.User.ID, &t.Course.ID, &dbCouponID, &t.RazorpayOrderID, &t.RazorpayPaymentID, &t.Amount, &t.Currency, &t.Status, &t.ErrorDescription, &t.ConfirmedAt, &t.CreatedAt)
+	if dbCouponID != nil {
+		t.Coupon.ID = *dbCouponID
+	}
 	return &t, err
 }
 
 func (m *TransactionsModule) FindByRazorpayOrderIDRepository(orderID string) (*Transaction, error) {
 	var t Transaction
+	var dbCouponID *string
 	err := m.DB.QueryRow(`
 		SELECT id, user_id, course_id, coupon_id, razorpay_order_id, razorpay_payment_id, amount, currency, status, error_description, confirmed_at, created_at
 		FROM transactions WHERE razorpay_order_id = $1`, orderID).
-		Scan(&t.ID, &t.UserID, &t.CourseID, &t.CouponID, &t.RazorpayOrderID, &t.RazorpayPaymentID, &t.Amount, &t.Currency, &t.Status, &t.ErrorDescription, &t.ConfirmedAt, &t.CreatedAt)
+		Scan(&t.ID, &t.User.ID, &t.Course.ID, &dbCouponID, &t.RazorpayOrderID, &t.RazorpayPaymentID, &t.Amount, &t.Currency, &t.Status, &t.ErrorDescription, &t.ConfirmedAt, &t.CreatedAt)
+	if dbCouponID != nil {
+		t.Coupon.ID = *dbCouponID
+	}
 	return &t, err
 }
 
@@ -41,12 +49,12 @@ func (m *TransactionsModule) ListRepository(page, limit int, userID string) ([]T
 	where := "1=1"
 	idx := 1
 	if userID != "" {
-		where = "user_id = $1"
+		where = "t.user_id = $1"
 		args = append(args, userID)
 		idx++
 	}
 	var total int
-	m.DB.QueryRow("SELECT COUNT(*) FROM transactions WHERE "+where, args...).Scan(&total)
+	m.DB.QueryRow("SELECT COUNT(*) FROM transactions t WHERE "+where, args...).Scan(&total)
 
 	offset := (page - 1) * limit
 	args = append(args, limit, offset)
@@ -56,8 +64,12 @@ func (m *TransactionsModule) ListRepository(page, limit int, userID string) ([]T
 	offsetIdx := idx + 1
 	
 	query := fmt.Sprintf(`
-		SELECT id, user_id, course_id, coupon_id, razorpay_order_id, razorpay_payment_id, amount, currency, status, error_description, confirmed_at, created_at
-		FROM transactions WHERE %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`, where, limitIdx, offsetIdx)
+		SELECT t.id, t.user_id, u.name, u.image, t.course_id, c.title, c.thumbnail, t.coupon_id, cp.code, cp.discount_percent, t.razorpay_order_id, t.razorpay_payment_id, t.amount, t.currency, t.status, t.error_description, t.confirmed_at, t.created_at
+		FROM transactions t
+		LEFT JOIN "user" u ON u.id = t.user_id
+		LEFT JOIN courses c ON c.id = t.course_id
+		LEFT JOIN coupons cp ON cp.id = t.coupon_id
+		WHERE %s ORDER BY t.created_at DESC LIMIT $%d OFFSET $%d`, where, limitIdx, offsetIdx)
 
 	rows, err := m.DB.Query(query, args...)
 	if err != nil {
@@ -67,7 +79,19 @@ func (m *TransactionsModule) ListRepository(page, limit int, userID string) ([]T
 	var list []Transaction
 	for rows.Next() {
 		var t Transaction
-		rows.Scan(&t.ID, &t.UserID, &t.CourseID, &t.CouponID, &t.RazorpayOrderID, &t.RazorpayPaymentID, &t.Amount, &t.Currency, &t.Status, &t.ErrorDescription, &t.ConfirmedAt, &t.CreatedAt)
+		var dbCouponID, dbCouponCode, uName, cTitle *string
+		var dbDiscountPercent *float64
+		var uImage, cThumb *string
+		rows.Scan(&t.ID, &t.User.ID, &uName, &uImage, &t.Course.ID, &cTitle, &cThumb, &dbCouponID, &dbCouponCode, &dbDiscountPercent, &t.RazorpayOrderID, &t.RazorpayPaymentID, &t.Amount, &t.Currency, &t.Status, &t.ErrorDescription, &t.ConfirmedAt, &t.CreatedAt)
+		if uName != nil { t.User.Name = *uName }
+		t.User.Image = uImage
+		if cTitle != nil { t.Course.Title = *cTitle }
+		t.Course.Thumbnail = cThumb
+		if dbCouponID != nil {
+			t.Coupon.ID = *dbCouponID
+			if dbCouponCode != nil { t.Coupon.Code = *dbCouponCode }
+			if dbDiscountPercent != nil { t.Coupon.DiscountValue = *dbDiscountPercent }
+		}
 		list = append(list, t)
 	}
 	if list == nil {

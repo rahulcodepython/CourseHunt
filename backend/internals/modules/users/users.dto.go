@@ -10,7 +10,7 @@ type AssignRoleRequest struct {
 
 // ── User List Response ──
 
-type UserListItem struct {
+type UserListResponse struct {
 	ID            string    `json:"id"`
 	Name          string    `json:"name"`
 	Email         string    `json:"email"`

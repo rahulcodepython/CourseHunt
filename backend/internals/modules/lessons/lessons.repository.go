@@ -1,5 +1,10 @@
 package lessons
 
+import (
+	"fmt"
+	"strings"
+)
+
 func (m *LessonsModule) ListRepository(chapterID string) ([]Lesson, error) {
 	rows, err := m.DB.Query(`
 		SELECT id, chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds, created_at, updated_at
@@ -43,22 +48,46 @@ func (m *LessonsModule) CreateRepository(chapterID string, req CreateLessonReque
 }
 
 func (m *LessonsModule) UpdateRepository(id string, req UpdateLessonRequest) (*Lesson, error) {
+	setClauses := []string{"updated_at = CURRENT_TIMESTAMP"}
+	var args []interface{}
+	argIdx := 1
+
 	if req.Title != nil {
-		m.DB.Exec(`UPDATE lessons SET title = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, *req.Title, id)
+		setClauses = append(setClauses, fmt.Sprintf("title = $%d", argIdx))
+		args = append(args, *req.Title)
+		argIdx++
 	}
 	if req.LessonNo != nil {
-		m.DB.Exec(`UPDATE lessons SET lesson_no = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, *req.LessonNo, id)
+		setClauses = append(setClauses, fmt.Sprintf("lesson_no = $%d", argIdx))
+		args = append(args, *req.LessonNo)
+		argIdx++
 	}
 	if req.ShortDescription != nil {
-		m.DB.Exec(`UPDATE lessons SET short_description = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, *req.ShortDescription, id)
+		setClauses = append(setClauses, fmt.Sprintf("short_description = $%d", argIdx))
+		args = append(args, *req.ShortDescription)
+		argIdx++
 	}
 	if req.PreviewVideoURL != nil {
-		m.DB.Exec(`UPDATE lessons SET preview_video_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, *req.PreviewVideoURL, id)
+		setClauses = append(setClauses, fmt.Sprintf("preview_video_url = $%d", argIdx))
+		args = append(args, *req.PreviewVideoURL)
+		argIdx++
 	}
 	if req.DurationSeconds != nil {
-		m.DB.Exec(`UPDATE lessons SET duration_seconds = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, *req.DurationSeconds, id)
+		setClauses = append(setClauses, fmt.Sprintf("duration_seconds = $%d", argIdx))
+		args = append(args, *req.DurationSeconds)
+		argIdx++
 	}
-	return m.ReadRepository(id)
+	args = append(args, id)
+	query := fmt.Sprintf(
+		"UPDATE lessons SET %s WHERE id = $%d RETURNING id, chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds, created_at, updated_at",
+		strings.Join(setClauses, ", "), argIdx,
+	)
+	var l Lesson
+	err := m.DB.QueryRow(query, args...).Scan(
+		&l.ID, &l.ChapterID, &l.LessonNo, &l.Title, &l.LessonType,
+		&l.ShortDescription, &l.PreviewVideoURL, &l.DurationSeconds, &l.CreatedAt, &l.UpdatedAt,
+	)
+	return &l, err
 }
 
 func (m *LessonsModule) DeleteRepository(id string) (string, error) {

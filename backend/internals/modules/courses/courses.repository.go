@@ -117,12 +117,18 @@ func (m *CoursesModule) UpdateRepository(id string, req UpdateCourseRequest) (*C
 		argIdx++
 	}
 	args = append(args, id)
-	query := fmt.Sprintf("UPDATE courses SET %s WHERE id = $%d", strings.Join(setClauses, ", "), argIdx)
-	_, err := m.DB.Exec(query, args...)
-	if err != nil {
-		return nil, err
-	}
-	return m.ReadRepository(id)
+	query := fmt.Sprintf("UPDATE courses SET %s WHERE id = $%d RETURNING id, tutor_id, slug, title, short_description, long_description, image_url, preview_video_url, language, level, actual_price, final_price, COALESCE(benefits, '{}'), COALESCE(requirements, '{}'), category_id, subcategory_id, coupon_allowed, total_lectures, total_duration_seconds, rating_avg, feedback_count, status, created_at, updated_at", strings.Join(setClauses, ", "), argIdx)
+	var c Course
+	err := m.DB.QueryRow(query, args...).Scan(
+		&c.ID, &c.TutorID, &c.Slug, &c.Title,
+		&c.ShortDescription, &c.LongDescription, &c.ImageURL, &c.PreviewVideoURL,
+		&c.Language, &c.Level, &c.ActualPrice, &c.FinalPrice,
+		pq.Array(&c.Benefits), pq.Array(&c.Requirements),
+		&c.CategoryID, &c.SubcategoryID, &c.CouponAllowed,
+		&c.TotalLectures, &c.TotalDurationSeconds, &c.RatingAvg, &c.FeedbackCount,
+		&c.Status, &c.CreatedAt, &c.UpdatedAt,
+	)
+	return &c, err
 }
 
 func (m *CoursesModule) DeleteRepository(id string) (string, error) {

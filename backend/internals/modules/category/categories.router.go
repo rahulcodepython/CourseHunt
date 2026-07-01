@@ -11,7 +11,6 @@ func (c *CategoryModule) Routes(v1, protected fiber.Router) {
 
 	categories := protected.Group("/categories", middlewares.PermissionGuard("categories:manage"))
 	categories.Post("", c.CreateController)
+	categories.Patch("/:id", c.UpdateController)
 	categories.Delete("/:id", c.DeleteController)
-	categories.Post("/:id/subcategories", c.CreateSubController)
-	categories.Delete("/subcategories/:subID", c.DeleteSubController)
 }

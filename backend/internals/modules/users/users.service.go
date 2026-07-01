@@ -4,7 +4,7 @@ func (m *UsersModule) ReadService(id string) (*User, error) {
 	return m.ReadRepository(id)
 }
 
-func (m *UsersModule) ListService(page, limit int, search, role string) ([]UserListItem, int, error) {
+func (m *UsersModule) ListService(page, limit int, search, role string) ([]UserListResponse, int, error) {
 	return m.ListRepository(page, limit, search, role)
 }
 

@@ -2,26 +2,38 @@ package cart
 
 func (c *CartModule) AddRepository(userID, courseID string) (*CartItem, error) {
 	var ci CartItem
-	err := c.DB.QueryRow(`
-		WITH inserted AS (
-			INSERT INTO cart_items (user_id, course_id) 
-			VALUES ($1, $2) 
-			ON CONFLICT (user_id, course_id) DO UPDATE SET added_at = NOW() 
-			RETURNING id, user_id, course_id, added_at
-		)
-		SELECT 
-			i.id, 
-			i.user_id, 
-			i.course_id, 
-			COALESCE(co.title, '') AS course_name, 
-			COALESCE(co.image_url, '') AS course_thumbnail, 
-			i.added_at 
-		FROM inserted i
-		LEFT JOIN courses co ON i.course_id = co.id
-	`, userID, courseID).Scan(&ci.ID, &ci.UserID, &ci.CourseID, &ci.CourseName, &ci.CourseThumbnail, &ci.AddedAt)
+
+	query := `
+        WITH inserted AS (
+            INSERT INTO cart_items (user_id, course_id) 
+            VALUES ($1, $2) 
+            ON CONFLICT (user_id, course_id) DO UPDATE SET added_at = NOW() 
+            RETURNING id, user_id, course_id, added_at
+        )
+        SELECT 
+            i.id, 
+            i.user_id, 
+            i.course_id, 
+            COALESCE(co.title, '') AS course_name, 
+            COALESCE(co.image_url, '') AS course_thumbnail, 
+            i.added_at 
+        FROM inserted i
+        LEFT JOIN courses co ON i.course_id = co.id
+    `
+
+	err := c.DB.QueryRow(query, userID, courseID).Scan(
+		&ci.ID,
+		&ci.UserID,
+		&ci.Course.ID,        // Scans i.course_id
+		&ci.Course.Title,     // Scans course_name
+		&ci.Course.Thumbnail, // Scans course_thumbnail
+		&ci.AddedAt,
+	)
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &ci, nil
 }
 
@@ -53,7 +65,7 @@ func (c *CartModule) ListRepository(userID string) ([]CartItem, error) {
 	var list []CartItem
 	for rows.Next() {
 		var ci CartItem
-		if err := rows.Scan(&ci.ID, &ci.UserID, &ci.CourseID, &ci.CourseName, &ci.CourseThumbnail, &ci.AddedAt); err != nil {
+		if err := rows.Scan(&ci.ID, &ci.UserID, &ci.Course.ID, &ci.Course.Title, &ci.Course.Thumbnail, &ci.AddedAt); err != nil {
 			return nil, err
 		}
 		list = append(list, ci)

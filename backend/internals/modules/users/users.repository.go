@@ -9,7 +9,7 @@ func (m *UsersModule) ReadRepository(id string) (*User, error) {
 	return &u, err
 }
 
-func (m *UsersModule) ListRepository(page, limit int, search, role string) ([]UserListItem, int, error) {
+func (m *UsersModule) ListRepository(page, limit int, search, role string) ([]UserListResponse, int, error) {
 	where := `1=1`
 	args := []interface{}{}
 	idx := 1
@@ -40,15 +40,15 @@ func (m *UsersModule) ListRepository(page, limit int, search, role string) ([]Us
 	}
 	defer rows.Close()
 
-	var list []UserListItem
+	var list []UserListResponse
 	for rows.Next() {
-		var u UserListItem
+		var u UserListResponse
 		rows.Scan(&u.ID, &u.Name, &u.Email, &u.Image, &u.EmailVerified, &u.Banned, &u.CreatedAt)
 		u.Roles, _ = m.GetRolesRepository(u.ID)
 		list = append(list, u)
 	}
 	if list == nil {
-		list = []UserListItem{}
+		list = []UserListResponse{}
 	}
 	return list, total, rows.Err()
 }

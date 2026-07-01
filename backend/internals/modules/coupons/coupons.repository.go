@@ -3,24 +3,63 @@ package coupons
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 )
 
 func (m *CouponsModule) ReadByCodeRepository(code string) (*Coupon, error) {
 	var c Coupon
+	var courseID, courseTitle, courseThumbnail *string
+
 	err := m.DB.QueryRow(`
-		SELECT id, code, course_id, discount_percent, max_usage, usage_count, expires_at, is_active, created_by, created_at
-		FROM coupons WHERE code = $1`, code).
-		Scan(&c.ID, &c.Code, &c.CourseID, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, &c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt)
+		SELECT 
+			c.id, c.code, c.discount_percent, c.max_usage, c.usage_count, 
+			c.expires_at, c.is_active, c.created_by, c.created_at,
+			c.course_id, co.title, co.image_url
+		FROM coupons c
+		LEFT JOIN courses co ON c.course_id = co.id
+		WHERE c.code = $1`, code).
+		Scan(
+			&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
+			&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
+			&courseID, &courseTitle, &courseThumbnail,
+		)
+
+	if err == nil && courseID != nil {
+		c.Course.ID = *courseID
+		if courseTitle != nil {
+			c.Course.Title = *courseTitle
+		}
+		c.Course.Thumbnail = courseThumbnail
+	}
 	return &c, err
 }
 
 func (m *CouponsModule) ReadRepository(id string) (*Coupon, error) {
 	var c Coupon
+	var courseID, courseTitle, courseThumbnail *string
+
 	err := m.DB.QueryRow(`
-		SELECT id, code, course_id, discount_percent, max_usage, usage_count, expires_at, is_active, created_by, created_at
-		FROM coupons WHERE id = $1`, id).
-		Scan(&c.ID, &c.Code, &c.CourseID, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, &c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt)
+		SELECT 
+			c.id, c.code, c.discount_percent, c.max_usage, c.usage_count, 
+			c.expires_at, c.is_active, c.created_by, c.created_at,
+			c.course_id, co.title, co.image_url
+		FROM coupons c
+		LEFT JOIN courses co ON c.course_id = co.id
+		WHERE c.id = $1`, id).
+		Scan(
+			&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
+			&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
+			&courseID, &courseTitle, &courseThumbnail,
+		)
+
+	if err == nil && courseID != nil {
+		c.Course.ID = *courseID
+		if courseTitle != nil {
+			c.Course.Title = *courseTitle
+		}
+		c.Course.Thumbnail = courseThumbnail
+	}
 	return &c, err
 }
 
@@ -29,8 +68,13 @@ func (m *CouponsModule) ListRepository(page, limit int) ([]Coupon, int, error) {
 	m.DB.QueryRow(`SELECT COUNT(*) FROM coupons`).Scan(&total)
 	offset := (page - 1) * limit
 	rows, err := m.DB.Query(`
-		SELECT id, code, course_id, discount_percent, max_usage, usage_count, expires_at, is_active, created_by, created_at
-		FROM coupons ORDER BY created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
+		SELECT 
+			c.id, c.code, c.discount_percent, c.max_usage, c.usage_count, 
+			c.expires_at, c.is_active, c.created_by, c.created_at,
+			c.course_id, co.title, co.image_url
+		FROM coupons c
+		LEFT JOIN courses co ON c.course_id = co.id
+		ORDER BY c.created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -38,7 +82,22 @@ func (m *CouponsModule) ListRepository(page, limit int) ([]Coupon, int, error) {
 	var coupons []Coupon
 	for rows.Next() {
 		var c Coupon
-		rows.Scan(&c.ID, &c.Code, &c.CourseID, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, &c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt)
+		var courseID, courseTitle, courseThumbnail *string
+		err := rows.Scan(
+			&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
+			&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
+			&courseID, &courseTitle, &courseThumbnail,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		if courseID != nil {
+			c.Course.ID = *courseID
+			if courseTitle != nil {
+				c.Course.Title = *courseTitle
+			}
+			c.Course.Thumbnail = courseThumbnail
+		}
 		coupons = append(coupons, c)
 	}
 	if coupons == nil {
@@ -55,31 +114,100 @@ func (m *CouponsModule) CreateRepository(createdBy string, req CreateCouponReque
 			return nil, fmt.Errorf("invalid expires_at format")
 		}
 	}
+	
 	var c Coupon
+	var courseID, courseTitle, courseThumbnail *string
+
 	err = m.DB.QueryRow(`
-		INSERT INTO coupons (code, course_id, discount_percent, max_usage, expires_at, is_active, created_by)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, code, course_id, discount_percent, max_usage, usage_count, expires_at, is_active, created_by, created_at`,
+		WITH inserted AS (
+			INSERT INTO coupons (code, course_id, discount_percent, max_usage, expires_at, is_active, created_by)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+			RETURNING id, code, course_id, discount_percent, max_usage, usage_count, expires_at, is_active, created_by, created_at
+		)
+		SELECT 
+			i.id, i.code, i.discount_percent, i.max_usage, i.usage_count, 
+			i.expires_at, i.is_active, i.created_by, i.created_at,
+			i.course_id, co.title, co.image_url
+		FROM inserted i
+		LEFT JOIN courses co ON i.course_id = co.id`,
 		req.Code, req.CourseID, req.DiscountPercent, req.MaxUsage, expiresAt, req.IsActive, createdBy,
-	).Scan(&c.ID, &c.Code, &c.CourseID, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, &c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt)
+	).Scan(
+		&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
+		&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
+		&courseID, &courseTitle, &courseThumbnail,
+	)
+
+	if err == nil && courseID != nil {
+		c.Course.ID = *courseID
+		if courseTitle != nil {
+			c.Course.Title = *courseTitle
+		}
+		c.Course.Thumbnail = courseThumbnail
+	}
 	return &c, err
 }
 
 func (m *CouponsModule) UpdateRepository(id string, req UpdateCouponRequest) (*Coupon, error) {
+	setClauses := []string{}
+	var args []interface{}
+	argIdx := 1
+
 	if req.DiscountPercent != nil {
-		m.DB.Exec(`UPDATE coupons SET discount_percent = $1 WHERE id = $2`, *req.DiscountPercent, id)
+		setClauses = append(setClauses, fmt.Sprintf("discount_percent = $%d", argIdx))
+		args = append(args, *req.DiscountPercent)
+		argIdx++
 	}
 	if req.MaxUsage != nil {
-		m.DB.Exec(`UPDATE coupons SET max_usage = $1 WHERE id = $2`, *req.MaxUsage, id)
+		setClauses = append(setClauses, fmt.Sprintf("max_usage = $%d", argIdx))
+		args = append(args, *req.MaxUsage)
+		argIdx++
 	}
 	if req.IsActive != nil {
-		m.DB.Exec(`UPDATE coupons SET is_active = $1 WHERE id = $2`, *req.IsActive, id)
+		setClauses = append(setClauses, fmt.Sprintf("is_active = $%d", argIdx))
+		args = append(args, *req.IsActive)
+		argIdx++
 	}
 	if req.ExpiresAt != nil {
 		expiresAt, _ := time.Parse(time.RFC3339, *req.ExpiresAt)
-		m.DB.Exec(`UPDATE coupons SET expires_at = $1 WHERE id = $2`, expiresAt, id)
+		setClauses = append(setClauses, fmt.Sprintf("expires_at = $%d", argIdx))
+		args = append(args, expiresAt)
+		argIdx++
 	}
-	return m.ReadRepository(id)
+
+	if len(setClauses) == 0 {
+		return m.ReadRepository(id)
+	}
+
+	args = append(args, id)
+	query := fmt.Sprintf(`
+		WITH updated AS (
+			UPDATE coupons SET %s WHERE id = $%d
+			RETURNING id, code, course_id, discount_percent, max_usage, usage_count, expires_at, is_active, created_by, created_at
+		)
+		SELECT 
+			u.id, u.code, u.discount_percent, u.max_usage, u.usage_count, 
+			u.expires_at, u.is_active, u.created_by, u.created_at,
+			u.course_id, co.title, co.image_url
+		FROM updated u
+		LEFT JOIN courses co ON u.course_id = co.id`, strings.Join(setClauses, ", "), argIdx)
+
+	var c Coupon
+	var courseID, courseTitle, courseThumbnail *string
+
+	err := m.DB.QueryRow(query, args...).Scan(
+		&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
+		&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
+		&courseID, &courseTitle, &courseThumbnail,
+	)
+
+	if err == nil && courseID != nil {
+		c.Course.ID = *courseID
+		if courseTitle != nil {
+			c.Course.Title = *courseTitle
+		}
+		c.Course.Thumbnail = courseThumbnail
+	}
+	return &c, err
 }
 
 func (m *CouponsModule) DeleteRepository(id string) (string, error) {
@@ -124,7 +252,7 @@ func (m *CouponsModule) CheckRepository(code, courseID string) CouponCheckRespon
 	if c.UsageCount >= c.MaxUsage {
 		return CouponCheckResponse{Valid: false, DiscountPercent: c.DiscountPercent, Reason: reason("max_usage_reached")}
 	}
-	if c.CourseID != nil && *c.CourseID != courseID {
+	if c.Course.ID != "" && c.Course.ID != courseID {
 		return CouponCheckResponse{Valid: false, DiscountPercent: c.DiscountPercent, Reason: reason("not_applicable")}
 	}
 	return CouponCheckResponse{Valid: true, DiscountPercent: c.DiscountPercent}

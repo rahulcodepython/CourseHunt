@@ -35,3 +35,10 @@ type CourseInfo struct {
 	Title     string  `json:"title"`
 	Thumbnail *string `json:"thumbnail"`
 }
+
+// CouponInfo represents basic coupon details used across modules.
+type CouponInfo struct {
+	ID            string  `json:"id"`
+	Code          string  `json:"code"`
+	DiscountValue float64 `json:"discount_value"`
+}

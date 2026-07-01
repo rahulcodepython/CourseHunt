@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS courses (
     benefits              text[],
     requirements          text[],
     category_id           text REFERENCES categories(id) ON DELETE SET NULL,
-    subcategory_id        text REFERENCES subcategories(id) ON DELETE SET NULL,
+    subcategory_id        text REFERENCES categories(id) ON DELETE SET NULL,
     coupon_allowed        boolean DEFAULT true,
     total_lectures        INTEGER DEFAULT 0,
     total_duration_seconds INTEGER DEFAULT 0,

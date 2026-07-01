@@ -6,21 +6,29 @@ import (
 
 func (m *UpdatesModule) CreateRepository(createdBy string, req CreateUpdateRequest) (*CourseUpdate, error) {
 	var u CourseUpdate
+	var dbCourseID *string
 	err := m.DB.QueryRow(`
 		INSERT INTO course_updates (course_id, created_by, message)
 		VALUES ($1, $2, $3)
 		RETURNING id, course_id, created_by, message, created_at`,
 		req.CourseID, createdBy, req.Message,
-	).Scan(&u.ID, &u.CourseID, &u.CreatedBy, &u.Message, &u.CreatedAt)
+	).Scan(&u.ID, &dbCourseID, &u.CreatedBy, &u.Message, &u.CreatedAt)
+	if dbCourseID != nil {
+		u.Course.ID = *dbCourseID
+	}
 	return &u, err
 }
 
 func (m *UpdatesModule) UpdateRepository(id string, message string) (*CourseUpdate, error) {
 	var u CourseUpdate
+	var dbCourseID *string
 	err := m.DB.QueryRow(`
 		UPDATE course_updates SET message = $1 WHERE id = $2
 		RETURNING id, course_id, created_by, message, created_at`, message, id).
-		Scan(&u.ID, &u.CourseID, &u.CreatedBy, &u.Message, &u.CreatedAt)
+		Scan(&u.ID, &dbCourseID, &u.CreatedBy, &u.Message, &u.CreatedAt)
+	if dbCourseID != nil {
+		u.Course.ID = *dbCourseID
+	}
 	return &u, err
 }
 
@@ -104,7 +112,11 @@ func (m *UpdatesModule) ListRepository(page, limit int) ([]CourseUpdate, int, er
 	var total int
 	m.DB.QueryRow(`SELECT COUNT(*) FROM course_updates`).Scan(&total)
 	offset := (page - 1) * limit
-	rows, err := m.DB.Query(`SELECT id, course_id, created_by, message, created_at FROM course_updates ORDER BY created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
+	rows, err := m.DB.Query(`
+		SELECT cu.id, cu.course_id, c.title, c.thumbnail, cu.created_by, cu.message, cu.created_at 
+		FROM course_updates cu 
+		LEFT JOIN courses c ON c.id = cu.course_id 
+		ORDER BY cu.created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -112,7 +124,13 @@ func (m *UpdatesModule) ListRepository(page, limit int) ([]CourseUpdate, int, er
 	var list []CourseUpdate
 	for rows.Next() {
 		var u CourseUpdate
-		rows.Scan(&u.ID, &u.CourseID, &u.CreatedBy, &u.Message, &u.CreatedAt)
+		var dbCourseID, cTitle, cThumb *string
+		rows.Scan(&u.ID, &dbCourseID, &cTitle, &cThumb, &u.CreatedBy, &u.Message, &u.CreatedAt)
+		if dbCourseID != nil {
+			u.Course.ID = *dbCourseID
+			if cTitle != nil { u.Course.Title = *cTitle }
+			u.Course.Thumbnail = cThumb
+		}
 		list = append(list, u)
 	}
 	if list == nil {

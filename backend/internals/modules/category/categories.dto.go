@@ -3,9 +3,10 @@ package category
 // ── Categories ──
 
 type CreateCategoryRequest struct {
-	Name string `json:"name" validate:"required,min=2,max=100"`
+	Name     string  `json:"name" validate:"required,min=2,max=100"`
+	ParentID *string `json:"parent_id"`
 }
 
-type CreateSubcategoryRequest struct {
+type UpdateCategoryRequest struct {
 	Name string `json:"name" validate:"required,min=2,max=100"`
 }

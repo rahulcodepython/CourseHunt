@@ -1,11 +1,14 @@
 package updates
 
-import "time"
+import (
+	"coursehunt-backend/internals/models"
+	"time"
+)
 
 type CourseUpdate struct {
-	ID        string    `json:"id"`
-	CourseID  *string   `json:"course_id"`
-	CreatedBy *string   `json:"created_by"`
-	Message   string    `json:"message"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        string            `json:"id"`
+	Course    models.CourseInfo `json:"course"`
+	CreatedBy *string           `json:"created_by"`
+	Message   string            `json:"message"`
+	CreatedAt time.Time         `json:"created_at"`
 }

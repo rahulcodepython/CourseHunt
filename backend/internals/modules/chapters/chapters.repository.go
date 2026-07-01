@@ -3,6 +3,7 @@ package chapters
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 )
 
 func (m *ChaptersModule) ListRepository(courseID string) ([]Chapter, error) {
@@ -48,13 +49,31 @@ func (m *ChaptersModule) CreateRepository(courseID string, req CreateChapterRequ
 }
 
 func (m *ChaptersModule) UpdateRepository(id string, req UpdateChapterRequest) (*Chapter, error) {
+	setClauses := []string{"updated_at = CURRENT_TIMESTAMP"}
+	var args []interface{}
+	argIdx := 1
+
 	if req.Title != nil {
-		m.DB.Exec(`UPDATE chapters SET title = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, *req.Title, id)
+		setClauses = append(setClauses, fmt.Sprintf("title = $%d", argIdx))
+		args = append(args, *req.Title)
+		argIdx++
 	}
 	if req.ChapterNo != nil {
-		m.DB.Exec(`UPDATE chapters SET chapter_no = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, *req.ChapterNo, id)
+		setClauses = append(setClauses, fmt.Sprintf("chapter_no = $%d", argIdx))
+		args = append(args, *req.ChapterNo)
+		argIdx++
 	}
-	return m.ReadRepository(id)
+	args = append(args, id)
+	query := fmt.Sprintf(
+		"UPDATE chapters SET %s WHERE id = $%d RETURNING id, course_id, chapter_no, title, total_lectures, total_duration_seconds, created_at, updated_at",
+		strings.Join(setClauses, ", "), argIdx,
+	)
+	var ch Chapter
+	err := m.DB.QueryRow(query, args...).Scan(
+		&ch.ID, &ch.CourseID, &ch.ChapterNo, &ch.Title,
+		&ch.TotalLectures, &ch.TotalDurationSeconds, &ch.CreatedAt, &ch.UpdatedAt,
+	)
+	return &ch, err
 }
 
 func (m *ChaptersModule) DeleteRepository(id string) (string, error) {
