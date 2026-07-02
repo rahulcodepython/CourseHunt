@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 	"time"
 
 	"coursehunt-backend/internals/config"
@@ -127,18 +126,11 @@ func BaseAuthMiddleware(cfg *config.Config) fiber.Handler {
 	}
 
 	return func(c *fiber.Ctx) error {
-		// Step 1: Extract raw token from the Authorization header.
-		authHeader := c.Get("Authorization")
-		if authHeader == "" {
-			return utils.Unauthorized(c, "Authorization header missing")
+		// Step 1: Extract raw token from the cookie.
+		tokenString := c.Cookies(cfg.JWTCookieName)
+		if tokenString == "" {
+			return utils.Unauthorized(c, "Authorization cookie missing")
 		}
-
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			return utils.Unauthorized(c, "Authorization header format must be Bearer {token}")
-		}
-
-		tokenString := parts[1]
 
 		// Step 2: Fetch the current JWKS key set from the in-memory cache.
 		keySet, err := fetchKeySet(c.Context(), cfg.JWKSURL)

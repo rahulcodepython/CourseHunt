@@ -1,4 +1,3 @@
-import getToken from "@/lib/get-token";
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { ZodSchema } from "zod";
 
@@ -7,7 +6,7 @@ import { ZodSchema } from "zod";
 // =============================================================================
 
 const api: AxiosInstance = axios.create({
-	baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+	baseURL: process.env.NEXT_PUBLIC_API_URL || "",
 	withCredentials: true,
 });
 
@@ -30,13 +29,9 @@ export async function apiRequest<T>(
 	schema?: ZodSchema<T>,
 ): Promise<T | null> {
 	try {
-		// 1. Get the cached or fresh token
-		const token = await getToken();
-
-		// 2. Attach the token to the request config headers
+		// Attach the token to the request config headers
 		config.headers = {
 			...config.headers,
-			Authorization: `Bearer ${token}`,
 			"Content-Type": "application/json",
 		};
 

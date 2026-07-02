@@ -18,6 +18,7 @@ type Config struct {
 	MinioSecure           bool   `env:"MINIO_SECURE" envDefault:"false"`
 	AllowedOrigins        string `env:"ALLOWED_ORIGINS" envDefault:"http://localhost:3000"`
 	JWKSURL               string `env:"JWKS_URL" envDefault:"http://localhost:3000/api/auth/jwks"`
+	JWTCookieName         string `env:"JWT_COOKIE_NAME" envDefault:"better-auth.session_token"`
 	RazorpayKeyID         string `env:"RAZORPAY_KEY_ID"`
 	RazorpaySecret        string `env:"RAZORPAY_SECRET"`
 	RazorpayWebhookSecret string `env:"RAZORPAY_WEBHOOK_SECRET"`
