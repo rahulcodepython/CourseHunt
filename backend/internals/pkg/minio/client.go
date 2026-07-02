@@ -1,9 +1,9 @@
-package storage
+package minio
 
 import (
 	"context"
 	"fmt"
-	"io"
+	"time"
 
 	"coursehunt-backend/internals/config"
 
@@ -57,46 +57,17 @@ func SetupMinio(cfg *config.Config) error {
 	return nil
 }
 
-// UploadFile uploads a file to MinIO and returns its accessible URL
-func (s *MinioStorage) UploadFile(ctx context.Context, objectName string, reader io.Reader, size int64, contentType string) (string, error) {
+// GetSignedURL generates a signed URL for uploading an object, valid for 1 hour
+func (s *MinioStorage) GetSignedURL(ctx context.Context, objectName string) (string, error) {
 	if objectName == "" {
 		return "", fmt.Errorf("object name cannot be empty")
 	}
-	if reader == nil {
-		return "", fmt.Errorf("reader cannot be nil")
-	}
-	if size <= 0 {
-		return "", fmt.Errorf("invalid file size")
-	}
-	if contentType == "" {
-		return "", fmt.Errorf("content type cannot be empty")
-	}
 
-	_, err := s.client.PutObject(
-		ctx,
-		s.bucket,
-		objectName,
-		reader,
-		size,
-		minio.PutObjectOptions{ContentType: contentType},
-	)
+	expiry := time.Hour
+	url, err := s.client.PresignedPutObject(ctx, s.bucket, objectName, expiry)
 	if err != nil {
-		return "", fmt.Errorf("failed to upload file: %w", err)
+		return "", fmt.Errorf("failed to generate signed URL: %w", err)
 	}
 
-	return fmt.Sprintf("%s/%s", s.baseURL, objectName), nil
-}
-
-// GetFile retrieves a file from MinIO
-func (s *MinioStorage) GetFile(ctx context.Context, objectName string) (io.ReadCloser, error) {
-	if objectName == "" {
-		return nil, fmt.Errorf("object name cannot be empty")
-	}
-
-	object, err := s.client.GetObject(ctx, s.bucket, objectName, minio.GetObjectOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get file: %w", err)
-	}
-
-	return object, nil
+	return url.String(), nil
 }

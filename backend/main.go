@@ -10,7 +10,7 @@ import (
 	"coursehunt-backend/internals/database"
 	"coursehunt-backend/internals/routes"
 
-	"coursehunt-backend/internals/storage"
+	"coursehunt-backend/internals/pkg/minio"
 	"coursehunt-backend/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,7 +27,7 @@ func main() {
 	defer database.Close(db)
 
 	// Initialize MinIO storage, continuing without file storage if initialization fails.
-	err := storage.SetupMinio(cfg)
+	err := minio.SetupMinio(cfg)
 	if err != nil {
 		log.Printf("[main] minio connect warning: %v (continuing without file storage)", err)
 	}

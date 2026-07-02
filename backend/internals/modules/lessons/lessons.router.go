@@ -21,4 +21,6 @@ func (m *LessonsModule) Routes(protected fiber.Router) {
 
 	lessons.Post("/:id/resources", middlewares.PermissionGuard("courses:update"), m.CreateResourceController)
 	lessons.Delete("/resources/:resourceID", middlewares.PermissionGuard("courses:update"), m.DeleteResourceController)
+
+	lessons.Get("/:id/signed-url", middlewares.PermissionGuard("media:upload"), m.GetSignedURLController)
 }

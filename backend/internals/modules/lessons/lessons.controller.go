@@ -3,6 +3,7 @@ package lessons
 import (
 	"net/http"
 
+	"coursehunt-backend/internals/pkg/minio"
 	"coursehunt-backend/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -119,4 +120,18 @@ func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete resource", nil, err.Error())
 	}
 	return utils.JSON(c, http.StatusOK, true, "resource deleted successfully", map[string]string{"id": id}, nil)
+}
+
+func (m *LessonsModule) GetSignedURLController(c *fiber.Ctx) error {
+	fileName := c.Query("file_name")
+	if fileName == "" {
+		return utils.JSON(c, http.StatusBadRequest, false, "file_name query param required", nil, nil)
+	}
+
+	url, err := minio.MINIO.GetSignedURL(c.Context(), fileName)
+	if err != nil {
+		return utils.JSON(c, http.StatusInternalServerError, false, "failed to generate signed URL", nil, err.Error())
+	}
+
+	return utils.JSON(c, http.StatusOK, true, "signed URL generated successfully", map[string]string{"url": url}, nil)
 }
