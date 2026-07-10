@@ -60,7 +60,7 @@ func (c *CartModule) ListController(ctx *fiber.Ctx) error {
 // @Tags Cart
 // @Accept json
 // @Produce json
-// @Success 200 {object} utils.SwaggerResponse[]
+// @Success 200 {object} utils.SwaggerResponse[string]
 // @Router /api/v1/cart [delete]
 func (c *CartModule) ClearController(ctx *fiber.Ctx) error {
 	if err := c.ClearService(utils.GetUserID(ctx)); err != nil {

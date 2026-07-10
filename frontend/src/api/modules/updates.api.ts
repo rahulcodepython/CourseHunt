@@ -7,7 +7,7 @@ import { useApiMutation, useApiQuery } from "@/api/core/generics";
 import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
 import { CourseUpdateZod, CreateUpdateRequestZod, UpdateUpdateRequestZod, UpdateFeedResponseZod } from "@/types/updates.types";
-import { UpdateDeleteResponseZod } from "@/types/updates.types";
+
 
 /**
  * Fetches updates.
@@ -51,7 +51,7 @@ export function useCreateUpdateMutation() {
  */
 export function useDeleteUpdateMutation() {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/updates/${id}`, method: "DELETE" }, UpdateDeleteResponseZod),
+		(id: string) => apiRequest({ url: `/api/v1/updates/${id}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.updates(),

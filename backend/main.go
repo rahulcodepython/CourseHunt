@@ -20,6 +20,11 @@ import (
 	_ "coursehunt-backend/docs"
 )
 
+// @title CourseHunt API
+// @version 1.0
+// @description CourseHunt backend API server.
+// @host localhost:8080
+// @BasePath /api/v1
 func main() {
 	// Load application configuration
 	cfg := config.Load()

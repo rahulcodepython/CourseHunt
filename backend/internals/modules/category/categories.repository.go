@@ -1,51 +1,49 @@
 package category
 
+import (
+	"encoding/json"
+)
+
 func (c *CategoryModule) ListRepository() ([]Category, error) {
-	rows, err := c.DB.Query(`SELECT id, parent_id, name, created_at FROM categories ORDER BY name`)
+	var jsonBytes []byte
+	err := c.DB.QueryRow(`
+		SELECT COALESCE(
+			json_agg(
+				json_build_object(
+					'id', c.id,
+					'parent_id', c.parent_id,
+					'name', c.name,
+					'created_at', c.created_at,
+					'subcategories', COALESCE(
+						(
+							SELECT json_agg(
+								json_build_object(
+									'id', s.id,
+									'parent_id', s.parent_id,
+									'name', s.name,
+									'created_at', s.created_at,
+									'subcategories', '[]'::json
+								) ORDER BY s.name
+							)
+							FROM categories s
+							WHERE s.parent_id = c.id
+						), '[]'::json
+					)
+				) ORDER BY c.name
+			), '[]'::json
+		)
+		FROM categories c
+		WHERE c.parent_id IS NULL
+	`).Scan(&jsonBytes)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var allCats []Category
-	for rows.Next() {
-		var cat Category
-		if err := rows.Scan(&cat.ID, &cat.ParentID, &cat.Name, &cat.CreatedAt); err != nil {
-			return nil, err
-		}
-		cat.Subcategories = []Category{}
-		allCats = append(allCats, cat)
-	}
-
-	childrenMap := make(map[string][]Category)
 	var roots []Category
-
-	for _, cat := range allCats {
-		if cat.ParentID == nil {
-			roots = append(roots, cat)
-		} else {
-			childrenMap[*cat.ParentID] = append(childrenMap[*cat.ParentID], cat)
-		}
+	if err := json.Unmarshal(jsonBytes, &roots); err != nil {
+		return nil, err
 	}
 
-	var buildTree func(cat *Category)
-	buildTree = func(cat *Category) {
-		cat.Subcategories = childrenMap[cat.ID]
-		if cat.Subcategories == nil {
-			cat.Subcategories = []Category{}
-		}
-		for i := range cat.Subcategories {
-			buildTree(&cat.Subcategories[i])
-		}
-	}
-
-	for i := range roots {
-		buildTree(&roots[i])
-	}
-
-	if roots == nil {
-		roots = []Category{}
-	}
 	return roots, nil
 }
 

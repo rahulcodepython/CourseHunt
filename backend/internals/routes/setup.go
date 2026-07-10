@@ -76,10 +76,10 @@ func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 	quiz := quiz.NewQuizModule(db)
 	enrollments := enrollments.NewEnrollmentsModule(db)
 	chapters := chapters.NewChaptersModule(db)
+	lessons := lessons.NewLessonsModule(db)
+	courses := courses.NewCoursesModule(db)
 
 	// Modules with cross-deps — order matters, clearly visible
-	lessons := lessons.NewLessonsModule(db, enrollments, notes, quiz)
-	courses := courses.NewCoursesModule(db, chapters, lessons, enrollments)
 	rzp := razorpaypkg.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret)
 	transactions := transactions.NewTransactionsModule(db, coupons, courses, enrollments, rzp, cfg)
 

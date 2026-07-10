@@ -9,7 +9,7 @@ import { cache } from "@/api/core/cache-utils";
 import { CouponZod, CreateCouponRequestZod, UpdateCouponRequestZod, CouponCheckResponseZod } from "@/types/coupons.types";
 import { PaginatedResponseZod } from "@/types/common.types";
 
-import { CouponDeleteResponseZod } from "@/types/coupons.types";
+
 
 /**
  * Fetches all coupons.
@@ -71,7 +71,7 @@ export function useUpdateCouponMutation() {
  */
 export function useDeleteCouponMutation() {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/coupons/${id}`, method: "DELETE" }, CouponDeleteResponseZod),
+		(id: string) => apiRequest({ url: `/api/v1/coupons/${id}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.coupons(),

@@ -1,11 +1,5 @@
 import { z } from 'zod';
-import { CourseInfoZod, UserInfoZod } from './common.types';
-
-export const CreateFeedbackRequestZod = z.object({
-    rating: z.number(),
-    content: z.string().optional(),
-});
-export type CreateFeedbackRequest = z.infer<typeof CreateFeedbackRequestZod>;
+import { CourseInfoZod, UserInfoZod } from '@/types/common.types';
 
 export const FeedbackZod = z.object({
     id: z.string(),
@@ -17,4 +11,9 @@ export const FeedbackZod = z.object({
     created_at: z.string(),
 });
 export type Feedback = z.infer<typeof FeedbackZod>;
-export const FeedbackDeleteResponseZod = z.any(); export type FeedbackDeleteResponse = any;
+
+export const CreateFeedbackRequestZod = z.object({
+    rating: z.number(),
+    content: z.string().optional(),
+});
+export type CreateFeedbackRequest = z.infer<typeof CreateFeedbackRequestZod>;

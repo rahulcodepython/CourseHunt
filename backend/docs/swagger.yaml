@@ -1,3 +1,4 @@
+basePath: /api/v1
 definitions:
   cart.CartItem:
     properties:
@@ -199,6 +200,13 @@ definitions:
       total_lectures:
         type: integer
     type: object
+  courses.ChapterProgressInfo:
+    properties:
+      completed:
+        type: boolean
+      lessons_completed:
+        type: integer
+    type: object
   courses.Course:
     properties:
       actual_price:
@@ -335,6 +343,17 @@ definitions:
       total_lectures:
         type: integer
     type: object
+  courses.CourseStudyResponse:
+    properties:
+      chapters:
+        items:
+          $ref: '#/definitions/courses.StudyChapterItem'
+        type: array
+      course:
+        $ref: '#/definitions/models.CourseInfo'
+      enrollment:
+        $ref: '#/definitions/courses.EnrollmentStudyInfo'
+    type: object
   courses.CreateCourseRequest:
     properties:
       category_id:
@@ -373,14 +392,19 @@ definitions:
         type: string
       image_url:
         type: string
-      instructor:
-        $ref: '#/definitions/models.InstructorInfo'
       last_accessed_lesson_id:
         type: string
       slug:
         type: string
       title:
         type: string
+    type: object
+  courses.EnrollmentStudyInfo:
+    properties:
+      completed:
+        type: boolean
+      completion_percent:
+        type: number
     type: object
   courses.LessonCardResponse:
     properties:
@@ -395,6 +419,40 @@ definitions:
       preview_video_url:
         type: string
       short_description:
+        type: string
+      title:
+        type: string
+    type: object
+  courses.StudyChapterItem:
+    properties:
+      chapter_no:
+        type: integer
+      id:
+        type: string
+      lessons:
+        items:
+          $ref: '#/definitions/courses.StudyLessonItem'
+        type: array
+      progress:
+        $ref: '#/definitions/courses.ChapterProgressInfo'
+      title:
+        type: string
+      total_duration_seconds:
+        type: integer
+      total_lectures:
+        type: integer
+    type: object
+  courses.StudyLessonItem:
+    properties:
+      completed:
+        type: boolean
+      duration_seconds:
+        type: integer
+      id:
+        type: string
+      lesson_no:
+        type: integer
+      lesson_type:
         type: string
       title:
         type: string
@@ -649,32 +707,14 @@ definitions:
     required:
     - content
     type: object
-  enrollments.ChapterProgressInfo:
-    properties:
-      completed:
-        type: boolean
-      lessons_completed:
-        type: integer
-    type: object
-  enrollments.CourseStudyResponse:
-    properties:
-      chapters:
-        items:
-          $ref: '#/definitions/enrollments.StudyChapterItem'
-        type: array
-      course:
-        $ref: '#/definitions/models.CourseInfo'
-      enrollment:
-        $ref: '#/definitions/enrollments.EnrollmentStudyInfo'
-    type: object
   enrollments.Enrollment:
     properties:
       completed:
         type: boolean
       completion_percent:
         type: number
-      course_id:
-        type: string
+      course:
+        $ref: '#/definitions/models.CourseInfo'
       enrolled_at:
         type: string
       id:
@@ -683,15 +723,8 @@ definitions:
         type: string
       revoked:
         type: boolean
-      user_id:
-        type: string
-    type: object
-  enrollments.EnrollmentStudyInfo:
-    properties:
-      completed:
-        type: boolean
-      completion_percent:
-        type: number
+      user:
+        $ref: '#/definitions/models.UserInfo'
     type: object
   enrollments.ManualEnrollRequest:
     properties:
@@ -699,40 +732,6 @@ definitions:
         type: string
     required:
     - user_id
-    type: object
-  enrollments.StudyChapterItem:
-    properties:
-      chapter_no:
-        type: integer
-      id:
-        type: string
-      lessons:
-        items:
-          $ref: '#/definitions/enrollments.StudyLessonItem'
-        type: array
-      progress:
-        $ref: '#/definitions/enrollments.ChapterProgressInfo'
-      title:
-        type: string
-      total_duration_seconds:
-        type: integer
-      total_lectures:
-        type: integer
-    type: object
-  enrollments.StudyLessonItem:
-    properties:
-      completed:
-        type: boolean
-      duration_seconds:
-        type: integer
-      id:
-        type: string
-      lesson_no:
-        type: integer
-      lesson_type:
-        type: string
-      title:
-        type: string
     type: object
   feedbacks.CreateFeedbackRequest:
     properties:
@@ -751,23 +750,6 @@ definitions:
         type: string
       course:
         $ref: '#/definitions/models.CourseInfo'
-      created_at:
-        type: string
-      id:
-        type: string
-      is_pinned:
-        type: boolean
-      rating:
-        type: integer
-      user:
-        $ref: '#/definitions/models.UserInfo'
-    type: object
-  feedbacks.FeedbackResponse:
-    properties:
-      content:
-        type: string
-      course_id:
-        type: string
       created_at:
         type: string
       id:
@@ -839,21 +821,6 @@ definitions:
       updated_at:
         type: string
     type: object
-  lessons.LessonBodyContent:
-    properties:
-      content:
-        description: document
-        type: string
-      quiz_metadata:
-        allOf:
-        - $ref: '#/definitions/quiz.QuizMetadata'
-        description: quiz
-      video_url:
-        description: video
-        type: string
-      written_content:
-        type: string
-    type: object
   lessons.LessonCompleteResponse:
     properties:
       completed:
@@ -861,41 +828,15 @@ definitions:
       lesson_id:
         type: string
     type: object
-  lessons.LessonContentInfo:
-    properties:
-      chapter_id:
-        type: string
-      id:
-        type: string
-      lesson_no:
-        type: integer
-      lesson_type:
-        type: string
-      title:
-        type: string
-    type: object
   lessons.LessonContentResponse:
     properties:
-      completed:
-        type: boolean
-      content:
-        $ref: '#/definitions/lessons.LessonBodyContent'
-      lesson:
-        $ref: '#/definitions/lessons.LessonContentInfo'
-      resources:
-        items:
-          $ref: '#/definitions/lessons.LessonResource'
-        type: array
-      user_note:
-        $ref: '#/definitions/lessons.LessonUserNoteInfo'
+      content: {}
     type: object
   lessons.LessonDocumentContent:
     properties:
       content:
         type: string
       id:
-        type: string
-      lesson_id:
         type: string
     type: object
   lessons.LessonResource:
@@ -906,21 +847,12 @@ definitions:
         type: string
       id:
         type: string
-      lesson_id:
-        type: string
       title:
-        type: string
-    type: object
-  lessons.LessonUserNoteInfo:
-    properties:
-      content:
         type: string
     type: object
   lessons.LessonVideoContent:
     properties:
       id:
-        type: string
-      lesson_id:
         type: string
       video_url:
         type: string
@@ -1148,25 +1080,16 @@ definitions:
     type: object
   quiz.NextQuestionRequest:
     properties:
-      attempt_id:
-        type: string
       fetched_question_ids:
         items:
           type: string
         type: array
-    required:
-    - attempt_id
-    - fetched_question_ids
     type: object
   quiz.NextQuestionResponse:
     properties:
-      attempt_id:
-        type: string
       question:
         $ref: '#/definitions/quiz.QuestionForAttempt'
       remaining_questions:
-        type: integer
-      time_remaining_seconds:
         type: integer
     type: object
   quiz.QuestionArrangeItemInput:
@@ -1214,29 +1137,6 @@ definitions:
       id:
         type: string
       item_text:
-        type: string
-    type: object
-  quiz.QuizAttempt:
-    properties:
-      correct_count:
-        type: integer
-      id:
-        type: string
-      incorrect_count:
-        type: integer
-      passed:
-        type: boolean
-      quiz_id:
-        type: string
-      skipped_count:
-        type: integer
-      started_at:
-        type: string
-      submitted_at:
-        type: string
-      total_score:
-        type: number
-      user_id:
         type: string
     type: object
   quiz.QuizMetadata:
@@ -1321,11 +1221,8 @@ definitions:
           $ref: '#/definitions/quiz.SubmitQuizAnswerInput'
         minItems: 1
         type: array
-      attempt_id:
-        type: string
     required:
     - answers
-    - attempt_id
     type: object
   quiz.SubmitQuizResponse:
     properties:
@@ -1567,11 +1464,11 @@ definitions:
       total:
         type: integer
     type: object
-  utils.PaginatedData-feedbacks_FeedbackResponse:
+  utils.PaginatedData-feedbacks_Feedback:
     properties:
       data:
         items:
-          $ref: '#/definitions/feedbacks.FeedbackResponse'
+          $ref: '#/definitions/feedbacks.Feedback'
         type: array
       limit:
         type: integer
@@ -1655,10 +1552,10 @@ definitions:
       success:
         type: boolean
     type: object
-  utils.PaginatedResponse-feedbacks_FeedbackResponse:
+  utils.PaginatedResponse-feedbacks_Feedback:
     properties:
       data:
-        $ref: '#/definitions/utils.PaginatedData-feedbacks_FeedbackResponse'
+        $ref: '#/definitions/utils.PaginatedData-feedbacks_Feedback'
       message:
         type: string
       success:
@@ -1692,15 +1589,6 @@ definitions:
         type: boolean
     type: object
   utils.SwaggerBasicResponse:
-    properties:
-      data: {}
-      errors: {}
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
-  utils.SwaggerResponse-any:
     properties:
       data: {}
       errors: {}
@@ -1883,6 +1771,16 @@ definitions:
       success:
         type: boolean
     type: object
+  utils.SwaggerResponse-courses_CourseStudyResponse:
+    properties:
+      data:
+        $ref: '#/definitions/courses.CourseStudyResponse'
+      errors: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
   utils.SwaggerResponse-dashboard_AdminDashboard:
     properties:
       data:
@@ -1917,16 +1815,6 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/discussions.Discussion'
-      errors: {}
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
-  utils.SwaggerResponse-enrollments_CourseStudyResponse:
-    properties:
-      data:
-        $ref: '#/definitions/enrollments.CourseStudyResponse'
       errors: {}
       message:
         type: string
@@ -2073,16 +1961,6 @@ definitions:
       success:
         type: boolean
     type: object
-  utils.SwaggerResponse-quiz_QuizAttempt:
-    properties:
-      data:
-        $ref: '#/definitions/quiz.QuizAttempt'
-      errors: {}
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
   utils.SwaggerResponse-quiz_QuizMetadata:
     properties:
       data:
@@ -2107,6 +1985,16 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/quiz.SubmitQuizResponse'
+      errors: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  utils.SwaggerResponse-string:
+    properties:
+      data:
+        type: string
       errors: {}
       message:
         type: string
@@ -2194,8 +2082,12 @@ definitions:
       user_id:
         type: string
     type: object
+host: localhost:8080
 info:
   contact: {}
+  description: CourseHunt backend API server.
+  title: CourseHunt API
+  version: "1.0"
 paths:
   /api/v1/cart:
     delete:
@@ -2208,7 +2100,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/utils.SwaggerResponse-any'
+            $ref: '#/definitions/utils.SwaggerResponse-string'
       summary: ClearController
       tags:
       - Cart
@@ -2699,7 +2591,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/utils.SwaggerResponse-enrollments_CourseStudyResponse'
+            $ref: '#/definitions/utils.SwaggerResponse-courses_CourseStudyResponse'
       summary: ReadStudyController
       tags:
       - Courses
@@ -2937,7 +2829,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/utils.PaginatedResponse-feedbacks_FeedbackResponse'
+            $ref: '#/definitions/utils.PaginatedResponse-feedbacks_Feedback'
       summary: ListController
       tags:
       - Feedbacks
@@ -3526,15 +3418,20 @@ paths:
       summary: CreateMetadataController
       tags:
       - Quiz
-  /api/v1/quiz/lesson/{lessonID}/next:
+  /api/v1/quiz/lesson/{lessonID}/quiz/{quizID}/question:
     post:
       consumes:
       - application/json
-      description: ReadNextQuestionController for Quiz
+      description: GetQuestionController for Quiz
       parameters:
       - description: lessonID
         in: path
         name: lessonID
+        required: true
+        type: string
+      - description: quizID
+        in: path
+        name: quizID
         required: true
         type: string
       - description: Request Body
@@ -3550,31 +3447,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/utils.SwaggerResponse-quiz_NextQuestionResponse'
-      summary: ReadNextQuestionController
+      summary: GetQuestionController
       tags:
       - Quiz
-  /api/v1/quiz/lesson/{lessonID}/start:
-    post:
-      consumes:
-      - application/json
-      description: CreateAttemptController for Quiz
-      parameters:
-      - description: lessonID
-        in: path
-        name: lessonID
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/utils.SwaggerResponse-quiz_QuizAttempt'
-      summary: CreateAttemptController
-      tags:
-      - Quiz
-  /api/v1/quiz/lesson/{lessonID}/submit:
+  /api/v1/quiz/lesson/{lessonID}/quiz/{quizID}/submit:
     post:
       consumes:
       - application/json
@@ -3583,6 +3459,11 @@ paths:
       - description: lessonID
         in: path
         name: lessonID
+        required: true
+        type: string
+      - description: quizID
+        in: path
+        name: quizID
         required: true
         type: string
       - description: Request Body

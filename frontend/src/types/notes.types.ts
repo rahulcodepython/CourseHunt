@@ -1,16 +1,6 @@
 import { z } from 'zod';
 
-export const UpsertNoteRequestZod = z.object({
-    content: z.string(),
-});
-export type UpsertNoteRequest = z.infer<typeof UpsertNoteRequestZod>;
-
-export const NoteResponseZod = z.object({
-    id: z.string(),
-    content: z.string(),
-    updated_at: z.string(),
-});
-export type NoteResponse = z.infer<typeof NoteResponseZod>;
+// ── DB Row Structs ────────────────────────────────────────────────────────────
 
 export const UserNoteZod = z.object({
     id: z.string(),
@@ -21,4 +11,19 @@ export const UserNoteZod = z.object({
     updated_at: z.string(),
 });
 export type UserNote = z.infer<typeof UserNoteZod>;
-export const NoteDeleteResponseZod = z.any(); export type NoteDeleteResponse = any;
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+
+export const UpsertNoteRequestZod = z.object({
+    content: z.string(),
+});
+export type UpsertNoteRequest = z.infer<typeof UpsertNoteRequestZod>;
+
+// ── Note Response ─────────────────────────────────────────────────────────────
+
+export const NoteResponseZod = z.object({
+    id: z.string(),
+    content: z.string(),
+    updated_at: z.string(),
+});
+export type NoteResponse = z.infer<typeof NoteResponseZod>;

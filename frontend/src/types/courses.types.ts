@@ -1,8 +1,11 @@
+import { CategoryInfoZod, CourseInfoZod, InstructorInfoZod } from '@/types/common.types';
 import { z } from 'zod';
-import { InstructorInfoZod, CategoryInfoZod } from './common.types';
+
+// ── DB Row Structs ────────────────────────────────────────────────────────────
 
 export const CourseZod = z.object({
     id: z.string(),
+    // Note: Fields with `json:"-"` in Go are omitted from this Zod schema.
     slug: z.string(),
     title: z.string(),
     language: z.string(),
@@ -22,14 +25,43 @@ export const CourseZod = z.object({
 });
 export type Course = z.infer<typeof CourseZod>;
 
+export const StudyLessonItemZod = z.object({
+    id: z.string(),
+    lesson_no: z.number(),
+    title: z.string(),
+    lesson_type: z.string(),
+    duration_seconds: z.number(),
+    completed: z.boolean(),
+});
+export type StudyLessonItem = z.infer<typeof StudyLessonItemZod>;
+
+export const ChapterProgressInfoZod = z.object({
+    lessons_completed: z.number(),
+    completed: z.boolean(),
+});
+export type ChapterProgressInfo = z.infer<typeof ChapterProgressInfoZod>;
+
+export const StudyChapterItemZod = z.object({
+    id: z.string(),
+    chapter_no: z.number(),
+    title: z.string(),
+    total_lectures: z.number(),
+    total_duration_seconds: z.number(),
+    progress: ChapterProgressInfoZod,
+    lessons: z.array(StudyLessonItemZod),
+});
+export type StudyChapterItem = z.infer<typeof StudyChapterItemZod>;
+
+// ── Courses ───────────────────────────────────────────────────────────────────
+
 export const CreateCourseRequestZod = z.object({
     title: z.string(),
     short_description: z.string().optional(),
     category_id: z.string().optional(),
     subcategory_id: z.string().optional(),
     language: z.string(),
-    level: z.string().optional(),
-    status: z.string().optional(),
+    level: z.string(),
+    status: z.string(),
 });
 export type CreateCourseRequest = z.infer<typeof CreateCourseRequestZod>;
 
@@ -43,14 +75,16 @@ export const UpdateCourseRequestZod = z.object({
     level: z.string().optional(),
     actual_price: z.number().optional(),
     final_price: z.number().optional(),
-    benefits: z.array(z.string()),
-    requirements: z.array(z.string()),
+    benefits: z.array(z.string()).optional(), // Omitted fields might fallback to optional arrays depending on your Go JSON parser
+    requirements: z.array(z.string()).optional(),
     category_id: z.string().optional(),
     subcategory_id: z.string().optional(),
     coupon_allowed: z.boolean().optional(),
     status: z.string().optional(),
 });
 export type UpdateCourseRequest = z.infer<typeof UpdateCourseRequestZod>;
+
+// ── Course Responses ──────────────────────────────────────────────────────────
 
 export const CourseCardResponseZod = z.object({
     id: z.string(),
@@ -120,11 +154,12 @@ export const EnrolledCourseResponseZod = z.object({
     slug: z.string(),
     title: z.string(),
     image_url: z.string().optional(),
-    instructor: InstructorInfoZod,
     completion_percent: z.number(),
     last_accessed_lesson_id: z.string().optional(),
 });
 export type EnrolledCourseResponse = z.infer<typeof EnrolledCourseResponseZod>;
+
+// ── Course Created/Updated Response ───────────────────────────────────────────
 
 export const CourseCreatedResponseZod = z.object({
     id: z.string(),
@@ -134,5 +169,16 @@ export const CourseCreatedResponseZod = z.object({
     created_at: z.string(),
 });
 export type CourseCreatedResponse = z.infer<typeof CourseCreatedResponseZod>;
-export const CourseDeleteResponseZod = z.any(); export type CourseDeleteResponse = any;
-export const CourseStudyResponseZod = z.any(); export type CourseStudyResponse = any;
+
+export const EnrollmentStudyInfoZod = z.object({
+    completion_percent: z.number(),
+    completed: z.boolean(),
+});
+export type EnrollmentStudyInfo = z.infer<typeof EnrollmentStudyInfoZod>;
+
+export const CourseStudyResponseZod = z.object({
+    course: CourseInfoZod,
+    enrollment: EnrollmentStudyInfoZod,
+    chapters: z.array(StudyChapterItemZod),
+});
+export type CourseStudyResponse = z.infer<typeof CourseStudyResponseZod>;

@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { CourseInfoZod, PaginatedResponseZod } from './common.types';
+import { CourseInfoZod, PaginatedResponseZod } from '@/types/common.types';
+
+// ── DB Row Structs ────────────────────────────────────────────────────────────
 
 export const CourseUpdateZod = z.object({
     id: z.string(),
@@ -9,6 +11,8 @@ export const CourseUpdateZod = z.object({
     created_at: z.string(),
 });
 export type CourseUpdate = z.infer<typeof CourseUpdateZod>;
+
+// ── Requests ──────────────────────────────────────────────────────────────────
 
 export const CreateUpdateRequestZod = z.object({
     message: z.string(),
@@ -21,6 +25,8 @@ export const UpdateUpdateRequestZod = z.object({
 });
 export type UpdateUpdateRequest = z.infer<typeof UpdateUpdateRequestZod>;
 
+// ── Update Feed Response ──────────────────────────────────────────────────────
+
 export const UpdateFeedItemZod = z.object({
     id: z.string(),
     message: z.string(),
@@ -30,8 +36,7 @@ export const UpdateFeedItemZod = z.object({
 export type UpdateFeedItem = z.infer<typeof UpdateFeedItemZod>;
 
 export const UpdateFeedResponseZod = z.object({
-    unseen: z.array(UpdateFeedItemZod),
-    older: PaginatedResponseZod(UpdateFeedItemZod),
+    unseen: z.array(UpdateFeedItemZod).nullable().optional(), // Adding nullable/optional as fallback for empty slices in Go
+    older: PaginatedResponseZod(z.array(UpdateFeedItemZod)),
 });
 export type UpdateFeedResponse = z.infer<typeof UpdateFeedResponseZod>;
-export const UpdateDeleteResponseZod = z.any(); export type UpdateDeleteResponse = any;

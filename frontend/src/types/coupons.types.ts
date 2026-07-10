@@ -39,4 +39,3 @@ export const CouponZod = z.object({
     created_at: z.string(),
 });
 export type Coupon = z.infer<typeof CouponZod>;
-export const CouponDeleteResponseZod = z.any(); export type CouponDeleteResponse = any;

@@ -1,5 +1,5 @@
+import { UserInfoZod } from '@/types/common.types';
 import { z } from 'zod';
-import { UserInfoZod } from './common.types';
 
 export const CreateDiscussionRequestZod = z.object({
     content: z.string(),
@@ -35,4 +35,3 @@ export const DiscussionZod = z.object({
     updated_at: z.string(),
 });
 export type Discussion = z.infer<typeof DiscussionZod>;
-export const DiscussionDeleteResponseZod = z.any(); export type DiscussionDeleteResponse = any;

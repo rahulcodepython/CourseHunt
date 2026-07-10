@@ -1,6 +1,9 @@
 package users
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 func (m *UsersModule) ReadRepository(id string) (*User, error) {
 	var u User
@@ -14,6 +17,7 @@ func (m *UsersModule) ListRepository(page, limit int, search, role string) ([]Us
 	args := []interface{}{}
 	idx := 1
 
+	// Dynamically build the search conditions
 	if search != "" {
 		where += fmt.Sprintf(` AND (u.name ILIKE $%d OR u.email ILIKE $%d)`, idx, idx)
 		args = append(args, "%"+search+"%")
@@ -25,31 +29,63 @@ func (m *UsersModule) ListRepository(page, limit int, search, role string) ([]Us
 		idx++
 	}
 
-	var total int
-	m.DB.QueryRow(`SELECT COUNT(*) FROM "user" u WHERE `+where, args...).Scan(&total)
-
+	// Capture exact indexes for limit and offset parameters
+	limitIdx := idx
+	offsetIdx := idx + 1
 	offset := (page - 1) * limit
 	args = append(args, limit, offset)
-	rows, err := m.DB.Query(`
-		SELECT u.id, u.name, u.email, u.image, u."emailVerified", u.banned, u."createdAt"
+
+	// Single unified query: Aggregates total count and roles into a single network packet
+	query := fmt.Sprintf(`
+		SELECT u.id, u.name, u.email, u.image, u."emailVerified", u.banned, u."createdAt",
+		       COALESCE((
+		           SELECT json_agg(r.name) 
+		           FROM user_roles ur 
+		           JOIN roles r ON r.id = ur.role_id 
+		           WHERE ur.user_id = u.id
+		       ), '[]'::json) AS roles_json,
+		       COUNT(*) OVER() AS total_count
 		FROM "user" u
-		WHERE `+where+`
-		ORDER BY u."createdAt" DESC LIMIT $`+fmt.Sprint(idx)+` OFFSET $`+fmt.Sprint(idx+1), args...)
+		WHERE %s
+		ORDER BY u."createdAt" DESC 
+		LIMIT $%d OFFSET $%d`, where, limitIdx, offsetIdx)
+
+	rows, err := m.DB.Query(query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
 
 	var list []UserListResponse
+	total := 0
+
 	for rows.Next() {
 		var u UserListResponse
-		rows.Scan(&u.ID, &u.Name, &u.Email, &u.Image, &u.EmailVerified, &u.Banned, &u.CreatedAt)
-		u.Roles, _ = m.GetRolesRepository(u.ID)
+		var rolesJSON []byte
+
+		err := rows.Scan(
+			&u.ID, &u.Name, &u.Email, &u.Image, &u.EmailVerified, &u.Banned, &u.CreatedAt,
+			&rolesJSON, // Safely intercepts aggregated role array data
+			&total,     // Seamlessly populates from window analytics
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		// Directly unmarshal JSON data array into your response structure target
+		// Note: If your role model represents structural objects rather than simple string arrays,
+		// change `json_agg(r.name)` in the SQL above to: json_agg(json_build_object('id', r.id, 'name', r.name))
+		if err := json.Unmarshal(rolesJSON, &u.Roles); err != nil {
+			return nil, 0, err
+		}
+
 		list = append(list, u)
 	}
+
 	if list == nil {
 		list = []UserListResponse{}
 	}
+
 	return list, total, rows.Err()
 }
 

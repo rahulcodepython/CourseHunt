@@ -7,7 +7,7 @@ import { useApiMutation, useApiQuery } from "@/api/core/generics";
 import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
 import { ChapterZod, CreateChapterRequestZod, UpdateChapterRequestZod } from "@/types/chapters.types";
-import { ChapterDeleteResponseZod } from "@/types/chapters.types";
+
 
 /**
  * Fetches chapters for a course.
@@ -60,7 +60,7 @@ export function useUpdateChapterMutation(courseId: string) {
  */
 export function useDeleteChapterMutation(courseId: string) {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/chapters/${id}`, method: "DELETE" }, ChapterDeleteResponseZod),
+		(id: string) => apiRequest({ url: `/api/v1/chapters/${id}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.chapters(courseId),

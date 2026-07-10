@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+// ── DB Row Structs ────────────────────────────────────────────────────────────
+
 export const UserZod = z.object({
     id: z.string(),
     name: z.string(),
@@ -18,21 +20,14 @@ export const RoleZod = z.object({
 });
 export type Role = z.infer<typeof RoleZod>;
 
-export const UserWithRolesZod = z.object({
-    roles: z.array(RoleZod),
-});
-export type UserWithRoles = z.infer<typeof UserWithRolesZod>;
+// ── Requests ──────────────────────────────────────────────────────────────────
 
 export const AssignRoleRequestZod = z.object({
     role_id: z.number(),
 });
 export type AssignRoleRequest = z.infer<typeof AssignRoleRequestZod>;
 
-export const RoleAssignmentResponseZod = z.object({
-    user_id: z.string(),
-    role_id: z.number(),
-});
-export type RoleAssignmentResponse = z.infer<typeof RoleAssignmentResponseZod>;
+// ── User List Response ────────────────────────────────────────────────────────
 
 export const UserListResponseZod = z.object({
     id: z.string(),
@@ -45,4 +40,9 @@ export const UserListResponseZod = z.object({
     roles: z.array(RoleZod),
 });
 export type UserListResponse = z.infer<typeof UserListResponseZod>;
-export const MeResponseZod = z.any(); export type MeResponse = any;
+
+export const RoleAssignmentResponseZod = z.object({
+    user_id: z.string(),
+    role_id: z.number(),
+});
+export type RoleAssignmentResponse = z.infer<typeof RoleAssignmentResponseZod>;

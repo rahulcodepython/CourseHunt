@@ -9,7 +9,7 @@ import { cache } from "@/api/core/cache-utils";
 import { DiscussionZod, CreateDiscussionRequestZod, UpdateDiscussionRequestZod, DiscussionResponseZod } from "@/types/discussions.types";
 import { PaginatedResponseZod } from "@/types/common.types";
 
-import { DiscussionDeleteResponseZod } from "@/types/discussions.types";
+
 
 /**
  * Fetches discussions for a specific lesson.
@@ -53,7 +53,7 @@ export function useDiscussionRepliesQuery(id: string) {
  */
 export function useDeleteDiscussionMutation() {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/discussions/${id}`, method: "DELETE" }, DiscussionDeleteResponseZod),
+		(id: string) => apiRequest({ url: `/api/v1/discussions/${id}`, method: "DELETE" }, z.any()),
 		{
 			successMessage: "Discussion deleted successfully",
 		},

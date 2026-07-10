@@ -121,10 +121,10 @@ func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "id"
-// @Success 200 {object} utils.SwaggerResponse[enrollments.CourseStudyResponse]
+// @Success 200 {object} utils.SwaggerResponse[courses.CourseStudyResponse]
 // @Router /api/v1/courses/{id}/study [get]
 func (m *CoursesModule) ReadStudyController(c *fiber.Ctx) error {
-	resp, err := m.ReadStudyService(c.Params("id"), utils.GetUserID(c))
+	resp, err := m.ReadStudyMetadataService(c.Params("id"), utils.GetUserID(c))
 	if err != nil {
 		if err.Error() == "not enrolled" {
 			return utils.JSON(c, http.StatusForbidden, false, "not enrolled in this course", nil, nil)

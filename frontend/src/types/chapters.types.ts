@@ -23,4 +23,3 @@ export const UpdateChapterRequestZod = z.object({
     chapter_no: z.number().optional(),
 });
 export type UpdateChapterRequest = z.infer<typeof UpdateChapterRequestZod>;
-export const ChapterDeleteResponseZod = z.any(); export type ChapterDeleteResponse = any;

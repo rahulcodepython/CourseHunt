@@ -39,15 +39,25 @@ func (m *UpdatesModule) DeleteRepository(id string) (string, error) {
 }
 
 func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateFeedResponse, error) {
-	// Unseen: updates after user's last seen OR all updates for that course they're enrolled in, not yet seen
+	// OPTIMIZATION 1: Use a writable CTE to fetch unseen rows AND mark them as seen
+	// simultaneously in a single query packet over the network.
 	unseenRows, err := m.DB.Query(`
+		WITH target_unseen AS (
+			SELECT cu.id
+			FROM course_updates cu
+			LEFT JOIN update_seen us ON us.update_id = cu.id AND us.user_id = $1
+			WHERE us.id IS NULL
+			  AND (cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
+		),
+		mark_as_seen AS (
+			INSERT INTO update_seen (user_id, update_id)
+			SELECT $1, id FROM target_unseen
+			ON CONFLICT DO NOTHING
+		)
 		SELECT cu.id, cu.message, cu.course_id, c.title, cu.created_at
 		FROM course_updates cu
 		LEFT JOIN courses c ON c.id = cu.course_id
-		LEFT JOIN update_seen us ON us.update_id = cu.id AND us.user_id = $1
-		WHERE us.id IS NULL
-		  AND (cu.course_id IS NULL
-		    OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
+		WHERE cu.id IN (SELECT id FROM target_unseen)
 		ORDER BY cu.created_at DESC`, userID)
 	if err != nil {
 		return nil, err
@@ -55,11 +65,12 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 	defer unseenRows.Close()
 
 	var unseen []UpdateFeedItem
-	var unseenIDs []string
 	for unseenRows.Next() {
 		var item UpdateFeedItem
 		var cid, ctitle *string
-		unseenRows.Scan(&item.ID, &item.Message, &cid, &ctitle, &item.CreatedAt)
+		if err := unseenRows.Scan(&item.ID, &item.Message, &cid, &ctitle, &item.CreatedAt); err != nil {
+			return nil, err
+		}
 		if cid != nil {
 			item.Course.ID = *cid
 		}
@@ -67,24 +78,22 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 			item.Course.Title = *ctitle
 		}
 		unseen = append(unseen, item)
-		unseenIDs = append(unseenIDs, item.ID)
+	}
+	if err := unseenRows.Err(); err != nil {
+		return nil, err
 	}
 	if unseen == nil {
 		unseen = []UpdateFeedItem{}
 	}
 
-	// Mark unseen as seen
-	for _, uid := range unseenIDs {
-		m.DB.Exec(`INSERT INTO update_seen (user_id, update_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, userID, uid)
-	}
-
-	// Older (seen / paginated)
-	var total int
-	m.DB.QueryRow(`SELECT COUNT(*) FROM course_updates cu WHERE cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false)`, userID).Scan(&total)
-
+	// OPTIMIZATION 2: Leverage COUNT(*) OVER() windowing to pull older feeds
+	// and their total matching counts in 1 network call instead of 2.
 	offset := (page - 1) * limit
+	total := 0
+
 	olderRows, err := m.DB.Query(`
-		SELECT cu.id, cu.message, cu.course_id, c.title, cu.created_at
+		SELECT cu.id, cu.message, cu.course_id, c.title, cu.created_at,
+		       COUNT(*) OVER() AS total_count
 		FROM course_updates cu
 		LEFT JOIN courses c ON c.id = cu.course_id
 		WHERE (cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
@@ -98,7 +107,9 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 	for olderRows.Next() {
 		var item UpdateFeedItem
 		var cid, ctitle *string
-		olderRows.Scan(&item.ID, &item.Message, &cid, &ctitle, &item.CreatedAt)
+		if err := olderRows.Scan(&item.ID, &item.Message, &cid, &ctitle, &item.CreatedAt, &total); err != nil {
+			return nil, err
+		}
 		if cid != nil {
 			item.Course.ID = *cid
 		}
@@ -106,6 +117,9 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 			item.Course.Title = *ctitle
 		}
 		older = append(older, item)
+	}
+	if err := olderRows.Err(); err != nil {
+		return nil, err
 	}
 	if older == nil {
 		older = []UpdateFeedItem{}
@@ -123,11 +137,13 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 }
 
 func (m *UpdatesModule) ListRepository(page, limit int) ([]CourseUpdate, int, error) {
-	var total int
-	m.DB.QueryRow(`SELECT COUNT(*) FROM course_updates`).Scan(&total)
 	offset := (page - 1) * limit
+	total := 0
+
+	// OPTIMIZATION 3: Combined sequential count + list into 1 round-trip.
 	rows, err := m.DB.Query(`
-		SELECT cu.id, cu.course_id, c.title, c.thumbnail, cu.created_by, cu.message, cu.created_at 
+		SELECT cu.id, cu.course_id, c.title, c.thumbnail, cu.created_by, cu.message, cu.created_at,
+		       COUNT(*) OVER() AS total_count
 		FROM course_updates cu 
 		LEFT JOIN courses c ON c.id = cu.course_id 
 		ORDER BY cu.created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
@@ -135,11 +151,14 @@ func (m *UpdatesModule) ListRepository(page, limit int) ([]CourseUpdate, int, er
 		return nil, 0, err
 	}
 	defer rows.Close()
+
 	var list []CourseUpdate
 	for rows.Next() {
 		var u CourseUpdate
 		var dbCourseID, cTitle, cThumb *string
-		rows.Scan(&u.ID, &dbCourseID, &cTitle, &cThumb, &u.CreatedBy, &u.Message, &u.CreatedAt)
+		if err := rows.Scan(&u.ID, &dbCourseID, &cTitle, &cThumb, &u.CreatedBy, &u.Message, &u.CreatedAt, &total); err != nil {
+			return nil, 0, err
+		}
 		if dbCourseID != nil {
 			u.Course.ID = *dbCourseID
 			if cTitle != nil {

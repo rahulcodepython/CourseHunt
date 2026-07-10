@@ -1,6 +1,8 @@
 package profile
 
-import "time"
+import (
+	"time"
+)
 
 type UserProfile struct {
 	ID        string    `json:"id"`
@@ -20,4 +22,12 @@ type TutorProfile struct {
 	TotalStudents int       `json:"total_students"`
 	RatingAvg     float64   `json:"rating_avg"`
 	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+// ── Auth / Profile ──
+
+type UpdateProfileRequest struct {
+	Headline *string `json:"headline"`
+	Bio      *string `json:"bio"`
+	Website  *string `json:"website"`
 }

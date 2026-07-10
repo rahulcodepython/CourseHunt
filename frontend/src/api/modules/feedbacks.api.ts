@@ -8,7 +8,7 @@ import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
 import { FeedbackZod, CreateFeedbackRequestZod } from "@/types/feedbacks.types";
 
-import { FeedbackDeleteResponseZod } from "@/types/feedbacks.types";
+
 
 /**
  * Fetches all feedback.
@@ -60,7 +60,7 @@ export function usePinFeedbackMutation() {
  */
 export function useDeleteFeedbackMutation() {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/feedbacks/${id}`, method: "DELETE" }, FeedbackDeleteResponseZod),
+		(id: string) => apiRequest({ url: `/api/v1/feedbacks/${id}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.feedbacks(),

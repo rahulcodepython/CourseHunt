@@ -53,7 +53,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.SwaggerResponse-any"
+                            "$ref": "#/definitions/utils.SwaggerResponse-string"
                         }
                     }
                 }
@@ -777,7 +777,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.SwaggerResponse-enrollments_CourseStudyResponse"
+                            "$ref": "#/definitions/utils.SwaggerResponse-courses_CourseStudyResponse"
                         }
                     }
                 }
@@ -1139,7 +1139,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.PaginatedResponse-feedbacks_FeedbackResponse"
+                            "$ref": "#/definitions/utils.PaginatedResponse-feedbacks_Feedback"
                         }
                     }
                 }
@@ -1993,9 +1993,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/quiz/lesson/{lessonID}/next": {
+        "/api/v1/quiz/lesson/{lessonID}/quiz/{quizID}/question": {
             "post": {
-                "description": "ReadNextQuestionController for Quiz",
+                "description": "GetQuestionController for Quiz",
                 "consumes": [
                     "application/json"
                 ],
@@ -2005,12 +2005,19 @@ const docTemplate = `{
                 "tags": [
                     "Quiz"
                 ],
-                "summary": "ReadNextQuestionController",
+                "summary": "GetQuestionController",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "lessonID",
                         "name": "lessonID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "quizID",
+                        "name": "quizID",
                         "in": "path",
                         "required": true
                     },
@@ -2034,39 +2041,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/quiz/lesson/{lessonID}/start": {
-            "post": {
-                "description": "CreateAttemptController for Quiz",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Quiz"
-                ],
-                "summary": "CreateAttemptController",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "lessonID",
-                        "name": "lessonID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/utils.SwaggerResponse-quiz_QuizAttempt"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/quiz/lesson/{lessonID}/submit": {
+        "/api/v1/quiz/lesson/{lessonID}/quiz/{quizID}/submit": {
             "post": {
                 "description": "CreateSubmitController for Quiz",
                 "consumes": [
@@ -2084,6 +2059,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "lessonID",
                         "name": "lessonID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "quizID",
+                        "name": "quizID",
                         "in": "path",
                         "required": true
                     },
@@ -2920,6 +2902,17 @@ const docTemplate = `{
                 }
             }
         },
+        "courses.ChapterProgressInfo": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "boolean"
+                },
+                "lessons_completed": {
+                    "type": "integer"
+                }
+            }
+        },
         "courses.Course": {
             "type": "object",
             "properties": {
@@ -3126,6 +3119,23 @@ const docTemplate = `{
                 }
             }
         },
+        "courses.CourseStudyResponse": {
+            "type": "object",
+            "properties": {
+                "chapters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/courses.StudyChapterItem"
+                    }
+                },
+                "course": {
+                    "$ref": "#/definitions/models.CourseInfo"
+                },
+                "enrollment": {
+                    "$ref": "#/definitions/courses.EnrollmentStudyInfo"
+                }
+            }
+        },
         "courses.CreateCourseRequest": {
             "type": "object",
             "required": [
@@ -3180,9 +3190,6 @@ const docTemplate = `{
                 "image_url": {
                     "type": "string"
                 },
-                "instructor": {
-                    "$ref": "#/definitions/models.InstructorInfo"
-                },
                 "last_accessed_lesson_id": {
                     "type": "string"
                 },
@@ -3191,6 +3198,17 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "courses.EnrollmentStudyInfo": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "boolean"
+                },
+                "completion_percent": {
+                    "type": "number"
                 }
             }
         },
@@ -3213,6 +3231,58 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "short_description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "courses.StudyChapterItem": {
+            "type": "object",
+            "properties": {
+                "chapter_no": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lessons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/courses.StudyLessonItem"
+                    }
+                },
+                "progress": {
+                    "$ref": "#/definitions/courses.ChapterProgressInfo"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "total_duration_seconds": {
+                    "type": "integer"
+                },
+                "total_lectures": {
+                    "type": "integer"
+                }
+            }
+        },
+        "courses.StudyLessonItem": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "boolean"
+                },
+                "duration_seconds": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lesson_no": {
+                    "type": "integer"
+                },
+                "lesson_type": {
                     "type": "string"
                 },
                 "title": {
@@ -3596,34 +3666,6 @@ const docTemplate = `{
                 }
             }
         },
-        "enrollments.ChapterProgressInfo": {
-            "type": "object",
-            "properties": {
-                "completed": {
-                    "type": "boolean"
-                },
-                "lessons_completed": {
-                    "type": "integer"
-                }
-            }
-        },
-        "enrollments.CourseStudyResponse": {
-            "type": "object",
-            "properties": {
-                "chapters": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/enrollments.StudyChapterItem"
-                    }
-                },
-                "course": {
-                    "$ref": "#/definitions/models.CourseInfo"
-                },
-                "enrollment": {
-                    "$ref": "#/definitions/enrollments.EnrollmentStudyInfo"
-                }
-            }
-        },
         "enrollments.Enrollment": {
             "type": "object",
             "properties": {
@@ -3633,8 +3675,8 @@ const docTemplate = `{
                 "completion_percent": {
                     "type": "number"
                 },
-                "course_id": {
-                    "type": "string"
+                "course": {
+                    "$ref": "#/definitions/models.CourseInfo"
                 },
                 "enrolled_at": {
                     "type": "string"
@@ -3648,19 +3690,8 @@ const docTemplate = `{
                 "revoked": {
                     "type": "boolean"
                 },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "enrollments.EnrollmentStudyInfo": {
-            "type": "object",
-            "properties": {
-                "completed": {
-                    "type": "boolean"
-                },
-                "completion_percent": {
-                    "type": "number"
+                "user": {
+                    "$ref": "#/definitions/models.UserInfo"
                 }
             }
         },
@@ -3671,58 +3702,6 @@ const docTemplate = `{
             ],
             "properties": {
                 "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "enrollments.StudyChapterItem": {
-            "type": "object",
-            "properties": {
-                "chapter_no": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "lessons": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/enrollments.StudyLessonItem"
-                    }
-                },
-                "progress": {
-                    "$ref": "#/definitions/enrollments.ChapterProgressInfo"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "total_duration_seconds": {
-                    "type": "integer"
-                },
-                "total_lectures": {
-                    "type": "integer"
-                }
-            }
-        },
-        "enrollments.StudyLessonItem": {
-            "type": "object",
-            "properties": {
-                "completed": {
-                    "type": "boolean"
-                },
-                "duration_seconds": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "lesson_no": {
-                    "type": "integer"
-                },
-                "lesson_type": {
-                    "type": "string"
-                },
-                "title": {
                     "type": "string"
                 }
             }
@@ -3751,32 +3730,6 @@ const docTemplate = `{
                 },
                 "course": {
                     "$ref": "#/definitions/models.CourseInfo"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "is_pinned": {
-                    "type": "boolean"
-                },
-                "rating": {
-                    "type": "integer"
-                },
-                "user": {
-                    "$ref": "#/definitions/models.UserInfo"
-                }
-            }
-        },
-        "feedbacks.FeedbackResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "course_id": {
-                    "type": "string"
                 },
                 "created_at": {
                     "type": "string"
@@ -3881,30 +3834,6 @@ const docTemplate = `{
                 }
             }
         },
-        "lessons.LessonBodyContent": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "description": "document",
-                    "type": "string"
-                },
-                "quiz_metadata": {
-                    "description": "quiz",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/quiz.QuizMetadata"
-                        }
-                    ]
-                },
-                "video_url": {
-                    "description": "video",
-                    "type": "string"
-                },
-                "written_content": {
-                    "type": "string"
-                }
-            }
-        },
         "lessons.LessonCompleteResponse": {
             "type": "object",
             "properties": {
@@ -3916,47 +3845,10 @@ const docTemplate = `{
                 }
             }
         },
-        "lessons.LessonContentInfo": {
-            "type": "object",
-            "properties": {
-                "chapter_id": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "lesson_no": {
-                    "type": "integer"
-                },
-                "lesson_type": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
         "lessons.LessonContentResponse": {
             "type": "object",
             "properties": {
-                "completed": {
-                    "type": "boolean"
-                },
-                "content": {
-                    "$ref": "#/definitions/lessons.LessonBodyContent"
-                },
-                "lesson": {
-                    "$ref": "#/definitions/lessons.LessonContentInfo"
-                },
-                "resources": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/lessons.LessonResource"
-                    }
-                },
-                "user_note": {
-                    "$ref": "#/definitions/lessons.LessonUserNoteInfo"
-                }
+                "content": {}
             }
         },
         "lessons.LessonDocumentContent": {
@@ -3966,9 +3858,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
-                },
-                "lesson_id": {
                     "type": "string"
                 }
             }
@@ -3985,18 +3874,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "lesson_id": {
-                    "type": "string"
-                },
                 "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "lessons.LessonUserNoteInfo": {
-            "type": "object",
-            "properties": {
-                "content": {
                     "type": "string"
                 }
             }
@@ -4005,9 +3883,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "string"
-                },
-                "lesson_id": {
                     "type": "string"
                 },
                 "video_url": {
@@ -4350,14 +4225,7 @@ const docTemplate = `{
         },
         "quiz.NextQuestionRequest": {
             "type": "object",
-            "required": [
-                "attempt_id",
-                "fetched_question_ids"
-            ],
             "properties": {
-                "attempt_id": {
-                    "type": "string"
-                },
                 "fetched_question_ids": {
                     "type": "array",
                     "items": {
@@ -4369,16 +4237,10 @@ const docTemplate = `{
         "quiz.NextQuestionResponse": {
             "type": "object",
             "properties": {
-                "attempt_id": {
-                    "type": "string"
-                },
                 "question": {
                     "$ref": "#/definitions/quiz.QuestionForAttempt"
                 },
                 "remaining_questions": {
-                    "type": "integer"
-                },
-                "time_remaining_seconds": {
                     "type": "integer"
                 }
             }
@@ -4451,41 +4313,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "item_text": {
-                    "type": "string"
-                }
-            }
-        },
-        "quiz.QuizAttempt": {
-            "type": "object",
-            "properties": {
-                "correct_count": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "incorrect_count": {
-                    "type": "integer"
-                },
-                "passed": {
-                    "type": "boolean"
-                },
-                "quiz_id": {
-                    "type": "string"
-                },
-                "skipped_count": {
-                    "type": "integer"
-                },
-                "started_at": {
-                    "type": "string"
-                },
-                "submitted_at": {
-                    "type": "string"
-                },
-                "total_score": {
-                    "type": "number"
-                },
-                "user_id": {
                     "type": "string"
                 }
             }
@@ -4608,8 +4435,7 @@ const docTemplate = `{
         "quiz.SubmitQuizRequest": {
             "type": "object",
             "required": [
-                "answers",
-                "attempt_id"
+                "answers"
             ],
             "properties": {
                 "answers": {
@@ -4618,9 +4444,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/quiz.SubmitQuizAnswerInput"
                     }
-                },
-                "attempt_id": {
-                    "type": "string"
                 }
             }
         },
@@ -4991,13 +4814,13 @@ const docTemplate = `{
                 }
             }
         },
-        "utils.PaginatedData-feedbacks_FeedbackResponse": {
+        "utils.PaginatedData-feedbacks_Feedback": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/feedbacks.FeedbackResponse"
+                        "$ref": "#/definitions/feedbacks.Feedback"
                     }
                 },
                 "limit": {
@@ -5127,11 +4950,11 @@ const docTemplate = `{
                 }
             }
         },
-        "utils.PaginatedResponse-feedbacks_FeedbackResponse": {
+        "utils.PaginatedResponse-feedbacks_Feedback": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/utils.PaginatedData-feedbacks_FeedbackResponse"
+                    "$ref": "#/definitions/utils.PaginatedData-feedbacks_Feedback"
                 },
                 "message": {
                     "type": "string"
@@ -5184,19 +5007,6 @@ const docTemplate = `{
             }
         },
         "utils.SwaggerBasicResponse": {
-            "type": "object",
-            "properties": {
-                "data": {},
-                "errors": {},
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "utils.SwaggerResponse-any": {
             "type": "object",
             "properties": {
                 "data": {},
@@ -5470,6 +5280,21 @@ const docTemplate = `{
                 }
             }
         },
+        "utils.SwaggerResponse-courses_CourseStudyResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/courses.CourseStudyResponse"
+                },
+                "errors": {},
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "utils.SwaggerResponse-dashboard_AdminDashboard": {
             "type": "object",
             "properties": {
@@ -5520,21 +5345,6 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/discussions.Discussion"
-                },
-                "errors": {},
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "utils.SwaggerResponse-enrollments_CourseStudyResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/enrollments.CourseStudyResponse"
                 },
                 "errors": {},
                 "message": {
@@ -5755,21 +5565,6 @@ const docTemplate = `{
                 }
             }
         },
-        "utils.SwaggerResponse-quiz_QuizAttempt": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/quiz.QuizAttempt"
-                },
-                "errors": {},
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
         "utils.SwaggerResponse-quiz_QuizMetadata": {
             "type": "object",
             "properties": {
@@ -5805,6 +5600,21 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/quiz.SubmitQuizResponse"
+                },
+                "errors": {},
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "utils.SwaggerResponse-string": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
                 },
                 "errors": {},
                 "message": {
@@ -5942,12 +5752,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:8080",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "CourseHunt API",
+	Description:      "CourseHunt backend API server.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

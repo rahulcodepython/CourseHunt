@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { CourseInfoZod } from './common.types';
+import { CourseInfoZod } from '@/types/common.types';
+
+// ── DB Row Structs ────────────────────────────────────────────────────────────
 
 export const WishlistZod = z.object({
     id: z.string(),
@@ -8,4 +10,3 @@ export const WishlistZod = z.object({
     added_at: z.string(),
 });
 export type Wishlist = z.infer<typeof WishlistZod>;
-export const WishlistRemoveResponseZod = z.any(); export type WishlistRemoveResponse = any;

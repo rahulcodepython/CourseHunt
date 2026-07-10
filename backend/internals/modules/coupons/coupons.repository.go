@@ -1,7 +1,6 @@
 package coupons
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -20,35 +19,7 @@ func (m *CouponsModule) ReadByCodeRepository(code string) (*Coupon, error) {
 		LEFT JOIN courses co ON c.course_id = co.id
 		WHERE c.code = $1`, code).
 		Scan(
-			&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
-			&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
-			&courseID, &courseTitle, &courseThumbnail,
-		)
-
-	if err == nil && courseID != nil {
-		c.Course.ID = *courseID
-		if courseTitle != nil {
-			c.Course.Title = *courseTitle
-		}
-		c.Course.Thumbnail = courseThumbnail
-	}
-	return &c, err
-}
-
-func (m *CouponsModule) ReadRepository(id string) (*Coupon, error) {
-	var c Coupon
-	var courseID, courseTitle, courseThumbnail *string
-
-	err := m.DB.QueryRow(`
-		SELECT 
-			c.id, c.code, c.discount_percent, c.max_usage, c.usage_count, 
-			c.expires_at, c.is_active, c.created_by, c.created_at,
-			c.course_id, co.title, co.image_url
-		FROM coupons c
-		LEFT JOIN courses co ON c.course_id = co.id
-		WHERE c.id = $1`, id).
-		Scan(
-			&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
+			&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount,
 			&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
 			&courseID, &courseTitle, &courseThumbnail,
 		)
@@ -84,7 +55,7 @@ func (m *CouponsModule) ListRepository(page, limit int) ([]Coupon, int, error) {
 		var c Coupon
 		var courseID, courseTitle, courseThumbnail *string
 		err := rows.Scan(
-			&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
+			&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount,
 			&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
 			&courseID, &courseTitle, &courseThumbnail,
 		)
@@ -114,7 +85,7 @@ func (m *CouponsModule) CreateRepository(createdBy string, req CreateCouponReque
 			return nil, fmt.Errorf("invalid expires_at format")
 		}
 	}
-	
+
 	var c Coupon
 	var courseID, courseTitle, courseThumbnail *string
 
@@ -132,7 +103,7 @@ func (m *CouponsModule) CreateRepository(createdBy string, req CreateCouponReque
 		LEFT JOIN courses co ON i.course_id = co.id`,
 		req.Code, req.CourseID, req.DiscountPercent, req.MaxUsage, expiresAt, req.IsActive, createdBy,
 	).Scan(
-		&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
+		&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount,
 		&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
 		&courseID, &courseTitle, &courseThumbnail,
 	)
@@ -174,10 +145,6 @@ func (m *CouponsModule) UpdateRepository(id string, req UpdateCouponRequest) (*C
 		argIdx++
 	}
 
-	if len(setClauses) == 0 {
-		return m.ReadRepository(id)
-	}
-
 	args = append(args, id)
 	query := fmt.Sprintf(`
 		WITH updated AS (
@@ -195,7 +162,7 @@ func (m *CouponsModule) UpdateRepository(id string, req UpdateCouponRequest) (*C
 	var courseID, courseTitle, courseThumbnail *string
 
 	err := m.DB.QueryRow(query, args...).Scan(
-		&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount, 
+		&c.ID, &c.Code, &c.DiscountPercent, &c.MaxUsage, &c.UsageCount,
 		&c.ExpiresAt, &c.IsActive, &c.CreatedBy, &c.CreatedAt,
 		&courseID, &courseTitle, &courseThumbnail,
 	)
@@ -229,31 +196,4 @@ func (m *CouponsModule) RecordUsageRepository(couponID, userID, courseID string)
 		return err
 	}
 	return tx.Commit()
-}
-
-func (m *CouponsModule) CheckRepository(code, courseID string) CouponCheckResponse {
-	c, err := m.ReadByCodeRepository(code)
-	reason := func(s string) *string { return &s }
-
-	if err == sql.ErrNoRows {
-		r := "not_found"
-		return CouponCheckResponse{Valid: false, Reason: &r}
-	}
-	if err != nil {
-		r := "error"
-		return CouponCheckResponse{Valid: false, Reason: &r}
-	}
-	if !c.IsActive {
-		return CouponCheckResponse{Valid: false, DiscountPercent: c.DiscountPercent, Reason: reason("inactive")}
-	}
-	if time.Now().After(c.ExpiresAt) {
-		return CouponCheckResponse{Valid: false, DiscountPercent: c.DiscountPercent, Reason: reason("expired")}
-	}
-	if c.UsageCount >= c.MaxUsage {
-		return CouponCheckResponse{Valid: false, DiscountPercent: c.DiscountPercent, Reason: reason("max_usage_reached")}
-	}
-	if c.Course.ID != "" && c.Course.ID != courseID {
-		return CouponCheckResponse{Valid: false, DiscountPercent: c.DiscountPercent, Reason: reason("not_applicable")}
-	}
-	return CouponCheckResponse{Valid: true, DiscountPercent: c.DiscountPercent}
 }

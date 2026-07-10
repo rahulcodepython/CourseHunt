@@ -69,66 +69,46 @@ func (m *QuizModule) DeleteQuestionController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "question deleted successfully", map[string]string{"id": id}, nil)
 }
 
-// POST /api/lessons/:lessonID/quiz/start
-// @Summary CreateAttemptController
-// @Description CreateAttemptController for Quiz
+// POST /api/lessons/:lessonID/quiz/:quizID/question
+// @Summary GetQuestionController
+// @Description GetQuestionController for Quiz
 // @Tags Quiz
 // @Accept json
 // @Produce json
 // @Param lessonID path string true "lessonID"
-// @Success 200 {object} utils.SwaggerResponse[QuizAttempt]
-// @Router /api/v1/quiz/lesson/{lessonID}/start [post]
-func (m *QuizModule) CreateAttemptController(c *fiber.Ctx) error {
-	// Retrieve quiz metadata by lesson ID to get quiz ID
-	qm, err := m.ReadMetadataRepository(c.Params("lessonID"))
-	if err != nil {
-		return utils.JSON(c, http.StatusNotFound, false, "quiz not found for this lesson", nil, nil)
-	}
-	attempt, err := m.CreateAttemptService(qm.ID, utils.GetUserID(c))
-	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to start quiz attempt", nil, err.Error())
-	}
-	return utils.JSON(c, http.StatusCreated, true, "quiz attempt started", attempt, nil)
-}
-
-// POST /api/lessons/:lessonID/quiz/next
-// @Summary ReadNextQuestionController
-// @Description ReadNextQuestionController for Quiz
-// @Tags Quiz
-// @Accept json
-// @Produce json
-// @Param lessonID path string true "lessonID"
+// @Param quizID path string true "quizID"
 // @Param body body quiz.NextQuestionRequest true "Request Body"
 // @Success 200 {object} utils.SwaggerResponse[NextQuestionResponse]
-// @Router /api/v1/quiz/lesson/{lessonID}/next [post]
-func (m *QuizModule) ReadNextQuestionController(c *fiber.Ctx) error {
+// @Router /api/v1/quiz/lesson/{lessonID}/quiz/{quizID}/question [post]
+func (m *QuizModule) GetQuestionController(c *fiber.Ctx) error {
 	var req NextQuestionRequest
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	resp, err := m.NextQuestionService(c.Params("lessonID"), utils.GetUserID(c), req)
+	resp, err := m.GetQuestionService(c.Params("quizID"), utils.GetUserID(c), req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to get next question", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "failed to get question", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "next question fetched", resp, nil)
+	return utils.JSON(c, http.StatusOK, true, "question fetched", resp, nil)
 }
 
-// POST /api/lessons/:lessonID/quiz/submit
+// POST /api/lessons/:lessonID/quiz/:quizID/submit
 // @Summary CreateSubmitController
 // @Description CreateSubmitController for Quiz
 // @Tags Quiz
 // @Accept json
 // @Produce json
 // @Param lessonID path string true "lessonID"
+// @Param quizID path string true "quizID"
 // @Param body body quiz.SubmitQuizRequest true "Request Body"
 // @Success 200 {object} utils.SwaggerResponse[SubmitQuizResponse]
-// @Router /api/v1/quiz/lesson/{lessonID}/submit [post]
+// @Router /api/v1/quiz/lesson/{lessonID}/quiz/{quizID}/submit [post]
 func (m *QuizModule) CreateSubmitController(c *fiber.Ctx) error {
 	var req SubmitQuizRequest
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	resp, err := m.SubmitService(c.Params("lessonID"), utils.GetUserID(c), req)
+	resp, err := m.SubmitService(c.Params("quizID"), utils.GetUserID(c), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to submit quiz", nil, err.Error())
 	}

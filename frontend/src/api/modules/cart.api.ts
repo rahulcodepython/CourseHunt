@@ -5,8 +5,7 @@ import { z } from "zod";
 
 import { CartItemZod } from "@/types/cart.types";
 
-import { CartClearResponseZod } from "@/types/cart.types";
-import { CartRemoveResponseZod } from "@/types/cart.types";
+
 import { useApiMutation, useApiQuery } from "@/api/core/generics";
 import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
@@ -27,7 +26,7 @@ export function useCartQuery() {
  */
 export function useClearCartMutation() {
     return useApiMutation(
-        () => apiRequest({ url: "/api/v1/cart", method: "DELETE" }, CartClearResponseZod),
+        () => apiRequest({ url: "/api/v1/cart", method: "DELETE" }, z.any()),
         {
             invalidateKeys: [queryKeys.cart()],
             successMessage: "Cart cleared successfully",
@@ -60,7 +59,7 @@ export function useAddCourseToCartMutation() {
 export function useRemoveCourseFromCartMutation() {
     return useApiMutation(
         (courseId: string) =>
-            apiRequest({ url: `/api/v1/cart/course/${courseId}`, method: "DELETE" }, CartRemoveResponseZod),
+            apiRequest({ url: `/api/v1/cart/course/${courseId}`, method: "DELETE" }, z.any()),
         {
             updateCache: {
                 queryKey: queryKeys.cart(),

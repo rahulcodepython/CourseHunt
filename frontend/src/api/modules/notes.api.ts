@@ -8,7 +8,7 @@ import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
 import { UserNoteZod, UpsertNoteRequestZod, NoteResponseZod } from "@/types/notes.types";
 
-import { NoteDeleteResponseZod } from "@/types/notes.types";
+
 
 /**
  * Fetches notes for a lesson.
@@ -43,7 +43,7 @@ export function useCreateNoteMutation(lessonId: string) {
  */
 export function useDeleteNoteMutation(lessonId: string) {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/notes/${id}`, method: "DELETE" }, NoteDeleteResponseZod),
+		(id: string) => apiRequest({ url: `/api/v1/notes/${id}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.notes(lessonId),

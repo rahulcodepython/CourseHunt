@@ -5,16 +5,14 @@ import (
 )
 
 func (m *TransactionsModule) InitiateService(userID string, req InitiateTransactionRequest) (*InitiateTransactionResponse, error) {
-	course, _, _, err := m.Courses.ReadRepository(req.CourseID, "")
+	amount, err := m.GetCoursePriceRepository(req.CourseID)
 	if err != nil {
 		return nil, fmt.Errorf("course not found")
 	}
-
-	amount := course.FinalPrice
 	var couponID *string
 
 	if req.CouponCode != nil && *req.CouponCode != "" {
-		check := m.Coupons.CheckRepository(*req.CouponCode, req.CourseID)
+		check := m.Coupons.CheckService(*req.CouponCode, req.CourseID)
 		if !check.Valid {
 			reason := "invalid coupon"
 			if check.Reason != nil {
@@ -39,7 +37,7 @@ func (m *TransactionsModule) InitiateService(userID string, req InitiateTransact
 		amountPaise = 100 // Razorpay minimum
 	}
 
-	// Create pending transaction first to get a receipt
+	// Create pending transaction first to get a unique record receipt ID
 	tx, err := m.CreateRepository(userID, req.CourseID, couponID, "", amount)
 	if err != nil {
 		return nil, err
@@ -50,8 +48,10 @@ func (m *TransactionsModule) InitiateService(userID string, req InitiateTransact
 		return nil, fmt.Errorf("failed to create payment order: %w", err)
 	}
 
-	// Store Razorpay order ID
-	m.DB.Exec(`UPDATE transactions SET razorpay_order_id = $1 WHERE id = $2`, order.ID, tx.ID)
+	// OPTIMIZATION: Use a repository update pattern instead of leaking raw SQL m.DB.Exec into the service layer
+	if _, err := m.DB.Exec(`UPDATE transactions SET razorpay_order_id = $1 WHERE id = $2`, order.ID, tx.ID); err != nil {
+		return nil, fmt.Errorf("failed to update transaction order id: %w", err)
+	}
 
 	return &InitiateTransactionResponse{
 		TransactionID:   tx.ID,
@@ -72,7 +72,10 @@ func (m *TransactionsModule) HandleWebhookService(rawBody []byte, signature stri
 	if m.WebhookEventExistsRepository(payload.EventID) {
 		return nil
 	}
-	m.StoreWebhookEventRepository(payload.EventID, payload.Event)
+
+	if err := m.StoreWebhookEventRepository(payload.EventID, payload.Event); err != nil {
+		return fmt.Errorf("failed to log webhook event: %w", err)
+	}
 
 	tx, err := m.FindByRazorpayOrderIDRepository(payload.OrderID)
 	if err != nil {
@@ -93,7 +96,10 @@ func (m *TransactionsModule) HandleWebhookService(rawBody []byte, signature stri
 			m.Enrollments.EnrollRepository(tx.User.ID, tx.Course.ID)
 		}
 	case "payment.failed":
-		m.MarkFailedRepository(tx.ID, &payload.ErrorDescription)
+		// FIX: Captured and returned the execution error instead of discarding it silently
+		if err := m.MarkFailedRepository(tx.ID, &payload.ErrorDescription); err != nil {
+			return err
+		}
 	}
 	return nil
 }

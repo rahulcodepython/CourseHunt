@@ -6,17 +6,17 @@ import { z } from "zod";
 import { useApiMutation, useApiQuery } from "@/api/core/generics";
 import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
-import { CourseZod, CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod } from "@/types/courses.types";
+import { CourseZod, CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CourseCardResponseZod, EnrolledCourseResponseZod } from "@/types/courses.types";
 import { PaginatedResponseZod } from "@/types/common.types";
 
-import { CourseDeleteResponseZod } from "@/types/courses.types";
+
 
 /**
  * Fetches all paginated courses.
  */
 export function useCoursesQuery() {
 	return useApiQuery(queryKeys.courses(), () =>
-		apiRequest({ url: "/api/v1/courses", method: "GET" }, PaginatedResponseZod(CourseZod)),
+		apiRequest({ url: "/api/v1/courses", method: "GET" }, PaginatedResponseZod(CourseCardResponseZod)),
 	);
 }
 
@@ -37,6 +37,16 @@ export function useCourseLandingQuery(slug: string) {
 		apiRequest({ url: `/api/v1/courses/${slug}`, method: "GET" }, CourseLandingResponseZod),
 	);
 }
+
+/**
+ * Fetches the current user's enrolled courses.
+ */
+export function useEnrolledCoursesQuery() {
+	return useApiQuery(queryKeys.coursesEnrolled(), () =>
+		apiRequest({ url: "/api/v1/enrolled", method: "GET" }, z.array(EnrolledCourseResponseZod)),
+	);
+}
+
 
 /**
  * Creates a new course.
@@ -83,7 +93,7 @@ export function useUpdateCourseMutation() {
  */
 export function useDeleteCourseMutation() {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/courses/${id}`, method: "DELETE" }, CourseDeleteResponseZod),
+		(id: string) => apiRequest({ url: `/api/v1/courses/${id}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.courses(),

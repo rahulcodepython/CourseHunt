@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useApiMutation, useApiQuery } from "@/api/core/generics";
 import { queryKeys } from "@/api/query-keys";
 import { CategoryZod, CreateCategoryRequestZod, UpdateCategoryRequestZod } from "@/types/category.types";
-import { CategoryDeleteResponseZod } from "@/types/category.types";
+
 
 /**
  * Fetches all categories as a tree list.
@@ -38,7 +38,7 @@ export function useCreateCategoryMutation() {
  */
 export function useDeleteCategoryMutation() {
     return useApiMutation(
-        (id: string) => apiRequest({ url: `/api/v1/categories/${id}`, method: "DELETE" }, CategoryDeleteResponseZod),
+        (id: string) => apiRequest({ url: `/api/v1/categories/${id}`, method: "DELETE" }, z.any()),
         {
             invalidateKeys: [queryKeys.categories()],
             successMessage: "Category deleted successfully",

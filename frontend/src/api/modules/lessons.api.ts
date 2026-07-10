@@ -8,8 +8,7 @@ import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
 import { LessonZod, CreateLessonRequestZod, UpdateLessonRequestZod, LessonContentResponseZod, SignedURLResponseZod, LessonCompleteResponseZod, AddResourceRequestZod, UpsertVideoContentRequestZod, UpsertDocumentContentRequestZod } from "@/types/lessons.types";
 
-import { LessonDeleteResponseZod } from "@/types/lessons.types";
-import { ResourceDeleteResponseZod } from "@/types/lessons.types";
+
 
 /**
  * Fetches lessons for a chapter.
@@ -43,7 +42,7 @@ export function useCreateLessonMutation(chapterId: string) {
  */
 export function useDeleteResourceMutation() {
 	return useApiMutation(
-		(resourceId: string) => apiRequest({ url: `/api/v1/lessons/resources/${resourceId}`, method: "DELETE" }, ResourceDeleteResponseZod),
+		(resourceId: string) => apiRequest({ url: `/api/v1/lessons/resources/${resourceId}`, method: "DELETE" }, z.any()),
 		{
 			successMessage: "Resource deleted successfully",
 		},
@@ -56,7 +55,7 @@ export function useDeleteResourceMutation() {
  */
 export function useDeleteLessonMutation(chapterId: string) {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/lessons/${id}`, method: "DELETE" }, LessonDeleteResponseZod),
+		(id: string) => apiRequest({ url: `/api/v1/lessons/${id}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.lessons(chapterId),
@@ -102,7 +101,7 @@ export function useCompleteLessonMutation() {
  */
 export function useLessonContentQuery(id: string) {
 	return useApiQuery(queryKeys.lessonContent(id), () =>
-		apiRequest({ url: `/api/v1/lessons/${id}/content`, method: "GET" }, LessonContentResponseZod),
+		apiRequest({ url: `/api/v1/lessons/${id}/content`, method: "GET" }, LessonContentResponseZod(z.any())),
 	);
 }
 

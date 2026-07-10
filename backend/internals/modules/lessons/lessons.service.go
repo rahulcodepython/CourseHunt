@@ -40,52 +40,14 @@ func (m *LessonsModule) DeleteResourceService(id string) (string, error) {
 }
 
 // Content returns the full lesson content for study, validating enrollment.
-func (m *LessonsModule) ReadContentService(lessonID, userID, courseID string) (*LessonContentResponse, error) {
-	lesson, completed, err := m.ReadRepository(lessonID, userID)
+func (m *LessonsModule) ReadContentService(lessonID, userID, courseID string) (interface{}, error) {
+	resp, err := m.ReadContentAggregatedRepository(lessonID, userID)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("lesson not found")
 	}
 	if err != nil {
 		return nil, err
 	}
-
-	resp := &LessonContentResponse{}
-	resp.Lesson.ID = lesson.ID
-	resp.Lesson.Title = lesson.Title
-	resp.Lesson.LessonType = lesson.LessonType
-	resp.Lesson.LessonNo = lesson.LessonNo
-	resp.Lesson.ChapterID = lesson.ChapterID
-
-	switch lesson.LessonType {
-	case "video":
-		vc, _ := m.ReadVideoContentRepository(lessonID)
-		if vc != nil {
-			resp.Content.VideoURL = &vc.VideoURL
-			resp.Content.WrittenContent = vc.WrittenContent
-		}
-	case "document":
-		dc, _ := m.ReadDocumentContentRepository(lessonID)
-		if dc != nil {
-			resp.Content.DocumentContent = &dc.Content
-		}
-	case "quiz":
-		qm, _ := m.Quiz.ReadMetadataRepository(lessonID)
-		if qm != nil {
-			resp.Content.QuizMetadata = qm
-		}
-	}
-
-	resp.Resources, _ = m.ListResourcesRepository(lessonID)
-	if resp.Resources == nil {
-		resp.Resources = []LessonResource{}
-	}
-
-	note, _ := m.Notes.ReadRepository(userID, lessonID)
-	if note != nil {
-		resp.UserNote.Content = &note.Content
-	}
-
-	resp.Completed = completed
 
 	// Update last accessed
 	m.UpdateLastAccessed(userID, courseID, lessonID)
@@ -95,8 +57,4 @@ func (m *LessonsModule) ReadContentService(lessonID, userID, courseID string) (*
 
 func (m *LessonsModule) UpdateCompleteService(userID, lessonID, courseID string) error {
 	return m.MarkLessonComplete(userID, lessonID, courseID)
-}
-
-func (m *LessonsModule) GetChapterIDService(lessonID string) (string, error) {
-	return m.GetChapterIDByLesson(lessonID)
 }

@@ -2,14 +2,12 @@ package courses
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
-
-	"coursehunt-backend/internals/modules/profile"
-	"coursehunt-backend/internals/modules/users"
 
 	"github.com/lib/pq"
 )
@@ -137,83 +135,207 @@ func (m *CoursesModule) DeleteRepository(id string) (string, error) {
 	return deletedID, err
 }
 
-func (m *CoursesModule) ReadRepository(id, userID string) (*Course, float64, bool, error) {
-	var c Course
-	var completionPercent sql.NullFloat64
-	var completed sql.NullBool
-	err := m.DB.QueryRow(`
-		SELECT c.id, c.tutor_id, c.slug, c.title, c.short_description, c.long_description, c.image_url,
-		       c.preview_video_url, c.language, c.level, c.actual_price, c.final_price,
-		       COALESCE(c.benefits, '{}'), COALESCE(c.requirements, '{}'),
-		       c.category_id, c.subcategory_id, c.coupon_allowed,
-		       c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
-		       c.status, c.created_at, c.updated_at,
-			   e.completion_percent, e.completed
+func (m *CoursesModule) ReadStudyMetadataRepository(courseID, userID string) (*CourseStudyResponse, error) {
+	var resp CourseStudyResponse
+	var imageURL sql.NullString
+	var chaptersJSON []byte
+
+	query := `
+		SELECT 
+			c.id, c.title, c.image_url,
+			COALESCE(e.completion_percent, 0), COALESCE(e.completed, false),
+			(
+				SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
+				FROM (
+					SELECT 
+						ch.id, ch.chapter_no, ch.title, ch.total_lectures, ch.total_duration_seconds,
+						json_build_object(
+							'lessons_completed', COALESCE(cp.lessons_completed, 0),
+							'completed', COALESCE(cp.completed, false)
+						) AS progress,
+						(
+							SELECT COALESCE(json_agg(lessons_tree ORDER BY lessons_tree.lesson_no), '[]'::json)
+							FROM (
+								SELECT 
+									l.id, l.lesson_no, l.title, l.lesson_type, l.duration_seconds,
+									COALESCE(lp.completed, false) AS completed
+								FROM lessons l
+								LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = $2
+								WHERE l.chapter_id = ch.id
+							) lessons_tree
+						) AS lessons
+					FROM chapters ch
+					LEFT JOIN chapter_progress cp ON cp.chapter_id = ch.id AND cp.user_id = $2
+					WHERE ch.course_id = c.id
+				) chapters_tree
+			) AS chapters_json
 		FROM courses c
 		LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = $2
-		WHERE c.id = $1`, id, userID).Scan(
-		&c.ID, &c.TutorID, &c.Slug, &c.Title,
-		&c.ShortDescription, &c.LongDescription, &c.ImageURL, &c.PreviewVideoURL,
-		&c.Language, &c.Level, &c.ActualPrice, &c.FinalPrice,
-		pq.Array(&c.Benefits), pq.Array(&c.Requirements),
-		&c.CategoryID, &c.SubcategoryID, &c.CouponAllowed,
-		&c.TotalLectures, &c.TotalDurationSeconds, &c.RatingAvg, &c.FeedbackCount,
-		&c.Status, &c.CreatedAt, &c.UpdatedAt,
-		&completionPercent, &completed,
+		WHERE c.id = $1
+	`
+
+	err := m.DB.QueryRow(query, courseID, userID).Scan(
+		&resp.Course.ID, &resp.Course.Title, &imageURL,
+		&resp.Enrollment.CompletionPercent, &resp.Enrollment.Completed,
+		&chaptersJSON,
 	)
-	return &c, completionPercent.Float64, completed.Bool, err
+	if err != nil {
+		return nil, err
+	}
+
+	if imageURL.Valid {
+		resp.Course.Thumbnail = &imageURL.String
+	}
+
+	if chaptersJSON != nil {
+		json.Unmarshal(chaptersJSON, &resp.Chapters)
+	}
+	if resp.Chapters == nil {
+		resp.Chapters = []StudyChapterItem{}
+	}
+
+	return &resp, nil
 }
 
-func (m *CoursesModule) ReadBySlugRepository(slug string) (*Course, error) {
-	var c Course
-	err := m.DB.QueryRow(`
-		SELECT id, tutor_id, slug, title, short_description, long_description, image_url,
-		       preview_video_url, language, level, actual_price, final_price,
-		       COALESCE(benefits, '{}'), COALESCE(requirements, '{}'),
-		       category_id, subcategory_id, coupon_allowed,
-		       total_lectures, total_duration_seconds, rating_avg, feedback_count,
-		       status, created_at, updated_at
-		FROM courses WHERE slug = $1`, slug).Scan(
-		&c.ID, &c.TutorID, &c.Slug, &c.Title,
-		&c.ShortDescription, &c.LongDescription, &c.ImageURL, &c.PreviewVideoURL,
-		&c.Language, &c.Level, &c.ActualPrice, &c.FinalPrice,
-		pq.Array(&c.Benefits), pq.Array(&c.Requirements),
-		&c.CategoryID, &c.SubcategoryID, &c.CouponAllowed,
-		&c.TotalLectures, &c.TotalDurationSeconds, &c.RatingAvg, &c.FeedbackCount,
-		&c.Status, &c.CreatedAt, &c.UpdatedAt,
+func (m *CoursesModule) ReadLandingBySlugRepository(slug, userID string) (*CourseLandingResponse, error) {
+	var resp CourseLandingResponse
+	var shortDesc, longDesc, imageURL, previewURL, catID, catName, subcatID, subcatName sql.NullString
+	var instrID, instrName, instrImage, instrHeadline sql.NullString
+	var chaptersJSON []byte
+
+	var uid sql.NullString
+	if userID != "" {
+		uid = sql.NullString{String: userID, Valid: true}
+	}
+
+	query := `
+		SELECT 
+			c.id, c.slug, c.title, c.short_description, c.long_description, c.image_url, c.preview_video_url, 
+			c.language, c.level, c.actual_price, c.final_price, 
+			COALESCE(c.benefits, '{}'), COALESCE(c.requirements, '{}'),
+			c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
+			
+			cat.id, cat.name,
+			subcat.id, subcat.name,
+			
+			u.id, u.name, u.image, tp.headline,
+			
+			EXISTS(SELECT 1 FROM enrollments e WHERE e.user_id = $2 AND e.course_id = c.id AND e.revoked = false) AS is_enrolled,
+			
+			(
+				SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
+				FROM (
+					SELECT 
+						ch.id, ch.chapter_no, ch.title, ch.total_lectures, ch.total_duration_seconds,
+						(
+							SELECT COALESCE(json_agg(lessons_tree ORDER BY lessons_tree.lesson_no), '[]'::json)
+							FROM (
+								SELECT l.id, l.lesson_no, l.title, l.lesson_type, l.duration_seconds
+								FROM lessons l
+								WHERE l.chapter_id = ch.id
+							) lessons_tree
+						) AS lessons
+					FROM chapters ch
+					WHERE ch.course_id = c.id
+				) chapters_tree
+			) AS chapters_json
+		FROM courses c
+		LEFT JOIN categories cat ON c.category_id = cat.id
+		LEFT JOIN categories subcat ON c.subcategory_id = subcat.id
+		LEFT JOIN "user" u ON c.tutor_id = u.id
+		LEFT JOIN tutor_profiles tp ON u.id = tp.user_id
+		WHERE c.slug = $1
+	`
+
+	err := m.DB.QueryRow(query, slug, uid).Scan(
+		&resp.ID, &resp.Slug, &resp.Title, &shortDesc, &longDesc, &imageURL, &previewURL,
+		&resp.Language, &resp.Level, &resp.ActualPrice, &resp.FinalPrice,
+		pq.Array(&resp.Benefits), pq.Array(&resp.Requirements),
+		&resp.TotalLectures, &resp.TotalDurationSeconds, &resp.RatingAvg, &resp.FeedbackCount,
+
+		&catID, &catName,
+		&subcatID, &subcatName,
+
+		&instrID, &instrName, &instrImage, &instrHeadline,
+
+		&resp.IsEnrolled,
+		&chaptersJSON,
 	)
-	return &c, err
+	if err != nil {
+		return nil, err
+	}
+
+	if shortDesc.Valid {
+		resp.ShortDescription = &shortDesc.String
+	}
+	if longDesc.Valid {
+		resp.LongDescription = &longDesc.String
+	}
+	if imageURL.Valid {
+		resp.ImageURL = &imageURL.String
+	}
+	if previewURL.Valid {
+		resp.PreviewVideoURL = &previewURL.String
+	}
+
+	if catID.Valid && catName.Valid {
+		resp.Category = &models.CategoryInfo{ID: catID.String, Name: catName.String}
+	}
+	if subcatID.Valid && subcatName.Valid {
+		resp.Subcategory = &models.CategoryInfo{ID: subcatID.String, Name: subcatName.String}
+	}
+	if instrID.Valid {
+		resp.Instructor.ID = instrID.String
+		if instrName.Valid {
+			resp.Instructor.Name = instrName.String
+		}
+		if instrImage.Valid {
+			resp.Instructor.Image = &instrImage.String
+		}
+		if instrHeadline.Valid {
+			resp.Instructor.Headline = &instrHeadline.String
+		}
+	}
+
+	if chaptersJSON != nil {
+		json.Unmarshal(chaptersJSON, &resp.Chapters)
+	}
+	if resp.Chapters == nil {
+		resp.Chapters = []ChapterCardResponse{}
+	}
+
+	return &resp, nil
 }
 
-func (m *CoursesModule) ListRepository(page, limit int, categoryID, level, search, tutorID, status string) ([]Course, int, error) {
+func (m *CoursesModule) ListRepository(page, limit int, categoryID, level, search, tutorID, status string) ([]CourseCardResponse, int, error) {
 	where := []string{"1=1"}
 	args := []interface{}{}
 	idx := 1
 
 	if status != "" {
-		where = append(where, fmt.Sprintf("status = $%d", idx))
+		where = append(where, fmt.Sprintf("c.status = $%d", idx))
 		args = append(args, status)
 		idx++
 	} else {
-		where = append(where, "status = 'published'")
+		where = append(where, "c.status = 'published'")
 	}
 	if categoryID != "" {
-		where = append(where, fmt.Sprintf("category_id = $%d", idx))
+		where = append(where, fmt.Sprintf("c.category_id = $%d", idx))
 		args = append(args, categoryID)
 		idx++
 	}
 	if level != "" {
-		where = append(where, fmt.Sprintf("level = $%d", idx))
+		where = append(where, fmt.Sprintf("c.level = $%d", idx))
 		args = append(args, level)
 		idx++
 	}
 	if search != "" {
-		where = append(where, fmt.Sprintf("(title ILIKE $%d OR short_description ILIKE $%d)", idx, idx))
+		where = append(where, fmt.Sprintf("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", idx, idx))
 		args = append(args, "%"+search+"%")
 		idx++
 	}
 	if tutorID != "" {
-		where = append(where, fmt.Sprintf("tutor_id = $%d", idx))
+		where = append(where, fmt.Sprintf("c.tutor_id = $%d", idx))
 		args = append(args, tutorID)
 		idx++
 	}
@@ -221,83 +343,62 @@ func (m *CoursesModule) ListRepository(page, limit int, categoryID, level, searc
 	whereStr := strings.Join(where, " AND ")
 
 	var total int
-	m.DB.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM courses WHERE %s", whereStr), args...).Scan(&total)
+	m.DB.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM courses c WHERE %s", whereStr), args...).Scan(&total)
 
 	offset := (page - 1) * limit
 	args = append(args, limit, offset)
 	rows, err := m.DB.Query(fmt.Sprintf(`
-		SELECT id, tutor_id, slug, title, short_description, long_description, image_url,
-		       preview_video_url, language, level, actual_price, final_price,
-		       COALESCE(benefits, '{}'), COALESCE(requirements, '{}'),
-		       category_id, subcategory_id, coupon_allowed,
-		       total_lectures, total_duration_seconds, rating_avg, feedback_count,
-		       status, created_at, updated_at
-		FROM courses WHERE %s
-		ORDER BY created_at DESC LIMIT $%d OFFSET $%d`, whereStr, idx, idx+1), args...)
+		SELECT c.id, c.slug, c.title, c.short_description, c.image_url,
+		       c.actual_price, c.final_price, COALESCE(c.benefits, '{}'),
+		       c.level, c.rating_avg, c.feedback_count,
+		       u.id, u.name, u.image
+		FROM courses c
+		LEFT JOIN "user" u ON u.id = c.tutor_id
+		WHERE %s
+		ORDER BY c.created_at DESC LIMIT $%d OFFSET $%d`, whereStr, idx, idx+1), args...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
 
-	var courses []Course
+	var cards []CourseCardResponse
 	for rows.Next() {
-		var c Course
+		var card CourseCardResponse
+		var shortDesc, imageURL, instrID, instrName, instrImage sql.NullString
 		if err := rows.Scan(
-			&c.ID, &c.TutorID, &c.Slug, &c.Title,
-			&c.ShortDescription, &c.LongDescription, &c.ImageURL, &c.PreviewVideoURL,
-			&c.Language, &c.Level, &c.ActualPrice, &c.FinalPrice,
-			pq.Array(&c.Benefits), pq.Array(&c.Requirements),
-			&c.CategoryID, &c.SubcategoryID, &c.CouponAllowed,
-			&c.TotalLectures, &c.TotalDurationSeconds, &c.RatingAvg, &c.FeedbackCount,
-			&c.Status, &c.CreatedAt, &c.UpdatedAt,
+			&card.ID, &card.Slug, &card.Title, &shortDesc, &imageURL,
+			&card.ActualPrice, &card.FinalPrice, pq.Array(&card.Benefits),
+			&card.Level, &card.RatingAvg, &card.FeedbackCount,
+			&instrID, &instrName, &instrImage,
 		); err != nil {
 			return nil, 0, err
 		}
-		courses = append(courses, c)
+		if shortDesc.Valid {
+			card.ShortDescription = &shortDesc.String
+		}
+		if imageURL.Valid {
+			card.ImageURL = &imageURL.String
+		}
+		if instrID.Valid {
+			card.Instructor.ID = instrID.String
+			if instrName.Valid {
+				card.Instructor.Name = instrName.String
+			}
+			if instrImage.Valid {
+				card.Instructor.Image = &instrImage.String
+			}
+		}
+		cards = append(cards, card)
 	}
-	if courses == nil {
-		courses = []Course{}
+	if cards == nil {
+		cards = []CourseCardResponse{}
 	}
-	return courses, total, rows.Err()
+	return cards, total, rows.Err()
 }
 
-// GetTutorUserRepository returns the user row for a course's tutor.
-func (m *CoursesModule) GetTutorUserRepository(tutorID string) (*users.User, *profile.TutorProfile, error) {
-	var u users.User
-	err := m.DB.QueryRow(`SELECT id, name, email, "emailVerified", image, banned, "createdAt", "updatedAt" FROM "user" WHERE id = $1`, tutorID).
-		Scan(&u.ID, &u.Name, &u.Email, &u.EmailVerified, &u.Image, &u.Banned, &u.CreatedAt, &u.UpdatedAt)
-	if err != nil {
-		return nil, nil, err
-	}
-	var tp profile.TutorProfile
-	m.DB.QueryRow(`SELECT id, user_id, headline, bio, website, total_students, rating_avg FROM tutor_profile WHERE user_id = $1`, tutorID).
-		Scan(&tp.ID, &tp.UserID, &tp.Headline, &tp.Bio, &tp.Website, &tp.TotalStudents, &tp.RatingAvg)
-	return &u, &tp, nil
-}
-
-func (m *CoursesModule) GetCategoryInfoRepository(catID string) *models.CategoryInfo {
-	var ci models.CategoryInfo
-	m.DB.QueryRow(`SELECT id, name FROM categories WHERE id = $1`, catID).Scan(&ci.ID, &ci.Name)
-	if ci.ID == "" {
-		return nil
-	}
-	return &ci
-}
-
-func (m *CoursesModule) GetSubcategoryInfoRepository(subID string) *models.CategoryInfo {
-	var ci models.CategoryInfo
-	m.DB.QueryRow(`SELECT id, name FROM subcategories WHERE id = $1`, subID).Scan(&ci.ID, &ci.Name)
-	if ci.ID == "" {
-		return nil
-	}
-	return &ci
-}
-
-// EnrolledCoursesRepository returns the courses a user is enrolled in.
 func (m *CoursesModule) EnrolledCoursesRepository(userID string) ([]EnrolledCourseResponse, error) {
 	rows, err := m.DB.Query(`
-		SELECT c.id, c.slug, c.title, c.image_url, c.tutor_id,
-		       e.completion_percent, e.last_accessed_lesson_id
+		SELECT c.id, c.slug, c.title, c.image_url, e.completion_percent, e.last_accessed_lesson_id
 		FROM enrollments e
 		JOIN courses c ON c.id = e.course_id
 		WHERE e.user_id = $1 AND e.revoked = false
@@ -306,94 +407,20 @@ func (m *CoursesModule) EnrolledCoursesRepository(userID string) ([]EnrolledCour
 		return nil, err
 	}
 	defer rows.Close()
+
 	var list []EnrolledCourseResponse
 	for rows.Next() {
 		var resp EnrolledCourseResponse
-		var tutorID sql.NullString
-		if err := rows.Scan(&resp.ID, &resp.Slug, &resp.Title, &resp.ImageURL, &tutorID, &resp.CompletionPercent, &resp.LastAccessedLessonID); err != nil {
+		if err := rows.Scan(&resp.ID, &resp.Slug, &resp.Title, &resp.ImageURL, &resp.CompletionPercent, &resp.LastAccessedLessonID); err != nil {
 			return nil, err
 		}
-		if tutorID.Valid {
-			u, _, _ := m.GetTutorUserRepository(tutorID.String)
-			if u != nil {
-				resp.Instructor = models.InstructorInfo{ID: u.ID, Name: u.Name, Image: u.Image}
-			}
-		}
 		list = append(list, resp)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	if list == nil {
 		list = []EnrolledCourseResponse{}
 	}
-	return list, rows.Err()
-}
-
-func (m *CoursesModule) FetchCourseTreeJSON(courseID, userID string) ([]byte, error) {
-	var jsonData []byte
-	query := `
-        SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
-        FROM (
-            SELECT 
-                ch.id, 
-                ch.chapter_no, 
-                ch.title, 
-                ch.total_lectures, 
-                ch.total_duration_seconds,
-                json_build_object(
-                    'lessons_completed', COALESCE(cp.lessons_completed, 0),
-                    'completed', COALESCE(cp.completed, false)
-                ) AS progress,
-                (
-                    SELECT COALESCE(json_agg(lessons_tree ORDER BY lessons_tree.lesson_no), '[]'::json)
-                    FROM (
-                        SELECT 
-                            l.id, 
-                            l.lesson_no, 
-                            l.title, 
-                            l.lesson_type, 
-                            l.duration_seconds,
-                            COALESCE(lp.completed, false) AS completed
-                        FROM lessons l
-                        LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = $2
-                        WHERE l.chapter_id = ch.id
-                    ) lessons_tree
-                ) AS lessons
-            FROM chapters ch
-            LEFT JOIN chapter_progress cp ON cp.chapter_id = ch.id AND cp.user_id = $2
-            WHERE ch.course_id = $1
-        ) chapters_tree`
-	err := m.DB.QueryRow(query, courseID, userID).Scan(&jsonData)
-	return jsonData, err
-}
-
-func (m *CoursesModule) FetchCourseLandingTreeJSON(courseID string) ([]byte, error) {
-	var jsonData []byte
-	query := `
-        SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
-        FROM (
-            SELECT 
-                ch.id, 
-                ch.chapter_no, 
-                ch.title, 
-                ch.total_lectures, 
-                ch.total_duration_seconds,
-                (
-                    SELECT COALESCE(json_agg(lessons_tree ORDER BY lessons_tree.lesson_no), '[]'::json)
-                    FROM (
-                        SELECT 
-                            l.id, 
-                            l.lesson_no, 
-                            l.title, 
-                            l.lesson_type, 
-                            l.duration_seconds,
-                            l.short_description,
-                            l.preview_video_url
-                        FROM lessons l
-                        WHERE l.chapter_id = ch.id
-                    ) lessons_tree
-                ) AS lessons
-            FROM chapters ch
-            WHERE ch.course_id = $1
-        ) chapters_tree`
-	err := m.DB.QueryRow(query, courseID).Scan(&jsonData)
-	return jsonData, err
+	return list, nil
 }

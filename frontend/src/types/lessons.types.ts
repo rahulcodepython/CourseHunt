@@ -1,5 +1,42 @@
 import { z } from 'zod';
-import { QuizMetadataZod } from "./quiz.types";
+
+// ── DB Row Structs ────────────────────────────────────────────────────────────
+
+export const LessonZod = z.object({
+    id: z.string(),
+    chapter_id: z.string(),
+    lesson_no: z.number(),
+    title: z.string(),
+    lesson_type: z.string(),
+    // Note: ShortDescription and PreviewVideoURL are omitted because of `json:"-"`
+    duration_seconds: z.number(),
+    created_at: z.string(),
+    updated_at: z.string(),
+});
+export type Lesson = z.infer<typeof LessonZod>;
+
+export const LessonVideoContentZod = z.object({
+    id: z.string(),
+    video_url: z.string(),
+    written_content: z.string().optional(),
+});
+export type LessonVideoContent = z.infer<typeof LessonVideoContentZod>;
+
+export const LessonDocumentContentZod = z.object({
+    id: z.string(),
+    content: z.string(),
+});
+export type LessonDocumentContent = z.infer<typeof LessonDocumentContentZod>;
+
+export const LessonResourceZod = z.object({
+    id: z.string(),
+    title: z.string(),
+    file_url: z.string(),
+    file_type: z.string().optional(),
+});
+export type LessonResource = z.infer<typeof LessonResourceZod>;
+
+// ── Lessons ───────────────────────────────────────────────────────────────────
 
 export const CreateLessonRequestZod = z.object({
     title: z.string(),
@@ -38,45 +75,14 @@ export const AddResourceRequestZod = z.object({
 });
 export type AddResourceRequest = z.infer<typeof AddResourceRequestZod>;
 
-export const LessonContentInfoZod = z.object({
-    id: z.string(),
-    title: z.string(),
-    lesson_type: z.string(),
-    lesson_no: z.number(),
-    chapter_id: z.string(),
-});
-export type LessonContentInfo = z.infer<typeof LessonContentInfoZod>;
+export const LessonContentResponseZod = <T extends z.ZodTypeAny>(contentSchema: T) =>
+    z.object({
+        content: contentSchema.nullable().optional(),
+    });
 
-export const LessonBodyContentZod = z.object({
-    video_url: z.string().optional(),
-    written_content: z.string().optional(),
-    content: z.string().optional(),
-    quiz_metadata: QuizMetadataZod.optional(),
-});
-export type LessonBodyContent = z.infer<typeof LessonBodyContentZod>;
-
-export const LessonUserNoteInfoZod = z.object({
-    content: z.string().optional(),
-});
-export type LessonUserNoteInfo = z.infer<typeof LessonUserNoteInfoZod>;
-
-export const LessonResourceZod = z.object({
-    id: z.string(),
-    lesson_id: z.string(),
-    title: z.string(),
-    file_url: z.string(),
-    file_type: z.string().optional(),
-});
-export type LessonResource = z.infer<typeof LessonResourceZod>;
-
-export const LessonContentResponseZod = z.object({
-    lesson: LessonContentInfoZod,
-    content: LessonBodyContentZod,
-    resources: z.array(LessonResourceZod),
-    user_note: LessonUserNoteInfoZod,
-    completed: z.boolean(),
-});
-export type LessonContentResponse = z.infer<typeof LessonContentResponseZod>;
+export type LessonContentResponse<T> = {
+    content?: T | null;
+};
 
 export const SignedURLResponseZod = z.object({
     url: z.string(),
@@ -88,32 +94,3 @@ export const LessonCompleteResponseZod = z.object({
     completed: z.boolean(),
 });
 export type LessonCompleteResponse = z.infer<typeof LessonCompleteResponseZod>;
-
-export const LessonZod = z.object({
-    id: z.string(),
-    chapter_id: z.string(),
-    lesson_no: z.number(),
-    title: z.string(),
-    lesson_type: z.string(),
-    duration_seconds: z.number(),
-    created_at: z.string(),
-    updated_at: z.string(),
-});
-export type Lesson = z.infer<typeof LessonZod>;
-
-export const LessonVideoContentZod = z.object({
-    id: z.string(),
-    lesson_id: z.string(),
-    video_url: z.string(),
-    written_content: z.string().optional(),
-});
-export type LessonVideoContent = z.infer<typeof LessonVideoContentZod>;
-
-export const LessonDocumentContentZod = z.object({
-    id: z.string(),
-    lesson_id: z.string(),
-    content: z.string(),
-});
-export type LessonDocumentContent = z.infer<typeof LessonDocumentContentZod>;
-export const LessonDeleteResponseZod = z.any(); export type LessonDeleteResponse = any;
-export const ResourceDeleteResponseZod = z.any(); export type ResourceDeleteResponse = any;

@@ -2,8 +2,11 @@ package lessons
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
+
+	"coursehunt-backend/internals/modules/quiz"
 )
 
 func (m *LessonsModule) ListRepository(chapterID string) ([]Lesson, error) {
@@ -28,16 +31,81 @@ func (m *LessonsModule) ListRepository(chapterID string) ([]Lesson, error) {
 	return lessons, rows.Err()
 }
 
-func (m *LessonsModule) ReadRepository(id, userID string) (*Lesson, bool, error) {
-	var l Lesson
-	var completed sql.NullBool
-	err := m.DB.QueryRow(`
-		SELECT l.id, l.chapter_id, l.lesson_no, l.title, l.lesson_type, l.short_description, l.preview_video_url, l.duration_seconds, l.created_at, l.updated_at, lp.completed
+func (m *LessonsModule) ReadContentAggregatedRepository(lessonID, userID string) (interface{}, error) {
+	var lessonType string
+	var videoContentID, videoURL, writtenContent, documentContentID, documentContent sql.NullString
+	var quizMetadataJSON []byte
+
+	query := `
+		SELECT 
+			l.lesson_type,
+			vc.id AS video_content_id, vc.video_url, vc.written_content,
+			dc.id AS document_content_id, dc.content AS document_content,
+			CASE WHEN qm.id IS NOT NULL THEN json_build_object(
+				'id', qm.id,
+				'lesson_id', qm.lesson_id,
+				'title', qm.title,
+				'time_limit_seconds', qm.time_limit_seconds,
+				'total_questions', qm.total_questions,
+				'pass_score_percent', qm.pass_score_percent
+			) ELSE NULL END AS quiz_metadata
 		FROM lessons l
-		LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = $2
-		WHERE l.id = $1`, id, userID).
-		Scan(&l.ID, &l.ChapterID, &l.LessonNo, &l.Title, &l.LessonType, &l.ShortDescription, &l.PreviewVideoURL, &l.DurationSeconds, &l.CreatedAt, &l.UpdatedAt, &completed)
-	return &l, completed.Bool, err
+		LEFT JOIN lesson_video_content vc ON vc.lesson_id = l.id AND l.lesson_type = 'video'
+		LEFT JOIN lesson_document_content dc ON dc.lesson_id = l.id AND l.lesson_type = 'document'
+		LEFT JOIN quiz_metadata qm ON qm.lesson_id = l.id AND l.lesson_type = 'quiz'
+		WHERE l.id = $1
+	`
+	err := m.DB.QueryRow(query, lessonID).Scan(
+		&lessonType,
+		&videoContentID, &videoURL, &writtenContent,
+		&documentContentID, &documentContent,
+		&quizMetadataJSON,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	switch lessonType {
+	case "video":
+		var vc LessonVideoContent
+		if videoContentID.Valid {
+			vc.ID = videoContentID.String
+		}
+		if videoURL.Valid {
+			vc.VideoURL = videoURL.String
+		}
+		if writtenContent.Valid {
+			vc.WrittenContent = &writtenContent.String
+		}
+		return &LessonContentResponse[LessonVideoContent]{
+			Content: &vc,
+		}, nil
+	case "document":
+		var dc LessonDocumentContent
+		if documentContentID.Valid {
+			dc.ID = documentContentID.String
+		}
+		if documentContent.Valid {
+			dc.Content = documentContent.String
+		}
+		return &LessonContentResponse[LessonDocumentContent]{
+			Content: &dc,
+		}, nil
+	case "quiz":
+		if quizMetadataJSON != nil {
+			var qm quiz.QuizMetadata
+			if err := json.Unmarshal(quizMetadataJSON, &qm); err == nil {
+				return &LessonContentResponse[quiz.QuizMetadata]{
+					Content: &qm,
+				}, nil
+			}
+		}
+		return &LessonContentResponse[quiz.QuizMetadata]{
+			Content: nil,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown lesson type: %s", lessonType)
+	}
 }
 
 func (m *LessonsModule) CreateRepository(chapterID string, req CreateLessonRequest) (*Lesson, error) {
@@ -108,16 +176,9 @@ func (m *LessonsModule) UpsertVideoContentRepository(lessonID string, req Upsert
 		INSERT INTO lesson_video_content (lesson_id, video_url, written_content)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (lesson_id) DO UPDATE SET video_url = $2, written_content = $3
-		RETURNING id, lesson_id, video_url, written_content`,
+		RETURNING id, video_url, written_content`,
 		lessonID, req.VideoURL, req.WrittenContent,
-	).Scan(&vc.ID, &vc.LessonID, &vc.VideoURL, &vc.WrittenContent)
-	return &vc, err
-}
-
-func (m *LessonsModule) ReadVideoContentRepository(lessonID string) (*LessonVideoContent, error) {
-	var vc LessonVideoContent
-	err := m.DB.QueryRow(`SELECT id, lesson_id, video_url, written_content FROM lesson_video_content WHERE lesson_id = $1`, lessonID).
-		Scan(&vc.ID, &vc.LessonID, &vc.VideoURL, &vc.WrittenContent)
+	).Scan(&vc.ID, &vc.VideoURL, &vc.WrittenContent)
 	return &vc, err
 }
 
@@ -129,16 +190,9 @@ func (m *LessonsModule) UpsertDocumentContentRepository(lessonID, content string
 		INSERT INTO lesson_document_content (lesson_id, content)
 		VALUES ($1, $2)
 		ON CONFLICT (lesson_id) DO UPDATE SET content = $2
-		RETURNING id, lesson_id, content`,
+		RETURNING id, content`,
 		lessonID, content,
-	).Scan(&dc.ID, &dc.LessonID, &dc.Content)
-	return &dc, err
-}
-
-func (m *LessonsModule) ReadDocumentContentRepository(lessonID string) (*LessonDocumentContent, error) {
-	var dc LessonDocumentContent
-	err := m.DB.QueryRow(`SELECT id, lesson_id, content FROM lesson_document_content WHERE lesson_id = $1`, lessonID).
-		Scan(&dc.ID, &dc.LessonID, &dc.Content)
+	).Scan(&dc.ID, &dc.Content)
 	return &dc, err
 }
 
@@ -149,14 +203,14 @@ func (m *LessonsModule) CreateResourceRepository(lessonID string, req AddResourc
 	err := m.DB.QueryRow(`
 		INSERT INTO lesson_resources (lesson_id, title, file_url, file_type)
 		VALUES ($1, $2, $3, $4)
-		RETURNING id, lesson_id, title, file_url, file_type`,
+		RETURNING id, title, file_url, file_type`,
 		lessonID, req.Title, req.FileURL, req.FileType,
-	).Scan(&res.ID, &res.LessonID, &res.Title, &res.FileURL, &res.FileType)
+	).Scan(&res.ID, &res.Title, &res.FileURL, &res.FileType)
 	return &res, err
 }
 
 func (m *LessonsModule) ListResourcesRepository(lessonID string) ([]LessonResource, error) {
-	rows, err := m.DB.Query(`SELECT id, lesson_id, title, file_url, file_type FROM lesson_resources WHERE lesson_id = $1 ORDER BY id`, lessonID)
+	rows, err := m.DB.Query(`SELECT id, title, file_url, file_type FROM lesson_resources WHERE lesson_id = $1 ORDER BY id`, lessonID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +218,7 @@ func (m *LessonsModule) ListResourcesRepository(lessonID string) ([]LessonResour
 	var resources []LessonResource
 	for rows.Next() {
 		var res LessonResource
-		rows.Scan(&res.ID, &res.LessonID, &res.Title, &res.FileURL, &res.FileType)
+		rows.Scan(&res.ID, &res.Title, &res.FileURL, &res.FileType)
 		resources = append(resources, res)
 	}
 	if resources == nil {
@@ -177,13 +231,6 @@ func (m *LessonsModule) DeleteResourceRepository(id string) (string, error) {
 	var deletedID string
 	err := m.DB.QueryRow(`DELETE FROM lesson_resources WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
 	return deletedID, err
-}
-
-// GetChapterIDByLesson returns chapter_id for a lesson.
-func (m *LessonsModule) GetChapterIDByLesson(lessonID string) (string, error) {
-	var chID string
-	err := m.DB.QueryRow(`SELECT chapter_id FROM lessons WHERE id = $1`, lessonID).Scan(&chID)
-	return chID, err
 }
 
 func (m *LessonsModule) UpdateLastAccessed(userID, courseID, lessonID string) error {

@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { CouponInfoZod, CourseInfoZod, UserInfoZod } from './common.types';
+import { UserInfoZod, CourseInfoZod, CouponInfoZod } from '@/types/common.types';
+
+// ── DB Row Structs ────────────────────────────────────────────────────────────
 
 export const TransactionZod = z.object({
     id: z.string(),
@@ -26,6 +28,8 @@ export const WebhookEventZod = z.object({
 });
 export type WebhookEvent = z.infer<typeof WebhookEventZod>;
 
+// ── Requests ──────────────────────────────────────────────────────────────────
+
 export const InitiateTransactionRequestZod = z.object({
     course_id: z.string(),
     coupon_code: z.string().optional(),
@@ -37,6 +41,8 @@ export const ManualEnrollRequestZod = z.object({
 });
 export type ManualEnrollRequest = z.infer<typeof ManualEnrollRequestZod>;
 
+// ── Responses ─────────────────────────────────────────────────────────────────
+
 export const InitiateTransactionResponseZod = z.object({
     transaction_id: z.string(),
     razorpay_order_id: z.string(),
@@ -46,16 +52,14 @@ export const InitiateTransactionResponseZod = z.object({
 });
 export type InitiateTransactionResponse = z.infer<typeof InitiateTransactionResponseZod>;
 
+// Note: WebhookPayload has no JSON tags in the Go struct. 
+// Assuming standard snake_case mapping for the Zod schema to keep consistency.
 export const WebhookPayloadZod = z.object({
-    EventID: z.string(),
-    Event: z.string(),
-    OrderID: z.string(),
-    PaymentID: z.string(),
-    Status: z.string(),
-    ErrorDescription: z.string(),
+    event_id: z.string(),
+    event: z.string(),
+    order_id: z.string(),
+    payment_id: z.string(),
+    status: z.string(),
+    error_description: z.string(),
 });
 export type WebhookPayload = z.infer<typeof WebhookPayloadZod>;
-export const TransactionZod = z.any(); export type Transaction = any;
-export const InitiateTransactionRequestZod = z.any(); export type InitiateTransactionRequest = any;
-export const InitiateTransactionResponseZod = z.any(); export type InitiateTransactionResponse = any;
-export const WebhookRequestZod = z.any(); export type WebhookRequest = any;

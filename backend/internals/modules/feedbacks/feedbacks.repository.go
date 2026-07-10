@@ -13,77 +13,61 @@ func (m *FeedbacksModule) CreateRepository(userID, courseID string, req CreateFe
 }
 
 func (m *FeedbacksModule) ListRepository(courseID string, page, limit int) ([]Feedback, int, error) {
-	where := "1=1"
-	args := []interface{}{}
-	idx := 1
-	if courseID != "" {
-		where = "f.course_id = $1"
-		args = append(args, courseID)
-		idx++
-	}
-	var total int
-	m.DB.QueryRow("SELECT COUNT(*) FROM feedbacks f WHERE "+where, args...).Scan(&total)
 	offset := (page - 1) * limit
-	args = append(args, limit, offset)
-
-	// Helper for idx format
-	itoa := func(i int) string {
-		importFmt := "fmt"
-		_ = importFmt
-		// well actually we can just hardcode or do it with fmt
-		return ""
-	}
-	_ = itoa
-
-	// Let's rewrite query safely instead of using itoa
-	// Since args can have 0 or 1 param before limit, offset
-	// We have:
-	// query: SELECT ... LIMIT $X OFFSET $Y
-	// if courseID is present, X=2, Y=3. if not, X=1, Y=2.
-
-	limitIdx := idx
-	offsetIdx := idx + 1
-
-	// use fmt.Sprintf
-	importFmt := "fmt"
-	_ = importFmt
+	total := 0
 
 	var query string
+	var args []interface{}
+
+	// Using COUNT(*) OVER() aggregates the total dataset match count
+	// in the exact same packet loop as the slice fetch.
 	if courseID != "" {
 		query = `
 			SELECT f.id, f.course_id, f.rating, f.content, f.is_pinned, f.created_at,
-			       u.id, u.name, u.image
+			       u.id, u.name, u.image,
+			       COUNT(*) OVER() AS total_count
 			FROM feedbacks f
 			JOIN "user" u ON u.id = f.user_id
-			WHERE ` + where + `
-			ORDER BY f.is_pinned DESC, f.created_at DESC LIMIT $2 OFFSET $3`
+			WHERE f.course_id = $1
+			ORDER BY f.is_pinned DESC, f.created_at DESC 
+			LIMIT $2 OFFSET $3`
+		args = []interface{}{courseID, limit, offset}
 	} else {
 		query = `
 			SELECT f.id, f.course_id, f.rating, f.content, f.is_pinned, f.created_at,
-			       u.id, u.name, u.image
+			       u.id, u.name, u.image,
+			       COUNT(*) OVER() AS total_count
 			FROM feedbacks f
 			JOIN "user" u ON u.id = f.user_id
-			WHERE ` + where + `
-			ORDER BY f.is_pinned DESC, f.created_at DESC LIMIT $1 OFFSET $2`
+			ORDER BY f.is_pinned DESC, f.created_at DESC 
+			LIMIT $1 OFFSET $2`
+		args = []interface{}{limit, offset}
 	}
-	_ = limitIdx
-	_ = offsetIdx
 
 	rows, err := m.DB.Query(query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
+
 	var list []Feedback
 	for rows.Next() {
 		var fb Feedback
-		rows.Scan(&fb.ID, &fb.Course.ID, &fb.Rating, &fb.Content, &fb.IsPinned, &fb.CreatedAt,
-			&fb.User.ID, &fb.User.Name, &fb.User.Image)
+		err := rows.Scan(
+			&fb.ID, &fb.Course.ID, &fb.Rating, &fb.Content, &fb.IsPinned, &fb.CreatedAt,
+			&fb.User.ID, &fb.User.Name, &fb.User.Image,
+			&total, // Scans the window total into memory seamlessly
+		)
+		if err != nil {
+			return nil, 0, err
+		}
 		list = append(list, fb)
 	}
+
 	if list == nil {
 		list = []Feedback{}
 	}
+
 	return list, total, rows.Err()
 }
 

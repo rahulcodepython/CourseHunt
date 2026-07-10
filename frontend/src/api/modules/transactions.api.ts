@@ -10,7 +10,7 @@ import { PaginatedResponseZod } from "@/types/common.types";
 import { TransactionZod } from "@/types/transactions.types";
 import { InitiateTransactionRequestZod } from "@/types/transactions.types";
 import { InitiateTransactionResponseZod } from "@/types/transactions.types";
-import { WebhookRequestZod } from "@/types/transactions.types";
+import { WebhookPayloadZod } from "@/types/transactions.types";
 
 /**
  * Fetches all transactions (for admin).
@@ -48,7 +48,7 @@ export function useInitiateTransactionMutation() {
  */
 export function useTransactionWebhookMutation() {
 	return useApiMutation(
-		(data: z.infer<typeof WebhookRequestZod>) =>
+		(data: z.infer<typeof WebhookPayloadZod>) =>
 			apiRequest({ url: "/api/v1/transactions/webhook", method: "POST", data }, z.any()),
 	);
 }

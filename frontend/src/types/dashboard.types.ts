@@ -88,4 +88,3 @@ export const AdminDashboardZod = z.object({
     user_growth: z.array(UserGrowthZod),
 });
 export type AdminDashboard = z.infer<typeof AdminDashboardZod>;
-export const UserDashboardZod = z.any(); export type UserDashboard = any;

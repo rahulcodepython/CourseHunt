@@ -14,7 +14,6 @@ func (m *QuizModule) Routes(protected fiber.Router) {
 	quiz.Delete("/questions/:id", middlewares.PermissionGuard("courses:update"), m.DeleteQuestionController)
 
 	// User actions
-	quiz.Post("/lesson/:lessonID/start", m.CreateAttemptController)
-	quiz.Post("/lesson/:lessonID/next", m.ReadNextQuestionController)
-	quiz.Post("/lesson/:lessonID/submit", m.CreateSubmitController)
+	quiz.Post("/lesson/:lessonID/quiz/:quizID/question", m.GetQuestionController)
+	quiz.Post("/lesson/:lessonID/quiz/:quizID/submit", m.CreateSubmitController)
 }

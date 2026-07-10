@@ -16,20 +16,8 @@ type Enrollment struct {
 	EnrolledAt           time.Time         `json:"enrolled_at"`
 }
 
-type LessonProgress struct {
-	ID          string     `json:"id"`
-	UserID      string     `json:"user_id"`
-	LessonID    string     `json:"lesson_id"`
-	CourseID    string     `json:"course_id"`
-	Completed   bool       `json:"completed"`
-	CompletedAt *time.Time `json:"completed_at"`
-}
+// ── Study Responses ──
 
-type ChapterProgress struct {
-	ID               string `json:"id"`
-	UserID           string `json:"user_id"`
-	ChapterID        string `json:"chapter_id"`
-	CourseID         string `json:"course_id"`
-	LessonsCompleted int    `json:"lessons_completed"`
-	Completed        bool   `json:"completed"`
+type ManualEnrollRequest struct {
+	UserID string `json:"user_id" validate:"required"`
 }

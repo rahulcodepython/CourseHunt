@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+// ── DB Row Structs ────────────────────────────────────────────────────────────
+
 export const UserProfileZod = z.object({
     id: z.string(),
     user_id: z.string(),
@@ -21,6 +23,8 @@ export const TutorProfileZod = z.object({
     updated_at: z.string(),
 });
 export type TutorProfile = z.infer<typeof TutorProfileZod>;
+
+// ── Auth / Profile ────────────────────────────────────────────────────────────
 
 export const UpdateProfileRequestZod = z.object({
     headline: z.string().optional(),

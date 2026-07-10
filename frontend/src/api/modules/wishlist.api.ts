@@ -8,8 +8,7 @@ import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
 import { WishlistZod } from "@/types/wishlist.types";
 
-// TODO: added WishlistRemoveResponseZod — verify shape against api-docs.md
-import { WishlistRemoveResponseZod } from "@/types/wishlist.types";
+
 
 /**
  * Fetches the user's wishlist.
@@ -45,7 +44,7 @@ export function useAddCourseToWishlistMutation() {
 export function useRemoveCourseFromWishlistMutation() {
 	return useApiMutation(
 		(courseId: string) =>
-			apiRequest({ url: `/api/v1/wishlist/course/${courseId}`, method: "DELETE" }, WishlistRemoveResponseZod),
+			apiRequest({ url: `/api/v1/wishlist/course/${courseId}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.wishlist(),
