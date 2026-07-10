@@ -1,5 +1,9 @@
 package transactions
 
+import (
+	"fmt"
+)
+
 func (m *TransactionsModule) CreateRepository(userID, courseID string, couponID *string, razorpayOrderID string, amount float64) (*Transaction, error) {
 	var t Transaction
 	var dbCouponID *string
@@ -40,39 +44,42 @@ func (m *TransactionsModule) MarkFailedRepository(id string, desc *string) error
 	return err
 }
 
-func (m *TransactionsModule) ListRepository(page, limit int, userID string) ([]Transaction, int, error) {
+func (m *TransactionsModule) ListRepository(page, limit int, userID string, tutorID string) ([]Transaction, int, error) {
 	offset := (page - 1) * limit
 	total := 0
 
-	var query string
 	var args []interface{}
+	var whereClauses []string
 
-	// OPTIMIZATION: Use COUNT(*) OVER() window function to pull full count
-	// and record metrics in a single round-trip query execution.
 	if userID != "" {
-		query = `
-			SELECT t.id, t.user_id, u.name, u.image, t.course_id, c.title, c.thumbnail, t.coupon_id, cp.code, cp.discount_percent, t.razorpay_order_id, t.razorpay_payment_id, t.amount, t.currency, t.status, t.error_description, t.confirmed_at, t.created_at,
-			       COUNT(*) OVER() AS total_count
-			FROM transactions t
-			LEFT JOIN "user" u ON u.id = t.user_id
-			LEFT JOIN courses c ON c.id = t.course_id
-			LEFT JOIN coupons cp ON cp.id = t.coupon_id
-			WHERE t.user_id = $1 
-			ORDER BY t.created_at DESC 
-			LIMIT $2 OFFSET $3`
-		args = []interface{}{userID, limit, offset}
-	} else {
-		query = `
-			SELECT t.id, t.user_id, u.name, u.image, t.course_id, c.title, c.thumbnail, t.coupon_id, cp.code, cp.discount_percent, t.razorpay_order_id, t.razorpay_payment_id, t.amount, t.currency, t.status, t.error_description, t.confirmed_at, t.created_at,
-			       COUNT(*) OVER() AS total_count
-			FROM transactions t
-			LEFT JOIN "user" u ON u.id = t.user_id
-			LEFT JOIN courses c ON c.id = t.course_id
-			LEFT JOIN coupons cp ON cp.id = t.coupon_id
-			ORDER BY t.created_at DESC 
-			LIMIT $1 OFFSET $2`
-		args = []interface{}{limit, offset}
+		args = append(args, userID)
+		whereClauses = append(whereClauses, "t.user_id = $"+fmt.Sprint(len(args)))
 	}
+	if tutorID != "" {
+		args = append(args, tutorID)
+		whereClauses = append(whereClauses, "c.tutor_id = $"+fmt.Sprint(len(args)))
+	}
+
+	whereClause := ""
+	if len(whereClauses) > 0 {
+		whereClause = "WHERE " + whereClauses[0]
+		for i := 1; i < len(whereClauses); i++ {
+			whereClause += " AND " + whereClauses[i]
+		}
+	}
+
+	query := `
+		SELECT t.id, t.user_id, u.name, u.image, t.course_id, c.title, c.thumbnail, t.coupon_id, cp.code, cp.discount_percent, t.razorpay_order_id, t.razorpay_payment_id, t.amount, t.currency, t.status, t.error_description, t.confirmed_at, t.created_at,
+		       COUNT(*) OVER() AS total_count
+		FROM transactions t
+		LEFT JOIN "user" u ON u.id = t.user_id
+		LEFT JOIN courses c ON c.id = t.course_id
+		LEFT JOIN coupons cp ON cp.id = t.coupon_id
+		` + whereClause + `
+		ORDER BY t.created_at DESC 
+		LIMIT $` + fmt.Sprint(len(args)+1) + ` OFFSET $` + fmt.Sprint(len(args)+2)
+
+	args = append(args, limit, offset)
 
 	rows, err := m.DB.Query(query, args...)
 	if err != nil {

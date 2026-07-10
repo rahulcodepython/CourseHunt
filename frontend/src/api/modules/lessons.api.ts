@@ -40,9 +40,9 @@ export function useCreateLessonMutation(chapterId: string) {
 /**
  * Deletes a lesson resource.
  */
-export function useDeleteResourceMutation() {
+export function useDeleteResourceMutation(courseId: string) {
 	return useApiMutation(
-		(resourceId: string) => apiRequest({ url: `/api/v1/lessons/resources/${resourceId}`, method: "DELETE" }, z.any()),
+		(resourceId: string) => apiRequest({ url: `/api/v1/lessons/course/${courseId}/resources/${resourceId}`, method: "DELETE" }, z.any()),
 		{
 			successMessage: "Resource deleted successfully",
 		},
@@ -53,9 +53,9 @@ export function useDeleteResourceMutation() {
  * Deletes a lesson.
  * Cache strategy: removes the matching lesson from the chapter's lesson list cache.
  */
-export function useDeleteLessonMutation(chapterId: string) {
+export function useDeleteLessonMutation(chapterId: string, courseId: string) {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/lessons/${id}`, method: "DELETE" }, z.any()),
+		(id: string) => apiRequest({ url: `/api/v1/lessons/course/${courseId}/${id}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.lessons(chapterId),
@@ -70,10 +70,10 @@ export function useDeleteLessonMutation(chapterId: string) {
  * Updates a lesson.
  * Cache strategy: updates the matching lesson in the chapter's lesson list cache.
  */
-export function useUpdateLessonMutation(chapterId: string) {
+export function useUpdateLessonMutation(chapterId: string, courseId: string) {
 	return useApiMutation(
 		({ id, data }: { id: string; data: z.infer<typeof UpdateLessonRequestZod> }) =>
-			apiRequest({ url: `/api/v1/lessons/${id}`, method: "PATCH", data }, LessonZod),
+			apiRequest({ url: `/api/v1/lessons/course/${courseId}/${id}`, method: "PATCH", data }, LessonZod),
 		{
 			updateCache: {
 				queryKey: queryKeys.lessons(chapterId),
@@ -109,10 +109,10 @@ export function useLessonContentQuery(id: string) {
  * Adds a document to a lesson.
  * Cache strategy: invalidates lesson content query.
  */
-export function useAddDocumentMutation(id: string) {
+export function useAddDocumentMutation(id: string, courseId: string) {
 	return useApiMutation(
 		(data: z.infer<typeof UpsertDocumentContentRequestZod>) =>
-			apiRequest({ url: `/api/v1/lessons/${id}/document`, method: "POST", data }, z.any()),
+			apiRequest({ url: `/api/v1/lessons/course/${courseId}/${id}/document`, method: "POST", data }, z.any()),
 		{
 			invalidateKeys: [queryKeys.lessonContent(id)],
 			successMessage: "Document added successfully",
@@ -124,10 +124,10 @@ export function useAddDocumentMutation(id: string) {
  * Adds a resource to a lesson.
  * Cache strategy: invalidates lesson content query.
  */
-export function useAddResourceMutation(id: string) {
+export function useAddResourceMutation(id: string, courseId: string) {
 	return useApiMutation(
 		(data: z.infer<typeof AddResourceRequestZod>) =>
-			apiRequest({ url: `/api/v1/lessons/${id}/resources`, method: "POST", data }, z.any()),
+			apiRequest({ url: `/api/v1/lessons/course/${courseId}/${id}/resources`, method: "POST", data }, z.any()),
 		{
 			invalidateKeys: [queryKeys.lessonContent(id)],
 			successMessage: "Resource added successfully",
@@ -148,10 +148,10 @@ export function useSignedUrlQuery(id: string) {
  * Adds a video to a lesson.
  * Cache strategy: invalidates lesson content query.
  */
-export function useAddVideoMutation(id: string) {
+export function useAddVideoMutation(id: string, courseId: string) {
 	return useApiMutation(
 		(data: z.infer<typeof UpsertVideoContentRequestZod>) =>
-			apiRequest({ url: `/api/v1/lessons/${id}/video`, method: "POST", data }, z.any()),
+			apiRequest({ url: `/api/v1/lessons/course/${courseId}/${id}/video`, method: "POST", data }, z.any()),
 		{
 			invalidateKeys: [queryKeys.lessonContent(id)],
 			successMessage: "Video added successfully",

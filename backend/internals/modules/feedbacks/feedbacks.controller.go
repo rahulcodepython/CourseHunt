@@ -23,7 +23,11 @@ func (m *FeedbacksModule) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	f, err := m.CreateService(utils.GetUserID(c), c.Params("courseID"), req)
+	userID := utils.GetUserID(c)
+	if !m.Enrollments.IsEnrolledRepository(userID, c.Params("courseID")) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: not enrolled in course", nil, nil)
+	}
+	f, err := m.CreateService(userID, c.Params("courseID"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to post feedback", nil, err.Error())
 	}
@@ -63,6 +67,11 @@ func (m *FeedbacksModule) UpdateController(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return utils.JSON(c, http.StatusBadRequest, false, "invalid body", nil, err.Error())
 	}
+	userID := utils.GetUserID(c)
+	courseID := c.Params("courseID")
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	f, err := m.UpdateService(c.Params("id"), req.IsPinned)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to pin feedback", nil, err.Error())
@@ -79,6 +88,11 @@ func (m *FeedbacksModule) UpdateController(c *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
 // @Router /api/v1/feedbacks/{id} [delete]
 func (m *FeedbacksModule) DeleteController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	courseID := c.Params("courseID")
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	id, err := m.DeleteService(c.Params("id"))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete feedback", nil, err.Error())

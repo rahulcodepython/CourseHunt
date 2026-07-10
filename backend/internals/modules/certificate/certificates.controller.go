@@ -17,7 +17,11 @@ import (
 // @Success 200 {object} utils.SwaggerResponse[Certificate]
 // @Router /api/v1/certificates/claim/course/{courseID} [post]
 func (c *CertificateModule) ClaimController(ctx *fiber.Ctx) error {
-	cert, err := c.ClaimService(utils.GetUserID(ctx), ctx.Params("courseID"))
+	userID := utils.GetUserID(ctx)
+	if !c.Enrollments.IsEnrolledRepository(userID, ctx.Params("courseID")) {
+		return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in course", nil, nil)
+	}
+	cert, err := c.ClaimService(userID, ctx.Params("courseID"))
 	if err != nil {
 		if err.Error() == "course not completed" {
 			return utils.JSON(ctx, http.StatusForbidden, false, "course not completed", nil, nil)

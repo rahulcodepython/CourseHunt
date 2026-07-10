@@ -24,10 +24,10 @@ export function useDiscussionsQuery(lessonId: string) {
  * Creates a new discussion for a lesson.
  * Cache strategy: prepends the discussion to the lesson's discussions list.
  */
-export function useCreateDiscussionMutation(lessonId: string) {
+export function useCreateDiscussionMutation(lessonId: string, courseId: string) {
 	return useApiMutation(
 		(data: z.infer<typeof CreateDiscussionRequestZod>) =>
-			apiRequest({ url: `/api/v1/discussions/lesson/${lessonId}`, method: "POST", data }, DiscussionZod),
+			apiRequest({ url: `/api/v1/discussions/course/${courseId}/lesson/${lessonId}`, method: "POST", data }, DiscussionZod),
 		{
 			updateCache: {
 				queryKey: queryKeys.discussions(lessonId),
@@ -66,8 +66,8 @@ export function useDeleteDiscussionMutation() {
  */
 export function useUpdateDiscussionMutation() {
 	return useApiMutation(
-		({ id, data }: { id: string; data: z.infer<typeof UpdateDiscussionRequestZod> }) =>
-			apiRequest({ url: `/api/v1/discussions/${id}`, method: "PATCH", data }, DiscussionResponseZod),
+		({ id, courseId, data }: { id: string; courseId: string; data: z.infer<typeof UpdateDiscussionRequestZod> }) =>
+			apiRequest({ url: `/api/v1/discussions/course/${courseId}/${id}`, method: "PATCH", data }, DiscussionResponseZod),
 		{
 			successMessage: "Discussion updated successfully",
 		},

@@ -38,6 +38,10 @@ func (m *ChaptersModule) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
+	userID := utils.GetUserID(c)
+	if !m.Courses.IsCourseOwnerRepository(userID, c.Params("courseID")) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	ch, err := m.CreateService(c.Params("courseID"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to create chapter", nil, err.Error())
@@ -59,6 +63,10 @@ func (m *ChaptersModule) UpdateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
+	userID := utils.GetUserID(c)
+	if !m.Courses.IsCourseOwnerRepository(userID, c.Params("id")) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	ch, err := m.UpdateService(c.Params("id"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to update chapter", nil, err.Error())
@@ -75,6 +83,10 @@ func (m *ChaptersModule) UpdateController(c *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
 // @Router /api/v1/chapters/{id} [delete]
 func (m *ChaptersModule) DeleteController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	if !m.Courses.IsCourseOwnerRepository(userID, c.Params("id")) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	id, err := m.DeleteService(c.Params("id"))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete chapter", nil, err.Error())

@@ -8,7 +8,7 @@ import (
 
 func (m *ChaptersModule) Routes(protected fiber.Router) {
 	chapters := protected.Group("/chapters")
-	chapters.Get("/course/:courseID", m.ListController)
+	chapters.Get("/course/:courseID", middlewares.PermissionGuard("courses:update"), m.ListController)
 	chapters.Post("/course/:courseID", middlewares.PermissionGuard("courses:update"), m.CreateController)
 	chapters.Patch("/:id", middlewares.PermissionGuard("courses:update"), m.UpdateController)
 	chapters.Delete("/:id", middlewares.PermissionGuard("courses:update"), m.DeleteController)

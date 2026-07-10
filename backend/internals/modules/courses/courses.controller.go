@@ -90,6 +90,10 @@ func (m *CoursesModule) UpdateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
+	userID := utils.GetUserID(c)
+	if !m.IsCourseOwnerRepository(userID, c.Params("id")) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	course, err := m.UpdateService(c.Params("id"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to update course", nil, err.Error())
@@ -107,6 +111,10 @@ func (m *CoursesModule) UpdateController(c *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
 // @Router /api/v1/courses/{id} [delete]
 func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	if !m.IsCourseOwnerRepository(userID, c.Params("id")) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	id, err := m.DeleteService(c.Params("id"))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete course", nil, err.Error())
@@ -124,7 +132,11 @@ func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[courses.CourseStudyResponse]
 // @Router /api/v1/courses/{id}/study [get]
 func (m *CoursesModule) ReadStudyController(c *fiber.Ctx) error {
-	resp, err := m.ReadStudyMetadataService(c.Params("id"), utils.GetUserID(c))
+	userID := utils.GetUserID(c)
+	if !m.Enrollments.IsEnrolledRepository(userID, c.Params("id")) {
+		return utils.JSON(c, http.StatusForbidden, false, "not enrolled in this course", nil, nil)
+	}
+	resp, err := m.ReadStudyMetadataService(c.Params("id"), userID)
 	if err != nil {
 		if err.Error() == "not enrolled" {
 			return utils.JSON(c, http.StatusForbidden, false, "not enrolled in this course", nil, nil)

@@ -22,11 +22,12 @@ func (m *NotesModule) UpsertController(ctx *fiber.Ctx) error {
 	if ok, err := utils.Validate(ctx, &req); !ok {
 		return err
 	}
-	courseID := ctx.Query("course_id")
-	if courseID == "" {
-		return utils.JSON(ctx, http.StatusBadRequest, false, "course_id query param required", nil, nil)
+	courseID := ctx.Params("courseID")
+	userID := utils.GetUserID(ctx)
+	if !m.Enrollments.IsEnrolledRepository(userID, courseID) {
+		return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in course", nil, nil)
 	}
-	n, err := m.UpsertService(utils.GetUserID(ctx), ctx.Params("lessonID"), courseID, req.Content)
+	n, err := m.UpsertService(userID, ctx.Params("lessonID"), courseID, req.Content)
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to save note", nil, err.Error())
 	}

@@ -246,3 +246,9 @@ func (m *LessonsModule) MarkLessonComplete(userID, lessonID, courseID string) er
 		userID, lessonID, courseID)
 	return err
 }
+
+func (m *LessonsModule) GetCourseIDFromChapterID(chapterID string) (string, error) {
+	var courseID string
+	err := m.DB.QueryRow(`SELECT course_id FROM chapters WHERE id = $1`, chapterID).Scan(&courseID)
+	return courseID, err
+}

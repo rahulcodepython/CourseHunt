@@ -104,6 +104,6 @@ func (m *TransactionsModule) HandleWebhookService(rawBody []byte, signature stri
 	return nil
 }
 
-func (m *TransactionsModule) ListService(page, limit int, userID string) ([]Transaction, int, error) {
-	return m.ListRepository(page, limit, userID)
+func (m *TransactionsModule) ListService(page, limit int, userID string, tutorID string) ([]Transaction, int, error) {
+	return m.ListRepository(page, limit, userID, tutorID)
 }

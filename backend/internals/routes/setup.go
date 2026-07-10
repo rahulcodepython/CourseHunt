@@ -61,23 +61,24 @@ type Router struct {
 
 func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 	// Independent modules (no cross-deps)
+	enrollments := enrollments.NewEnrollmentsModule(db)
+	courses := courses.NewCoursesModule(db, enrollments)
+
 	cart := cart.NewCartModule(db)
 	wishlist := wishlist.NewWishlistModule(db)
 	categories := category.NewCategoryModule(db)
-	certificates := certificate.NewCertificateModule(db)
-	notes := notes.NewNotesModule(db)
-	discussions := discussions.NewDiscussionsModule(db)
+	certificates := certificate.NewCertificateModule(db, enrollments)
+	notes := notes.NewNotesModule(db, enrollments)
+	discussions := discussions.NewDiscussionsModule(db, enrollments, courses)
 	users := users.NewUsersModule(db)
 	dashboard := dashboard.NewDashboardModule(db)
 	profile := profile.NewProfileModule(db)
 	updates := updates.NewUpdatesModule(db)
-	feedbacks := feedbacks.NewFeedbacksModule(db)
+	feedbacks := feedbacks.NewFeedbacksModule(db, enrollments, courses)
 	coupons := coupons.NewCouponsModule(db)
-	quiz := quiz.NewQuizModule(db)
-	enrollments := enrollments.NewEnrollmentsModule(db)
-	chapters := chapters.NewChaptersModule(db)
-	lessons := lessons.NewLessonsModule(db)
-	courses := courses.NewCoursesModule(db)
+	quiz := quiz.NewQuizModule(db, enrollments, courses)
+	chapters := chapters.NewChaptersModule(db, courses)
+	lessons := lessons.NewLessonsModule(db, courses)
 
 	// Modules with cross-deps — order matters, clearly visible
 	rzp := razorpaypkg.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret)

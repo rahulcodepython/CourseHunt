@@ -61,11 +61,12 @@ func (m *DiscussionsModule) CreateController(ctx *fiber.Ctx) error {
 	if ok, err := utils.Validate(ctx, &req); !ok {
 		return err
 	}
-	courseID := ctx.Query("course_id")
-	if courseID == "" {
-		return utils.JSON(ctx, http.StatusBadRequest, false, "course_id query param required", nil, nil)
+	userID := utils.GetUserID(ctx)
+	courseID := ctx.Params("courseID")
+	if !m.Enrollments.IsEnrolledRepository(userID, courseID) && !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled or owner", nil, nil)
 	}
-	d, err := m.CreateService(utils.GetUserID(ctx), ctx.Params("lessonID"), courseID, req)
+	d, err := m.CreateService(userID, ctx.Params("lessonID"), courseID, req)
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to post discussion", nil, err.Error())
 	}
@@ -86,7 +87,12 @@ func (m *DiscussionsModule) UpdateController(ctx *fiber.Ctx) error {
 	if ok, err := utils.Validate(ctx, &req); !ok {
 		return err
 	}
-	d, err := m.UpdateService(ctx.Params("id"), utils.GetUserID(ctx), req.Content)
+	userID := utils.GetUserID(ctx)
+	courseID := ctx.Params("courseID")
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(ctx, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
+	d, err := m.UpdateService(ctx.Params("id"), userID, req.Content)
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to update discussion", nil, err.Error())
 	}

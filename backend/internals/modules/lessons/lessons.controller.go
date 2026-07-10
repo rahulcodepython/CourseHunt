@@ -39,6 +39,14 @@ func (m *LessonsModule) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
+	userID := utils.GetUserID(c)
+	courseID, err := m.GetCourseIDFromChapterID(c.Params("chapterID"))
+	if err != nil {
+		return utils.JSON(c, http.StatusNotFound, false, "chapter not found", nil, nil)
+	}
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	l, err := m.CreateService(c.Params("chapterID"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to create lesson", nil, err.Error())
@@ -60,6 +68,11 @@ func (m *LessonsModule) UpdateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
+	userID := utils.GetUserID(c)
+	courseID := c.Params("courseID")
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	l, err := m.UpdateService(c.Params("id"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to update lesson", nil, err.Error())
@@ -76,6 +89,11 @@ func (m *LessonsModule) UpdateController(c *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
 // @Router /api/v1/lessons/{id} [delete]
 func (m *LessonsModule) DeleteController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	courseID := c.Params("courseID")
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	id, err := m.DeleteService(c.Params("id"))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete lesson", nil, err.Error())
@@ -97,6 +115,11 @@ func (m *LessonsModule) UpsertVideoContentController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
+	userID := utils.GetUserID(c)
+	courseID := c.Params("courseID")
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	vc, err := m.UpsertVideoContentService(c.Params("id"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to update video content", nil, err.Error())
@@ -117,6 +140,11 @@ func (m *LessonsModule) UpsertDocumentContentController(c *fiber.Ctx) error {
 	var req UpsertDocumentContentRequest
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
+	}
+	userID := utils.GetUserID(c)
+	courseID := c.Params("courseID")
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
 	}
 	dc, err := m.UpsertDocumentContentService(c.Params("id"), req.Content)
 	if err != nil {
@@ -184,6 +212,11 @@ func (m *LessonsModule) CreateResourceController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
+	userID := utils.GetUserID(c)
+	courseID := c.Params("courseID")
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	res, err := m.CreateResourceService(c.Params("id"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to add resource", nil, err.Error())
@@ -200,6 +233,11 @@ func (m *LessonsModule) CreateResourceController(c *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
 // @Router /api/v1/lessons/resources/{resourceID} [delete]
 func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	courseID := c.Params("courseID")
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	id, err := m.DeleteResourceService(c.Params("resourceID"))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete resource", nil, err.Error())

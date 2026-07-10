@@ -424,3 +424,12 @@ func (m *CoursesModule) EnrolledCoursesRepository(userID string) ([]EnrolledCour
 	}
 	return list, nil
 }
+
+func (m *CoursesModule) IsCourseOwnerRepository(tutorID, courseID string) bool {
+	var exists bool
+	err := m.DB.QueryRow(`SELECT EXISTS(SELECT 1 FROM courses WHERE id = $1 AND tutor_id = $2)`, courseID, tutorID).Scan(&exists)
+	if err != nil {
+		return false
+	}
+	return exists
+}

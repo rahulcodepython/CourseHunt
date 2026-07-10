@@ -43,7 +43,7 @@ export function useCreateFeedbackMutation() {
  */
 export function usePinFeedbackMutation() {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/feedbacks/${id}/pin`, method: "PATCH" }, FeedbackZod),
+		({ id, courseId }: { id: string; courseId: string }) => apiRequest({ url: `/api/v1/feedbacks/course/${courseId}/${id}/pin`, method: "PATCH" }, FeedbackZod),
 		{
 			updateCache: {
 				queryKey: queryKeys.feedbacks(),
@@ -60,7 +60,7 @@ export function usePinFeedbackMutation() {
  */
 export function useDeleteFeedbackMutation() {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/feedbacks/${id}`, method: "DELETE" }, z.any()),
+		({ id, courseId }: { id: string; courseId: string }) => apiRequest({ url: `/api/v1/feedbacks/course/${courseId}/${id}`, method: "DELETE" }, z.any()),
 		{
 			updateCache: {
 				queryKey: queryKeys.feedbacks(),

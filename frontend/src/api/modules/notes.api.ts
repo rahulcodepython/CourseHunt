@@ -23,10 +23,10 @@ export function useNotesQuery(lessonId: string) {
  * Creates a new note for a lesson.
  * Cache strategy: appends to notes list.
  */
-export function useCreateNoteMutation(lessonId: string) {
+export function useCreateNoteMutation(lessonId: string, courseId: string) {
 	return useApiMutation(
 		(data: z.infer<typeof UpsertNoteRequestZod>) =>
-			apiRequest({ url: `/api/v1/notes/lesson/${lessonId}`, method: "POST", data }, NoteResponseZod),
+			apiRequest({ url: `/api/v1/notes/course/${courseId}/lesson/${lessonId}`, method: "POST", data }, NoteResponseZod),
 		{
 			updateCache: {
 				queryKey: queryKeys.notes(lessonId),

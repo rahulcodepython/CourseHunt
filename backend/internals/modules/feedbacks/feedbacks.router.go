@@ -11,6 +11,6 @@ func (m *FeedbacksModule) Routes(v1, protected fiber.Router) {
 
 	feedbacks := protected.Group("/feedbacks")
 	feedbacks.Post("/course/:courseID", m.CreateController)
-	feedbacks.Delete("/:id", middlewares.PermissionGuard("feedback:delete"), m.DeleteController)
-	feedbacks.Patch("/:id/pin", middlewares.PermissionGuard("feedback:pin"), m.UpdateController)
+	feedbacks.Delete("/course/:courseID/:id", middlewares.PermissionGuard("feedback:delete"), m.DeleteController)
+	feedbacks.Patch("/course/:courseID/:id/pin", middlewares.PermissionGuard("feedback:pin"), m.UpdateController)
 }

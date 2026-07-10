@@ -97,7 +97,11 @@ func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 // @Router /api/v1/transactions [get]
 func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := m.ListService(page, limit, c.Query("user_id"))
+	tutorID := ""
+	if c.Locals("role") == "tutor" {
+		tutorID = utils.GetUserID(c)
+	}
+	list, total, err := m.ListService(page, limit, c.Query("user_id"), tutorID)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch transactions", nil, err.Error())
 	}
@@ -116,7 +120,7 @@ func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 // @Router /api/v1/transactions/me [get]
 func (m *TransactionsModule) ListOwnController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := m.ListService(page, limit, utils.GetUserID(c))
+	list, total, err := m.ListService(page, limit, utils.GetUserID(c), "")
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch your transactions", nil, err.Error())
 	}

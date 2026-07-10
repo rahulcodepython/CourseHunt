@@ -23,6 +23,10 @@ func (m *QuizModule) CreateMetadataController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
+	userID := utils.GetUserID(c)
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	qm, err := m.CreateMetadataService(c.Params("lessonID"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to save quiz", nil, err.Error())
@@ -45,6 +49,10 @@ func (m *QuizModule) CreateQuestionController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
+	userID := utils.GetUserID(c)
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	q, err := m.CreateQuestionService(c.Params("quizID"), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to add question", nil, err.Error())
@@ -62,6 +70,10 @@ func (m *QuizModule) CreateQuestionController(c *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
 // @Router /api/v1/quiz/questions/{id} [delete]
 func (m *QuizModule) DeleteQuestionController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	if !m.Courses.IsCourseOwnerRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+	}
 	id, err := m.DeleteQuestionService(c.Params("id"))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete question", nil, err.Error())
@@ -85,7 +97,11 @@ func (m *QuizModule) GetQuestionController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	resp, err := m.GetQuestionService(c.Params("quizID"), utils.GetUserID(c), req)
+	userID := utils.GetUserID(c)
+	if !m.Enrollments.IsEnrolledRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: not enrolled in course", nil, nil)
+	}
+	resp, err := m.GetQuestionService(c.Params("quizID"), userID, req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to get question", nil, err.Error())
 	}
@@ -108,7 +124,11 @@ func (m *QuizModule) CreateSubmitController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	resp, err := m.SubmitService(c.Params("quizID"), utils.GetUserID(c), req)
+	userID := utils.GetUserID(c)
+	if !m.Enrollments.IsEnrolledRepository(userID, courseID) {
+		return utils.JSON(c, http.StatusForbidden, false, "access denied: not enrolled in course", nil, nil)
+	}
+	resp, err := m.SubmitService(c.Params("quizID"), userID, req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to submit quiz", nil, err.Error())
 	}
