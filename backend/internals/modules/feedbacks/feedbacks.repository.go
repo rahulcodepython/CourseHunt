@@ -12,7 +12,7 @@ func (m *FeedbacksModule) CreateRepository(userID, courseID string, req CreateFe
 	return &f, err
 }
 
-func (m *FeedbacksModule) ListRepository(courseID string, page, limit int) ([]FeedbackResponse, int, error) {
+func (m *FeedbacksModule) ListRepository(courseID string, page, limit int) ([]Feedback, int, error) {
 	where := "1=1"
 	args := []interface{}{}
 	idx := 1
@@ -74,15 +74,15 @@ func (m *FeedbacksModule) ListRepository(courseID string, page, limit int) ([]Fe
 		return nil, 0, err
 	}
 	defer rows.Close()
-	var list []FeedbackResponse
+	var list []Feedback
 	for rows.Next() {
-		var fb FeedbackResponse
-		rows.Scan(&fb.ID, &fb.CourseID, &fb.Rating, &fb.Content, &fb.IsPinned, &fb.CreatedAt,
+		var fb Feedback
+		rows.Scan(&fb.ID, &fb.Course.ID, &fb.Rating, &fb.Content, &fb.IsPinned, &fb.CreatedAt,
 			&fb.User.ID, &fb.User.Name, &fb.User.Image)
 		list = append(list, fb)
 	}
 	if list == nil {
-		list = []FeedbackResponse{}
+		list = []Feedback{}
 	}
 	return list, total, rows.Err()
 }

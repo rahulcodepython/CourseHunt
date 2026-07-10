@@ -58,7 +58,14 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 	var unseenIDs []string
 	for unseenRows.Next() {
 		var item UpdateFeedItem
-		unseenRows.Scan(&item.ID, &item.Message, &item.CourseID, &item.CourseTitle, &item.CreatedAt)
+		var cid, ctitle *string
+		unseenRows.Scan(&item.ID, &item.Message, &cid, &ctitle, &item.CreatedAt)
+		if cid != nil {
+			item.Course.ID = *cid
+		}
+		if ctitle != nil {
+			item.Course.Title = *ctitle
+		}
 		unseen = append(unseen, item)
 		unseenIDs = append(unseenIDs, item.ID)
 	}
@@ -90,7 +97,14 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 	var older []UpdateFeedItem
 	for olderRows.Next() {
 		var item UpdateFeedItem
-		olderRows.Scan(&item.ID, &item.Message, &item.CourseID, &item.CourseTitle, &item.CreatedAt)
+		var cid, ctitle *string
+		olderRows.Scan(&item.ID, &item.Message, &cid, &ctitle, &item.CreatedAt)
+		if cid != nil {
+			item.Course.ID = *cid
+		}
+		if ctitle != nil {
+			item.Course.Title = *ctitle
+		}
 		older = append(older, item)
 	}
 	if older == nil {
@@ -99,7 +113,7 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 
 	return &UpdateFeedResponse{
 		Unseen: unseen,
-		Older: models.PaginatedResponse{
+		Older: models.PaginatedResponse[[]UpdateFeedItem]{
 			Data:  older,
 			Total: total,
 			Page:  page,
@@ -128,7 +142,9 @@ func (m *UpdatesModule) ListRepository(page, limit int) ([]CourseUpdate, int, er
 		rows.Scan(&u.ID, &dbCourseID, &cTitle, &cThumb, &u.CreatedBy, &u.Message, &u.CreatedAt)
 		if dbCourseID != nil {
 			u.Course.ID = *dbCourseID
-			if cTitle != nil { u.Course.Title = *cTitle }
+			if cTitle != nil {
+				u.Course.Title = *cTitle
+			}
 			u.Course.Thumbnail = cThumb
 		}
 		list = append(list, u)

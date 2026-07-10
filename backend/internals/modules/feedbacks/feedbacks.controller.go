@@ -9,6 +9,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @Summary CreateController
+// @Description CreateController for Feedbacks
+// @Tags Feedbacks
+// @Accept json
+// @Produce json
+// @Param courseID path string true "courseID"
+// @Param body body feedbacks.CreateFeedbackRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[Feedback]
+// @Router /api/v1/feedbacks/course/{courseID} [post]
 func (m *FeedbacksModule) CreateController(c *fiber.Ctx) error {
 	var req CreateFeedbackRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -21,17 +30,32 @@ func (m *FeedbacksModule) CreateController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusCreated, true, "feedback posted", f, nil)
 }
 
+// @Summary ListController
+// @Description ListController for Feedbacks
+// @Tags Feedbacks
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.PaginatedResponse[Feedback]
+// @Router /api/v1/feedbacks [get]
 func (m *FeedbacksModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListService(c.Query("course_id"), page, limit)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch feedbacks", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "feedbacks fetched", models.PaginatedResponse{
+	return utils.JSON(c, http.StatusOK, true, "feedbacks fetched", models.PaginatedResponse[[]Feedback]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
 }
 
+// @Summary UpdateController
+// @Description UpdateController for Feedbacks
+// @Tags Feedbacks
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} utils.SwaggerResponse[Feedback]
+// @Router /api/v1/feedbacks/{id}/pin [patch]
 func (m *FeedbacksModule) UpdateController(c *fiber.Ctx) error {
 	var req struct {
 		IsPinned bool `json:"is_pinned"`
@@ -46,6 +70,14 @@ func (m *FeedbacksModule) UpdateController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "feedback pin status updated", f, nil)
 }
 
+// @Summary DeleteController
+// @Description DeleteController for Feedbacks
+// @Tags Feedbacks
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
+// @Router /api/v1/feedbacks/{id} [delete]
 func (m *FeedbacksModule) DeleteController(c *fiber.Ctx) error {
 	id, err := m.DeleteService(c.Params("id"))
 	if err != nil {

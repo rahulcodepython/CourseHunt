@@ -20,3 +20,8 @@ type UserListResponse struct {
 	CreatedAt     time.Time `json:"createdAt"`
 	Roles         []Role    `json:"roles"`
 }
+
+type RoleAssignmentResponse struct {
+	UserID string `json:"user_id"`
+	RoleID int    `json:"role_id"`
+}

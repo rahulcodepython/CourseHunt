@@ -5,7 +5,7 @@ import (
 )
 
 func (m *TransactionsModule) InitiateService(userID string, req InitiateTransactionRequest) (*InitiateTransactionResponse, error) {
-	course, err := m.Courses.ReadRepository(req.CourseID)
+	course, _, _, err := m.Courses.ReadRepository(req.CourseID, "")
 	if err != nil {
 		return nil, fmt.Errorf("course not found")
 	}

@@ -8,20 +8,24 @@ type CreateQuizRequest struct {
 	PassScorePercent int    `json:"pass_score_percent" validate:"min=0,max=100"`
 }
 
+type QuestionOptionInput struct {
+	OptionText string `json:"option_text" validate:"required"`
+	IsCorrect  bool   `json:"is_correct"`
+}
+
+type QuestionArrangeItemInput struct {
+	ItemText     string `json:"item_text" validate:"required"`
+	CorrectOrder int    `json:"correct_order" validate:"min=1"`
+}
+
 type CreateQuestionRequest struct {
-	QuestionType  string  `json:"question_type" validate:"required,oneof=single_choice multi_choice arrange fill_blank"`
-	QuestionText  string  `json:"question_text" validate:"required"`
-	Points        int     `json:"points" validate:"min=1"`
-	FillBlankHint *string `json:"fill_blank_hint"`
-	Options       []struct {
-		OptionText string `json:"option_text" validate:"required"`
-		IsCorrect  bool   `json:"is_correct"`
-	} `json:"options"`
-	ArrangeItems []struct {
-		ItemText     string `json:"item_text" validate:"required"`
-		CorrectOrder int    `json:"correct_order" validate:"min=1"`
-	} `json:"arrange_items"`
-	FillAnswers []string `json:"fill_answers"`
+	QuestionType  string                     `json:"question_type" validate:"required,oneof=single_choice multi_choice arrange fill_blank"`
+	QuestionText  string                     `json:"question_text" validate:"required"`
+	Points        int                        `json:"points" validate:"min=1"`
+	FillBlankHint *string                    `json:"fill_blank_hint"`
+	Options       []QuestionOptionInput      `json:"options"`
+	ArrangeItems  []QuestionArrangeItemInput `json:"arrange_items"`
+	FillAnswers   []string                   `json:"fill_answers"`
 }
 
 type StartQuizAttemptRequest struct {
@@ -33,15 +37,17 @@ type NextQuestionRequest struct {
 	FetchedQuestionIDs []string `json:"fetched_question_ids" validate:"required"`
 }
 
+type SubmitQuizAnswerInput struct {
+	QuestionID        string   `json:"question_id" validate:"required,uuid"`
+	SelectedOptionIDs []string `json:"selected_option_ids"`
+	ArrangeOrder      []int    `json:"arrange_order"`
+	FillText          *string  `json:"fill_text"`
+	IsSkipped         bool     `json:"is_skipped"`
+}
+
 type SubmitQuizRequest struct {
-	AttemptID string `json:"attempt_id" validate:"required,uuid"`
-	Answers   []struct {
-		QuestionID        string   `json:"question_id" validate:"required,uuid"`
-		SelectedOptionIDs []string `json:"selected_option_ids"`
-		ArrangeOrder      []int    `json:"arrange_order"`
-		FillText          *string  `json:"fill_text"`
-		IsSkipped         bool     `json:"is_skipped"`
-	} `json:"answers" validate:"required,min=1,dive"`
+	AttemptID string                  `json:"attempt_id" validate:"required,uuid"`
+	Answers   []SubmitQuizAnswerInput `json:"answers" validate:"required,min=1,dive"`
 }
 
 // ── Quiz Response ──

@@ -5,6 +5,7 @@ import (
 	"coursehunt-backend/internals/modules/enrollments"
 
 	"database/sql"
+	"encoding/json"
 	"fmt"
 )
 
@@ -86,40 +87,15 @@ func (m *CoursesModule) ReadLandingService(slug, userID string) (*CourseLandingR
 		}
 	}
 	if userID != "" {
-		resp.IsEnrolled = m.Enrollments.IsEnrolledRepository(userID, c.ID)
+		var exists bool
+		m.DB.QueryRow(`SELECT EXISTS(SELECT 1 FROM enrollments WHERE user_id = $1 AND course_id = $2 AND revoked = false)`, userID, c.ID).Scan(&exists)
+		resp.IsEnrolled = exists
 	}
 
-	// Build chapter+lesson tree
-	chaptersList, _ := m.Chapters.ListRepository(c.ID)
-	for _, ch := range chaptersList {
-		lessonsList, _ := m.Lessons.ListRepository(ch.ID)
-		chResp := ChapterCardResponse{
-			ID:                   ch.ID,
-			ChapterNo:            ch.ChapterNo,
-			Title:                ch.Title,
-			TotalLectures:        ch.TotalLectures,
-			TotalDurationSeconds: ch.TotalDurationSeconds,
-		}
-		for _, l := range lessonsList {
-			lr := LessonCardResponse{
-				ID:              l.ID,
-				LessonNo:        l.LessonNo,
-				Title:           l.Title,
-				LessonType:      l.LessonType,
-				DurationSeconds: l.DurationSeconds,
-			}
-			if l.ShortDescription.Valid {
-				lr.ShortDescription = &l.ShortDescription.String
-			}
-			if l.PreviewVideoURL.Valid {
-				lr.PreviewVideoURL = &l.PreviewVideoURL.String
-			}
-			chResp.Lessons = append(chResp.Lessons, lr)
-		}
-		if chResp.Lessons == nil {
-			chResp.Lessons = []LessonCardResponse{}
-		}
-		resp.Chapters = append(resp.Chapters, chResp)
+	// Build chapter+lesson tree using JSON aggregation
+	jsonData, err := m.FetchCourseLandingTreeJSON(c.ID)
+	if err == nil && jsonData != nil {
+		json.Unmarshal(jsonData, &resp.Chapters)
 	}
 	if resp.Chapters == nil {
 		resp.Chapters = []ChapterCardResponse{}
@@ -129,52 +105,23 @@ func (m *CoursesModule) ReadLandingService(slug, userID string) (*CourseLandingR
 
 // ReadStudyService returns the study page data for enrolled users.
 func (m *CoursesModule) ReadStudyService(courseID, userID string) (*enrollments.CourseStudyResponse, error) {
-	course, err := m.ReadRepository(courseID)
+	course, cp, completed, err := m.ReadRepository(courseID, userID)
 	if err != nil {
 		return nil, err
-	}
-	enrollment, err := m.Enrollments.ReadRepository(userID, courseID)
-	if err != nil {
-		return nil, fmt.Errorf("not enrolled")
 	}
 
 	resp := &enrollments.CourseStudyResponse{}
 	resp.Course.ID = course.ID
 	resp.Course.Title = course.Title
 	if course.ImageURL.Valid {
-		resp.Course.ImageURL = &course.ImageURL.String
+		resp.Course.Thumbnail = &course.ImageURL.String
 	}
-	resp.Enrollment.CompletionPercent = enrollment.CompletionPercent
-	resp.Enrollment.Completed = enrollment.Completed
+	resp.Enrollment.CompletionPercent = cp
+	resp.Enrollment.Completed = completed
 
-	chaptersList, _ := m.Chapters.ListRepository(courseID)
-	for _, ch := range chaptersList {
-		lessonsList, _ := m.Lessons.ListRepository(ch.ID)
-		cp := m.Enrollments.GetChapterProgressRepository(userID, ch.ID)
-		chItem := enrollments.StudyChapterItem{
-			ID:                   ch.ID,
-			ChapterNo:            ch.ChapterNo,
-			Title:                ch.Title,
-			TotalLectures:        ch.TotalLectures,
-			TotalDurationSeconds: ch.TotalDurationSeconds,
-		}
-		chItem.Progress.LessonsCompleted = cp.LessonsCompleted
-		chItem.Progress.Completed = cp.Completed
-		for _, l := range lessonsList {
-			completed := m.Enrollments.GetLessonProgressRepository(userID, l.ID)
-			chItem.Lessons = append(chItem.Lessons, enrollments.StudyLessonItem{
-				ID:              l.ID,
-				LessonNo:        l.LessonNo,
-				Title:           l.Title,
-				LessonType:      l.LessonType,
-				DurationSeconds: l.DurationSeconds,
-				Completed:       completed,
-			})
-		}
-		if chItem.Lessons == nil {
-			chItem.Lessons = []enrollments.StudyLessonItem{}
-		}
-		resp.Chapters = append(resp.Chapters, chItem)
+	jsonData, err := m.FetchCourseTreeJSON(courseID, userID)
+	if err == nil && jsonData != nil {
+		json.Unmarshal(jsonData, &resp.Chapters)
 	}
 	if resp.Chapters == nil {
 		resp.Chapters = []enrollments.StudyChapterItem{}

@@ -1,6 +1,7 @@
 package lessons
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 )
@@ -27,13 +28,16 @@ func (m *LessonsModule) ListRepository(chapterID string) ([]Lesson, error) {
 	return lessons, rows.Err()
 }
 
-func (m *LessonsModule) ReadRepository(id string) (*Lesson, error) {
+func (m *LessonsModule) ReadRepository(id, userID string) (*Lesson, bool, error) {
 	var l Lesson
+	var completed sql.NullBool
 	err := m.DB.QueryRow(`
-		SELECT id, chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds, created_at, updated_at
-		FROM lessons WHERE id = $1`, id).
-		Scan(&l.ID, &l.ChapterID, &l.LessonNo, &l.Title, &l.LessonType, &l.ShortDescription, &l.PreviewVideoURL, &l.DurationSeconds, &l.CreatedAt, &l.UpdatedAt)
-	return &l, err
+		SELECT l.id, l.chapter_id, l.lesson_no, l.title, l.lesson_type, l.short_description, l.preview_video_url, l.duration_seconds, l.created_at, l.updated_at, lp.completed
+		FROM lessons l
+		LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = $2
+		WHERE l.id = $1`, id, userID).
+		Scan(&l.ID, &l.ChapterID, &l.LessonNo, &l.Title, &l.LessonType, &l.ShortDescription, &l.PreviewVideoURL, &l.DurationSeconds, &l.CreatedAt, &l.UpdatedAt, &completed)
+	return &l, completed.Bool, err
 }
 
 func (m *LessonsModule) CreateRepository(chapterID string, req CreateLessonRequest) (*Lesson, error) {
@@ -180,4 +184,18 @@ func (m *LessonsModule) GetChapterIDByLesson(lessonID string) (string, error) {
 	var chID string
 	err := m.DB.QueryRow(`SELECT chapter_id FROM lessons WHERE id = $1`, lessonID).Scan(&chID)
 	return chID, err
+}
+
+func (m *LessonsModule) UpdateLastAccessed(userID, courseID, lessonID string) error {
+	_, err := m.DB.Exec(`UPDATE enrollments SET last_accessed_lesson_id = $1 WHERE user_id = $2 AND course_id = $3`, lessonID, userID, courseID)
+	return err
+}
+
+func (m *LessonsModule) MarkLessonComplete(userID, lessonID, courseID string) error {
+	_, err := m.DB.Exec(`
+		INSERT INTO lesson_progress (user_id, lesson_id, course_id, completed, completed_at)
+		VALUES ($1, $2, $3, true, CURRENT_TIMESTAMP)
+		ON CONFLICT (user_id, lesson_id) DO UPDATE SET completed = true, completed_at = CURRENT_TIMESTAMP`,
+		userID, lessonID, courseID)
+	return err
 }

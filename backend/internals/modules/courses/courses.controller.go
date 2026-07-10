@@ -10,6 +10,13 @@ import (
 )
 
 // GET /api/courses?page=1&limit=20&category=&level=&search=
+// @Summary ListController
+// @Description ListController for Courses
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.PaginatedResponse[CourseCardResponse]
+// @Router /api/v1/courses [get]
 func (m *CoursesModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	cards, total, err := m.ListService(page, limit,
@@ -22,12 +29,20 @@ func (m *CoursesModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch courses", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "courses fetched successfully", models.PaginatedResponse{
+	return utils.JSON(c, http.StatusOK, true, "courses fetched successfully", models.PaginatedResponse[[]CourseCardResponse]{
 		Data: cards, Total: total, Page: page, Limit: limit,
 	}, nil)
 }
 
 // POST /api/courses
+// @Summary CreateController
+// @Description CreateController for Courses
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Param body body courses.CreateCourseRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[CourseCreatedResponse]
+// @Router /api/v1/courses [post]
 func (m *CoursesModule) CreateController(c *fiber.Ctx) error {
 	var req CreateCourseRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -41,6 +56,14 @@ func (m *CoursesModule) CreateController(c *fiber.Ctx) error {
 }
 
 // GET /api/courses/:slug — public landing page
+// @Summary ReadLandingController
+// @Description ReadLandingController for Courses
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Param slug path string true "slug"
+// @Success 200 {object} utils.SwaggerResponse[CourseLandingResponse]
+// @Router /api/v1/courses/{slug} [get]
 func (m *CoursesModule) ReadLandingController(c *fiber.Ctx) error {
 	resp, err := m.ReadLandingService(c.Params("slug"), utils.GetUserID(c))
 	if err != nil {
@@ -53,6 +76,15 @@ func (m *CoursesModule) ReadLandingController(c *fiber.Ctx) error {
 }
 
 // PATCH /api/courses/:id
+// @Summary UpdateController
+// @Description UpdateController for Courses
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Param body body courses.UpdateCourseRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[Course]
+// @Router /api/v1/courses/{id} [patch]
 func (m *CoursesModule) UpdateController(c *fiber.Ctx) error {
 	var req UpdateCourseRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -66,6 +98,14 @@ func (m *CoursesModule) UpdateController(c *fiber.Ctx) error {
 }
 
 // DELETE /api/courses/:id
+// @Summary DeleteController
+// @Description DeleteController for Courses
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
+// @Router /api/v1/courses/{id} [delete]
 func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
 	id, err := m.DeleteService(c.Params("id"))
 	if err != nil {
@@ -75,6 +115,14 @@ func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
 }
 
 // GET /api/courses/:id/study
+// @Summary ReadStudyController
+// @Description ReadStudyController for Courses
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} utils.SwaggerResponse[enrollments.CourseStudyResponse]
+// @Router /api/v1/courses/{id}/study [get]
 func (m *CoursesModule) ReadStudyController(c *fiber.Ctx) error {
 	resp, err := m.ReadStudyService(c.Params("id"), utils.GetUserID(c))
 	if err != nil {
@@ -87,6 +135,13 @@ func (m *CoursesModule) ReadStudyController(c *fiber.Ctx) error {
 }
 
 // GET /api/courses/enrolled — enrolled courses
+// @Summary EnrolledController
+// @Description EnrolledController for Courses
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.SwaggerResponse[[]EnrolledCourseResponse]
+// @Router /api/v1/me/enrolled [get]
 func (m *CoursesModule) EnrolledController(c *fiber.Ctx) error {
 	list, err := m.EnrolledCoursesService(utils.GetUserID(c))
 	if err != nil {

@@ -137,16 +137,21 @@ func (m *CoursesModule) DeleteRepository(id string) (string, error) {
 	return deletedID, err
 }
 
-func (m *CoursesModule) ReadRepository(id string) (*Course, error) {
+func (m *CoursesModule) ReadRepository(id, userID string) (*Course, float64, bool, error) {
 	var c Course
+	var completionPercent sql.NullFloat64
+	var completed sql.NullBool
 	err := m.DB.QueryRow(`
-		SELECT id, tutor_id, slug, title, short_description, long_description, image_url,
-		       preview_video_url, language, level, actual_price, final_price,
-		       COALESCE(benefits, '{}'), COALESCE(requirements, '{}'),
-		       category_id, subcategory_id, coupon_allowed,
-		       total_lectures, total_duration_seconds, rating_avg, feedback_count,
-		       status, created_at, updated_at
-		FROM courses WHERE id = $1`, id).Scan(
+		SELECT c.id, c.tutor_id, c.slug, c.title, c.short_description, c.long_description, c.image_url,
+		       c.preview_video_url, c.language, c.level, c.actual_price, c.final_price,
+		       COALESCE(c.benefits, '{}'), COALESCE(c.requirements, '{}'),
+		       c.category_id, c.subcategory_id, c.coupon_allowed,
+		       c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
+		       c.status, c.created_at, c.updated_at,
+			   e.completion_percent, e.completed
+		FROM courses c
+		LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = $2
+		WHERE c.id = $1`, id, userID).Scan(
 		&c.ID, &c.TutorID, &c.Slug, &c.Title,
 		&c.ShortDescription, &c.LongDescription, &c.ImageURL, &c.PreviewVideoURL,
 		&c.Language, &c.Level, &c.ActualPrice, &c.FinalPrice,
@@ -154,8 +159,9 @@ func (m *CoursesModule) ReadRepository(id string) (*Course, error) {
 		&c.CategoryID, &c.SubcategoryID, &c.CouponAllowed,
 		&c.TotalLectures, &c.TotalDurationSeconds, &c.RatingAvg, &c.FeedbackCount,
 		&c.Status, &c.CreatedAt, &c.UpdatedAt,
+		&completionPercent, &completed,
 	)
-	return &c, err
+	return &c, completionPercent.Float64, completed.Bool, err
 }
 
 func (m *CoursesModule) ReadBySlugRepository(slug string) (*Course, error) {
@@ -319,4 +325,75 @@ func (m *CoursesModule) EnrolledCoursesRepository(userID string) ([]EnrolledCour
 		list = []EnrolledCourseResponse{}
 	}
 	return list, rows.Err()
+}
+
+func (m *CoursesModule) FetchCourseTreeJSON(courseID, userID string) ([]byte, error) {
+	var jsonData []byte
+	query := `
+        SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
+        FROM (
+            SELECT 
+                ch.id, 
+                ch.chapter_no, 
+                ch.title, 
+                ch.total_lectures, 
+                ch.total_duration_seconds,
+                json_build_object(
+                    'lessons_completed', COALESCE(cp.lessons_completed, 0),
+                    'completed', COALESCE(cp.completed, false)
+                ) AS progress,
+                (
+                    SELECT COALESCE(json_agg(lessons_tree ORDER BY lessons_tree.lesson_no), '[]'::json)
+                    FROM (
+                        SELECT 
+                            l.id, 
+                            l.lesson_no, 
+                            l.title, 
+                            l.lesson_type, 
+                            l.duration_seconds,
+                            COALESCE(lp.completed, false) AS completed
+                        FROM lessons l
+                        LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = $2
+                        WHERE l.chapter_id = ch.id
+                    ) lessons_tree
+                ) AS lessons
+            FROM chapters ch
+            LEFT JOIN chapter_progress cp ON cp.chapter_id = ch.id AND cp.user_id = $2
+            WHERE ch.course_id = $1
+        ) chapters_tree`
+	err := m.DB.QueryRow(query, courseID, userID).Scan(&jsonData)
+	return jsonData, err
+}
+
+func (m *CoursesModule) FetchCourseLandingTreeJSON(courseID string) ([]byte, error) {
+	var jsonData []byte
+	query := `
+        SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
+        FROM (
+            SELECT 
+                ch.id, 
+                ch.chapter_no, 
+                ch.title, 
+                ch.total_lectures, 
+                ch.total_duration_seconds,
+                (
+                    SELECT COALESCE(json_agg(lessons_tree ORDER BY lessons_tree.lesson_no), '[]'::json)
+                    FROM (
+                        SELECT 
+                            l.id, 
+                            l.lesson_no, 
+                            l.title, 
+                            l.lesson_type, 
+                            l.duration_seconds,
+                            l.short_description,
+                            l.preview_video_url
+                        FROM lessons l
+                        WHERE l.chapter_id = ch.id
+                    ) lessons_tree
+                ) AS lessons
+            FROM chapters ch
+            WHERE ch.course_id = $1
+        ) chapters_tree`
+	err := m.DB.QueryRow(query, courseID).Scan(&jsonData)
+	return jsonData, err
 }

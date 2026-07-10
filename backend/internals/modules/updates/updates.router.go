@@ -8,7 +8,7 @@ import (
 
 func (m *UpdatesModule) Routes(v1, protected fiber.Router) {
 	protected.Get("/updates/feed", m.FeedController) // user feed (wait, feed was on /updates/feed but old code had it as protected.Group then Get("/feed", h.Feed))
-	
+
 	// Actually keeping the old route structure
 	updatesAdmin := protected.Group("/updates")
 

@@ -41,17 +41,12 @@ func (m *LessonsModule) DeleteResourceService(id string) (string, error) {
 
 // Content returns the full lesson content for study, validating enrollment.
 func (m *LessonsModule) ReadContentService(lessonID, userID, courseID string) (*LessonContentResponse, error) {
-	lesson, err := m.ReadRepository(lessonID)
+	lesson, completed, err := m.ReadRepository(lessonID, userID)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("lesson not found")
 	}
 	if err != nil {
 		return nil, err
-	}
-
-	// Validate enrollment (unless admin/tutor — handled at handler level via permission)
-	if !m.Enrollments.IsEnrolledRepository(userID, courseID) {
-		return nil, fmt.Errorf("not enrolled")
 	}
 
 	resp := &LessonContentResponse{}
@@ -90,16 +85,16 @@ func (m *LessonsModule) ReadContentService(lessonID, userID, courseID string) (*
 		resp.UserNote.Content = &note.Content
 	}
 
-	resp.Completed = m.Enrollments.GetLessonProgressRepository(userID, lessonID)
+	resp.Completed = completed
 
 	// Update last accessed
-	m.Enrollments.UpdateLastAccessedRepository(userID, courseID, lessonID)
+	m.UpdateLastAccessed(userID, courseID, lessonID)
 
 	return resp, nil
 }
 
 func (m *LessonsModule) UpdateCompleteService(userID, lessonID, courseID string) error {
-	return m.Enrollments.MarkLessonCompleteRepository(userID, lessonID, courseID)
+	return m.MarkLessonComplete(userID, lessonID, courseID)
 }
 
 func (m *LessonsModule) GetChapterIDService(lessonID string) (string, error) {

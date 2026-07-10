@@ -1,0 +1,24 @@
+import { z } from 'zod';
+
+export const CategoryZod: z.ZodType = z.lazy(() =>
+    z.object({
+        id: z.string(),
+        parent_id: z.string().optional(),
+        name: z.string(),
+        created_at: z.string(),
+        subcategories: z.array(CategoryZod).optional(),
+    })
+);
+export type Category = z.infer<typeof CategoryZod>;
+
+export const CreateCategoryRequestZod = z.object({
+    name: z.string(),
+    parent_id: z.string().optional(),
+});
+export type CreateCategoryRequest = z.infer<typeof CreateCategoryRequestZod>;
+
+export const UpdateCategoryRequestZod = z.object({
+    name: z.string(),
+});
+export type UpdateCategoryRequest = z.infer<typeof UpdateCategoryRequestZod>;
+export const CategoryDeleteResponseZod = z.any(); export type CategoryDeleteResponse = any;

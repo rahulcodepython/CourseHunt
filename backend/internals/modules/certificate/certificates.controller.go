@@ -8,6 +8,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @Summary ClaimController
+// @Description ClaimController for Certificate
+// @Tags Certificate
+// @Accept json
+// @Produce json
+// @Param courseID path string true "courseID"
+// @Success 200 {object} utils.SwaggerResponse[Certificate]
+// @Router /api/v1/certificates/claim/course/{courseID} [post]
 func (c *CertificateModule) ClaimController(ctx *fiber.Ctx) error {
 	cert, err := c.ClaimService(utils.GetUserID(ctx), ctx.Params("courseID"))
 	if err != nil {
@@ -19,6 +27,13 @@ func (c *CertificateModule) ClaimController(ctx *fiber.Ctx) error {
 	return utils.JSON(ctx, http.StatusCreated, true, "certificate claimed", cert, nil)
 }
 
+// @Summary ListController
+// @Description ListController for Certificate
+// @Tags Certificate
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.SwaggerResponse[[]CertificateResponse]
+// @Router /api/v1/certificates [get]
 func (c *CertificateModule) ListController(ctx *fiber.Ctx) error {
 	list, err := c.ListService(utils.GetUserID(ctx))
 	if err != nil {
@@ -27,6 +42,14 @@ func (c *CertificateModule) ListController(ctx *fiber.Ctx) error {
 	return utils.JSON(ctx, http.StatusOK, true, "certificates fetched", list, nil)
 }
 
+// @Summary GetController
+// @Description GetController for Certificate
+// @Tags Certificate
+// @Accept json
+// @Produce json
+// @Param courseID path string true "courseID"
+// @Success 200 {object} utils.SwaggerResponse[Certificate]
+// @Router /api/v1/certificates/course/{courseID} [get]
 func (c *CertificateModule) GetController(ctx *fiber.Ctx) error {
 	cert, err := c.GetService(utils.GetUserID(ctx), ctx.Params("courseID"))
 	if err != nil {

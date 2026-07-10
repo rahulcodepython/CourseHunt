@@ -9,17 +9,33 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @Summary ListController
+// @Description ListController for Users
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.PaginatedResponse[UserListResponse]
+// @Router /api/v1/users [get]
 func (m *UsersModule) ListController(ctx *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(ctx)
 	list, total, err := m.ListService(page, limit, ctx.Query("search"), ctx.Query("role"))
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch users", nil, err.Error())
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "users fetched", models.PaginatedResponse{
+	return utils.JSON(ctx, http.StatusOK, true, "users fetched", models.PaginatedResponse[[]UserListResponse]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
 }
 
+// @Summary AssignRoleController
+// @Description AssignRoleController for Users
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Param body body users.AssignRoleRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[RoleAssignmentResponse]
+// @Router /api/v1/users/{id}/roles/assign [post]
 func (m *UsersModule) AssignRoleController(ctx *fiber.Ctx) error {
 	var req AssignRoleRequest
 	if ok, err := utils.Validate(ctx, &req); !ok {
@@ -31,6 +47,15 @@ func (m *UsersModule) AssignRoleController(ctx *fiber.Ctx) error {
 	return utils.JSON(ctx, http.StatusOK, true, "role assigned", map[string]interface{}{"user_id": ctx.Params("id"), "role_id": req.RoleID}, nil)
 }
 
+// @Summary DeleteRoleController
+// @Description DeleteRoleController for Users
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Param body body users.AssignRoleRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[RoleAssignmentResponse]
+// @Router /api/v1/users/{id}/roles/revoke [post]
 func (m *UsersModule) DeleteRoleController(ctx *fiber.Ctx) error {
 	var req AssignRoleRequest
 	if ok, err := utils.Validate(ctx, &req); !ok {
@@ -42,6 +67,13 @@ func (m *UsersModule) DeleteRoleController(ctx *fiber.Ctx) error {
 	return utils.JSON(ctx, http.StatusOK, true, "role revoked", map[string]interface{}{"user_id": ctx.Params("id"), "role_id": req.RoleID}, nil)
 }
 
+// @Summary MeController
+// @Description MeController for Users
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.SwaggerResponse[User]
+// @Router /api/v1/me [get]
 func (m *UsersModule) MeController(ctx *fiber.Ctx) error {
 	u, err := m.ReadService(utils.GetUserID(ctx))
 	if err != nil {

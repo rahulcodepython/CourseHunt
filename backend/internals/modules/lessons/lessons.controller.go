@@ -9,6 +9,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @Summary ListController
+// @Description ListController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param chapterID path string true "chapterID"
+// @Success 200 {object} utils.SwaggerResponse[[]Lesson]
+// @Router /api/v1/lessons/chapter/{chapterID} [get]
 func (m *LessonsModule) ListController(c *fiber.Ctx) error {
 	lessons, err := m.ListService(c.Params("chapterID"))
 	if err != nil {
@@ -17,6 +25,15 @@ func (m *LessonsModule) ListController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "lessons fetched successfully", lessons, nil)
 }
 
+// @Summary CreateController
+// @Description CreateController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param chapterID path string true "chapterID"
+// @Param body body lessons.CreateLessonRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[Lesson]
+// @Router /api/v1/lessons/chapter/{chapterID} [post]
 func (m *LessonsModule) CreateController(c *fiber.Ctx) error {
 	var req CreateLessonRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -29,6 +46,15 @@ func (m *LessonsModule) CreateController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusCreated, true, "lesson created successfully", l, nil)
 }
 
+// @Summary UpdateController
+// @Description UpdateController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Param body body lessons.UpdateLessonRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[Lesson]
+// @Router /api/v1/lessons/{id} [patch]
 func (m *LessonsModule) UpdateController(c *fiber.Ctx) error {
 	var req UpdateLessonRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -41,6 +67,14 @@ func (m *LessonsModule) UpdateController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "lesson updated successfully", l, nil)
 }
 
+// @Summary DeleteController
+// @Description DeleteController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
+// @Router /api/v1/lessons/{id} [delete]
 func (m *LessonsModule) DeleteController(c *fiber.Ctx) error {
 	id, err := m.DeleteService(c.Params("id"))
 	if err != nil {
@@ -49,6 +83,15 @@ func (m *LessonsModule) DeleteController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "lesson deleted successfully", map[string]string{"id": id}, nil)
 }
 
+// @Summary UpsertVideoContentController
+// @Description UpsertVideoContentController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Param body body lessons.UpsertVideoContentRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[LessonVideoContent]
+// @Router /api/v1/lessons/{id}/video [post]
 func (m *LessonsModule) UpsertVideoContentController(c *fiber.Ctx) error {
 	var req UpsertVideoContentRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -61,6 +104,15 @@ func (m *LessonsModule) UpsertVideoContentController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "video content updated successfully", vc, nil)
 }
 
+// @Summary UpsertDocumentContentController
+// @Description UpsertDocumentContentController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Param body body lessons.UpsertDocumentContentRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[LessonDocumentContent]
+// @Router /api/v1/lessons/{id}/document [post]
 func (m *LessonsModule) UpsertDocumentContentController(c *fiber.Ctx) error {
 	var req UpsertDocumentContentRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -73,6 +125,14 @@ func (m *LessonsModule) UpsertDocumentContentController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "document content updated successfully", dc, nil)
 }
 
+// @Summary ReadContentController
+// @Description ReadContentController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} utils.SwaggerResponse[LessonContentResponse]
+// @Router /api/v1/lessons/{id}/content [get]
 func (m *LessonsModule) ReadContentController(c *fiber.Ctx) error {
 	courseID := c.Query("course_id")
 	if courseID == "" {
@@ -91,6 +151,14 @@ func (m *LessonsModule) ReadContentController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "lesson content fetched successfully", resp, nil)
 }
 
+// @Summary UpdateCompleteController
+// @Description UpdateCompleteController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} utils.SwaggerResponse[LessonCompleteResponse]
+// @Router /api/v1/lessons/{id}/complete [post]
 func (m *LessonsModule) UpdateCompleteController(c *fiber.Ctx) error {
 	courseID := c.Query("course_id")
 	if courseID == "" {
@@ -102,6 +170,15 @@ func (m *LessonsModule) UpdateCompleteController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "lesson marked as complete", map[string]interface{}{"lesson_id": c.Params("id"), "completed": true}, nil)
 }
 
+// @Summary CreateResourceController
+// @Description CreateResourceController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Param body body lessons.AddResourceRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[LessonResource]
+// @Router /api/v1/lessons/{id}/resources [post]
 func (m *LessonsModule) CreateResourceController(c *fiber.Ctx) error {
 	var req AddResourceRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -114,6 +191,14 @@ func (m *LessonsModule) CreateResourceController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusCreated, true, "resource added successfully", res, nil)
 }
 
+// @Summary DeleteResourceController
+// @Description DeleteResourceController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param resourceID path string true "resourceID"
+// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
+// @Router /api/v1/lessons/resources/{resourceID} [delete]
 func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
 	id, err := m.DeleteResourceService(c.Params("resourceID"))
 	if err != nil {
@@ -122,6 +207,14 @@ func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
 	return utils.JSON(c, http.StatusOK, true, "resource deleted successfully", map[string]string{"id": id}, nil)
 }
 
+// @Summary GetSignedURLController
+// @Description GetSignedURLController for Lessons
+// @Tags Lessons
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} utils.SwaggerResponse[SignedURLResponse]
+// @Router /api/v1/lessons/{id}/signed-url [get]
 func (m *LessonsModule) GetSignedURLController(c *fiber.Ctx) error {
 	fileName := c.Query("file_name")
 	if fileName == "" {

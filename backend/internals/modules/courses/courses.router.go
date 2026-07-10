@@ -17,7 +17,7 @@ func (m *CoursesModule) Routes(v1, protected fiber.Router) {
 	courses.Patch("/:id", middlewares.PermissionGuard("courses:update"), m.UpdateController)
 	courses.Delete("/:id", middlewares.PermissionGuard("courses:delete"), m.DeleteController)
 	courses.Get("/:id/study", m.ReadStudyController)
-	
+
 	// Ensure /me/enrolled doesn't conflict
 	protected.Get("/me/enrolled", m.EnrolledController)
 }

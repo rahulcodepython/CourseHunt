@@ -1,8 +1,8 @@
 package updates
 
 import (
-	"time"
 	"coursehunt-backend/internals/models"
+	"time"
 )
 
 // ── Updates ──
@@ -19,14 +19,13 @@ type UpdateUpdateRequest struct {
 // ── Update Feed Response ──
 
 type UpdateFeedItem struct {
-	ID          string    `json:"id"`
-	Message     string    `json:"message"`
-	CourseID    *string   `json:"course_id"`
-	CourseTitle *string   `json:"course_title"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID        string            `json:"id"`
+	Message   string            `json:"message"`
+	Course    models.CourseInfo `json:"course"`
+	CreatedAt time.Time         `json:"created_at"`
 }
 
 type UpdateFeedResponse struct {
-	Unseen []UpdateFeedItem  `json:"unseen"`
-	Older  models.PaginatedResponse `json:"older"`
+	Unseen []UpdateFeedItem                           `json:"unseen"`
+	Older  models.PaginatedResponse[[]UpdateFeedItem] `json:"older"`
 }

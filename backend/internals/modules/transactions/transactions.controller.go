@@ -11,6 +11,14 @@ import (
 )
 
 // POST /api/transactions/initiate
+// @Summary CreateController
+// @Description CreateController for Transactions
+// @Tags Transactions
+// @Accept json
+// @Produce json
+// @Param body body transactions.InitiateTransactionRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[InitiateTransactionResponse]
+// @Router /api/v1/transactions/initiate [post]
 func (m *TransactionsModule) CreateController(c *fiber.Ctx) error {
 	var req InitiateTransactionRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -24,6 +32,13 @@ func (m *TransactionsModule) CreateController(c *fiber.Ctx) error {
 }
 
 // POST /api/transactions/webhook
+// @Summary WebhookController
+// @Description WebhookController for Transactions
+// @Tags Transactions
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.SwaggerBasicResponse
+// @Router /api/v1/transactions/webhook [post]
 func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 	signature := c.Get("X-Razorpay-Signature")
 	if signature == "" {
@@ -73,25 +88,39 @@ func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 }
 
 // GET /api/transactions
+// @Summary ListController
+// @Description ListController for Transactions
+// @Tags Transactions
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.PaginatedResponse[Transaction]
+// @Router /api/v1/transactions [get]
 func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListService(page, limit, c.Query("user_id"))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch transactions", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "transactions fetched", models.PaginatedResponse{
+	return utils.JSON(c, http.StatusOK, true, "transactions fetched", models.PaginatedResponse[[]Transaction]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
 }
 
 // GET /api/transactions/me
+// @Summary ListOwnController
+// @Description ListOwnController for Transactions
+// @Tags Transactions
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.PaginatedResponse[Transaction]
+// @Router /api/v1/transactions/me [get]
 func (m *TransactionsModule) ListOwnController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListService(page, limit, utils.GetUserID(c))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch your transactions", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "transactions fetched", models.PaginatedResponse{
+	return utils.JSON(c, http.StatusOK, true, "transactions fetched", models.PaginatedResponse[[]Transaction]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
 }
