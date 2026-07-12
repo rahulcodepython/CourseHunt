@@ -6,11 +6,11 @@ import (
 )
 
 type CourseUpdate struct {
-	ID        string            `json:"id"`
-	Course    models.CourseInfo `json:"course"`
-	CreatedBy *string           `json:"created_by"`
-	Message   string            `json:"message"`
-	CreatedAt time.Time         `json:"created_at"`
+	ID        string            `json:"id" db:"id"`
+	Course    models.CourseInfo `json:"course" db:""`
+	CreatedBy *string           `json:"created_by" db:"created_by"`
+	Message   string            `json:"message" db:"message"`
+	CreatedAt time.Time         `json:"created_at" db:"created_at"`
 }
 
 type CreateUpdateRequest struct {
@@ -22,13 +22,11 @@ type UpdateUpdateRequest struct {
 	Message string `json:"message" validate:"required,min=1,max=2000"`
 }
 
-// ── Update Feed Response ──
-
 type UpdateFeedItem struct {
-	ID        string            `json:"id"`
-	Message   string            `json:"message"`
-	Course    models.CourseInfo `json:"course"`
-	CreatedAt time.Time         `json:"created_at"`
+	ID        string            `json:"id" db:"id"`
+	Message   string            `json:"message" db:"message"`
+	Course    models.CourseInfo `json:"course" db:""`
+	CreatedAt time.Time         `json:"created_at" db:"created_at"`
 }
 
 type UpdateFeedResponse struct {

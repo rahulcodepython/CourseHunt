@@ -4,6 +4,8 @@ import (
 	"database/sql"
 
 	"coursehunt-backend/internals/config"
+
+	"github.com/jmoiron/sqlx"
 	"coursehunt-backend/internals/modules/cart"
 	"coursehunt-backend/internals/modules/category"
 	"coursehunt-backend/internals/modules/certificate"
@@ -61,28 +63,29 @@ type Router struct {
 
 func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 	// Independent modules (no cross-deps)
-	enrollments := enrollments.NewEnrollmentsModule(db)
-	courses := courses.NewCoursesModule(db, enrollments)
+	enrollments := enrollments.NewEnrollmentsModule(sqlx.NewDb(db, "postgres"))
+	courses := courses.NewCoursesModule(sqlx.NewDb(db, "postgres"), enrollments)
 
-	cart := cart.NewCartModule(db)
-	wishlist := wishlist.NewWishlistModule(db)
-	categories := category.NewCategoryModule(db)
-	certificates := certificate.NewCertificateModule(db, enrollments)
-	notes := notes.NewNotesModule(db, enrollments)
-	discussions := discussions.NewDiscussionsModule(db, enrollments, courses)
-	users := users.NewUsersModule(db)
-	dashboard := dashboard.NewDashboardModule(db)
-	profile := profile.NewProfileModule(db)
-	updates := updates.NewUpdatesModule(db)
-	feedbacks := feedbacks.NewFeedbacksModule(db, enrollments, courses)
-	coupons := coupons.NewCouponsModule(db)
-	quiz := quiz.NewQuizModule(db, enrollments, courses)
-	chapters := chapters.NewChaptersModule(db, courses)
-	lessons := lessons.NewLessonsModule(db, courses)
+	cart := cart.NewCartModule(sqlx.NewDb(db, "postgres"))
+	wishlist := wishlist.NewWishlistModule(sqlx.NewDb(db, "postgres"))
+	categories := category.NewCategoryModule(sqlx.NewDb(db, "postgres"))
+	certificates := certificate.NewCertificateModule(sqlx.NewDb(db, "postgres"), enrollments)
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	dashboard := dashboard.NewDashboardModule(sqlxDB)
+	notes := notes.NewNotesModule(sqlxDB, enrollments)
+	discussions := discussions.NewDiscussionsModule(sqlxDB, enrollments, courses)
+	users := users.NewUsersModule(sqlxDB)
+	profile := profile.NewProfileModule(sqlxDB)
+	updates := updates.NewUpdatesModule(sqlxDB)
+	feedbacks := feedbacks.NewFeedbacksModule(sqlxDB, enrollments, courses)
+	coupons := coupons.NewCouponsModule(sqlx.NewDb(db, "postgres"), courses)
+	quiz := quiz.NewQuizModule(sqlxDB, enrollments, courses)
+	chapters := chapters.NewChaptersModule(sqlx.NewDb(db, "postgres"), courses)
+	lessons := lessons.NewLessonsModule(sqlxDB, courses)
 
 	// Modules with cross-deps — order matters, clearly visible
 	rzp := razorpaypkg.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret)
-	transactions := transactions.NewTransactionsModule(db, coupons, courses, enrollments, rzp, cfg)
+	transactions := transactions.NewTransactionsModule(sqlxDB, coupons, courses, enrollments, rzp, cfg)
 
 	return &Router{
 		App: app, API: app.Group("/api"), DB: db, CFG: cfg,

@@ -22,7 +22,7 @@ func (m *UpdatesModule) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	u, err := m.CreateService(utils.GetUserID(c), req)
+	u, err := m.CreateRepository(utils.GetUserID(c), req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to create update", nil, err.Error())
 	}
@@ -43,7 +43,7 @@ func (m *UpdatesModule) UpdateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	u, err := m.UpdateService(c.Params("id"), req.Message)
+	u, err := m.UpdateRepository(c.Params("id"), req.Message)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to modify update", nil, err.Error())
 	}
@@ -59,7 +59,7 @@ func (m *UpdatesModule) UpdateController(c *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
 // @Router /api/v1/updates/{id} [delete]
 func (m *UpdatesModule) DeleteController(c *fiber.Ctx) error {
-	id, err := m.DeleteService(c.Params("id"))
+	id, err := m.DeleteRepository(c.Params("id"))
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete update", nil, err.Error())
 	}
@@ -75,7 +75,7 @@ func (m *UpdatesModule) DeleteController(c *fiber.Ctx) error {
 // @Router /api/v1/updates/feed [get]
 func (m *UpdatesModule) FeedController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	feed, err := m.FeedService(utils.GetUserID(c), page, limit)
+	feed, err := m.FeedRepository(utils.GetUserID(c), page, limit)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch update feed", nil, err.Error())
 	}
@@ -91,7 +91,7 @@ func (m *UpdatesModule) FeedController(c *fiber.Ctx) error {
 // @Router /api/v1/updates [get]
 func (m *UpdatesModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := m.ListService(page, limit)
+	list, total, err := m.ListRepository(page, limit)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch updates", nil, err.Error())
 	}

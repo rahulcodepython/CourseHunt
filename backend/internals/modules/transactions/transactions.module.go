@@ -1,17 +1,17 @@
 package transactions
 
 import (
-	"database/sql"
-
 	"coursehunt-backend/internals/config"
 	"coursehunt-backend/internals/modules/coupons"
 	"coursehunt-backend/internals/modules/courses"
 	"coursehunt-backend/internals/modules/enrollments"
 	razorpaypkg "coursehunt-backend/internals/pkg/razorpay"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type TransactionsModule struct {
-	DB          *sql.DB
+	DB          *sqlx.DB
 	Coupons     *coupons.CouponsModule
 	Courses     *courses.CoursesModule
 	Enrollments *enrollments.EnrollmentsModule
@@ -20,7 +20,7 @@ type TransactionsModule struct {
 }
 
 func NewTransactionsModule(
-	db *sql.DB,
+	db *sqlx.DB,
 	c *coupons.CouponsModule,
 	crs *courses.CoursesModule,
 	enr *enrollments.EnrollmentsModule,

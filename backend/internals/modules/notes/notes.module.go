@@ -2,14 +2,15 @@ package notes
 
 import (
 	"coursehunt-backend/internals/modules/enrollments"
-	"database/sql"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type NotesModule struct {
-	DB          *sql.DB
+	DB          *sqlx.DB
 	Enrollments *enrollments.EnrollmentsModule
 }
 
-func NewNotesModule(db *sql.DB, enrollments *enrollments.EnrollmentsModule) *NotesModule {
+func NewNotesModule(db *sqlx.DB, enrollments *enrollments.EnrollmentsModule) *NotesModule {
 	return &NotesModule{DB: db, Enrollments: enrollments}
 }

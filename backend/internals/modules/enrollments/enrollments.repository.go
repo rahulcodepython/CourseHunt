@@ -1,46 +1,122 @@
 package enrollments
 
-func (m *EnrollmentsModule) EnrollRepository(userID, courseID string) (*Enrollment, error) {
-	var e Enrollment
-	err := m.DB.QueryRow(`
-		INSERT INTO enrollments (user_id, course_id)
-		VALUES ($1, $2)
-		ON CONFLICT (user_id, course_id) DO UPDATE SET revoked = false
-		RETURNING id, user_id, course_id, completion_percent, completed, last_accessed_lesson_id, revoked, enrolled_at`,
-		userID, courseID).Scan(&e.ID, &e.UserID.ID, &e.CourseID.ID, &e.CompletionPercent, &e.Completed, &e.LastAccessedLessonID, &e.Revoked, &e.EnrolledAt)
-	return &e, err
-}
+import (
+	"encoding/json"
+	"errors"
+)
+
+var (
+	ErrAccessDenied = errors.New("access denied")
+)
 
 func (m *EnrollmentsModule) RevokeRepository(userID, courseID string) error {
 	_, err := m.DB.Exec(`UPDATE enrollments SET revoked = true WHERE user_id = $1 AND course_id = $2`, userID, courseID)
 	return err
 }
 
-func (m *EnrollmentsModule) IsEnrolledRepository(userID, courseID string) bool {
-	var exists bool
-	m.DB.QueryRow(`SELECT EXISTS(SELECT 1 FROM enrollments WHERE user_id = $1 AND course_id = $2 AND revoked = false)`, userID, courseID).Scan(&exists)
-	return exists
-}
-
-func (m *EnrollmentsModule) ListRepository(page, limit int) ([]Enrollment, int, error) {
-	var total int
-	m.DB.QueryRow(`SELECT COUNT(*) FROM enrollments`).Scan(&total)
+func (m *EnrollmentsModule) ListRepository(page, limit int, courseID string) ([]ListEnrollmentResponse, int, error) {
 	offset := (page - 1) * limit
-	rows, err := m.DB.Query(`
-		SELECT id, user_id, course_id, completion_percent, completed, last_accessed_lesson_id, revoked, enrolled_at
-		FROM enrollments ORDER BY enrolled_at DESC LIMIT $1 OFFSET $2`, limit, offset)
+
+	var result struct {
+		Total int             `db:"total"`
+		Data  json.RawMessage `db:"data"`
+	}
+	err := m.DB.Get(&result, `
+		WITH count_cte AS (
+			SELECT COUNT(*) AS total FROM enrollments WHERE course_id = $1
+		),
+		data_cte AS (
+			SELECT 
+				e.id,
+				json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', COALESCE(u.image, '')) AS "user",
+				e.completion_percent,
+				e.completed,
+				e.revoked,
+				e.enrolled_at
+			FROM enrollments e
+			LEFT JOIN "user" u ON e.user_id = u.id
+			WHERE e.course_id = $1
+			ORDER BY e.enrolled_at DESC
+			LIMIT $2 OFFSET $3
+		)
+		SELECT 
+			COALESCE((SELECT total FROM count_cte), 0) AS total,
+			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
+	`, courseID, limit, offset)
+
 	if err != nil {
 		return nil, 0, err
 	}
-	defer rows.Close()
-	var list []Enrollment
-	for rows.Next() {
-		var e Enrollment
-		rows.Scan(&e.ID, &e.UserID.ID, &e.CourseID.ID, &e.CompletionPercent, &e.Completed, &e.LastAccessedLessonID, &e.Revoked, &e.EnrolledAt)
-		list = append(list, e)
+
+	var list []ListEnrollmentResponse
+	if err := json.Unmarshal(result.Data, &list); err != nil {
+		return nil, 0, err
 	}
-	if list == nil {
-		list = []Enrollment{}
+
+	return list, result.Total, nil
+}
+
+func (m *EnrollmentsModule) InspectRepository(page, limit int, courseID, tutorID string) ([]ListEnrollmentResponse, int, error) {
+	offset := (page - 1) * limit
+
+	var result struct {
+		IsOwner bool            `db:"is_owner"`
+		Total   int             `db:"total"`
+		Data    json.RawMessage `db:"data"`
 	}
-	return list, total, rows.Err()
+
+	err := m.DB.Get(&result, `
+		WITH auth AS (
+			SELECT EXISTS(SELECT 1 FROM courses WHERE id = $1 AND tutor_id = $2) AS is_owner
+		),
+		count_cte AS (
+			SELECT COUNT(*) AS total FROM enrollments e
+			CROSS JOIN auth a
+			WHERE e.course_id = $1 AND a.is_owner = true
+		),
+		data_cte AS (
+			SELECT 
+				e.id,
+				json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', COALESCE(u.image, '')) AS "user",
+				e.completion_percent,
+				e.completed,
+				e.revoked,
+				e.enrolled_at
+			FROM enrollments e
+			LEFT JOIN "user" u ON e.user_id = u.id
+			CROSS JOIN auth a
+			WHERE e.course_id = $1 AND a.is_owner = true
+			ORDER BY e.enrolled_at DESC
+			LIMIT $3 OFFSET $4
+		)
+		SELECT 
+			COALESCE((SELECT is_owner FROM auth), false) AS is_owner,
+			COALESCE((SELECT total FROM count_cte), 0) AS total,
+			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
+	`, courseID, tutorID, limit, offset)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if !result.IsOwner {
+		return nil, 0, ErrAccessDenied
+	}
+
+	var list []ListEnrollmentResponse
+	if err := json.Unmarshal(result.Data, &list); err != nil {
+		return nil, 0, err
+	}
+
+	return list, result.Total, nil
+}
+
+func (m *EnrollmentsModule) EnrollRepository(userID, courseID string) error {
+	_, err := m.DB.Exec(`
+		INSERT INTO enrollments (user_id, course_id, revoked)
+		VALUES ($1, $2, false)
+		ON CONFLICT (user_id, course_id) DO UPDATE SET revoked = false`,
+		userID, courseID,
+	)
+	return err
 }

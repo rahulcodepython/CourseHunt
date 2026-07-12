@@ -4,32 +4,28 @@ func (c *CartModule) AddRepository(userID, courseID string) (*CartItem, error) {
 	var ci CartItem
 
 	query := `
-        WITH inserted AS (
-            INSERT INTO cart_items (user_id, course_id) 
-            VALUES ($1, $2) 
-            ON CONFLICT (user_id, course_id) DO UPDATE SET added_at = NOW() 
-            RETURNING id, user_id, course_id, added_at
-        )
-        SELECT 
-            i.id, 
-            i.user_id, 
-            i.course_id, 
-            COALESCE(co.title, '') AS course_name, 
-            COALESCE(co.image_url, '') AS course_thumbnail, 
-            i.added_at 
-        FROM inserted i
-        LEFT JOIN courses co ON i.course_id = co.id
-    `
+		WITH inserted AS (
+			INSERT INTO cart_items (user_id, course_id)
+			SELECT $1, $2
+			WHERE NOT EXISTS (
+				SELECT 1 FROM enrollments WHERE user_id = $1 AND course_id = $2 AND revoked = false
+			)
+			ON CONFLICT (user_id, course_id) DO UPDATE SET added_at = NOW()
+			RETURNING id, user_id, course_id, added_at
+		)
+		SELECT
+			i.id AS id,
+			i.user_id AS user_id,
+			i.added_at AS added_at,
+			i.course_id AS "course.id",
+			COALESCE(co.title, '') AS "course.title",
+			co.image_url AS "course.thumbnail"
+		FROM inserted i
+		LEFT JOIN courses co ON i.course_id = co.id
+	`
 
-	err := c.DB.QueryRow(query, userID, courseID).Scan(
-		&ci.ID,
-		&ci.UserID,
-		&ci.Course.ID,        // Scans i.course_id
-		&ci.Course.Title,     // Scans course_name
-		&ci.Course.Thumbnail, // Scans course_thumbnail
-		&ci.AddedAt,
-	)
-
+	// sqlx maps the dot-notation aliases directly into your nested struct
+	err := c.DB.Get(&ci, query, userID, courseID)
 	if err != nil {
 		return nil, err
 	}
@@ -37,44 +33,33 @@ func (c *CartModule) AddRepository(userID, courseID string) (*CartItem, error) {
 	return &ci, nil
 }
 
-func (c *CartModule) RemoveRepository(userID, courseID string) (string, error) {
-	var id string
-	err := c.DB.QueryRow(`DELETE FROM cart_items WHERE user_id = $1 AND course_id = $2 RETURNING id`, userID, courseID).Scan(&id)
+func (c *CartModule) RemoveRepository(userID, id string) (string, error) {
+	err := c.DB.Get(&id, `DELETE FROM cart_items WHERE user_id = $1 AND id = $2 RETURNING id`, userID, id)
 	return id, err
 }
 
 func (c *CartModule) ListRepository(userID string) ([]CartItem, error) {
-	rows, err := c.DB.Query(`
-		SELECT 
-			ci.id, 
-			ci.user_id, 
-			ci.course_id, 
-			COALESCE(co.title, '') AS course_name, 
-			COALESCE(co.image_url, '') AS course_thumbnail, 
-			ci.added_at 
+	var list []CartItem
+
+	query := `
+		SELECT
+			ci.id AS id,
+			ci.user_id AS user_id,
+			ci.added_at AS added_at,
+			ci.course_id AS "course.id",
+			COALESCE(co.title, '') AS "course.title",
+			co.image_url AS "course.thumbnail"
 		FROM cart_items ci
 		LEFT JOIN courses co ON ci.course_id = co.id
-		WHERE ci.user_id = $1 
+		WHERE ci.user_id = $1
 		ORDER BY ci.added_at DESC
-	`, userID)
+	`
+
+	err := c.DB.Select(&list, query, userID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var list []CartItem
-	for rows.Next() {
-		var ci CartItem
-		if err := rows.Scan(&ci.ID, &ci.UserID, &ci.Course.ID, &ci.Course.Title, &ci.Course.Thumbnail, &ci.AddedAt); err != nil {
-			return nil, err
-		}
-		list = append(list, ci)
-	}
-
-	if list == nil {
-		list = []CartItem{}
-	}
-	return list, rows.Err()
+	return list, nil
 }
 
 func (c *CartModule) ClearRepository(userID string) error {

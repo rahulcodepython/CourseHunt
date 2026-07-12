@@ -8,16 +8,35 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @Summary ListController
+// @Description ListController for Wishlist
+// @Tags Wishlist
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.SwaggerResponse[[]WishlistItem]
+// @Router /api/v1/wishlist [get]
+func (m *WishlistModule) ListController(ctx *fiber.Ctx) error {
+	list, err := m.ListRepository(utils.GetUserID(ctx))
+	if err != nil {
+		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch wishlist", nil, err.Error())
+	}
+	return utils.JSON(ctx, http.StatusOK, true, "wishlist fetched", list, nil)
+}
+
 // @Summary CreateController
 // @Description CreateController for Wishlist
 // @Tags Wishlist
 // @Accept json
 // @Produce json
-// @Param courseID path string true "courseID"
-// @Success 200 {object} utils.SwaggerResponse[Wishlist]
-// @Router /api/v1/wishlist/course/{courseID} [post]
+// @Param body body wishlist.CreateWishlistRequest true "Request Body"
+// @Success 200 {object} utils.SwaggerResponse[WishlistItem]
+// @Router /api/v1/wishlist [post]
 func (m *WishlistModule) CreateController(ctx *fiber.Ctx) error {
-	item, err := m.CreateService(utils.GetUserID(ctx), ctx.Params("courseID"))
+	var req CreateWishlistRequest
+	if ok, err := utils.Validate(ctx, &req); !ok {
+		return err
+	}
+	item, err := m.CreateRepository(utils.GetUserID(ctx), req.CourseID)
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to add to wishlist", nil, err.Error())
 	}
@@ -29,28 +48,13 @@ func (m *WishlistModule) CreateController(ctx *fiber.Ctx) error {
 // @Tags Wishlist
 // @Accept json
 // @Produce json
-// @Param courseID path string true "courseID"
+// @Param id path string true "id"
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
-// @Router /api/v1/wishlist/course/{courseID} [delete]
+// @Router /api/v1/wishlist/{id} [delete]
 func (m *WishlistModule) DeleteController(ctx *fiber.Ctx) error {
-	id, err := m.DeleteService(utils.GetUserID(ctx), ctx.Params("courseID"))
+	id, err := m.DeleteRepository(utils.GetUserID(ctx), ctx.Params("id"))
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to remove from wishlist", nil, err.Error())
 	}
 	return utils.JSON(ctx, http.StatusOK, true, "removed from wishlist", map[string]string{"id": id}, nil)
-}
-
-// @Summary ListController
-// @Description ListController for Wishlist
-// @Tags Wishlist
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerResponse[[]Wishlist]
-// @Router /api/v1/wishlist [get]
-func (m *WishlistModule) ListController(ctx *fiber.Ctx) error {
-	list, err := m.ListService(utils.GetUserID(ctx))
-	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch wishlist", nil, err.Error())
-	}
-	return utils.JSON(ctx, http.StatusOK, true, "wishlist fetched", list, nil)
 }

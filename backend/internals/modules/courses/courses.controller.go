@@ -1,6 +1,7 @@
 package courses
 
 import (
+	"errors"
 	"net/http"
 
 	"coursehunt-backend/internals/models"
@@ -9,75 +10,162 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// GET /api/courses?page=1&limit=20&category=&level=&search=
-// @Summary ListController
-// @Description ListController for Courses
+// @Summary PublicListController
+// @Description Fetch public courses for landing page
 // @Tags Courses
 // @Accept json
 // @Produce json
 // @Success 200 {object} utils.PaginatedResponse[CourseCardResponse]
 // @Router /api/v1/courses [get]
-func (m *CoursesModule) ListController(c *fiber.Ctx) error {
+func (m *CoursesModule) PublicListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	cards, total, err := m.ListService(page, limit,
-		c.Query("category"),
+	cards, total, err := m.PublicListRepository(page, limit,
+		c.Query("category_id"),
+		c.Query("subcategory_id"),
 		c.Query("level"),
 		c.Query("search"),
-		c.Query("tutor"),
-		c.Query("status"),
 	)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch courses", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch public courses", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "courses fetched successfully", models.PaginatedResponse[[]CourseCardResponse]{
+	return utils.JSON(c, http.StatusOK, true, "public courses fetched successfully", models.PaginatedResponse[[]CoursePublicResponse]{
 		Data: cards, Total: total, Page: page, Limit: limit,
 	}, nil)
 }
 
-// POST /api/courses
-// @Summary CreateController
-// @Description CreateController for Courses
-// @Tags Courses
-// @Accept json
-// @Produce json
-// @Param body body courses.CreateCourseRequest true "Request Body"
-// @Success 200 {object} utils.SwaggerResponse[CourseCreatedResponse]
-// @Router /api/v1/courses [post]
-func (m *CoursesModule) CreateController(c *fiber.Ctx) error {
-	var req CreateCourseRequest
-	if ok, err := utils.Validate(c, &req); !ok {
-		return err
-	}
-	resp, err := m.CreateService(utils.GetUserID(c), req)
-	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to create course", nil, err.Error())
-	}
-	return utils.JSON(c, http.StatusCreated, true, "course created successfully", resp, nil)
-}
-
-// GET /api/courses/:slug — public landing page
-// @Summary ReadLandingController
-// @Description ReadLandingController for Courses
+// @Summary PublicSingleController
+// @Description Fetch single course details for landing page
 // @Tags Courses
 // @Accept json
 // @Produce json
 // @Param slug path string true "slug"
 // @Success 200 {object} utils.SwaggerResponse[CourseLandingResponse]
 // @Router /api/v1/courses/{slug} [get]
-func (m *CoursesModule) ReadLandingController(c *fiber.Ctx) error {
-	resp, err := m.ReadLandingService(c.Params("slug"), utils.GetUserID(c))
+func (m *CoursesModule) PublicSingleController(c *fiber.Ctx) error {
+	resp, err := m.PublicSingleRepository(c.Params("slug"), utils.GetUserID(c))
 	if err != nil {
-		if err.Error() == "not found" {
+		switch {
+		case errors.Is(err, ErrCourseNotFound):
 			return utils.JSON(c, http.StatusNotFound, false, "course not found", nil, nil)
+		default:
+			return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch course landing page", nil, err.Error())
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch course", nil, err.Error())
 	}
-	return utils.JSON(c, http.StatusOK, true, "course fetched successfully", resp, nil)
+	return utils.JSON(c, http.StatusOK, true, "course landing page fetched successfully", resp, nil)
 }
 
-// PATCH /api/courses/:id
+// @Summary StudyController
+// @Description Fetch study materials for enrolled users
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} utils.SwaggerResponse[CourseStudyResponse]
+// @Router /api/v1/courses/{id}/study [get]
+func (m *CoursesModule) StudyController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	resp, err := m.StudyMetadataRepository(c.Params("id"), userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrCourseNotFound):
+			return utils.JSON(c, http.StatusNotFound, false, "course not found", nil, nil)
+		case errors.Is(err, ErrNotEnrolled):
+			return utils.JSON(c, http.StatusForbidden, false, "not enrolled in this course", nil, nil)
+		default:
+			return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch study page", nil, err.Error())
+		}
+	}
+	return utils.JSON(c, http.StatusOK, true, "study page fetched successfully", resp, nil)
+}
+
+// @Summary EnrolledListController
+// @Description Fetch enrolled courses for the logged-in user
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.SwaggerResponse[[]EnrolledCourseResponse]
+// @Router /api/v1/me/enrolled [get]
+func (m *CoursesModule) EnrolledListController(c *fiber.Ctx) error {
+	list, err := m.EnrolledCoursesRepository(utils.GetUserID(c))
+	if err != nil {
+		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch enrolled courses", nil, err.Error())
+	}
+	return utils.JSON(c, http.StatusOK, true, "enrolled courses fetched successfully", list, nil)
+}
+
+// @Summary InspectController
+// @Description Admin inspect courses metadata
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.PaginatedResponse[CourseInspectResponse]
+// @Router /api/v1/courses/inspect [get]
+func (m *CoursesModule) InspectController(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+	list, total, err := m.InspectRepository(page, limit,
+		c.Query("category_id"),
+		c.Query("subcategory_id"),
+		c.Query("level"),
+		c.Query("search"),
+		c.Query("tutor_id"),
+		c.Query("status"),
+	)
+	if err != nil {
+		return utils.JSON(c, http.StatusInternalServerError, false, "failed to inspect courses", nil, err.Error())
+	}
+	return utils.JSON(c, http.StatusOK, true, "courses inspected successfully", models.PaginatedResponse[[]CourseInspectResponse]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	}, nil)
+}
+
+// @Summary ListController
+// @Description Tutors retrieve their own courses
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.PaginatedResponse[CourseInspectResponse]
+// @Router /api/v1/courses [get]
+func (m *CoursesModule) ListController(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+	userID := utils.GetUserID(c)
+	list, total, err := m.TutorListRepository(page, limit,
+		userID,
+		c.Query("category_id"),
+		c.Query("subcategory_id"),
+		c.Query("level"),
+		c.Query("search"),
+		c.Query("status"),
+	)
+	if err != nil {
+		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch tutor courses", nil, err.Error())
+	}
+	return utils.JSON(c, http.StatusOK, true, "tutor courses fetched successfully", models.PaginatedResponse[[]CourseInspectResponse]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	}, nil)
+}
+
+// @Summary CreateController
+// @Description Create a new course
+// @Tags Courses
+// @Accept json
+// @Produce json
+// @Param body body courses.CreateCourseRequest true "Request Body"
+// @Success 201 {object} utils.SwaggerResponse[CourseCreatedResponse]
+// @Router /api/v1/courses [post]
+func (m *CoursesModule) CreateController(c *fiber.Ctx) error {
+	var req CreateCourseRequest
+	if ok, err := utils.Validate(c, &req); !ok {
+		return err
+	}
+	resp, err := m.CreateRepository(utils.GetUserID(c), req)
+	if err != nil {
+		return utils.JSON(c, http.StatusInternalServerError, false, "failed to create course", nil, err.Error())
+	}
+	return utils.JSON(c, http.StatusCreated, true, "course created successfully", resp, nil)
+}
+
 // @Summary UpdateController
-// @Description UpdateController for Courses
+// @Description Update course details
 // @Tags Courses
 // @Accept json
 // @Produce json
@@ -91,19 +179,22 @@ func (m *CoursesModule) UpdateController(c *fiber.Ctx) error {
 		return err
 	}
 	userID := utils.GetUserID(c)
-	if !m.IsCourseOwnerRepository(userID, c.Params("id")) {
-		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
-	}
-	course, err := m.UpdateService(c.Params("id"), req)
+	course, err := m.UpdateRepository(c.Params("id"), userID, req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to update course", nil, err.Error())
+		switch {
+		case errors.Is(err, ErrCourseNotFound):
+			return utils.JSON(c, http.StatusNotFound, false, "course not found", nil, nil)
+		case errors.Is(err, ErrAccessDenied):
+			return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+		default:
+			return utils.JSON(c, http.StatusInternalServerError, false, "failed to update course", nil, err.Error())
+		}
 	}
 	return utils.JSON(c, http.StatusOK, true, "course updated successfully", course, nil)
 }
 
-// DELETE /api/courses/:id
 // @Summary DeleteController
-// @Description DeleteController for Courses
+// @Description Delete a course
 // @Tags Courses
 // @Accept json
 // @Produce json
@@ -112,52 +203,16 @@ func (m *CoursesModule) UpdateController(c *fiber.Ctx) error {
 // @Router /api/v1/courses/{id} [delete]
 func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
-	if !m.IsCourseOwnerRepository(userID, c.Params("id")) {
-		return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
-	}
-	id, err := m.DeleteService(c.Params("id"))
+	id, err := m.DeleteRepository(c.Params("id"), userID)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete course", nil, err.Error())
+		switch {
+		case errors.Is(err, ErrCourseNotFound):
+			return utils.JSON(c, http.StatusNotFound, false, "course not found", nil, nil)
+		case errors.Is(err, ErrAccessDenied):
+			return utils.JSON(c, http.StatusForbidden, false, "access denied: you do not own this course", nil, nil)
+		default:
+			return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete course", nil, err.Error())
+		}
 	}
 	return utils.JSON(c, http.StatusOK, true, "course deleted successfully", map[string]string{"id": id}, nil)
-}
-
-// GET /api/courses/:id/study
-// @Summary ReadStudyController
-// @Description ReadStudyController for Courses
-// @Tags Courses
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Success 200 {object} utils.SwaggerResponse[courses.CourseStudyResponse]
-// @Router /api/v1/courses/{id}/study [get]
-func (m *CoursesModule) ReadStudyController(c *fiber.Ctx) error {
-	userID := utils.GetUserID(c)
-	if !m.Enrollments.IsEnrolledRepository(userID, c.Params("id")) {
-		return utils.JSON(c, http.StatusForbidden, false, "not enrolled in this course", nil, nil)
-	}
-	resp, err := m.ReadStudyMetadataService(c.Params("id"), userID)
-	if err != nil {
-		if err.Error() == "not enrolled" {
-			return utils.JSON(c, http.StatusForbidden, false, "not enrolled in this course", nil, nil)
-		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch study page", nil, err.Error())
-	}
-	return utils.JSON(c, http.StatusOK, true, "study page fetched successfully", resp, nil)
-}
-
-// GET /api/courses/enrolled — enrolled courses
-// @Summary EnrolledController
-// @Description EnrolledController for Courses
-// @Tags Courses
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerResponse[[]EnrolledCourseResponse]
-// @Router /api/v1/me/enrolled [get]
-func (m *CoursesModule) EnrolledController(c *fiber.Ctx) error {
-	list, err := m.EnrolledCoursesService(utils.GetUserID(c))
-	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch enrolled courses", nil, err.Error())
-	}
-	return utils.JSON(c, http.StatusOK, true, "enrolled courses fetched successfully", list, nil)
 }

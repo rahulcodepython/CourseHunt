@@ -1,29 +1,41 @@
 package transactions
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"log"
+	"math"
 )
 
-func (m *TransactionsModule) InitiateService(userID string, req InitiateTransactionRequest) (*InitiateTransactionResponse, error) {
-	amount, err := m.GetCoursePriceRepository(req.CourseID)
+const (
+	// minRazorpayAmountPaise is Razorpay's minimum chargeable order amount (₹1).
+	minRazorpayAmountPaise int64 = 100
+)
+
+func (m *TransactionsModule) InitiateService(ctx context.Context, userID string, req InitiateTransactionRequest) (*InitiateTransactionResponse, error) {
+	amount, err := m.GetCoursePriceRepository(ctx, req.CourseID)
 	if err != nil {
 		return nil, fmt.Errorf("course not found")
 	}
-	var couponID *string
 
+	var couponID *string
 	if req.CouponCode != nil && *req.CouponCode != "" {
-		check := m.Coupons.CheckService(*req.CouponCode, req.CourseID)
+		check := m.Coupons.CheckCoupon(*req.CouponCode, req.CourseID)
 		if !check.Valid {
 			reason := "invalid coupon"
 			if check.Reason != nil {
 				reason = *check.Reason
 			}
-			return nil, fmt.Errorf(reason)
+			return nil, errors.New(reason)
 		}
-		coupon, _ := m.Coupons.ReadByCodeRepository(*req.CouponCode)
+		coupon, err := m.Coupons.ReadByCodeRepository(*req.CouponCode)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load coupon: %w", err)
+		}
 		if coupon != nil {
 			discount := amount * check.DiscountPercent / 100
-			amount = amount - discount
+			amount -= discount
 			if amount < 0 {
 				amount = 0
 			}
@@ -31,25 +43,28 @@ func (m *TransactionsModule) InitiateService(userID string, req InitiateTransact
 		}
 	}
 
-	// Create Razorpay order (amount in paise)
-	amountPaise := int64(amount * 100)
-	if amountPaise < 100 {
-		amountPaise = 100 // Razorpay minimum
+	amountPaise := int64(math.Round(amount * 100))
+	if amountPaise < minRazorpayAmountPaise {
+		amountPaise = minRazorpayAmountPaise
 	}
 
-	// Create pending transaction first to get a unique record receipt ID
-	tx, err := m.CreateRepository(userID, req.CourseID, couponID, "", amount)
+	// Create pending transaction first so we have an id to attach to the
+	// Razorpay order as a reference.
+	tx, err := m.CreateRepository(ctx, userID, req.CourseID, couponID, "", amount)
 	if err != nil {
 		return nil, err
 	}
 
 	order, err := m.Razorpay.CreateOrder(amountPaise, "INR", tx.ID)
 	if err != nil {
+		// Don't leave the row stuck in "pending" forever with no order id.
+		if markErr := m.MarkOrderCreationFailedRepository(ctx, tx.ID); markErr != nil {
+			log.Printf("transactions: failed to mark tx %s as failed after order-create error: %v", tx.ID, markErr)
+		}
 		return nil, fmt.Errorf("failed to create payment order: %w", err)
 	}
 
-	// OPTIMIZATION: Use a repository update pattern instead of leaking raw SQL m.DB.Exec into the service layer
-	if _, err := m.DB.Exec(`UPDATE transactions SET razorpay_order_id = $1 WHERE id = $2`, order.ID, tx.ID); err != nil {
+	if err := m.UpdateRazorpayOrderIDRepository(ctx, tx.ID, order.ID); err != nil {
 		return nil, fmt.Errorf("failed to update transaction order id: %w", err)
 	}
 
@@ -62,48 +77,67 @@ func (m *TransactionsModule) InitiateService(userID string, req InitiateTransact
 	}, nil
 }
 
-// HandleWebhook processes Razorpay webhook events with idempotency.
-func (m *TransactionsModule) HandleWebhookService(rawBody []byte, signature string, payload WebhookPayload) error {
+func (m *TransactionsModule) HandleWebhookService(ctx context.Context, rawBody []byte, signature string, payload WebhookPayload) error {
 	if !m.Razorpay.VerifyWebhookSignature(rawBody, signature) {
 		return fmt.Errorf("invalid signature")
 	}
 
-	// Idempotency check
-	if m.WebhookEventExistsRepository(payload.EventID) {
+	processed, err := m.WebhookEventExistsRepository(ctx, payload.EventID)
+	if err != nil {
+		// A DB error here must NOT be treated as "not seen yet" - that risks
+		// double-processing a payment (double enrollment, double coupon usage)
+		// during a DB blip. Fail loud so Razorpay retries.
+		return fmt.Errorf("failed to check webhook event: %w", err)
+	}
+	if processed {
 		return nil
 	}
 
-	if err := m.StoreWebhookEventRepository(payload.EventID, payload.Event); err != nil {
+	// Recorded as unprocessed until the business-logic side effects below
+	// succeed. ON CONFLICT DO NOTHING makes this safe to re-run on retry.
+	if err := m.StoreWebhookEventRepository(ctx, payload.EventID, payload.Event); err != nil {
 		return fmt.Errorf("failed to log webhook event: %w", err)
 	}
 
-	tx, err := m.FindByRazorpayOrderIDRepository(payload.OrderID)
+	tx, err := m.FindByRazorpayOrderIDRepository(ctx, payload.OrderID)
 	if err != nil {
-		return fmt.Errorf("transaction not found for order %s", payload.OrderID)
+		return fmt.Errorf("transaction not found for order %s: %w", payload.OrderID, err)
 	}
 
 	switch payload.Event {
 	case "payment.captured":
-		if err := m.MarkSuccessRepository(tx.ID, payload.PaymentID); err != nil {
-			return err
+		if err := m.MarkSuccessRepository(ctx, tx.ID, payload.PaymentID); err != nil {
+			return fmt.Errorf("failed to mark transaction success: %w", err)
 		}
-		// Register coupon usage
+
+		// NOTE: Coupons/Enrollments live in separate modules with their own
+		// DB handles, so this can't be wrapped in a single sqlx.Tx without
+		// those repositories accepting a shared transaction. Errors are
+		// surfaced (not silently dropped) so the webhook fails and Razorpay
+		// retries, rather than looking successful while enrollment is missing.
 		if tx.Coupon.ID != "" && tx.User.ID != "" && tx.Course.ID != "" {
-			m.Coupons.RecordUsageRepository(tx.Coupon.ID, tx.User.ID, tx.Course.ID)
+			if err := m.Coupons.RecordUsageRepository(tx.Coupon.ID, tx.User.ID, tx.Course.ID); err != nil {
+				return fmt.Errorf("failed to record coupon usage for tx %s: %w", tx.ID, err)
+			}
 		}
-		// Enroll user
 		if tx.User.ID != "" && tx.Course.ID != "" {
-			m.Enrollments.EnrollRepository(tx.User.ID, tx.Course.ID)
+			if err := m.Enrollments.EnrollRepository(tx.User.ID, tx.Course.ID); err != nil {
+				return fmt.Errorf("failed to enroll user for tx %s: %w", tx.ID, err)
+			}
 		}
+
 	case "payment.failed":
-		// FIX: Captured and returned the execution error instead of discarding it silently
-		if err := m.MarkFailedRepository(tx.ID, &payload.ErrorDescription); err != nil {
-			return err
+		if err := m.MarkFailedRepository(ctx, tx.ID, &payload.ErrorDescription); err != nil {
+			return fmt.Errorf("failed to mark transaction failed: %w", err)
 		}
 	}
-	return nil
-}
 
-func (m *TransactionsModule) ListService(page, limit int, userID string, tutorID string) ([]Transaction, int, error) {
-	return m.ListRepository(page, limit, userID, tutorID)
+	if err := m.MarkWebhookEventProcessedRepository(ctx, payload.EventID); err != nil {
+		// Side effects already succeeded; log rather than fail, since
+		// returning an error here would trigger a needless retry that
+		// re-attempts (idempotent) enrollment/status updates.
+		log.Printf("transactions: failed to mark webhook event %s processed: %v", payload.EventID, err)
+	}
+
+	return nil
 }

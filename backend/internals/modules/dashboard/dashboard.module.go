@@ -1,13 +1,13 @@
 package dashboard
 
 import (
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 )
 
 type DashboardModule struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
-func NewDashboardModule(db *sql.DB) *DashboardModule {
+func NewDashboardModule(db *sqlx.DB) *DashboardModule {
 	return &DashboardModule{DB: db}
 }

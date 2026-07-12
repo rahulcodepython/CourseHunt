@@ -1,33 +1,19 @@
 package coupons
 
 import (
-	"database/sql"
+	"errors"
 	"time"
 )
 
-func (m *CouponsModule) ListService(page, limit int) ([]Coupon, int, error) {
-	return m.ListRepository(page, limit)
-}
-func (m *CouponsModule) CreateService(createdBy string, req CreateCouponRequest) (*Coupon, error) {
-	return m.CreateRepository(createdBy, req)
-}
-func (m *CouponsModule) UpdateService(id string, req UpdateCouponRequest) (*Coupon, error) {
-	return m.UpdateRepository(id, req)
-}
-func (m *CouponsModule) DeleteService(id string) (string, error) {
-	return m.DeleteRepository(id)
-}
-func (m *CouponsModule) CheckService(code, courseID string) CouponCheckResponse {
+func (m *CouponsModule) CheckCoupon(code, courseID string) CouponCheckResponse {
 	c, err := m.ReadByCodeRepository(code)
 	reason := func(s string) *string { return &s }
 
-	if err == sql.ErrNoRows {
-		r := "not_found"
-		return CouponCheckResponse{Valid: false, Reason: &r}
-	}
 	if err != nil {
-		r := "error"
-		return CouponCheckResponse{Valid: false, Reason: &r}
+		if errors.Is(err, ErrCouponNotFound) {
+			return CouponCheckResponse{Valid: false, Reason: reason("not_found")}
+		}
+		return CouponCheckResponse{Valid: false, Reason: reason("error")}
 	}
 	if !c.IsActive {
 		return CouponCheckResponse{Valid: false, DiscountPercent: c.DiscountPercent, Reason: reason("inactive")}

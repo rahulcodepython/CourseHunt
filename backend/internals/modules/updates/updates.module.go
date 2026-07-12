@@ -1,13 +1,13 @@
 package updates
 
 import (
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 )
 
 type UpdatesModule struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
-func NewUpdatesModule(db *sql.DB) *UpdatesModule {
+func NewUpdatesModule(db *sqlx.DB) *UpdatesModule {
 	return &UpdatesModule{DB: db}
 }

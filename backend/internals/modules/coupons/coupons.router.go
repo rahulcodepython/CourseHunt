@@ -7,12 +7,12 @@ import (
 )
 
 func (m *CouponsModule) Routes(protected fiber.Router) {
-	coupons := protected.Group("/coupons")
-	coupons.Get("/check", m.CheckController)
+	protected.Get("/coupons/check", m.CheckController)
 
 	// Admin actions
-	coupons.Get("", middlewares.PermissionGuard("coupons:read"), m.ListController)
-	coupons.Post("", middlewares.PermissionGuard("coupons:create"), m.CreateController)
-	coupons.Patch("/:id", middlewares.PermissionGuard("coupons:update"), m.UpdateController)
-	coupons.Delete("/:id", middlewares.PermissionGuard("coupons:delete"), m.DeleteController)
+	coupons := protected.Group("/coupons", middlewares.PermissionGuard("coupons:manage"))
+	coupons.Get("", m.ListController)
+	coupons.Post("", m.CreateController)
+	coupons.Patch("/:id", m.UpdateController)
+	coupons.Delete("/:id", m.DeleteController)
 }

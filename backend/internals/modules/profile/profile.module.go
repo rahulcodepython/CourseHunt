@@ -1,18 +1,17 @@
 package profile
 
 import (
-	"database/sql"
-
 	"coursehunt-backend/internals/modules/users"
+
+	"github.com/jmoiron/sqlx"
 )
 
-// ProfileModule depends on users package for UserProfile and TutorProfile types.
 type ProfileModule struct {
-	DB    *sql.DB
+	DB    *sqlx.DB
 	Users *users.UsersModule
 }
 
-func NewProfileModule(db *sql.DB) *ProfileModule {
+func NewProfileModule(db *sqlx.DB) *ProfileModule {
 	return &ProfileModule{
 		DB:    db,
 		Users: users.NewUsersModule(db),

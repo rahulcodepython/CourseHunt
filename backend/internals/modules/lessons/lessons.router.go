@@ -7,20 +7,21 @@ import (
 )
 
 func (m *LessonsModule) Routes(protected fiber.Router) {
-	lessons := protected.Group("/lessons")
-	lessons.Get("/chapter/:chapterID", middlewares.PermissionGuard("courses:update"), m.ListController)
-	lessons.Post("/chapter/:chapterID", middlewares.PermissionGuard("courses:update"), m.CreateController)
-	lessons.Patch("/course/:courseID/:id", middlewares.PermissionGuard("courses:update"), m.UpdateController)
-	lessons.Delete("/course/:courseID/:id", middlewares.PermissionGuard("courses:update"), m.DeleteController)
+	studentLessonOperation := protected.Group("/lessons", middlewares.PermissionGuard("courses:study"))
+	studentLessonOperation.Get("/:id/content", m.ReadContentController)
+	studentLessonOperation.Post("/:id/complete", m.UpdateCompleteController)
 
-	lessons.Post("/course/:courseID/:id/video", middlewares.PermissionGuard("courses:update"), m.UpsertVideoContentController)
-	lessons.Post("/course/:courseID/:id/document", middlewares.PermissionGuard("courses:update"), m.UpsertDocumentContentController)
+	lessons := protected.Group("/lessons", middlewares.PermissionGuard("courses:manage"))
+	lessons.Get("", m.ListController)
+	lessons.Post("", m.CreateController)
+	lessons.Patch("/:id", m.UpdateController)
+	lessons.Delete("/:id", m.DeleteController)
 
-	lessons.Get("/:id/content", m.ReadContentController)
-	lessons.Post("/:id/complete", m.UpdateCompleteController)
+	lessons.Post("/:id/video", m.UpsertVideoContentController)
+	lessons.Post("/:id/document", m.UpsertDocumentContentController)
 
-	lessons.Post("/course/:courseID/:id/resources", middlewares.PermissionGuard("courses:update"), m.CreateResourceController)
-	lessons.Delete("/course/:courseID/resources/:resourceID", middlewares.PermissionGuard("courses:update"), m.DeleteResourceController)
+	lessons.Post("/:id/resources", m.CreateResourceController)
+	lessons.Delete("/:id/resources/:resourceID", m.DeleteResourceController)
 
-	lessons.Get("/:id/signed-url", middlewares.PermissionGuard("media:upload"), m.GetSignedURLController)
+	lessons.Get("/:id/signed-url", m.GetSignedURLController)
 }

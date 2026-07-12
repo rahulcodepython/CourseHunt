@@ -16,7 +16,7 @@ import (
 // @Success 200 {object} utils.SwaggerResponse[UserDashboard]
 // @Router /api/v1/dashboard/user [get]
 func (m *DashboardModule) UserDashboardController(ctx *fiber.Ctx) error {
-	d, err := m.UserDashboardService(utils.GetUserID(ctx))
+	d, err := m.UserDashboardRepository(utils.GetUserID(ctx))
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch user dashboard", nil, err.Error())
 	}
@@ -31,7 +31,7 @@ func (m *DashboardModule) UserDashboardController(ctx *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[TutorDashboard]
 // @Router /api/v1/dashboard/tutor [get]
 func (m *DashboardModule) TutorDashboardController(ctx *fiber.Ctx) error {
-	d, err := m.TutorDashboardService(utils.GetUserID(ctx))
+	d, err := m.TutorDashboardRepository(utils.GetUserID(ctx))
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch tutor dashboard", nil, err.Error())
 	}
@@ -46,7 +46,7 @@ func (m *DashboardModule) TutorDashboardController(ctx *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[AdminDashboard]
 // @Router /api/v1/dashboard/admin [get]
 func (m *DashboardModule) AdminDashboardController(ctx *fiber.Ctx) error {
-	d, err := m.AdminDashboardService()
+	d, err := m.AdminDashboardRepository()
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch admin dashboard", nil, err.Error())
 	}

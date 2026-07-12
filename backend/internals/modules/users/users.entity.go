@@ -3,36 +3,34 @@ package users
 import "time"
 
 type User struct {
-	ID            string    `json:"id"`
-	Name          string    `json:"name"`
-	Email         string    `json:"email"`
-	EmailVerified bool      `json:"emailVerified"`
-	Image         *string   `json:"image"`
-	Banned        bool      `json:"banned"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+	ID            string    `json:"id" db:"id"`
+	Name          string    `json:"name" db:"name"`
+	Email         string    `json:"email" db:"email"`
+	EmailVerified bool      `json:"emailVerified" db:"emailVerified"`
+	Image         *string   `json:"image" db:"image"`
+	Banned        bool      `json:"banned" db:"banned"`
+	CreatedAt     time.Time `json:"createdAt" db:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt" db:"updatedAt"`
 }
 
 type Role struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID   int    `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
 }
 
 type AssignRoleRequest struct {
 	RoleID int `json:"role_id" validate:"required,min=1"`
 }
 
-// ── User List Response ──
-
 type UserListResponse struct {
-	ID            string    `json:"id"`
-	Name          string    `json:"name"`
-	Email         string    `json:"email"`
-	Image         *string   `json:"image"`
-	EmailVerified bool      `json:"emailVerified"`
-	Banned        bool      `json:"banned"`
-	CreatedAt     time.Time `json:"createdAt"`
-	Roles         []Role    `json:"roles"`
+	ID            string    `json:"id" db:"id"`
+	Name          string    `json:"name" db:"name"`
+	Email         string    `json:"email" db:"email"`
+	Image         *string   `json:"image" db:"image"`
+	EmailVerified bool      `json:"emailVerified" db:"emailVerified"`
+	Banned        bool      `json:"banned" db:"banned"`
+	CreatedAt     time.Time `json:"createdAt" db:"createdAt"`
+	Roles         []Role    `json:"roles" db:"-"`
 }
 
 type RoleAssignmentResponse struct {

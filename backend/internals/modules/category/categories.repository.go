@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 )
 
+// ListRepository remains highly optimized by leveraging Postgres JSON functions,
+// but now reads into a string/byte slice via c.DB.Get.
 func (c *CategoryModule) ListRepository() ([]Category, error) {
 	var jsonBytes []byte
-	err := c.DB.QueryRow(`
+	query := `
 		SELECT COALESCE(
 			json_agg(
 				json_build_object(
@@ -33,9 +35,10 @@ func (c *CategoryModule) ListRepository() ([]Category, error) {
 			), '[]'::json
 		)
 		FROM categories c
-		WHERE c.parent_id IS NULL
-	`).Scan(&jsonBytes)
-	if err != nil {
+		WHERE c.parent_id IS NULL`
+
+	// Automatically executes and maps the single column outcome to jsonBytes
+	if err := c.DB.Get(&jsonBytes, query); err != nil {
 		return nil, err
 	}
 
@@ -49,22 +52,40 @@ func (c *CategoryModule) ListRepository() ([]Category, error) {
 
 func (c *CategoryModule) CreateRepository(name string, parentID *string) (*Category, error) {
 	var cat Category
-	cat.Subcategories = []Category{}
-	err := c.DB.QueryRow(`INSERT INTO categories (name, parent_id) VALUES ($1, $2) RETURNING id, parent_id, name, created_at`, name, parentID).
-		Scan(&cat.ID, &cat.ParentID, &cat.Name, &cat.CreatedAt)
-	return &cat, err
+	cat.Subcategories = []Category{} // Pre-initialize slice to avoid returning 'null' in future JSON operations
+
+	query := `INSERT INTO categories (name, parent_id)
+	          VALUES ($1, $2)
+	          RETURNING id, parent_id, name, created_at`
+
+	// Struct mapping eliminates manual .Scan calls
+	if err := c.DB.Get(&cat, query, name, parentID); err != nil {
+		return nil, err
+	}
+	return &cat, nil
 }
 
 func (c *CategoryModule) UpdateRepository(id, name string) (*Category, error) {
 	var cat Category
 	cat.Subcategories = []Category{}
-	err := c.DB.QueryRow(`UPDATE categories SET name = $1 WHERE id = $2 RETURNING id, parent_id, name, created_at`, name, id).
-		Scan(&cat.ID, &cat.ParentID, &cat.Name, &cat.CreatedAt)
-	return &cat, err
+
+	query := `UPDATE categories
+	          SET name = $1
+	          WHERE id = $2
+	          RETURNING id, parent_id, name, created_at`
+
+	if err := c.DB.Get(&cat, query, name, id); err != nil {
+		return nil, err
+	}
+	return &cat, nil
 }
 
 func (c *CategoryModule) DeleteRepository(id string) (string, error) {
 	var deletedID string
-	err := c.DB.QueryRow(`DELETE FROM categories WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
-	return deletedID, err
+	query := `DELETE FROM categories WHERE id = $1 RETURNING id`
+
+	if err := c.DB.Get(&deletedID, query, id); err != nil {
+		return "", err
+	}
+	return deletedID, nil
 }

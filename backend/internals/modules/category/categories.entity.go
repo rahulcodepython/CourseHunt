@@ -5,11 +5,11 @@ import (
 )
 
 type Category struct {
-	ID            string     `json:"id"`
-	ParentID      *string    `json:"parent_id,omitempty"`
-	Name          string     `json:"name"`
-	CreatedAt     time.Time  `json:"created_at"`
-	Subcategories []Category `json:"subcategories,omitempty"`
+	ID            string     `json:"id" db:"id"`
+	ParentID      *string    `json:"parent_id,omitempty" db:"parent_id"`
+	Name          string     `json:"name" db:"name"`
+	CreatedAt     time.Time  `json:"created_at" db:"created_at"`
+	Subcategories []Category `json:"subcategories,omitempty" db:"-"` // Ignore this field for flat SQL scans
 }
 
 // ── Categories ──

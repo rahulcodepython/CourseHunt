@@ -2,14 +2,15 @@ package chapters
 
 import (
 	"coursehunt-backend/internals/modules/courses"
-	"database/sql"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type ChaptersModule struct {
-	DB      *sql.DB
+	DB      *sqlx.DB
 	Courses *courses.CoursesModule
 }
 
-func NewChaptersModule(db *sql.DB, courses *courses.CoursesModule) *ChaptersModule {
+func NewChaptersModule(db *sqlx.DB, courses *courses.CoursesModule) *ChaptersModule {
 	return &ChaptersModule{DB: db, Courses: courses}
 }

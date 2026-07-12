@@ -1,13 +1,16 @@
 package coupons
 
 import (
-	"database/sql"
+	"coursehunt-backend/internals/modules/courses"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type CouponsModule struct {
-	DB *sql.DB
+	DB      *sqlx.DB
+	Courses *courses.CoursesModule
 }
 
-func NewCouponsModule(db *sql.DB) *CouponsModule {
-	return &CouponsModule{DB: db}
+func NewCouponsModule(db *sqlx.DB, courses *courses.CoursesModule) *CouponsModule {
+	return &CouponsModule{DB: db, Courses: courses}
 }

@@ -1,125 +1,215 @@
 package lessons
 
 import (
-	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
-
-	"coursehunt-backend/internals/modules/quiz"
 )
 
-func (m *LessonsModule) ListRepository(chapterID string) ([]Lesson, error) {
-	rows, err := m.DB.Query(`
-		SELECT id, chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds, created_at, updated_at
-		FROM lessons WHERE chapter_id = $1 ORDER BY lesson_no`, chapterID)
+var (
+	ErrNotEnrolled      = errors.New("access denied: not enrolled in course")
+	ErrLessonNotFound   = errors.New("lesson not found")
+	ErrChapterNotFound  = errors.New("chapter not found")
+	ErrResourceNotFound = errors.New("resource not found")
+	ErrAccessDenied     = errors.New("access denied")
+)
+
+func (m *LessonsModule) ListRepository(chapterID, tutorID string) ([]Lesson, error) {
+	var result struct {
+		ChapterExists bool            `db:"chapter_exists"`
+		IsOwner       bool            `db:"is_owner"`
+		Data          json.RawMessage `db:"data"`
+	}
+
+	query := `
+		WITH chapter_auth AS (
+			SELECT c.tutor_id
+			FROM chapters ch
+			JOIN courses c ON c.id = ch.course_id
+			WHERE ch.id = $1
+		),
+		lessons_data AS (
+			SELECT l.id, l.chapter_id, l.lesson_no, l.title, l.lesson_type, l.short_description, l.preview_video_url, l.duration_seconds, l.created_at, l.updated_at
+			FROM lessons l
+			CROSS JOIN chapter_auth ca
+			WHERE l.chapter_id = $1 AND ca.tutor_id = $2
+			ORDER BY l.lesson_no
+		)
+		SELECT 
+			EXISTS(SELECT 1 FROM chapter_auth) AS chapter_exists,
+			EXISTS(SELECT 1 FROM chapter_auth WHERE tutor_id = $2) AS is_owner,
+			COALESCE((SELECT json_agg(lessons_data) FROM lessons_data), '[]'::json) AS data
+	`
+	err := m.DB.Get(&result, query, chapterID, tutorID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	switch {
+	case !result.ChapterExists:
+		return nil, ErrChapterNotFound
+	case !result.IsOwner:
+		return nil, ErrAccessDenied
+	}
+
 	var lessons []Lesson
-	for rows.Next() {
-		var l Lesson
-		if err := rows.Scan(&l.ID, &l.ChapterID, &l.LessonNo, &l.Title, &l.LessonType, &l.ShortDescription, &l.PreviewVideoURL, &l.DurationSeconds, &l.CreatedAt, &l.UpdatedAt); err != nil {
-			return nil, err
-		}
-		lessons = append(lessons, l)
+	if err := json.Unmarshal(result.Data, &lessons); err != nil {
+		return nil, err
 	}
-	if lessons == nil {
-		lessons = []Lesson{}
-	}
-	return lessons, rows.Err()
+	return lessons, nil
 }
 
-func (m *LessonsModule) ReadContentAggregatedRepository(lessonID, userID string) (interface{}, error) {
-	var lessonType string
-	var videoContentID, videoURL, writtenContent, documentContentID, documentContent sql.NullString
-	var quizMetadataJSON []byte
+func (m *LessonsModule) ReadContentAggregatedRepository(lessonID, userID string) (*AggregatedLessonContentResponse, error) {
+	var result struct {
+		LessonExists bool             `db:"lesson_exists"`
+		IsEnrolled   bool             `db:"is_enrolled"`
+		ContentData  *json.RawMessage `db:"content_data"`
+	}
 
 	query := `
+		WITH lesson_info AS (
+			SELECT l.id AS lesson_id, l.lesson_type, ch.course_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			WHERE l.id = $1
+		),
+		enrollment_auth AS (
+			SELECT EXISTS (
+				SELECT 1 FROM enrollments e
+				JOIN lesson_info li ON e.course_id = li.course_id
+				WHERE e.user_id = $2 AND e.revoked = false
+			) AS is_enrolled
+		),
+		updated_enrollment AS (
+			UPDATE enrollments e
+			SET last_accessed_lesson_id = $1
+			FROM lesson_info li, enrollment_auth ea
+			WHERE e.course_id = li.course_id AND e.user_id = $2 AND e.revoked = false AND ea.is_enrolled = true
+			RETURNING e.id
+		),
+		content_cte AS (
+			SELECT 
+				li.lesson_type,
+				CASE 
+					WHEN li.lesson_type = 'video' THEN (
+						SELECT json_build_object(
+							'id', vc.id,
+							'video_url', vc.video_url,
+							'written_content', vc.written_content
+						)
+						FROM lesson_video_content vc
+						WHERE vc.lesson_id = li.lesson_id
+					)
+					ELSE NULL
+				END AS video_content,
+				CASE 
+					WHEN li.lesson_type = 'document' THEN (
+						SELECT json_build_object(
+							'id', dc.id,
+							'content', dc.content
+						)
+						FROM lesson_document_content dc
+						WHERE dc.lesson_id = li.lesson_id
+					)
+					ELSE NULL
+				END AS document_content,
+				CASE 
+					WHEN li.lesson_type = 'quiz' THEN (
+						SELECT json_build_object(
+							'id', qm.id,
+							'lesson_id', qm.lesson_id,
+							'title', qm.title,
+							'time_limit_seconds', qm.time_limit_seconds,
+							'total_questions', qm.total_questions,
+							'pass_score_percent', qm.pass_score_percent
+						)
+						FROM quiz_metadata qm
+						WHERE qm.lesson_id = li.lesson_id
+					)
+					ELSE NULL
+				END AS quiz_content
+			FROM lesson_info li
+			CROSS JOIN enrollment_auth ea
+			WHERE ea.is_enrolled = true
+		)
 		SELECT 
-			l.lesson_type,
-			vc.id AS video_content_id, vc.video_url, vc.written_content,
-			dc.id AS document_content_id, dc.content AS document_content,
-			CASE WHEN qm.id IS NOT NULL THEN json_build_object(
-				'id', qm.id,
-				'lesson_id', qm.lesson_id,
-				'title', qm.title,
-				'time_limit_seconds', qm.time_limit_seconds,
-				'total_questions', qm.total_questions,
-				'pass_score_percent', qm.pass_score_percent
-			) ELSE NULL END AS quiz_metadata
-		FROM lessons l
-		LEFT JOIN lesson_video_content vc ON vc.lesson_id = l.id AND l.lesson_type = 'video'
-		LEFT JOIN lesson_document_content dc ON dc.lesson_id = l.id AND l.lesson_type = 'document'
-		LEFT JOIN quiz_metadata qm ON qm.lesson_id = l.id AND l.lesson_type = 'quiz'
-		WHERE l.id = $1
+			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
+			COALESCE((SELECT is_enrolled FROM enrollment_auth), false) AS is_enrolled,
+			(SELECT row_to_json(content_cte.*) FROM content_cte) AS content_data
 	`
-	err := m.DB.QueryRow(query, lessonID).Scan(
-		&lessonType,
-		&videoContentID, &videoURL, &writtenContent,
-		&documentContentID, &documentContent,
-		&quizMetadataJSON,
+	err := m.DB.Get(&result, query, lessonID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case !result.LessonExists:
+		return nil, ErrLessonNotFound
+	case !result.IsEnrolled:
+		return nil, ErrNotEnrolled
+	case result.ContentData == nil:
+		return nil, errors.New("failed to retrieve content")
+	}
+
+	var resp AggregatedLessonContentResponse
+	if err := json.Unmarshal(*result.ContentData, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func (m *LessonsModule) CreateRepository(tutorID, chapterID string, req CreateLessonRequest) (*Lesson, error) {
+	var result struct {
+		CourseTutorID *string          `db:"course_tutor_id"`
+		CourseID      *string          `db:"course_id"`
+		InsertedData  *json.RawMessage `db:"inserted_data"`
+	}
+
+	query := `
+		WITH auth AS (
+			SELECT c.id AS course_id, c.tutor_id
+			FROM chapters ch
+			JOIN courses c ON c.id = ch.course_id
+			WHERE ch.id = $1
+		),
+		inserted AS (
+			INSERT INTO lessons (chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds)
+			SELECT $1, $2, $3, $4, $5, $6, $7
+			FROM auth
+			WHERE auth.tutor_id = $8
+			RETURNING *
+		)
+		SELECT 
+			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			(SELECT id FROM auth) AS course_id,
+			row_to_json(inserted.*) AS inserted_data
+		FROM (SELECT 1) dummy
+		LEFT JOIN inserted ON true
+	`
+	err := m.DB.Get(&result, query,
+		chapterID, req.LessonNo, req.Title, req.LessonType, req.ShortDescription, req.PreviewVideoURL, req.DurationSeconds,
+		tutorID,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	switch lessonType {
-	case "video":
-		var vc LessonVideoContent
-		if videoContentID.Valid {
-			vc.ID = videoContentID.String
-		}
-		if videoURL.Valid {
-			vc.VideoURL = videoURL.String
-		}
-		if writtenContent.Valid {
-			vc.WrittenContent = &writtenContent.String
-		}
-		return &LessonContentResponse[LessonVideoContent]{
-			Content: &vc,
-		}, nil
-	case "document":
-		var dc LessonDocumentContent
-		if documentContentID.Valid {
-			dc.ID = documentContentID.String
-		}
-		if documentContent.Valid {
-			dc.Content = documentContent.String
-		}
-		return &LessonContentResponse[LessonDocumentContent]{
-			Content: &dc,
-		}, nil
-	case "quiz":
-		if quizMetadataJSON != nil {
-			var qm quiz.QuizMetadata
-			if err := json.Unmarshal(quizMetadataJSON, &qm); err == nil {
-				return &LessonContentResponse[quiz.QuizMetadata]{
-					Content: &qm,
-				}, nil
-			}
-		}
-		return &LessonContentResponse[quiz.QuizMetadata]{
-			Content: nil,
-		}, nil
-	default:
-		return nil, fmt.Errorf("unknown lesson type: %s", lessonType)
+	switch {
+	case result.CourseTutorID == nil:
+		return nil, ErrChapterNotFound
+	case result.InsertedData == nil:
+		return nil, ErrAccessDenied
 	}
-}
 
-func (m *LessonsModule) CreateRepository(chapterID string, req CreateLessonRequest) (*Lesson, error) {
 	var l Lesson
-	err := m.DB.QueryRow(`
-		INSERT INTO lessons (chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds, created_at, updated_at`,
-		chapterID, req.LessonNo, req.Title, req.LessonType, req.ShortDescription, req.PreviewVideoURL, req.DurationSeconds,
-	).Scan(&l.ID, &l.ChapterID, &l.LessonNo, &l.Title, &l.LessonType, &l.ShortDescription, &l.PreviewVideoURL, &l.DurationSeconds, &l.CreatedAt, &l.UpdatedAt)
-	return &l, err
+	if err := json.Unmarshal(*result.InsertedData, &l); err != nil {
+		return nil, err
+	}
+	return &l, nil
 }
 
-func (m *LessonsModule) UpdateRepository(id string, req UpdateLessonRequest) (*Lesson, error) {
+func (m *LessonsModule) UpdateRepository(id, tutorID string, req UpdateLessonRequest) (*Lesson, error) {
 	setClauses := []string{"updated_at = CURRENT_TIMESTAMP"}
 	var args []interface{}
 	argIdx := 1
@@ -149,106 +239,321 @@ func (m *LessonsModule) UpdateRepository(id string, req UpdateLessonRequest) (*L
 		args = append(args, *req.DurationSeconds)
 		argIdx++
 	}
-	args = append(args, id)
-	query := fmt.Sprintf(
-		"UPDATE lessons SET %s WHERE id = $%d RETURNING id, chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds, created_at, updated_at",
-		strings.Join(setClauses, ", "), argIdx,
-	)
-	var l Lesson
-	err := m.DB.QueryRow(query, args...).Scan(
-		&l.ID, &l.ChapterID, &l.LessonNo, &l.Title, &l.LessonType,
-		&l.ShortDescription, &l.PreviewVideoURL, &l.DurationSeconds, &l.CreatedAt, &l.UpdatedAt,
-	)
-	return &l, err
-}
 
-func (m *LessonsModule) DeleteRepository(id string) (string, error) {
-	var deletedID string
-	err := m.DB.QueryRow(`DELETE FROM lessons WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
-	return deletedID, err
-}
+	tutorArgIdx := argIdx
+	idArgIdx := argIdx + 1
+	args = append(args, tutorID, id)
 
-// ── Video Content ─────────────────────────────────────────────────────────────
+	query := fmt.Sprintf(`
+		WITH auth AS (
+			SELECT c.tutor_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE l.id = $%d
+		),
+		updated AS (
+			UPDATE lessons SET %s 
+			WHERE id = $%d AND EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $%d)
+			RETURNING *
+		)
+		SELECT 
+			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			row_to_json(updated.*) AS updated_data
+		FROM (SELECT 1) dummy
+		LEFT JOIN updated ON true
+	`, idArgIdx, strings.Join(setClauses, ", "), idArgIdx, tutorArgIdx)
 
-func (m *LessonsModule) UpsertVideoContentRepository(lessonID string, req UpsertVideoContentRequest) (*LessonVideoContent, error) {
-	var vc LessonVideoContent
-	err := m.DB.QueryRow(`
-		INSERT INTO lesson_video_content (lesson_id, video_url, written_content)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (lesson_id) DO UPDATE SET video_url = $2, written_content = $3
-		RETURNING id, video_url, written_content`,
-		lessonID, req.VideoURL, req.WrittenContent,
-	).Scan(&vc.ID, &vc.VideoURL, &vc.WrittenContent)
-	return &vc, err
-}
+	var result struct {
+		CourseTutorID *string          `db:"course_tutor_id"`
+		UpdatedData   *json.RawMessage `db:"updated_data"`
+	}
 
-// ── Document Content ──────────────────────────────────────────────────────────
-
-func (m *LessonsModule) UpsertDocumentContentRepository(lessonID, content string) (*LessonDocumentContent, error) {
-	var dc LessonDocumentContent
-	err := m.DB.QueryRow(`
-		INSERT INTO lesson_document_content (lesson_id, content)
-		VALUES ($1, $2)
-		ON CONFLICT (lesson_id) DO UPDATE SET content = $2
-		RETURNING id, content`,
-		lessonID, content,
-	).Scan(&dc.ID, &dc.Content)
-	return &dc, err
-}
-
-// ── Resources ─────────────────────────────────────────────────────────────────
-
-func (m *LessonsModule) CreateResourceRepository(lessonID string, req AddResourceRequest) (*LessonResource, error) {
-	var res LessonResource
-	err := m.DB.QueryRow(`
-		INSERT INTO lesson_resources (lesson_id, title, file_url, file_type)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, title, file_url, file_type`,
-		lessonID, req.Title, req.FileURL, req.FileType,
-	).Scan(&res.ID, &res.Title, &res.FileURL, &res.FileType)
-	return &res, err
-}
-
-func (m *LessonsModule) ListResourcesRepository(lessonID string) ([]LessonResource, error) {
-	rows, err := m.DB.Query(`SELECT id, title, file_url, file_type FROM lesson_resources WHERE lesson_id = $1 ORDER BY id`, lessonID)
+	err := m.DB.Get(&result, query, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var resources []LessonResource
-	for rows.Next() {
-		var res LessonResource
-		rows.Scan(&res.ID, &res.Title, &res.FileURL, &res.FileType)
-		resources = append(resources, res)
+
+	switch {
+	case result.CourseTutorID == nil:
+		return nil, ErrLessonNotFound
+	case result.UpdatedData == nil:
+		return nil, ErrAccessDenied
 	}
-	if resources == nil {
-		resources = []LessonResource{}
+
+	var l Lesson
+	if err := json.Unmarshal(*result.UpdatedData, &l); err != nil {
+		return nil, err
 	}
-	return resources, rows.Err()
+	return &l, nil
 }
 
-func (m *LessonsModule) DeleteResourceRepository(id string) (string, error) {
-	var deletedID string
-	err := m.DB.QueryRow(`DELETE FROM lesson_resources WHERE id = $1 RETURNING id`, id).Scan(&deletedID)
-	return deletedID, err
+func (m *LessonsModule) DeleteRepository(id, tutorID string) (string, error) {
+	var result struct {
+		CourseTutorID *string `db:"course_tutor_id"`
+		DeletedID     *string `db:"deleted_id"`
+	}
+
+	query := `
+		WITH auth AS (
+			SELECT c.tutor_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE l.id = $1
+		),
+		deleted AS (
+			DELETE FROM lessons 
+			WHERE id = $1 AND EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $2)
+			RETURNING id
+		)
+		SELECT 
+			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			(SELECT id FROM deleted) AS deleted_id
+	`
+	err := m.DB.Get(&result, query, id, tutorID)
+	if err != nil {
+		return "", err
+	}
+
+	switch {
+	case result.CourseTutorID == nil:
+		return "", ErrLessonNotFound
+	case result.DeletedID == nil:
+		return "", ErrAccessDenied
+	}
+
+	return *result.DeletedID, nil
 }
 
-func (m *LessonsModule) UpdateLastAccessed(userID, courseID, lessonID string) error {
-	_, err := m.DB.Exec(`UPDATE enrollments SET last_accessed_lesson_id = $1 WHERE user_id = $2 AND course_id = $3`, lessonID, userID, courseID)
-	return err
+// ── Video Content ──
+
+func (m *LessonsModule) UpsertVideoContentRepository(lessonID, tutorID string, req UpsertVideoContentRequest) (*LessonVideoContent, error) {
+	var result struct {
+		CourseTutorID *string          `db:"course_tutor_id"`
+		InsertedData  *json.RawMessage `db:"inserted_data"`
+	}
+
+	query := `
+		WITH auth AS (
+			SELECT c.tutor_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE l.id = $1
+		),
+		inserted AS (
+			INSERT INTO lesson_video_content (lesson_id, video_url, written_content)
+			SELECT $1, $2, $3
+			WHERE EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $4)
+			ON CONFLICT (lesson_id) DO UPDATE SET video_url = $2, written_content = $3
+			RETURNING id, video_url, written_content
+		)
+		SELECT 
+			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			row_to_json(inserted.*) AS inserted_data
+		FROM (SELECT 1) dummy
+		LEFT JOIN inserted ON true
+	`
+	err := m.DB.Get(&result, query, lessonID, req.VideoURL, req.WrittenContent, tutorID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case result.CourseTutorID == nil:
+		return nil, ErrLessonNotFound
+	case result.InsertedData == nil:
+		return nil, ErrAccessDenied
+	}
+
+	var vc LessonVideoContent
+	if err := json.Unmarshal(*result.InsertedData, &vc); err != nil {
+		return nil, err
+	}
+	return &vc, nil
 }
 
-func (m *LessonsModule) MarkLessonComplete(userID, lessonID, courseID string) error {
-	_, err := m.DB.Exec(`
-		INSERT INTO lesson_progress (user_id, lesson_id, course_id, completed, completed_at)
-		VALUES ($1, $2, $3, true, CURRENT_TIMESTAMP)
-		ON CONFLICT (user_id, lesson_id) DO UPDATE SET completed = true, completed_at = CURRENT_TIMESTAMP`,
-		userID, lessonID, courseID)
-	return err
+// ── Document Content ──
+
+func (m *LessonsModule) UpsertDocumentContentRepository(lessonID, tutorID, content string) (*LessonDocumentContent, error) {
+	var result struct {
+		CourseTutorID *string          `db:"course_tutor_id"`
+		InsertedData  *json.RawMessage `db:"inserted_data"`
+	}
+
+	query := `
+		WITH auth AS (
+			SELECT c.tutor_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE l.id = $1
+		),
+		inserted AS (
+			INSERT INTO lesson_document_content (lesson_id, content)
+			SELECT $1, $2
+			WHERE EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $3)
+			ON CONFLICT (lesson_id) DO UPDATE SET content = $2
+			RETURNING id, content
+		)
+		SELECT 
+			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			row_to_json(inserted.*) AS inserted_data
+		FROM (SELECT 1) dummy
+		LEFT JOIN inserted ON true
+	`
+	err := m.DB.Get(&result, query, lessonID, content, tutorID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case result.CourseTutorID == nil:
+		return nil, ErrLessonNotFound
+	case result.InsertedData == nil:
+		return nil, ErrAccessDenied
+	}
+
+	var dc LessonDocumentContent
+	if err := json.Unmarshal(*result.InsertedData, &dc); err != nil {
+		return nil, err
+	}
+	return &dc, nil
 }
 
-func (m *LessonsModule) GetCourseIDFromChapterID(chapterID string) (string, error) {
-	var courseID string
-	err := m.DB.QueryRow(`SELECT course_id FROM chapters WHERE id = $1`, chapterID).Scan(&courseID)
-	return courseID, err
+// ── Resources ──
+
+func (m *LessonsModule) CreateResourceRepository(lessonID, tutorID string, req AddResourceRequest) (*LessonResource, error) {
+	var result struct {
+		CourseTutorID *string          `db:"course_tutor_id"`
+		InsertedData  *json.RawMessage `db:"inserted_data"`
+	}
+
+	query := `
+		WITH auth AS (
+			SELECT c.tutor_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE l.id = $1
+		),
+		inserted AS (
+			INSERT INTO lesson_resources (lesson_id, title, file_url, file_type)
+			SELECT $1, $2, $3, $4
+			WHERE EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $5)
+			RETURNING id, title, file_url, file_type
+		)
+		SELECT 
+			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			row_to_json(inserted.*) AS inserted_data
+		FROM (SELECT 1) dummy
+		LEFT JOIN inserted ON true
+	`
+	err := m.DB.Get(&result, query, lessonID, req.Title, req.FileURL, req.FileType, tutorID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case result.CourseTutorID == nil:
+		return nil, ErrLessonNotFound
+	case result.InsertedData == nil:
+		return nil, ErrAccessDenied
+	}
+
+	var res LessonResource
+	if err := json.Unmarshal(*result.InsertedData, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (m *LessonsModule) DeleteResourceRepository(resourceID, tutorID string) (string, error) {
+	var result struct {
+		CourseTutorID *string `db:"course_tutor_id"`
+		DeletedID     *string `db:"deleted_id"`
+	}
+
+	query := `
+		WITH auth AS (
+			SELECT c.tutor_id
+			FROM lesson_resources lr
+			JOIN lessons l ON l.id = lr.lesson_id
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE lr.id = $1
+		),
+		deleted AS (
+			DELETE FROM lesson_resources
+			WHERE id = $1 AND EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $2)
+			RETURNING id
+		)
+		SELECT 
+			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			(SELECT id FROM deleted) AS deleted_id
+	`
+	err := m.DB.Get(&result, query, resourceID, tutorID)
+	if err != nil {
+		return "", err
+	}
+
+	switch {
+	case result.CourseTutorID == nil:
+		return "", ErrResourceNotFound
+	case result.DeletedID == nil:
+		return "", ErrAccessDenied
+	}
+
+	return *result.DeletedID, nil
+}
+
+func (m *LessonsModule) MarkLessonComplete(userID, lessonID string) error {
+	var result struct {
+		LessonExists bool `db:"lesson_exists"`
+		IsEnrolled   bool `db:"is_enrolled"`
+		Completed    bool `db:"completed"`
+	}
+
+	query := `
+		WITH lesson_info AS (
+			SELECT ch.course_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			WHERE l.id = $1
+		),
+		enrollment_auth AS (
+			SELECT EXISTS (
+				SELECT 1 FROM enrollments e
+				JOIN lesson_info li ON e.course_id = li.course_id
+				WHERE e.user_id = $2 AND e.revoked = false
+			) AS is_enrolled
+		),
+		inserted AS (
+			INSERT INTO lesson_progress (user_id, lesson_id, course_id, completed, completed_at)
+			SELECT $2, $1, li.course_id, true, CURRENT_TIMESTAMP
+			FROM lesson_info li
+			CROSS JOIN enrollment_auth ea
+			WHERE ea.is_enrolled = true
+			ON CONFLICT (user_id, lesson_id) DO UPDATE SET completed = true, completed_at = CURRENT_TIMESTAMP
+			RETURNING lesson_id
+		)
+		SELECT 
+			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
+			COALESCE((SELECT is_enrolled FROM enrollment_auth), false) AS is_enrolled,
+			EXISTS(SELECT 1 FROM inserted) AS completed
+	`
+	err := m.DB.Get(&result, query, lessonID, userID)
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case !result.LessonExists:
+		return ErrLessonNotFound
+	case !result.IsEnrolled:
+		return ErrNotEnrolled
+	}
+
+	return nil
 }

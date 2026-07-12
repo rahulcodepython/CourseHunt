@@ -1,13 +1,13 @@
 package users
 
 import (
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 )
 
 type UsersModule struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
-func NewUsersModule(db *sql.DB) *UsersModule {
+func NewUsersModule(db *sqlx.DB) *UsersModule {
 	return &UsersModule{DB: db}
 }

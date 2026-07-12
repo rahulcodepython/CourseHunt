@@ -16,7 +16,7 @@ func (m *DashboardModule) UserDashboardRepository(userID string) (*UserDashboard
 			'recent_courses', COALESCE((
 				SELECT json_agg(rc) FROM (
 					SELECT c.id, c.slug, c.title, c.image_url, e.completion_percent
-					FROM enrollments e 
+					FROM enrollments e
 					JOIN courses c ON c.id = e.course_id
 					WHERE e.user_id = $1 AND e.revoked = false
 					ORDER BY e.enrolled_at DESC LIMIT 5
@@ -25,16 +25,15 @@ func (m *DashboardModule) UserDashboardRepository(userID string) (*UserDashboard
 			'recent_certificates', COALESCE((
 				SELECT json_agg(cert_rows) FROM (
 					SELECT c.title AS course_title, cert.issued_at
-					FROM certificates cert 
+					FROM certificates cert
 					JOIN courses c ON c.id = cert.course_id
-					WHERE cert.user_id = $1 
+					WHERE cert.user_id = $1
 					ORDER BY cert.issued_at DESC LIMIT 5
 				) cert_rows
 			), '[]'::json)
 		)`
 
-	err := m.DB.QueryRow(query, userID).Scan(&jsonData)
-	if err != nil {
+	if err := m.DB.Get(&jsonData, query, userID); err != nil {
 		return nil, err
 	}
 
@@ -86,8 +85,7 @@ func (m *DashboardModule) TutorDashboardRepository(tutorID string) (*TutorDashbo
 			), '[]'::json)
 		)`
 
-	err := m.DB.QueryRow(query, tutorID).Scan(&jsonData)
-	if err != nil {
+	if err := m.DB.Get(&jsonData, query, tutorID); err != nil {
 		return nil, err
 	}
 
@@ -107,22 +105,22 @@ func (m *DashboardModule) AdminDashboardRepository() (*AdminDashboard, error) {
 		SELECT json_build_object(
 			'total_users', (SELECT COUNT(*) FROM "user"),
 			'total_tutors', (
-				SELECT COUNT(DISTINCT ur.user_id) 
-				FROM user_roles ur 
-				JOIN roles ro ON ro.id = ur.role_id 
+				SELECT COUNT(DISTINCT ur.user_id)
+				FROM user_roles ur
+				JOIN roles ro ON ro.id = ur.role_id
 				WHERE ro.name = 'tutor'
 			),
 			'total_courses', (SELECT COUNT(*) FROM courses),
 			'total_enrollments', (SELECT COUNT(*) FROM enrollments),
 			'total_revenue', COALESCE((SELECT SUM(amount) FROM transactions WHERE status = 'success'), 0.0),
 			'revenue_this_month', COALESCE((
-				SELECT SUM(amount) FROM transactions 
+				SELECT SUM(amount) FROM transactions
 				WHERE status = 'success' AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
 			), 0.0),
 			'recent_transactions', COALESCE((
 				SELECT json_agg(tx_rows) FROM (
-					SELECT id, user_id, course_id, amount, status, created_at 
-					FROM transactions 
+					SELECT id, user_id, course_id, amount, status, created_at
+					FROM transactions
 					ORDER BY created_at DESC LIMIT 20
 				) tx_rows
 			), '[]'::json),
@@ -146,8 +144,7 @@ func (m *DashboardModule) AdminDashboardRepository() (*AdminDashboard, error) {
 			), '[]'::json)
 		)`
 
-	err := m.DB.QueryRow(query).Scan(&jsonData)
-	if err != nil {
+	if err := m.DB.Get(&jsonData, query); err != nil {
 		return nil, err
 	}
 

@@ -2,15 +2,16 @@ package certificate
 
 import (
 	"coursehunt-backend/internals/modules/enrollments"
-	"database/sql"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type CertificateModule struct {
-	DB          *sql.DB
+	DB          *sqlx.DB
 	Enrollments *enrollments.EnrollmentsModule
 }
 
-func NewCertificateModule(db *sql.DB, enrollments *enrollments.EnrollmentsModule) *CertificateModule {
+func NewCertificateModule(db *sqlx.DB, enrollments *enrollments.EnrollmentsModule) *CertificateModule {
 	return &CertificateModule{
 		DB:          db,
 		Enrollments: enrollments,

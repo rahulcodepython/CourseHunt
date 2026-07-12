@@ -8,7 +8,7 @@ import (
 
 func (m *DashboardModule) Routes(protected fiber.Router) {
 	dashboard := protected.Group("/dashboard")
-	dashboard.Get("/user", m.UserDashboardController)
+	dashboard.Get("/user", middlewares.PermissionGuard("dashboard:student"), m.UserDashboardController)
 	dashboard.Get("/tutor", middlewares.PermissionGuard("dashboard:tutor"), m.TutorDashboardController)
 	dashboard.Get("/admin", middlewares.PermissionGuard("dashboard:admin"), m.AdminDashboardController)
 }

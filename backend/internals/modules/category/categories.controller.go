@@ -16,7 +16,7 @@ import (
 // @Success 200 {object} utils.SwaggerResponse[[]Category]
 // @Router /api/v1/categories [get]
 func (c *CategoryModule) ListController(ctx *fiber.Ctx) error {
-	cats, err := c.ListService()
+	cats, err := c.ListRepository()
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch categories", nil, err.Error())
 	}
@@ -36,7 +36,7 @@ func (c *CategoryModule) CreateController(ctx *fiber.Ctx) error {
 	if ok, err := utils.Validate(ctx, &req); !ok {
 		return err
 	}
-	cat, err := c.CreateService(req)
+	cat, err := c.CreateRepository(req.Name, req.ParentID)
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to create category", nil, err.Error())
 	}
@@ -52,7 +52,7 @@ func (c *CategoryModule) CreateController(ctx *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
 // @Router /api/v1/categories/{id} [delete]
 func (c *CategoryModule) DeleteController(ctx *fiber.Ctx) error {
-	id, err := c.DeleteService(ctx.Params("id"))
+	id, err := c.DeleteRepository(ctx.Params("id"))
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to delete category", nil, err.Error())
 	}
@@ -73,7 +73,7 @@ func (c *CategoryModule) UpdateController(ctx *fiber.Ctx) error {
 	if ok, err := utils.Validate(ctx, &req); !ok {
 		return err
 	}
-	cat, err := c.UpdateService(ctx.Params("id"), req)
+	cat, err := c.UpdateRepository(ctx.Params("id"), req.Name)
 	if err != nil {
 		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to update category", nil, err.Error())
 	}

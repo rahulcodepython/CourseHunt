@@ -1,13 +1,13 @@
 package wishlist
 
 import (
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 )
 
 type WishlistModule struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
-func NewWishlistModule(db *sql.DB) *WishlistModule {
+func NewWishlistModule(db *sqlx.DB) *WishlistModule {
 	return &WishlistModule{DB: db}
 }

@@ -1,13 +1,11 @@
 package cart
 
-import (
-	"database/sql"
-)
+import "github.com/jmoiron/sqlx"
 
 type CartModule struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
-func NewCartModule(db *sql.DB) *CartModule {
+func NewCartModule(db *sqlx.DB) *CartModule {
 	return &CartModule{DB: db}
 }

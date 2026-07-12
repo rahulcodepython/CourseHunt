@@ -18,7 +18,8 @@ import (
 // @Router /api/v1/coupons [get]
 func (m *CouponsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := m.ListService(page, limit)
+	userID := utils.GetUserID(c)
+	list, total, err := m.ListRepository(page, limit, userID)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch coupons", nil, err.Error())
 	}
@@ -40,7 +41,8 @@ func (m *CouponsModule) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	coupon, err := m.CreateService(utils.GetUserID(c), req)
+	userID := utils.GetUserID(c)
+	coupon, err := m.CreateRepository(userID, req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to create coupon", nil, err.Error())
 	}
@@ -61,7 +63,8 @@ func (m *CouponsModule) UpdateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	coupon, err := m.UpdateService(c.Params("id"), req)
+	userID := utils.GetUserID(c)
+	coupon, err := m.UpdateRepository(c.Params("id"), userID, req)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to update coupon", nil, err.Error())
 	}
@@ -77,7 +80,8 @@ func (m *CouponsModule) UpdateController(c *fiber.Ctx) error {
 // @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
 // @Router /api/v1/coupons/{id} [delete]
 func (m *CouponsModule) DeleteController(c *fiber.Ctx) error {
-	id, err := m.DeleteService(c.Params("id"))
+	userID := utils.GetUserID(c)
+	id, err := m.DeleteRepository(c.Params("id"), userID)
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete coupon", nil, err.Error())
 	}
@@ -97,6 +101,6 @@ func (m *CouponsModule) CheckController(c *fiber.Ctx) error {
 	if code == "" || courseID == "" {
 		return utils.JSON(c, http.StatusBadRequest, false, "code and course_id required", nil, nil)
 	}
-	resp := m.CheckService(code, courseID)
+	resp := m.CheckCoupon(code, courseID)
 	return utils.JSON(c, http.StatusOK, true, "coupon checked", resp, nil)
 }

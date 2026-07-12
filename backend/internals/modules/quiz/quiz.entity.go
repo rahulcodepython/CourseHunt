@@ -5,48 +5,48 @@ import (
 )
 
 type QuizMetadata struct {
-	ID               string `json:"id"`
-	LessonID         string `json:"lesson_id"`
-	Title            string `json:"title"`
-	TimeLimitSeconds int    `json:"time_limit_seconds"`
-	TotalQuestions   int    `json:"total_questions"`
-	PassScorePercent int    `json:"pass_score_percent"`
+	ID               string `json:"id" db:"id"`
+	LessonID         string `json:"lesson_id" db:"lesson_id"`
+	Title            string `json:"title" db:"title"`
+	TimeLimitSeconds int    `json:"time_limit_seconds" db:"time_limit_seconds"`
+	TotalQuestions   int    `json:"total_questions" db:"total_questions"`
+	PassScorePercent int    `json:"pass_score_percent" db:"pass_score_percent"`
 }
 
 type QuizQuestion struct {
-	ID            string  `json:"id"`
-	QuizID        string  `json:"quiz_id"`
-	QuestionType  string  `json:"question_type"`
-	QuestionText  string  `json:"question_text"`
-	Points        int     `json:"points"`
-	FillBlankHint *string `json:"fill_blank_hint"`
+	ID            string  `json:"id" db:"id"`
+	QuizID        string  `json:"quiz_id" db:"quiz_id"`
+	QuestionType  string  `json:"question_type" db:"question_type"`
+	QuestionText  string  `json:"question_text" db:"question_text"`
+	Points        int     `json:"points" db:"points"`
+	FillBlankHint *string `json:"fill_blank_hint" db:"fill_blank_hint"`
 }
 
 type QuizOption struct {
-	ID         string `json:"id"`
-	QuestionID string `json:"question_id"`
-	OptionText string `json:"option_text"`
-	IsCorrect  bool   `json:"is_correct,omitempty"`
+	ID         string `json:"id" db:"id"`
+	QuestionID string `json:"question_id" db:"question_id"`
+	OptionText string `json:"option_text" db:"option_text"`
+	IsCorrect  bool   `json:"is_correct,omitempty" db:"is_correct"`
 }
 
 type QuizArrangeItem struct {
-	ID           string `json:"id"`
-	QuestionID   string `json:"question_id"`
-	ItemText     string `json:"item_text"`
-	CorrectOrder int    `json:"correct_order"`
+	ID           string `json:"id" db:"id"`
+	QuestionID   string `json:"question_id" db:"question_id"`
+	ItemText     string `json:"item_text" db:"item_text"`
+	CorrectOrder int    `json:"correct_order" db:"correct_order"`
 }
 
 type QuizAttempt struct {
-	ID             string     `json:"id"`
-	QuizID         string     `json:"quiz_id"`
-	UserID         string     `json:"user_id"`
-	StartedAt      time.Time  `json:"started_at"`
-	SubmittedAt    *time.Time `json:"submitted_at"`
-	TotalScore     *float64   `json:"total_score"`
-	Passed         *bool      `json:"passed"`
-	CorrectCount   int        `json:"correct_count"`
-	IncorrectCount int        `json:"incorrect_count"`
-	SkippedCount   int        `json:"skipped_count"`
+	ID             string     `json:"id" db:"id"`
+	QuizID         string     `json:"quiz_id" db:"quiz_id"`
+	UserID         string     `json:"user_id" db:"user_id"`
+	StartedAt      time.Time  `json:"started_at" db:"started_at"`
+	SubmittedAt    *time.Time `json:"submitted_at" db:"submitted_at"`
+	TotalScore     *float64   `json:"total_score" db:"total_score"`
+	Passed         *bool      `json:"passed" db:"passed"`
+	CorrectCount   int        `json:"correct_count" db:"correct_count"`
+	IncorrectCount int        `json:"incorrect_count" db:"incorrect_count"`
+	SkippedCount   int        `json:"skipped_count" db:"skipped_count"`
 }
 
 type QuestionValidation struct {
@@ -114,7 +114,6 @@ type QuestionForAttempt struct {
 	FillBlankHint *string                 `json:"fill_blank_hint"`
 }
 
-// Public option — no is_correct field exposed during quiz
 type QuizOptionPublic struct {
 	ID         string `json:"id"`
 	OptionText string `json:"option_text"`
@@ -146,4 +145,18 @@ type SubmitQuizResponse struct {
 	SkippedCount   int              `json:"skipped_count"`
 	Passed         bool             `json:"passed"`
 	Results        []QuizResultItem `json:"results"`
+}
+
+type AttemptAnswerToSave struct {
+	QuestionID        string
+	SelectedOptionIDs []string
+	ArrangeOrder      []int
+	FillText          *string
+	IsSkipped         bool
+	IsCorrect         bool
+}
+
+type QuizEvaluationData struct {
+	PassScorePercent int
+	Questions        map[string]QuestionValidation
 }

@@ -2,15 +2,16 @@ package lessons
 
 import (
 	"coursehunt-backend/internals/modules/courses"
-	"database/sql"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type LessonsModule struct {
-	DB      *sql.DB
+	DB      *sqlx.DB
 	Courses *courses.CoursesModule
 }
 
-func NewLessonsModule(db *sql.DB, courses *courses.CoursesModule) *LessonsModule {
+func NewLessonsModule(db *sqlx.DB, courses *courses.CoursesModule) *LessonsModule {
 	return &LessonsModule{
 		DB:      db,
 		Courses: courses,

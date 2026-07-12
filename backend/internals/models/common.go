@@ -31,9 +31,9 @@ type CategoryInfo struct {
 
 // CourseInfo represents basic course details used across modules.
 type CourseInfo struct {
-	ID        string  `json:"id"`
-	Title     string  `json:"title"`
-	Thumbnail *string `json:"thumbnail"`
+	ID        string  `json:"id" db:"id"`
+	Title     string  `json:"title" db:"title"`
+	Thumbnail *string `json:"thumbnail" db:"thumbnail"`
 }
 
 // CouponInfo represents basic coupon details used across modules.

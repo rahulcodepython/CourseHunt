@@ -7,14 +7,14 @@ import (
 )
 
 func (m *UpdatesModule) Routes(v1, protected fiber.Router) {
-	protected.Get("/updates/feed", m.FeedController) // user feed (wait, feed was on /updates/feed but old code had it as protected.Group then Get("/feed", h.Feed))
+	protected.Get("/updates/feed", middlewares.PermissionGuard("updates:feed"), m.FeedController) // user feed (wait, feed was on /updates/feed but old code had it as protected.Group then Get("/feed", h.Feed))
 
 	// Actually keeping the old route structure
-	updatesAdmin := protected.Group("/updates")
+	updatesAdmin := protected.Group("/updates", middlewares.PermissionGuard("updates:manage"))
 
 	// Admin CRUD
-	updatesAdmin.Get("", middlewares.PermissionGuard("updates:read"), m.ListController)
-	updatesAdmin.Post("", middlewares.PermissionGuard("updates:create"), m.CreateController)
-	updatesAdmin.Patch("/:id", middlewares.PermissionGuard("updates:update"), m.UpdateController)
-	updatesAdmin.Delete("/:id", middlewares.PermissionGuard("updates:delete"), m.DeleteController)
+	updatesAdmin.Get("", m.ListController)
+	updatesAdmin.Post("", m.CreateController)
+	updatesAdmin.Patch("/:id", m.UpdateController)
+	updatesAdmin.Delete("/:id", m.DeleteController)
 }

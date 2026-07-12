@@ -1,13 +1,11 @@
 package category
 
-import (
-	"database/sql"
-)
+import "github.com/jmoiron/sqlx"
 
 type CategoryModule struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
-func NewCategoryModule(db *sql.DB) *CategoryModule {
+func NewCategoryModule(db *sqlx.DB) *CategoryModule {
 	return &CategoryModule{DB: db}
 }

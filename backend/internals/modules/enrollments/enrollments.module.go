@@ -1,13 +1,13 @@
 package enrollments
 
 import (
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 )
 
 type EnrollmentsModule struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
-func NewEnrollmentsModule(db *sql.DB) *EnrollmentsModule {
+func NewEnrollmentsModule(db *sqlx.DB) *EnrollmentsModule {
 	return &EnrollmentsModule{DB: db}
 }

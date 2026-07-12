@@ -1,17 +1,17 @@
 package courses
 
 import (
-	"database/sql"
-
 	"coursehunt-backend/internals/modules/enrollments"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type CoursesModule struct {
-	DB          *sql.DB
+	DB          *sqlx.DB
 	Enrollments *enrollments.EnrollmentsModule
 }
 
-func NewCoursesModule(db *sql.DB, enrollments *enrollments.EnrollmentsModule) *CoursesModule {
+func NewCoursesModule(db *sqlx.DB, enrollments *enrollments.EnrollmentsModule) *CoursesModule {
 	return &CoursesModule{
 		DB:          db,
 		Enrollments: enrollments,
