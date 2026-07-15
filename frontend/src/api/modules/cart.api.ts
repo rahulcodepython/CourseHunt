@@ -3,12 +3,12 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { CartItemZod, CreateCartRequestZod } from "@/types/cart.types";
+import { CartItemZod, CartItem, CreateCartRequestZod } from "@/types/cart.types";
 import { SuccessResponseZod, DeleteResponseZod } from "@/types/common.types";
 
-import { useApiMutation, useApiQuery } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
-import { cache } from "@/api/core/cache-utils";
 
 export function useCartQuery() {
     return useApiQuery(queryKeys.cart(), () =>
@@ -31,13 +31,10 @@ export function useAddCourseToCartMutation() {
         (data: z.infer<typeof CreateCartRequestZod>) =>
             apiRequest({ url: "/api/v1/carts", method: "POST", data }, CartItemZod),
         {
-            updateCache: {
-                queryKey: queryKeys.cart(),
-                updater: cache.append(),
-            },
+            invalidateKeys: [queryKeys.cart()],
             successMessage: "Course added to cart",
         },
-	);
+    );
 }
 
 export function useRemoveCourseFromCartMutation() {
@@ -45,10 +42,7 @@ export function useRemoveCourseFromCartMutation() {
         (id: string) =>
             apiRequest({ url: `/api/v1/carts/${id}`, method: "DELETE" }, DeleteResponseZod),
         {
-            updateCache: {
-                queryKey: queryKeys.cart(),
-                updater: cache.remove((item: any, id) => item.id === id),
-            },
+            invalidateKeys: [queryKeys.cart()],
             successMessage: "Course removed from cart",
         },
     );

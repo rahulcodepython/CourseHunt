@@ -3,9 +3,9 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { useApiMutation, useApiQuery } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
-import { cache } from "@/api/core/cache-utils";
 import { FeedbackZod, CreateFeedbackRequestZod, PinFeedbackRequestZod } from "@/types/feedbacks.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/types/common.types";
 
@@ -26,6 +26,7 @@ export function useCreateFeedbackMutation() {
 		(data: z.infer<typeof CreateFeedbackRequestZod>) =>
 			apiRequest({ url: "/api/v1/feedbacks", method: "POST", data }, FeedbackZod),
 		{
+			invalidateKeys: [queryKeys.feedbacks(), queryKeys.feedbacksPinned(), queryKeys.feedbacksInspect()],
 			successMessage: "Feedback submitted successfully",
 		},
 	);
@@ -36,10 +37,7 @@ export function useUpdateFeedbackMutation() {
 		({ id, data }: { id: string; data: z.infer<typeof PinFeedbackRequestZod> }) =>
 			apiRequest({ url: `/api/v1/feedbacks/${id}`, method: "PATCH", data }, FeedbackZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.feedbacks(),
-				updater: cache.update((item: any, variables: any) => item.id === variables.id, "data"),
-			},
+			invalidateKeys: [queryKeys.feedbacks(), queryKeys.feedbacksPinned(), queryKeys.feedbacksInspect()],
 			successMessage: "Feedback updated successfully",
 		},
 	);
@@ -49,10 +47,7 @@ export function useDeleteFeedbackMutation() {
 	return useApiMutation(
 		(id: string) => apiRequest({ url: `/api/v1/feedbacks/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.feedbacks(),
-				updater: cache.remove((item: any, id) => item.id === id, "data"),
-			},
+			invalidateKeys: [queryKeys.feedbacks(), queryKeys.feedbacksPinned(), queryKeys.feedbacksInspect()],
 			successMessage: "Feedback deleted successfully",
 		},
 	);

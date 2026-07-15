@@ -3,9 +3,9 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { useApiMutation, useApiQuery } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
-import { cache } from "@/api/core/cache-utils";
 import { CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CoursePublicResponseZod, EnrolledCourseResponseZod, CourseCreatedResponseZod, CourseInspectResponseZod } from "@/types/courses.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/types/common.types";
 
@@ -38,10 +38,7 @@ export function useCreateCourseMutation() {
 		(data: z.infer<typeof CreateCourseRequestZod>) =>
 			apiRequest({ url: "/api/v1/courses", method: "POST", data }, CourseCreatedResponseZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.courses(),
-				updater: cache.prepend("data"),
-			},
+			invalidateKeys: [queryKeys.courses(), queryKeys.coursesInspect(), queryKeys.coursesTutor()],
 			successMessage: "Course created successfully",
 		},
 	);
@@ -52,12 +49,7 @@ export function useUpdateCourseMutation() {
 		({ id, data }: { id: string; data: z.infer<typeof UpdateCourseRequestZod> }) =>
 			apiRequest({ url: `/api/v1/courses/${id}`, method: "PATCH", data }, CourseCreatedResponseZod),
 		{
-			updateCache: [
-				{
-					queryKey: queryKeys.courses(),
-					updater: cache.update((item: any, variables: any) => item.id === variables.id, "data"),
-				}
-			],
+			invalidateKeys: [queryKeys.courses(), queryKeys.coursesInspect(), queryKeys.coursesTutor()],
 			successMessage: "Course updated successfully",
 		},
 	);
@@ -67,10 +59,7 @@ export function useDeleteCourseMutation() {
 	return useApiMutation(
 		(id: string) => apiRequest({ url: `/api/v1/courses/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.courses(),
-				updater: cache.remove((item: any, id) => item.id === id, "data"),
-			},
+			invalidateKeys: [queryKeys.courses(), queryKeys.coursesInspect(), queryKeys.coursesTutor()],
 			successMessage: "Course deleted successfully",
 		},
 	);

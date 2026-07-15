@@ -3,9 +3,9 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { useApiMutation, useApiQuery } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
-import { cache } from "@/api/core/cache-utils";
 import { CourseUpdateZod, CreateUpdateRequestZod, UpdateUpdateRequestZod, UpdateFeedResponseZod } from "@/types/updates.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/types/common.types";
 
@@ -26,10 +26,7 @@ export function useCreateUpdateMutation() {
 		(data: z.infer<typeof CreateUpdateRequestZod>) =>
 			apiRequest({ url: "/api/v1/updates", method: "POST", data }, CourseUpdateZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.updates(),
-				updater: cache.prepend("data"),
-			},
+			invalidateKeys: [queryKeys.updateFeed(), queryKeys.updates()],
 			successMessage: "Update created successfully",
 		},
 	);
@@ -39,10 +36,7 @@ export function useDeleteUpdateMutation() {
 	return useApiMutation(
 		(id: string) => apiRequest({ url: `/api/v1/updates/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.updates(),
-				updater: cache.remove((item: any, id) => item.id === id, "data"),
-			},
+			invalidateKeys: [queryKeys.updateFeed(), queryKeys.updates()],
 			successMessage: "Update deleted successfully",
 		},
 	);
@@ -53,10 +47,7 @@ export function useUpdateUpdateMutation() {
 		({ id, data }: { id: string; data: z.infer<typeof UpdateUpdateRequestZod> }) =>
 			apiRequest({ url: `/api/v1/updates/${id}`, method: "PATCH", data }, CourseUpdateZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.updates(),
-				updater: cache.update((item: any, variables: any) => item.id === variables.id, "data"),
-			},
+			invalidateKeys: [queryKeys.updateFeed(), queryKeys.updates()],
 			successMessage: "Update modified successfully",
 		},
 	);

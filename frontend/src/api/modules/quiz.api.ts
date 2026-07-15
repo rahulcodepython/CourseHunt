@@ -3,19 +3,21 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { useApiMutation } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
 import {
 	CreateQuizRequestZod, NextQuestionRequestZod,
 	SubmitQuizRequestZod, CreateQuestionRequestZod, NextQuestionResponseZod,
 	SubmitQuizResponseZod, QuizMetadataZod, QuizQuestionZod
 } from "@/types/quiz.types";
 import { DeleteResponseZod } from "@/types/common.types";
+import { queryKeys } from "@/api/query-keys";
 
 export function useCreateQuizMutation() {
 	return useApiMutation(
 		({ lessonId, data }: { lessonId: string; data: z.infer<typeof CreateQuizRequestZod> }) =>
 			apiRequest({ url: `/api/v1/quiz/metadata?lesson_id=${lessonId}`, method: "POST", data }, QuizMetadataZod),
 		{
+			invalidateKeys: (data, vars) => [queryKeys.lessonContent(vars.lessonId)],
 			successMessage: "Quiz created successfully",
 		},
 	);

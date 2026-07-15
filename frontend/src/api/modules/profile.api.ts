@@ -3,9 +3,9 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { useApiMutation, useApiQuery } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
-import { cache } from "@/api/core/cache-utils";
 import { UserProfileZod, TutorProfileZod, UpdateProfileRequestZod, AdminProfileItemZod } from "@/types/profile.types";
 import { PaginatedResponseZod } from "@/types/common.types";
 
@@ -37,10 +37,7 @@ export function useCreateUserProfileMutation() {
 		(data: z.infer<typeof UpdateProfileRequestZod>) =>
 			apiRequest({ url: "/api/v1/profile/user", method: "POST", data }, UserProfileZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.profileUser(),
-				updater: cache.replace(),
-			},
+			invalidateKeys: [queryKeys.profileUser()],
 			successMessage: "User profile updated successfully",
 		},
 	);

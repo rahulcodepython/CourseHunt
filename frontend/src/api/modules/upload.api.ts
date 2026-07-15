@@ -1,7 +1,7 @@
 "use client";
 
 import { apiRequest } from "@/api/client";
-import { useApiMutation } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
 import { UploadMediaResponseZod } from "@/types/upload.types";
 
 export function useUploadMediaMutation() {

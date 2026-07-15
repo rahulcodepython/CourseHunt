@@ -3,9 +3,9 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { useApiMutation, useApiQuery } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
-import { cache } from "@/api/core/cache-utils";
 import { CouponZod, CreateCouponRequestZod, UpdateCouponRequestZod, CouponCheckResponseZod } from "@/types/coupons.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/types/common.types";
 
@@ -26,10 +26,7 @@ export function useCreateCouponMutation() {
 		(data: z.infer<typeof CreateCouponRequestZod>) =>
 			apiRequest({ url: "/api/v1/coupons", method: "POST", data }, CouponZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.coupons(),
-				updater: cache.prepend("data"),
-			},
+			invalidateKeys: [queryKeys.coupons()],
 			successMessage: "Coupon created successfully",
 		},
 	);
@@ -40,10 +37,7 @@ export function useUpdateCouponMutation() {
 		({ id, data }: { id: string; data: z.infer<typeof UpdateCouponRequestZod> }) =>
 			apiRequest({ url: `/api/v1/coupons/${id}`, method: "PATCH", data }, CouponZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.coupons(),
-				updater: cache.update((item: any, variables: any) => item.id === variables.id, "data"),
-			},
+			invalidateKeys: [queryKeys.coupons()],
 			successMessage: "Coupon updated successfully",
 		},
 	);
@@ -53,10 +47,7 @@ export function useDeleteCouponMutation() {
 	return useApiMutation(
 		(id: string) => apiRequest({ url: `/api/v1/coupons/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.coupons(),
-				updater: cache.remove((item: any, id) => item.id === id, "data"),
-			},
+			invalidateKeys: [queryKeys.coupons()],
 			successMessage: "Coupon deleted successfully",
 		},
 	);

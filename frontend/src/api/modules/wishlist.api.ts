@@ -3,9 +3,9 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { useApiMutation, useApiQuery } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
-import { cache } from "@/api/core/cache-utils";
 import { WishlistItemZod } from "@/types/wishlist.types";
 import { DeleteResponseZod } from "@/types/common.types";
 
@@ -20,10 +20,7 @@ export function useAddCourseToWishlistMutation() {
 		(courseId: string) =>
 			apiRequest({ url: "/api/v1/wishlist", method: "POST", data: { course_id: courseId } }, WishlistItemZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.wishlist(),
-				updater: cache.append(),
-			},
+			invalidateKeys: [queryKeys.wishlist()],
 			successMessage: "Course added to wishlist",
 		},
 	);
@@ -34,10 +31,7 @@ export function useRemoveCourseFromWishlistMutation() {
 		(id: string) =>
 			apiRequest({ url: `/api/v1/wishlist/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.wishlist(),
-				updater: cache.remove((item: any, id) => item.id === id),
-			},
+			invalidateKeys: [queryKeys.wishlist()],
 			successMessage: "Course removed from wishlist",
 		},
 	);

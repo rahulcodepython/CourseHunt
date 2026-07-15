@@ -8,6 +8,13 @@ export const PaginatedResponseZod = <T extends z.ZodTypeAny>(dataSchema: T) =>
         limit: z.number(),
     });
 
+export type PaginatedResponse<T> = {
+    data: T[];
+    total: number;
+    page: number;
+    limit: number;
+};
+
 export const DeleteResponseZod = z.object({
     id: z.string(),
 });

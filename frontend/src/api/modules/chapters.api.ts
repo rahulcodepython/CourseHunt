@@ -3,9 +3,9 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { useApiMutation, useApiQuery } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
-import { cache } from "@/api/core/cache-utils";
 import { ChapterZod, CreateChapterRequestZod, UpdateChapterRequestZod } from "@/types/chapters.types";
 import { DeleteResponseZod } from "@/types/common.types";
 
@@ -20,10 +20,7 @@ export function useCreateChapterMutation(courseId: string) {
 		(data: z.infer<typeof CreateChapterRequestZod>) =>
 			apiRequest({ url: `/api/v1/chapters?course_id=${courseId}`, method: "POST", data }, ChapterZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.chapters(courseId),
-				updater: cache.append(),
-			},
+			invalidateKeys: [queryKeys.chapters(courseId)],
 			successMessage: "Chapter created successfully",
 		},
 	);
@@ -34,10 +31,7 @@ export function useUpdateChapterMutation(courseId: string) {
 		({ id, data }: { id: string; data: z.infer<typeof UpdateChapterRequestZod> }) =>
 			apiRequest({ url: `/api/v1/chapters/${id}`, method: "PATCH", data }, ChapterZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.chapters(courseId),
-				updater: cache.update((item: any, variables: any) => item.id === variables.id),
-			},
+			invalidateKeys: [queryKeys.chapters(courseId)],
 			successMessage: "Chapter updated successfully",
 		},
 	);
@@ -47,10 +41,7 @@ export function useDeleteChapterMutation(courseId: string) {
 	return useApiMutation(
 		(id: string) => apiRequest({ url: `/api/v1/chapters/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.chapters(courseId),
-				updater: cache.remove((item: any, id) => item.id === id),
-			},
+			invalidateKeys: [queryKeys.chapters(courseId)],
 			successMessage: "Chapter deleted successfully",
 		},
 	);

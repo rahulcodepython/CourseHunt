@@ -3,9 +3,9 @@
 import { apiRequest } from "@/api/client";
 import { z } from "zod";
 
-import { useApiMutation, useApiQuery } from "@/api/core/generics";
+import { useApiMutation } from "@/api/core/use-api-mutation";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
-import { cache } from "@/api/core/cache-utils";
 import { LessonZod, CreateLessonRequestZod, UpdateLessonRequestZod, AggregatedLessonContentResponseZod, SignedURLResponseZod, AddResourceRequestZod, UpsertVideoContentRequestZod, UpsertDocumentContentRequestZod, LessonCompleteResponseZod, LessonVideoContentZod, LessonDocumentContentZod, LessonResourceZod } from "@/types/lessons.types";
 import { DeleteResponseZod } from "@/types/common.types";
 
@@ -20,10 +20,7 @@ export function useCreateLessonMutation(chapterId: string) {
 		(data: z.infer<typeof CreateLessonRequestZod>) =>
 			apiRequest({ url: `/api/v1/lessons?chapter_id=${chapterId}`, method: "POST", data }, LessonZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.lessons(chapterId),
-				updater: cache.append(),
-			},
+			invalidateKeys: [queryKeys.lessons(chapterId)],
 			successMessage: "Lesson created successfully",
 		},
 	);
@@ -33,10 +30,7 @@ export function useDeleteLessonMutation(chapterId: string) {
 	return useApiMutation(
 		(id: string) => apiRequest({ url: `/api/v1/lessons/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.lessons(chapterId),
-				updater: cache.remove((item: any, id) => item.id === id),
-			},
+			invalidateKeys: [queryKeys.lessons(chapterId)],
 			successMessage: "Lesson deleted successfully",
 		},
 	);
@@ -47,20 +41,18 @@ export function useUpdateLessonMutation(chapterId: string) {
 		({ id, data }: { id: string; data: z.infer<typeof UpdateLessonRequestZod> }) =>
 			apiRequest({ url: `/api/v1/lessons/${id}`, method: "PATCH", data }, LessonZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.lessons(chapterId),
-				updater: cache.update((item: any, variables: any) => item.id === variables.id),
-			},
+			invalidateKeys: [queryKeys.lessons(chapterId)],
 			successMessage: "Lesson updated successfully",
 		},
 	);
 }
 
-export function useCompleteLessonMutation() {
+export function useCompleteLessonMutation(courseId: string) {
 	return useApiMutation(
 		(id: string) =>
 			apiRequest({ url: `/api/v1/lessons/${id}/complete`, method: "POST" }, LessonCompleteResponseZod),
 		{
+			invalidateKeys: [queryKeys.courseStudy(courseId)],
 			successMessage: "Lesson completed",
 		},
 	);
@@ -110,6 +102,7 @@ export function useDeleteResourceMutation(id: string) {
 		(resourceId: string) =>
 			apiRequest({ url: `/api/v1/lessons/${id}/resources/${resourceId}`, method: "DELETE" }, DeleteResponseZod),
 		{
+			invalidateKeys: [queryKeys.lessonContent(id)],
 			successMessage: "Resource deleted successfully",
 		},
 	);

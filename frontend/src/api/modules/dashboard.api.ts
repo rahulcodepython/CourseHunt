@@ -2,7 +2,7 @@
 
 import { apiRequest } from "@/api/client";
 
-import { useApiQuery } from "@/api/core/generics";
+import { useApiQuery } from "@/api/core/use-api-query";
 import { queryKeys } from "@/api/query-keys";
 import { AdminDashboardZod, TutorDashboardZod, UserDashboardZod } from "@/types/dashboard.types";
 
