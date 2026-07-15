@@ -2,7 +2,6 @@ package certificate
 
 import (
 	"errors"
-	"net/http"
 
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
@@ -17,24 +16,24 @@ func (m *CertificateModule) ClaimController(c *fiber.Ctx) error {
 	cert, err := m.IssueRepository(userID, courseID)
 	if err != nil {
 		if errors.Is(err, ErrNotEnrolled) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in course.", err)
 		}
 		if errors.Is(err, ErrNotCompleted) {
-			return utils.JSON(c, http.StatusForbidden, false, "Course not completed.", nil, err.Error())
+			return utils.Forbidden(c, "Course not completed.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to claim certificate.", nil, nil)
+		return utils.InternalError(c, "Failed to claim certificate.", err)
 	}
 
-	return utils.JSON(c, http.StatusCreated, true, "Certificate claimed.", cert, nil)
+	return utils.Created(c, "Certificate claimed.", cert)
 }
 
 func (m *CertificateModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListRepository(utils.GetUserID(c), page, limit)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch certificates.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch certificates.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Certificates fetched.", models.PaginatedResponse[[]Certificate]{
+	return utils.OK(c, "Certificates fetched.", models.PaginatedResponse[[]Certificate]{
 		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }

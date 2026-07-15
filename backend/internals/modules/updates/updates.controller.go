@@ -1,8 +1,6 @@
 package updates
 
 import (
-	"net/http"
-
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
@@ -16,9 +14,9 @@ func (m *UpdatesModule) CreateController(c *fiber.Ctx) error {
 	}
 	u, err := m.CreateRepository(utils.GetUserID(c), req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to create update.", nil, nil)
+		return utils.InternalError(c, "Failed to create update.", err)
 	}
-	return utils.JSON(c, http.StatusCreated, true, "Update created.", u, nil)
+	return utils.Created(c, "Update created.", u)
 }
 
 func (m *UpdatesModule) UpdateController(c *fiber.Ctx) error {
@@ -28,35 +26,35 @@ func (m *UpdatesModule) UpdateController(c *fiber.Ctx) error {
 	}
 	u, err := m.UpdateRepository(c.Params("id"), req.Message)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to modify update.", nil, nil)
+		return utils.InternalError(c, "Failed to modify update.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Update modified.", u, nil)
+	return utils.OK(c, "Update modified.", u)
 }
 
 func (m *UpdatesModule) DeleteController(c *fiber.Ctx) error {
 	id, err := m.DeleteRepository(c.Params("id"))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete update.", nil, nil)
+		return utils.InternalError(c, "Failed to delete update.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Update deleted.", models.DeleteResponse{ID: id}, nil)
+	return utils.OK(c, "Update deleted.", models.DeleteResponse{ID: id})
 }
 
 func (m *UpdatesModule) FeedController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	feed, err := m.FeedRepository(utils.GetUserID(c), page, limit)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch update feed.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch update feed.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Update feed fetched.", feed, nil)
+	return utils.OK(c, "Update feed fetched.", feed)
 }
 
 func (m *UpdatesModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListRepository(page, limit)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch updates.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch updates.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Updates fetched.", models.PaginatedResponse[[]CourseUpdate]{
+	return utils.OK(c, "Updates fetched.", models.PaginatedResponse[[]CourseUpdate]{
 		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }

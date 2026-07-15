@@ -2,7 +2,6 @@ package courses
 
 import (
 	"errors"
-	"net/http"
 
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
@@ -19,22 +18,22 @@ func (m *CoursesModule) PublicListController(c *fiber.Ctx) error {
 		c.Query("search"),
 	)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch public courses.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch public courses.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Public courses fetched successfully.", models.PaginatedResponse[[]CoursePublicResponse]{
+	return utils.OK(c, "Public courses fetched successfully.", models.PaginatedResponse[[]CoursePublicResponse]{
 		Data: cards, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }
 
 func (m *CoursesModule) PublicSingleController(c *fiber.Ctx) error {
 	resp, err := m.PublicSingleRepository(c.Params("slug"), utils.GetUserID(c))
 	if err != nil {
 		if errors.Is(err, ErrCourseNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Course not found.", nil, err.Error())
+			return utils.NotFound(c, "Course not found.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch course details.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch course details.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Course details fetched successfully.", resp, nil)
+	return utils.OK(c, "Course details fetched successfully.", resp)
 }
 
 func (m *CoursesModule) StudyController(c *fiber.Ctx) error {
@@ -42,25 +41,25 @@ func (m *CoursesModule) StudyController(c *fiber.Ctx) error {
 	resp, err := m.StudyMetadataRepository(c.Params("id"), userID)
 	if err != nil {
 		if errors.Is(err, ErrCourseNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Course not found.", nil, err.Error())
+			return utils.NotFound(c, "Course not found.", err)
 		}
 		if errors.Is(err, ErrNotEnrolled) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch study page.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch study page.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Study page fetched successfully.", resp, nil)
+	return utils.OK(c, "Study page fetched successfully.", resp)
 }
 
 func (m *CoursesModule) EnrolledListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.EnrolledCoursesRepository(utils.GetUserID(c), page, limit)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch enrolled courses.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch enrolled courses.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Enrolled courses fetched successfully.", models.PaginatedResponse[[]EnrolledCourseResponse]{
+	return utils.OK(c, "Enrolled courses fetched successfully.", models.PaginatedResponse[[]EnrolledCourseResponse]{
 		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }
 
 func (m *CoursesModule) InspectController(c *fiber.Ctx) error {
@@ -74,11 +73,11 @@ func (m *CoursesModule) InspectController(c *fiber.Ctx) error {
 		c.Query("status"),
 	)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to inspect courses.", nil, nil)
+		return utils.InternalError(c, "Failed to inspect courses.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Courses inspected successfully.", models.PaginatedResponse[[]CourseInspectResponse]{
+	return utils.OK(c, "Courses inspected successfully.", models.PaginatedResponse[[]CourseInspectResponse]{
 		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }
 
 func (m *CoursesModule) ListController(c *fiber.Ctx) error {
@@ -93,11 +92,11 @@ func (m *CoursesModule) ListController(c *fiber.Ctx) error {
 		c.Query("status"),
 	)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch your courses.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch your courses.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Your courses fetched successfully.", models.PaginatedResponse[[]CourseInspectResponse]{
+	return utils.OK(c, "Your courses fetched successfully.", models.PaginatedResponse[[]CourseInspectResponse]{
 		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }
 
 func (m *CoursesModule) CreateController(c *fiber.Ctx) error {
@@ -107,9 +106,9 @@ func (m *CoursesModule) CreateController(c *fiber.Ctx) error {
 	}
 	resp, err := m.CreateRepository(utils.GetUserID(c), req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to create course.", nil, nil)
+		return utils.InternalError(c, "Failed to create course.", err)
 	}
-	return utils.JSON(c, http.StatusCreated, true, "Course created successfully.", resp, nil)
+	return utils.Created(c, "Course created successfully.", resp)
 }
 
 func (m *CoursesModule) UpdateController(c *fiber.Ctx) error {
@@ -121,14 +120,14 @@ func (m *CoursesModule) UpdateController(c *fiber.Ctx) error {
 	course, err := m.UpdateRepository(c.Params("id"), userID, req)
 	if err != nil {
 		if errors.Is(err, ErrCourseNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Course not found.", nil, err.Error())
+			return utils.NotFound(c, "Course not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update course.", nil, nil)
+		return utils.InternalError(c, "Failed to update course.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Course updated successfully.", course, nil)
+	return utils.OK(c, "Course updated successfully.", course)
 }
 
 func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
@@ -136,12 +135,12 @@ func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
 	id, err := m.DeleteRepository(c.Params("id"), userID)
 	if err != nil {
 		if errors.Is(err, ErrCourseNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Course not found.", nil, err.Error())
+			return utils.NotFound(c, "Course not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete course.", nil, nil)
+		return utils.InternalError(c, "Failed to delete course.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Course deleted successfully.", models.DeleteResponse{ID: id}, nil)
+	return utils.OK(c, "Course deleted successfully.", models.DeleteResponse{ID: id})
 }

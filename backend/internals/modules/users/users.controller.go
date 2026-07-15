@@ -1,8 +1,6 @@
 package users
 
 import (
-	"net/http"
-
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
@@ -15,9 +13,9 @@ func (m *UsersModule) AssignRoleController(c *fiber.Ctx) error {
 		return err
 	}
 	if err := m.AssignRoleRepository(c.Params("id"), req.RoleID); err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to assign role.", nil, nil)
+		return utils.InternalError(c, "Failed to assign role.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Role assigned.", RoleAssignmentResponse{UserID: c.Params("id"), RoleID: req.RoleID}, nil)
+	return utils.OK(c, "Role assigned.", RoleAssignmentResponse{UserID: c.Params("id"), RoleID: req.RoleID})
 }
 
 func (m *UsersModule) DeleteRoleController(c *fiber.Ctx) error {
@@ -26,18 +24,18 @@ func (m *UsersModule) DeleteRoleController(c *fiber.Ctx) error {
 		return err
 	}
 	if err := m.DeleteRoleRepository(c.Params("id"), req.RoleID); err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to revoke role.", nil, nil)
+		return utils.InternalError(c, "Failed to revoke role.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Role revoked.", RoleAssignmentResponse{UserID: c.Params("id"), RoleID: req.RoleID}, nil)
+	return utils.OK(c, "Role revoked.", RoleAssignmentResponse{UserID: c.Params("id"), RoleID: req.RoleID})
 }
 
 func (m *UsersModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListRepository(page, limit, c.Query("name"), c.Query("email"), c.Query("role"))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch users.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch users.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Users fetched.", models.PaginatedResponse[[]UserListResponse]{
+	return utils.OK(c, "Users fetched.", models.PaginatedResponse[[]UserListResponse]{
 		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }

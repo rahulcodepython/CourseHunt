@@ -14,5 +14,5 @@ func GlobalErrorHandler(c *fiber.Ctx, err error) error {
 	}
 
 	log.Printf("[error] %s %s -> %d: %v", c.Method(), c.Path(), code, err)
-	return InternalError(c, err.Error())
+	return InternalError(c, "An unexpected error occurred.", err)
 }

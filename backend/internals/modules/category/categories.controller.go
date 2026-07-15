@@ -1,8 +1,6 @@
 package category
 
 import (
-	"net/http"
-
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
@@ -13,11 +11,11 @@ func (m *CategoryModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	cats, total, err := m.ListRepository(page, limit, c.Query("name"))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch categories.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch categories.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Categories fetched successfully.", models.PaginatedResponse[[]Category]{
+	return utils.OK(c, "Categories fetched successfully.", models.PaginatedResponse[[]Category]{
 		Data: cats, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }
 
 func (m *CategoryModule) CreateController(c *fiber.Ctx) error {
@@ -27,17 +25,17 @@ func (m *CategoryModule) CreateController(c *fiber.Ctx) error {
 	}
 	cat, err := m.CreateRepository(req.Name, req.ParentID)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to create category.", nil, nil)
+		return utils.InternalError(c, "Failed to create category.", err)
 	}
-	return utils.JSON(c, http.StatusCreated, true, "Category created successfully.", cat, nil)
+	return utils.Created(c, "Category created successfully.", cat)
 }
 
 func (m *CategoryModule) DeleteController(c *fiber.Ctx) error {
 	id, err := m.DeleteRepository(c.Params("id"))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete category.", nil, nil)
+		return utils.InternalError(c, "Failed to delete category.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Category deleted successfully.", models.DeleteResponse{ID: id}, nil)
+	return utils.OK(c, "Category deleted successfully.", models.DeleteResponse{ID: id})
 }
 
 func (m *CategoryModule) UpdateController(c *fiber.Ctx) error {
@@ -47,7 +45,7 @@ func (m *CategoryModule) UpdateController(c *fiber.Ctx) error {
 	}
 	cat, err := m.UpdateRepository(c.Params("id"), req.Name)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update category.", nil, nil)
+		return utils.InternalError(c, "Failed to update category.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Category updated successfully.", cat, nil)
+	return utils.OK(c, "Category updated successfully.", cat)
 }

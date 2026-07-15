@@ -5,7 +5,6 @@ import (
 
 	"coursehunt-backend/internals/config"
 
-	"github.com/jmoiron/sqlx"
 	"coursehunt-backend/internals/modules/cart"
 	"coursehunt-backend/internals/modules/category"
 	"coursehunt-backend/internals/modules/certificate"
@@ -23,6 +22,8 @@ import (
 	"coursehunt-backend/internals/modules/updates"
 	"coursehunt-backend/internals/modules/users"
 	"coursehunt-backend/internals/modules/wishlist"
+
+	"github.com/jmoiron/sqlx"
 
 	razorpaypkg "coursehunt-backend/internals/pkg/razorpay"
 
@@ -111,7 +112,7 @@ func (r *Router) SetUp() {
 	protected := v1.Group("", middlewares.BaseAuthMiddleware(r.CFG))
 
 	v1.Get("/health", func(c *fiber.Ctx) error {
-		return utils.JSON(c, 200, true, "OK", fiber.Map{"status": "ok", "version": "1.0.0", "database": r.DB.Ping()}, nil)
+		return utils.OK(c, "Health check passed.", fiber.Map{"status": "ok", "version": "1.0.0", "database": r.DB.Ping()})
 	})
 
 	// Register Routes

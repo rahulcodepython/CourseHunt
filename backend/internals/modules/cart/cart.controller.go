@@ -1,8 +1,6 @@
 package cart
 
 import (
-	"net/http"
-
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
@@ -13,11 +11,11 @@ func (m *CartModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListRepository(utils.GetUserID(c), page, limit)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch cart.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch cart.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Cart fetched.", models.PaginatedResponse[[]CartItem]{
+	return utils.OK(c, "Cart fetched.", models.PaginatedResponse[[]CartItem]{
 		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }
 
 func (m *CartModule) AddController(c *fiber.Ctx) error {
@@ -27,23 +25,23 @@ func (m *CartModule) AddController(c *fiber.Ctx) error {
 	}
 	item, err := m.AddRepository(utils.GetUserID(c), requestBody.CourseId)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to add to cart.", nil, nil)
+		return utils.InternalError(c, "Failed to add to cart.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Added to cart.", item, nil)
+	return utils.OK(c, "Added to cart.", item)
 }
 
 func (m *CartModule) RemoveController(c *fiber.Ctx) error {
 	id, err := m.RemoveRepository(utils.GetUserID(c), c.Params("id"))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to remove from cart.", nil, nil)
+		return utils.InternalError(c, "Failed to remove from cart.", err)
 	}
 
-	return utils.JSON(c, http.StatusOK, true, "Removed from cart.", models.DeleteResponse{ID: id}, nil)
+	return utils.OK(c, "Removed from cart.", models.DeleteResponse{ID: id})
 }
 
 func (m *CartModule) ClearController(c *fiber.Ctx) error {
 	if err := m.ClearRepository(utils.GetUserID(c)); err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to clear cart.", nil, nil)
+		return utils.InternalError(c, "Failed to clear cart.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Cart cleared.", models.SuccessResponse{Success: true}, nil)
+	return utils.OK(c, "Cart cleared.", models.SuccessResponse{Success: true})
 }

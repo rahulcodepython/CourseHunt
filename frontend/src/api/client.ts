@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
-import { ZodSchema } from "zod";
+import { z, ZodSchema } from "zod";
+import { ApiResponse, ApiResponseZod } from "@/types/common.types";
 
 // =============================================================================
 // Axios Instance
@@ -11,22 +12,11 @@ const api: AxiosInstance = axios.create({
 });
 
 // =============================================================================
-// Logging
-// =============================================================================
-
-const log = {
-    success: (source: string, data: unknown) =>
-        process.env.NODE_ENV === "development" && console.log(`[${source}] Success:`, data),
-    error: (source: string, error: unknown) =>
-        process.env.NODE_ENV === "development" && console.error(`[${source}] Failure:`, error),
-};
-
-// =============================================================================
 // Request Handler
 // =============================================================================
 
 /**
- * Makes an API request and validates the response `data` field using a Zod schema.
+ * Makes an API request and validates the response using the ApiResponseZod schema.
  *
  * Backend response shape:
  * { success: boolean, message: string, data?: T }
@@ -35,32 +25,45 @@ const log = {
  * - On error, logs the route and error message to console.
  * - Returns `null` on failure.
  */
-export async function apiRequest<T>(
-    config: AxiosRequestConfig,
-    schema?: ZodSchema<T>,
-): Promise<T | null> {
-    const route = `${config.method?.toUpperCase() ?? "REQUEST"} ${config.url}`;
 
+export async function apiRequest<T>(config: AxiosRequestConfig, schema: z.ZodType<T>): Promise<ApiResponse<T>> {
     try {
-        // Ensure requests are always sent as JSON.
         config.headers = {
             ...config.headers,
             "Content-Type": "application/json",
         };
 
         const response = await api.request(config);
-        const payload = response.data?.data;
-        const result = schema && payload !== undefined ? schema.parse(payload) : (payload ?? null);
+        const responseSchema = ApiResponseZod(schema);
 
-        log.success(`apiRequest ${route}`, result);
-        return result;
+        // Parse and return the validated response
+        return responseSchema.parse(response.data);
+
     } catch (error) {
-        const message = axios.isAxiosError(error)
-            ? (error.response?.data?.message ?? error.message)
-            : String(error);
+        let message = "An unexpected error occurred";
+        let detailedError = String(error);
 
-        log.error(`apiRequest ${route}`, message);
-        return null;
+        // 1. Handle Axios Network/HTTP Errors
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.message || error.message;
+            detailedError = error.response?.data?.error || error.code || detailedError;
+        }
+        // 2. Handle Zod Schema Validation Errors
+        else if (error instanceof z.ZodError) {
+            message = "Response Validation Failed";
+        }
+        // 3. Handle Standard JS Errors
+        else if (error instanceof Error) {
+            message = error.message;
+        }
+
+        // Return the exact same shape as a successful response
+        return {
+            success: false,
+            message,
+            data: null,
+            error: detailedError,
+        };
     }
 }
 

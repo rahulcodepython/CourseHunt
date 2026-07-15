@@ -117,19 +117,19 @@ func BaseAuthMiddleware(cfg *config.Config) fiber.Handler {
 		// Step 1: Extract raw token from the cookie.
 		tokenString := c.Cookies(cfg.JWTCookieName)
 		if tokenString == "" {
-			return utils.Unauthorized(c, "Authorization cookie missing")
+			return utils.Unauthorized(c, "Authorization cookie missing.", fmt.Errorf("cookie %s is missing", cfg.JWTCookieName))
 		}
 
 		// Step 2: Fetch the current JWKS key set from the in-memory cache.
 		keySet, err := fetchKeySet(c.Context(), cfg.JWKSURL)
 		if err != nil {
-			return utils.InternalError(c, "Failed to fetch signing keys")
+			return utils.InternalError(c, "Failed to fetch signing keys.", err)
 		}
 
 		// Step 3: Parse and validate the JWT signature, expiry, and claims.
 		token, err := parseToken([]byte(tokenString), keySet)
 		if err != nil {
-			return utils.Unauthorized(c, "Invalid or expired token: "+err.Error())
+			return utils.Unauthorized(c, "Invalid or expired token.", err)
 		}
 
 		// Step 4: Extract user context from the token and store it.
@@ -149,7 +149,7 @@ func PermissionGuard(requiredPermission string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user, ok := c.Locals("user").(models.UserContext)
 		if !ok {
-			return utils.Unauthorized(c, "Unauthorized")
+			return utils.Unauthorized(c, "Unauthorized.", fmt.Errorf("user context not found in locals"))
 		}
 
 		if !slices.Contains(user.Permissions, requiredPermission) {

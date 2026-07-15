@@ -2,7 +2,6 @@ package transactions
 
 import (
 	"fmt"
-	"net/http"
 
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
@@ -17,9 +16,9 @@ func (m *TransactionsModule) CreateController(c *fiber.Ctx) error {
 	}
 	resp, err := m.InitiateService(c.Context(), utils.GetUserID(c), req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to initiate transaction.", nil, nil)
+		return utils.InternalError(c, "Failed to initiate transaction.", err)
 	}
-	return utils.JSON(c, http.StatusCreated, true, "Transaction initiated.", resp, nil)
+	return utils.Created(c, "Transaction initiated.", resp)
 }
 
 func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
@@ -73,20 +72,20 @@ func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListRepository(c.Context(), page, limit, c.Query("user_id"), "", c.Query("status"), c.Query("course_id"), c.Query("date_from"), c.Query("date_to"))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch transactions.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch transactions.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Transactions fetched.", models.PaginatedResponse[[]Transaction]{
+	return utils.OK(c, "Transactions fetched.", models.PaginatedResponse[[]Transaction]{
 		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }
 
 func (m *TransactionsModule) ListOwnController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListRepository(c.Context(), page, limit, utils.GetUserID(c), "", "", "", "", "")
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch your transactions.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch your transactions.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Your transactions fetched.", models.PaginatedResponse[[]Transaction]{
+	return utils.OK(c, "Your transactions fetched.", models.PaginatedResponse[[]Transaction]{
 		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
+	})
 }

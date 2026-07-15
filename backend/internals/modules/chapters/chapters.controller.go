@@ -1,8 +1,6 @@
 package chapters
 
 import (
-	"net/http"
-
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
@@ -13,9 +11,9 @@ func (m *ChaptersModule) ListController(c *fiber.Ctx) error {
 	courseID := c.Query("course_id")
 	chapters, err := m.ListRepository(courseID, utils.GetUserID(c))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch chapters.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch chapters.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Chapters fetched successfully.", chapters, nil)
+	return utils.OK(c, "Chapters fetched successfully.", chapters)
 }
 
 func (m *ChaptersModule) CreateController(c *fiber.Ctx) error {
@@ -25,9 +23,9 @@ func (m *ChaptersModule) CreateController(c *fiber.Ctx) error {
 	}
 	ch, err := m.CreateRepository(utils.GetUserID(c), req.CourseID, req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to create chapter.", nil, nil)
+		return utils.InternalError(c, "Failed to create chapter.", err)
 	}
-	return utils.JSON(c, http.StatusCreated, true, "Chapter created successfully.", ch, nil)
+	return utils.Created(c, "Chapter created successfully.", ch)
 }
 
 func (m *ChaptersModule) UpdateController(c *fiber.Ctx) error {
@@ -37,15 +35,15 @@ func (m *ChaptersModule) UpdateController(c *fiber.Ctx) error {
 	}
 	ch, err := m.UpdateRepository(c.Params("id"), utils.GetUserID(c), req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update chapter.", nil, nil)
+		return utils.InternalError(c, "Failed to update chapter.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Chapter updated successfully.", ch, nil)
+	return utils.OK(c, "Chapter updated successfully.", ch)
 }
 
 func (m *ChaptersModule) DeleteController(c *fiber.Ctx) error {
 	id, err := m.DeleteRepository(c.Params("id"), utils.GetUserID(c))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete chapter.", nil, nil)
+		return utils.InternalError(c, "Failed to delete chapter.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Chapter deleted successfully.", models.DeleteResponse{ID: id}, nil)
+	return utils.OK(c, "Chapter deleted successfully.", models.DeleteResponse{ID: id})
 }

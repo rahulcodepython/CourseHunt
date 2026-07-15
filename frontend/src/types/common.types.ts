@@ -54,3 +54,17 @@ export const CouponInfoZod = z.object({
     code: z.string(),
     discount_value: z.number(),
 });
+
+export const ApiResponseZod = <T extends z.ZodTypeAny>(dataSchema: T) => z.object({
+    success: z.boolean(),
+    message: z.string(),
+    data: dataSchema.optional().nullable(),
+    error: z.string().optional().nullable(),
+});
+
+export type ApiResponse<T> = {
+    success: boolean;
+    message: string;
+    data?: T | null;
+    error?: string | null;
+};

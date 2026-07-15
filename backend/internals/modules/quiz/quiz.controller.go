@@ -2,7 +2,6 @@ package quiz
 
 import (
 	"errors"
-	"net/http"
 
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
@@ -17,21 +16,21 @@ func (m *QuizModule) CreateMetadataController(c *fiber.Ctx) error {
 	}
 	lessonID := c.Query("lesson_id")
 	if lessonID == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "Lesson ID query param required.", nil, nil)
+		return utils.BadRequest(c, "Lesson ID query param required.", nil)
 	}
 	tutorID := utils.GetUserID(c)
 	qm, err := m.CreateMetadataRepository(lessonID, tutorID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLessonNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own the course this lesson belongs to.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own the course this lesson belongs to.", err)
 		default:
-			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to save quiz metadata.", nil, nil)
+			return utils.InternalError(c, "Failed to save quiz metadata.", err)
 		}
 	}
-	return utils.JSON(c, http.StatusOK, true, "Quiz saved successfully.", qm, nil)
+	return utils.OK(c, "Quiz saved successfully.", qm)
 }
 
 func (m *QuizModule) CreateQuestionController(c *fiber.Ctx) error {
@@ -41,21 +40,21 @@ func (m *QuizModule) CreateQuestionController(c *fiber.Ctx) error {
 	}
 	quizID := c.Query("quiz_id")
 	if quizID == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "Quiz ID query param required.", nil, nil)
+		return utils.BadRequest(c, "Quiz ID query param required.", nil)
 	}
 	tutorID := utils.GetUserID(c)
 	q, err := m.CreateQuestionRepository(quizID, tutorID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrQuizNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Quiz not found.", nil, err.Error())
+			return utils.NotFound(c, "Quiz not found.", err)
 		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own the course this quiz belongs to.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own the course this quiz belongs to.", err)
 		default:
-			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to add question.", nil, nil)
+			return utils.InternalError(c, "Failed to add question.", err)
 		}
 	}
-	return utils.JSON(c, http.StatusCreated, true, "Question added successfully.", q, nil)
+	return utils.Created(c, "Question added successfully.", q)
 }
 
 func (m *QuizModule) DeleteQuestionController(c *fiber.Ctx) error {
@@ -64,14 +63,14 @@ func (m *QuizModule) DeleteQuestionController(c *fiber.Ctx) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrQuestionNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Question not found.", nil, err.Error())
+			return utils.NotFound(c, "Question not found.", err)
 		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own the course this question belongs to.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own the course this question belongs to.", err)
 		default:
-			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete question.", nil, nil)
+			return utils.InternalError(c, "Failed to delete question.", err)
 		}
 	}
-	return utils.JSON(c, http.StatusOK, true, "Question deleted successfully.", models.DeleteResponse{ID: id}, nil)
+	return utils.OK(c, "Question deleted successfully.", models.DeleteResponse{ID: id})
 }
 
 func (m *QuizModule) GetQuestionController(c *fiber.Ctx) error {
@@ -81,21 +80,21 @@ func (m *QuizModule) GetQuestionController(c *fiber.Ctx) error {
 	}
 	quizID := c.Query("quiz_id")
 	if quizID == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "Quiz ID query param required.", nil, nil)
+		return utils.BadRequest(c, "Quiz ID query param required.", nil)
 	}
 	userID := utils.GetUserID(c)
 	resp, err := m.GetQuestionRepository(quizID, userID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrQuizNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Quiz not found.", nil, err.Error())
+			return utils.NotFound(c, "Quiz not found.", err)
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in this course.", err)
 		default:
-			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to get question.", nil, nil)
+			return utils.InternalError(c, "Failed to get question.", err)
 		}
 	}
-	return utils.JSON(c, http.StatusOK, true, "Question fetched.", resp, nil)
+	return utils.OK(c, "Question fetched.", resp)
 }
 
 func (m *QuizModule) CreateSubmitController(c *fiber.Ctx) error {
@@ -105,19 +104,19 @@ func (m *QuizModule) CreateSubmitController(c *fiber.Ctx) error {
 	}
 	quizID := c.Query("quiz_id")
 	if quizID == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "Quiz ID query param required.", nil, nil)
+		return utils.BadRequest(c, "Quiz ID query param required.", nil)
 	}
 	userID := utils.GetUserID(c)
 	resp, err := m.SubmitQuizService(quizID, userID, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrQuizNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Quiz not found.", nil, err.Error())
+			return utils.NotFound(c, "Quiz not found.", err)
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in this course.", err)
 		default:
-			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to submit quiz.", nil, nil)
+			return utils.InternalError(c, "Failed to submit quiz.", err)
 		}
 	}
-	return utils.JSON(c, http.StatusOK, true, "Quiz submitted successfully.", resp, nil)
+	return utils.OK(c, "Quiz submitted successfully.", resp)
 }

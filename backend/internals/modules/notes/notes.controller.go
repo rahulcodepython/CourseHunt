@@ -2,7 +2,6 @@ package notes
 
 import (
 	"errors"
-	"net/http"
 
 	"coursehunt-backend/internals/utils"
 
@@ -16,42 +15,42 @@ func (m *NotesModule) UpsertController(c *fiber.Ctx) error {
 	}
 	lessonID := c.Query("lesson_id")
 	if lessonID == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "Lesson ID query param required.", nil, nil)
+		return utils.BadRequest(c, "Lesson ID query param required.", nil)
 	}
 	userID := utils.GetUserID(c)
 	n, err := m.UpsertRepository(userID, lessonID, req.Content)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLessonNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in course.", err)
 		default:
-			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to save note.", nil, nil)
+			return utils.InternalError(c, "Failed to save note.", err)
 		}
 	}
-	return utils.JSON(c, http.StatusOK, true, "Note saved.", n, nil)
+	return utils.OK(c, "Note saved.", n)
 }
 
 func (m *NotesModule) ReadController(c *fiber.Ctx) error {
 	lessonID := c.Query("lesson_id")
 	if lessonID == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "Lesson ID query param required.", nil, nil)
+		return utils.BadRequest(c, "Lesson ID query param required.", nil)
 	}
 	n, err := m.ReadRepository(utils.GetUserID(c), lessonID)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLessonNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in course.", err)
 		case errors.Is(err, ErrNoteNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Note not found.", nil, err.Error())
+			return utils.NotFound(c, "Note not found.", err)
 		default:
-			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch note.", nil, nil)
+			return utils.InternalError(c, "Failed to fetch note.", err)
 		}
 	}
-	return utils.JSON(c, http.StatusOK, true, "Note fetched.", n, nil)
+	return utils.OK(c, "Note fetched.", n)
 }
 
 func (m *NotesModule) UpdateController(c *fiber.Ctx) error {
@@ -63,16 +62,16 @@ func (m *NotesModule) UpdateController(c *fiber.Ctx) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrNoteNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Note not found.", nil, err.Error())
+			return utils.NotFound(c, "Note not found.", err)
 		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this note.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this note.", err)
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in course.", err)
 		default:
-			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update note.", nil, nil)
+			return utils.InternalError(c, "Failed to update note.", err)
 		}
 	}
-	return utils.JSON(c, http.StatusOK, true, "Note updated.", n, nil)
+	return utils.OK(c, "Note updated.", n)
 }
 
 func (m *NotesModule) DeleteController(c *fiber.Ctx) error {
@@ -80,14 +79,14 @@ func (m *NotesModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrNoteNotFound):
-			return utils.JSON(c, http.StatusNotFound, false, "Note not found.", nil, err.Error())
+			return utils.NotFound(c, "Note not found.", err)
 		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this note.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this note.", err)
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in course.", err)
 		default:
-			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete note.", nil, nil)
+			return utils.InternalError(c, "Failed to delete note.", err)
 		}
 	}
-	return utils.JSON(c, http.StatusOK, true, "Note deleted.", map[string]string{"id": id}, nil)
+	return utils.OK(c, "Note deleted.", map[string]string{"id": id})
 }

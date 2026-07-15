@@ -2,7 +2,6 @@ package lessons
 
 import (
 	"errors"
-	"net/http"
 
 	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/pkg/minio"
@@ -14,20 +13,20 @@ import (
 func (m *LessonsModule) ListController(c *fiber.Ctx) error {
 	chapterID := c.Query("chapter_id")
 	if chapterID == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "Chapter ID query param required.", nil, nil)
+		return utils.BadRequest(c, "Chapter ID query param required.", nil)
 	}
 	userID := utils.GetUserID(c)
 	lessons, err := m.ListRepository(chapterID, userID)
 	if err != nil {
 		if errors.Is(err, ErrChapterNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Chapter not found.", nil, err.Error())
+			return utils.NotFound(c, "Chapter not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch lessons.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch lessons.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Lessons fetched successfully.", lessons, nil)
+	return utils.OK(c, "Lessons fetched successfully.", lessons)
 }
 
 func (m *LessonsModule) CreateController(c *fiber.Ctx) error {
@@ -38,19 +37,19 @@ func (m *LessonsModule) CreateController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
 	chapterID := c.Query("chapter_id")
 	if chapterID == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "Chapter ID query param required.", nil, nil)
+		return utils.BadRequest(c, "Chapter ID query param required.", nil)
 	}
 	l, err := m.CreateRepository(userID, chapterID, req)
 	if err != nil {
 		if errors.Is(err, ErrChapterNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Chapter not found.", nil, err.Error())
+			return utils.NotFound(c, "Chapter not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to create lesson.", nil, nil)
+		return utils.InternalError(c, "Failed to create lesson.", err)
 	}
-	return utils.JSON(c, http.StatusCreated, true, "Lesson created successfully.", l, nil)
+	return utils.Created(c, "Lesson created successfully.", l)
 }
 
 func (m *LessonsModule) UpdateController(c *fiber.Ctx) error {
@@ -62,14 +61,14 @@ func (m *LessonsModule) UpdateController(c *fiber.Ctx) error {
 	l, err := m.UpdateRepository(c.Params("id"), userID, req)
 	if err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update lesson.", nil, nil)
+		return utils.InternalError(c, "Failed to update lesson.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Lesson updated successfully.", l, nil)
+	return utils.OK(c, "Lesson updated successfully.", l)
 }
 
 func (m *LessonsModule) DeleteController(c *fiber.Ctx) error {
@@ -77,14 +76,14 @@ func (m *LessonsModule) DeleteController(c *fiber.Ctx) error {
 	id, err := m.DeleteRepository(c.Params("id"), userID)
 	if err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete lesson.", nil, nil)
+		return utils.InternalError(c, "Failed to delete lesson.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Lesson deleted successfully.", models.DeleteResponse{ID: id}, nil)
+	return utils.OK(c, "Lesson deleted successfully.", models.DeleteResponse{ID: id})
 }
 
 func (m *LessonsModule) UpsertVideoContentController(c *fiber.Ctx) error {
@@ -96,14 +95,14 @@ func (m *LessonsModule) UpsertVideoContentController(c *fiber.Ctx) error {
 	vc, err := m.UpsertVideoContentRepository(c.Params("id"), userID, req)
 	if err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update video content.", nil, nil)
+		return utils.InternalError(c, "Failed to update video content.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Video content updated successfully.", vc, nil)
+	return utils.OK(c, "Video content updated successfully.", vc)
 }
 
 func (m *LessonsModule) UpsertDocumentContentController(c *fiber.Ctx) error {
@@ -115,41 +114,41 @@ func (m *LessonsModule) UpsertDocumentContentController(c *fiber.Ctx) error {
 	dc, err := m.UpsertDocumentContentRepository(c.Params("id"), userID, req.Content)
 	if err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update document content.", nil, nil)
+		return utils.InternalError(c, "Failed to update document content.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Document content updated successfully.", dc, nil)
+	return utils.OK(c, "Document content updated successfully.", dc)
 }
 
 func (m *LessonsModule) ReadContentController(c *fiber.Ctx) error {
 	resp, err := m.ReadContentAggregatedRepository(c.Params("id"), utils.GetUserID(c))
 	if err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		}
 		if errors.Is(err, ErrNotEnrolled) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch lesson content.", nil, nil)
+		return utils.InternalError(c, "Failed to fetch lesson content.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Lesson content fetched successfully.", resp, nil)
+	return utils.OK(c, "Lesson content fetched successfully.", resp)
 }
 
 func (m *LessonsModule) UpdateCompleteController(c *fiber.Ctx) error {
 	if err := m.MarkLessonComplete(utils.GetUserID(c), c.Params("id")); err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		}
 		if errors.Is(err, ErrNotEnrolled) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. Not enrolled in course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to mark lesson complete.", nil, nil)
+		return utils.InternalError(c, "Failed to mark lesson complete.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Lesson marked as complete.", LessonCompleteResponse{LessonID: c.Params("id"), Completed: true}, nil)
+	return utils.OK(c, "Lesson marked as complete.", LessonCompleteResponse{LessonID: c.Params("id"), Completed: true})
 }
 
 func (m *LessonsModule) CreateResourceController(c *fiber.Ctx) error {
@@ -161,14 +160,14 @@ func (m *LessonsModule) CreateResourceController(c *fiber.Ctx) error {
 	res, err := m.CreateResourceRepository(c.Params("id"), userID, req)
 	if err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
+			return utils.NotFound(c, "Lesson not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to add resource.", nil, nil)
+		return utils.InternalError(c, "Failed to add resource.", err)
 	}
-	return utils.JSON(c, http.StatusCreated, true, "Resource added successfully.", res, nil)
+	return utils.Created(c, "Resource added successfully.", res)
 }
 
 func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
@@ -176,26 +175,26 @@ func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
 	id, err := m.DeleteResourceRepository(c.Params("resourceID"), userID)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
-			return utils.JSON(c, http.StatusNotFound, false, "Resource not found.", nil, err.Error())
+			return utils.NotFound(c, "Resource not found.", err)
 		}
 		if errors.Is(err, ErrAccessDenied) {
-			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this course.", nil, err.Error())
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete resource.", nil, nil)
+		return utils.InternalError(c, "Failed to delete resource.", err)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Resource deleted successfully.", models.DeleteResponse{ID: id}, nil)
+	return utils.OK(c, "Resource deleted successfully.", models.DeleteResponse{ID: id})
 }
 
 func (m *LessonsModule) GetSignedURLController(c *fiber.Ctx) error {
 	fileName := c.Query("file_name")
 	if fileName == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "File name query param required.", nil, nil)
+		return utils.BadRequest(c, "File name query param required.", nil)
 	}
 
 	url, err := minio.MINIO.GetSignedURL(c.Context(), fileName)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to generate signed URL.", nil, nil)
+		return utils.InternalError(c, "Failed to generate signed URL.", err)
 	}
 
-	return utils.JSON(c, http.StatusOK, true, "Signed URL generated successfully.", SignedURLResponse{URL: url}, nil)
+	return utils.OK(c, "Signed URL generated successfully.", SignedURLResponse{URL: url})
 }
