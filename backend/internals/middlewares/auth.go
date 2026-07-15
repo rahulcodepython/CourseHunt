@@ -7,25 +7,13 @@ import (
 	"time"
 
 	"coursehunt-backend/internals/config"
+	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
-
-// =============================================================================
-// Types
-// =============================================================================
-
-// UserContext holds the authenticated user's identity, extracted from the JWT.
-// It is stored in Fiber's request-scoped locals under the key "user".
-type UserContext struct {
-	UserID      string   `json:"user_id"`
-	Email       string   `json:"email"`
-	Roles       []string `json:"roles"`
-	Permissions []string `json:"permissions"`
-}
 
 // =============================================================================
 // JWKS Cache
@@ -96,13 +84,13 @@ func extractStringSlice(token jwt.Token, key string) []string {
 }
 
 // extractUserContext builds a UserContext from a validated JWT token.
-func extractUserContext(token jwt.Token) UserContext {
+func extractUserContext(token jwt.Token) models.UserContext {
 	var email string
 	if raw, ok := token.Get("email"); ok {
 		email = fmt.Sprintf("%v", raw)
 	}
 
-	return UserContext{
+	return models.UserContext{
 		UserID:      token.Subject(),
 		Email:       email,
 		Roles:       extractStringSlice(token, "roles"),
@@ -159,7 +147,7 @@ func BaseAuthMiddleware(cfg *config.Config) fiber.Handler {
 //	routes.Post("/courses", middlewares.PermissionGuard("courses:create"), handler)
 func PermissionGuard(requiredPermission string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user, ok := c.Locals("user").(UserContext)
+		user, ok := c.Locals("user").(models.UserContext)
 		if !ok {
 			return utils.Unauthorized(c, "Unauthorized")
 		}

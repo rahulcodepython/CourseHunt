@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (m *QuizModule) Routes(protected fiber.Router) {
+func (m *QuizModule) Routes(v1, protected fiber.Router) {
 	quiz := protected.Group("/quiz")
 
 	// Tutor actions

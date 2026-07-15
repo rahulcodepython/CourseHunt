@@ -1,9 +1,5 @@
 package quiz
 
-import (
-	"time"
-)
-
 type QuizMetadata struct {
 	ID               string `json:"id" db:"id"`
 	LessonID         string `json:"lesson_id" db:"lesson_id"`
@@ -34,19 +30,6 @@ type QuizArrangeItem struct {
 	QuestionID   string `json:"question_id" db:"question_id"`
 	ItemText     string `json:"item_text" db:"item_text"`
 	CorrectOrder int    `json:"correct_order" db:"correct_order"`
-}
-
-type QuizAttempt struct {
-	ID             string     `json:"id" db:"id"`
-	QuizID         string     `json:"quiz_id" db:"quiz_id"`
-	UserID         string     `json:"user_id" db:"user_id"`
-	StartedAt      time.Time  `json:"started_at" db:"started_at"`
-	SubmittedAt    *time.Time `json:"submitted_at" db:"submitted_at"`
-	TotalScore     *float64   `json:"total_score" db:"total_score"`
-	Passed         *bool      `json:"passed" db:"passed"`
-	CorrectCount   int        `json:"correct_count" db:"correct_count"`
-	IncorrectCount int        `json:"incorrect_count" db:"incorrect_count"`
-	SkippedCount   int        `json:"skipped_count" db:"skipped_count"`
 }
 
 type QuestionValidation struct {

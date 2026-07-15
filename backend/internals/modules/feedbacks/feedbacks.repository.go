@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 )
 
 var (
@@ -62,16 +64,52 @@ func (m *FeedbacksModule) CreateRepository(userID, courseID string, req CreateFe
 	return &f, nil
 }
 
-func (m *FeedbacksModule) ListRepository(page, limit int) ([]Feedback, int, error) {
+func (m *FeedbacksModule) ListRepository(page, limit int, isPinned, userName, userEmail, courseID string) ([]Feedback, int, error) {
 	offset := (page - 1) * limit
+
+	var where []string
+	var args []any
+	idx := 1
+
+	if isPinned == "true" {
+		where = append(where, "f.is_pinned = true")
+	} else if isPinned == "false" {
+		where = append(where, "f.is_pinned = false")
+	}
+	if userName != "" {
+		where = append(where, fmt.Sprintf("u.name ILIKE $%d", idx))
+		args = append(args, "%"+userName+"%")
+		idx++
+	}
+	if userEmail != "" {
+		where = append(where, fmt.Sprintf("u.email ILIKE $%d", idx))
+		args = append(args, "%"+userEmail+"%")
+		idx++
+	}
+	if courseID != "" {
+		where = append(where, fmt.Sprintf("f.course_id = $%d", idx))
+		args = append(args, courseID)
+		idx++
+	}
+
+	whereClause := ""
+	if len(where) > 0 {
+		whereClause = "WHERE " + strings.Join(where, " AND ")
+	}
+
+	args = append(args, limit, offset)
 
 	var result struct {
 		Total int             `db:"total"`
 		Data  json.RawMessage `db:"data"`
 	}
-	err := m.DB.Get(&result, `
+	err := m.DB.Get(&result, fmt.Sprintf(`
 		WITH count_cte AS (
-			SELECT COUNT(*) AS total FROM feedbacks
+			SELECT COUNT(*) AS total
+			FROM feedbacks f
+			JOIN "user" u ON u.id = f.user_id
+			LEFT JOIN courses c ON c.id = f.course_id
+			%s
 		),
 		data_cte AS (
 			SELECT f.id, f.rating, f.content, f.is_pinned, f.created_at,
@@ -80,13 +118,14 @@ func (m *FeedbacksModule) ListRepository(page, limit int) ([]Feedback, int, erro
 			FROM feedbacks f
 			JOIN "user" u ON u.id = f.user_id
 			LEFT JOIN courses c ON c.id = f.course_id
+			%s
 			ORDER BY f.is_pinned DESC, f.created_at DESC
-			LIMIT $1 OFFSET $2
+			LIMIT $%d OFFSET $%d
 		)
 		SELECT 
 			COALESCE((SELECT total FROM count_cte), 0) AS total,
 			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
-	`, limit, offset)
+	`, whereClause, whereClause, idx, idx+1), args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -98,11 +137,18 @@ func (m *FeedbacksModule) ListRepository(page, limit int) ([]Feedback, int, erro
 	return list, result.Total, nil
 }
 
-func (m *FeedbacksModule) ListPinRepository() ([]Feedback, error) {
-	var resultData json.RawMessage
-	err := m.DB.Get(&resultData, `
-		SELECT COALESCE(json_agg(t), '[]'::json)
-		FROM (
+func (m *FeedbacksModule) ListPinRepository(page, limit int) ([]Feedback, int, error) {
+	offset := (page - 1) * limit
+
+	var result struct {
+		Total int             `db:"total_count"`
+		Data  json.RawMessage `db:"data_json"`
+	}
+	err := m.DB.Get(&result, `
+		WITH count_cte AS (
+			SELECT COUNT(*) AS total_count FROM feedbacks WHERE is_pinned = true
+		),
+		data_cte AS (
 			SELECT f.id, f.rating, f.content, f.is_pinned, f.created_at,
 				   json_build_object('id', c.id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url) AS course,
 				   json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS "user"
@@ -110,16 +156,22 @@ func (m *FeedbacksModule) ListPinRepository() ([]Feedback, error) {
 			JOIN "user" u ON u.id = f.user_id
 			LEFT JOIN courses c ON c.id = f.course_id
 			WHERE f.is_pinned = true
-		) t`)
+			ORDER BY f.created_at DESC
+			LIMIT $1 OFFSET $2
+		)
+		SELECT
+			COALESCE((SELECT total_count FROM count_cte), 0) AS total_count,
+			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data_json
+	`, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	var list []Feedback
-	if err := json.Unmarshal(resultData, &list); err != nil {
-		return nil, err
+	if err := json.Unmarshal(result.Data, &list); err != nil {
+		return nil, 0, err
 	}
-	return list, nil
+	return list, result.Total, nil
 }
 
 func (m *FeedbacksModule) UpdateRepository(id string, pin bool) (*Feedback, error) {

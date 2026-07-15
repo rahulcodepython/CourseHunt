@@ -1,6 +1,7 @@
 package certificate
 
 import (
+	"encoding/json"
 	"errors"
 )
 
@@ -10,7 +11,7 @@ var (
 	ErrFailedToExecute = errors.New("failed to issue certificate")
 )
 
-func (c *CertificateModule) IssueRepository(userID, courseID string) (*Certificate, error) {
+func (m *CertificateModule) IssueRepository(userID, courseID string) (*Certificate, error) {
 	query := `
 		WITH status_check AS (
 			SELECT
@@ -49,7 +50,7 @@ func (c *CertificateModule) IssueRepository(userID, courseID string) (*Certifica
 	}
 
 	var res executionResult
-	if err := c.DB.Get(&res, query, userID, courseID); err != nil {
+	if err := m.DB.Get(&res, query, userID, courseID); err != nil {
 		return nil, err
 	}
 
@@ -66,27 +67,42 @@ func (c *CertificateModule) IssueRepository(userID, courseID string) (*Certifica
 	}
 }
 
-func (c *CertificateModule) ListRepository(userID string) ([]Certificate, error) {
-	// Initialize empty slice to prevent returning 'null' in JSON results
-	list := []Certificate{}
+func (m *CertificateModule) ListRepository(userID string, page, limit int) ([]Certificate, int, error) {
+	offset := (page - 1) * limit
 
-	query := `
+	var result struct {
+		Total int             `db:"total_count"`
+		Data  json.RawMessage `db:"data_json"`
+	}
+	err := m.DB.Get(&result, `
+		WITH count_cte AS (
+			SELECT COUNT(*) AS total_count FROM certificates WHERE user_id = $1
+		),
+		data_cte AS (
+			SELECT
+				cert.id AS id,
+				cert.user_id AS user_id,
+				cert.issued_at AS issued_at,
+				cert.course_id AS "course.id",
+				COALESCE(co.title, '') AS "course.title",
+				co.image_url AS "course.thumbnail"
+			FROM certificates cert
+			LEFT JOIN courses co ON co.id = cert.course_id
+			WHERE cert.user_id = $1
+			ORDER BY cert.issued_at DESC
+			LIMIT $2 OFFSET $3
+		)
 		SELECT
-			cert.id AS id,
-			cert.user_id AS user_id,
-			cert.issued_at AS issued_at,
-			cert.course_id AS "course.id",
-			COALESCE(co.title, '') AS "course.title",
-			co.image_url AS "course.thumbnail"
-		FROM certificates cert
-		LEFT JOIN courses co ON co.id = cert.course_id
-		WHERE cert.user_id = $1
-		ORDER BY cert.issued_at DESC
-	`
-
-	if err := c.DB.Select(&list, query, userID); err != nil {
-		return nil, err
+			COALESCE((SELECT total_count FROM count_cte), 0) AS total_count,
+			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data_json
+	`, userID, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 
-	return list, nil
+	var list []Certificate
+	if err := json.Unmarshal(result.Data, &list); err != nil {
+		return nil, 0, err
+	}
+	return list, result.Total, nil
 }

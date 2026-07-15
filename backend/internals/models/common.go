@@ -42,3 +42,11 @@ type CouponInfo struct {
 	Code          string  `json:"code"`
 	DiscountValue float64 `json:"discount_value"`
 }
+
+// UserContext holds the authenticated user's identity, extracted from the JWT.
+type UserContext struct {
+	UserID      string   `json:"user_id"`
+	Email       string   `json:"email"`
+	Roles       []string `json:"roles"`
+	Permissions []string `json:"permissions"`
+}

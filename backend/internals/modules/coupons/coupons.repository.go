@@ -3,6 +3,8 @@ package coupons
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 )
 
 // Explicit, granular domain errors
@@ -32,11 +34,32 @@ func (m *CouponsModule) ReadByCodeRepository(code string) (*Coupon, error) {
 	return &c, nil
 }
 
-func (m *CouponsModule) ListRepository(page, limit int, userID string) ([]Coupon, int, error) {
+func (m *CouponsModule) ListRepository(page, limit int, userID, status, isActive, code string) ([]Coupon, int, error) {
 	offset := (page - 1) * limit
 
-	// Single roundtrip returns overall database depth alongside pre-packed JSON payload arrays
-	query := `
+	where := []string{"co.tutor_id = $3"}
+	args := []any{limit, offset, userID}
+	idx := 4
+
+	if status != "" {
+		where = append(where, fmt.Sprintf("c.is_active = $%d::boolean", idx))
+		args = append(args, status)
+		idx++
+	}
+	if isActive == "true" || isActive == "false" {
+		where = append(where, fmt.Sprintf("c.is_active = $%d", idx))
+		args = append(args, isActive == "true")
+		idx++
+	}
+	if code != "" {
+		where = append(where, fmt.Sprintf("c.code ILIKE $%d", idx))
+		args = append(args, "%"+code+"%")
+		idx++
+	}
+
+	whereClause := strings.Join(where, " AND ")
+
+	query := fmt.Sprintf(`
 		WITH data_summary AS (
 			SELECT
 				c.id, c.code, c.discount_percent, c.max_usage, c.usage_count,
@@ -46,7 +69,7 @@ func (m *CouponsModule) ListRepository(page, limit int, userID string) ([]Coupon
 				co.image_url AS course_thumbnail
 			FROM coupons c
 			LEFT JOIN courses co ON c.course_id = co.id
-			WHERE co.tutor_id = $3
+			WHERE %s
 			ORDER BY c.created_at DESC
 		)
 		SELECT
@@ -73,7 +96,7 @@ func (m *CouponsModule) ListRepository(page, limit int, userID string) ([]Coupon
 					)
 					FROM (SELECT * FROM data_summary LIMIT $1 OFFSET $2) ds
 				), '[]'::json
-			) AS data_json`
+			) AS data_json`, whereClause)
 
 	type couponListRow struct {
 		TotalCount int    `db:"total_count"`
@@ -82,7 +105,7 @@ func (m *CouponsModule) ListRepository(page, limit int, userID string) ([]Coupon
 
 	var row couponListRow
 
-	if err := m.DB.Get(&row, query, limit, offset, userID); err != nil {
+	if err := m.DB.Get(&row, query, args...); err != nil {
 		return nil, 0, err
 	}
 

@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (m *NotesModule) Routes(protected fiber.Router) {
+func (m *NotesModule) Routes(v1, protected fiber.Router) {
 	notes := protected.Group("/notes", middlewares.PermissionGuard("notes:manage"))
 	notes.Get("", m.ReadController)
 	notes.Post("", m.UpsertController)

@@ -10,216 +10,144 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// @Summary ListController
-// @Description ListController for Discussions
-// @Tags Discussions
-// @Accept json
-// @Produce json
-// @Param lesson_id query string true "lesson_id"
-// @Success 200 {object} utils.PaginatedResponse[Discussion]
-// @Router /api/v1/discussions [get]
-func (m *DiscussionsModule) ListController(ctx *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(ctx)
-	lessonID := ctx.Query("lesson_id")
+func (m *DiscussionsModule) ListController(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+	lessonID := c.Query("lessonID")
 	if lessonID == "" {
-		return utils.JSON(ctx, http.StatusBadRequest, false, "Provide a valid lesson id.", nil, nil)
+		return utils.JSON(c, http.StatusBadRequest, false, "Lesson ID query param required.", nil, nil)
 	}
-	userID := utils.GetUserID(ctx)
+	userID := utils.GetUserID(c)
 	list, total, err := m.ListByLessonRepository(lessonID, userID, page, limit)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrLessonNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "lesson not found", nil, nil)
-		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in this course", nil, nil)
-		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch discussions", nil, err.Error())
+		if errors.Is(err, ErrLessonNotFound) {
+			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
 		}
-	}
-	return utils.JSON(ctx, http.StatusOK, true, "discussions fetched", models.PaginatedResponse[[]Discussion]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
-}
-
-// @Summary AdminListController
-// @Description AdminListController for Discussions (no enrollment check)
-// @Tags Discussions
-// @Accept json
-// @Produce json
-// @Param lesson_id query string true "lesson_id"
-// @Success 200 {object} utils.PaginatedResponse[Discussion]
-// @Router /api/v1/discussions/admin [get]
-func (m *DiscussionsModule) AdminListController(ctx *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(ctx)
-	lessonID := ctx.Query("lesson_id")
-	if lessonID == "" {
-		return utils.JSON(ctx, http.StatusBadRequest, false, "Provide a valid lesson id.", nil, nil)
-	}
-	list, total, err := m.ListByLessonAdminRepository(lessonID, page, limit)
-	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch discussions", nil, err.Error())
-	}
-	return utils.JSON(ctx, http.StatusOK, true, "discussions fetched", models.PaginatedResponse[[]Discussion]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	}, nil)
-}
-
-// @Summary ListRepliesController
-// @Description ListRepliesController for Discussions
-// @Tags Discussions
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Success 200 {object} utils.PaginatedResponse[Discussion]
-// @Router /api/v1/discussions/replies/{id} [get]
-func (m *DiscussionsModule) ListRepliesController(ctx *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(ctx)
-	userID := utils.GetUserID(ctx)
-	list, total, err := m.ListRepliesRepository(ctx.Params("id"), userID, page, limit)
-	if err != nil {
-		switch {
-		case errors.Is(err, ErrDiscussionNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "parent discussion not found", nil, nil)
-		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in this course", nil, nil)
-		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch replies", nil, err.Error())
+		if errors.Is(err, ErrNotEnrolled) {
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
 		}
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch discussions.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "replies fetched", models.PaginatedResponse[[]Discussion]{
+	return utils.JSON(c, http.StatusOK, true, "Discussions fetched.", models.PaginatedResponse[[]Discussion]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
 }
 
-// @Summary CreateController
-// @Description CreateController for Discussions
-// @Tags Discussions
-// @Accept json
-// @Produce json
-// @Param body body discussions.CreateDiscussionRequest true "Request Body"
-// @Success 201 {object} utils.SwaggerResponse[Discussion]
-// @Router /api/v1/discussions [post]
-func (m *DiscussionsModule) CreateController(ctx *fiber.Ctx) error {
+func (m *DiscussionsModule) ListRepliesController(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+	userID := utils.GetUserID(c)
+	list, total, err := m.ListRepliesRepository(c.Params("id"), userID, page, limit)
+	if err != nil {
+		if errors.Is(err, ErrDiscussionNotFound) {
+			return utils.JSON(c, http.StatusNotFound, false, "Discussion not found.", nil, err.Error())
+		}
+		if errors.Is(err, ErrNotEnrolled) {
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+		}
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch replies.", nil, nil)
+	}
+	return utils.JSON(c, http.StatusOK, true, "Replies fetched.", models.PaginatedResponse[[]Discussion]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	}, nil)
+}
+
+func (m *DiscussionsModule) CreateController(c *fiber.Ctx) error {
 	var req CreateDiscussionRequest
-	if ok, err := utils.Validate(ctx, &req); !ok {
+	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	if req.LessonID == "" {
-		return utils.JSON(ctx, http.StatusBadRequest, false, "lesson_id is required", nil, nil)
-	}
-	userID := utils.GetUserID(ctx)
-	d, err := m.CreateRepository(userID, req.LessonID, req)
+	userID := utils.GetUserID(c)
+	d, err := m.CreateRepository(userID, req)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrLessonNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "lesson not found", nil, nil)
-		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in this course", nil, nil)
-		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to post discussion", nil, err.Error())
+		if errors.Is(err, ErrLessonNotFound) {
+			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
 		}
+		if errors.Is(err, ErrNotEnrolled) {
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+		}
+		if errors.Is(err, ErrParentNotFound) {
+			return utils.JSON(c, http.StatusNotFound, false, "Parent discussion not found.", nil, err.Error())
+		}
+		if errors.Is(err, ErrParentInvalid) {
+			return utils.JSON(c, http.StatusBadRequest, false, "Parent discussion belongs to a different lesson.", nil, err.Error())
+		}
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to post discussion.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusCreated, true, "discussion posted", d, nil)
+	return utils.JSON(c, http.StatusCreated, true, "Discussion posted.", d, nil)
 }
 
-// @Summary UpdateController
-// @Description UpdateController for Discussions
-// @Tags Discussions
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Param body body discussions.UpdateDiscussionRequest true "Request Body"
-// @Success 200 {object} utils.SwaggerResponse[Discussion]
-// @Router /api/v1/discussions/{id} [patch]
-func (m *DiscussionsModule) UpdateController(ctx *fiber.Ctx) error {
+func (m *DiscussionsModule) UpdateController(c *fiber.Ctx) error {
 	var req UpdateDiscussionRequest
-	if ok, err := utils.Validate(ctx, &req); !ok {
+	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	userID := utils.GetUserID(ctx)
-	d, err := m.UpdateRepository(ctx.Params("id"), userID, req.Content)
+	userID := utils.GetUserID(c)
+	d, err := m.UpdateRepository(c.Params("id"), userID, req.Content)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrDiscussionNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "discussion not found", nil, nil)
-		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: you cannot update this discussion", nil, nil)
-		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in this course", nil, nil)
-		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to update discussion", nil, err.Error())
+		if errors.Is(err, ErrDiscussionNotFound) {
+			return utils.JSON(c, http.StatusNotFound, false, "Discussion not found.", nil, err.Error())
 		}
+		if errors.Is(err, ErrAccessDenied) {
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this discussion.", nil, err.Error())
+		}
+		if errors.Is(err, ErrNotEnrolled) {
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+		}
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update discussion.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "discussion updated", d, nil)
+	return utils.JSON(c, http.StatusOK, true, "Discussion updated.", d, nil)
 }
 
-// @Summary DeleteController
-// @Description DeleteController for Discussions (regular users)
-// @Tags Discussions
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
-// @Router /api/v1/discussions/{id} [delete]
-func (m *DiscussionsModule) DeleteController(ctx *fiber.Ctx) error {
-	userID := utils.GetUserID(ctx)
-	id, err := m.DeleteRepository(ctx.Params("id"), userID)
+func (m *DiscussionsModule) DeleteController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	id, err := m.DeleteRepository(c.Params("id"), userID)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrDiscussionNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "discussion not found", nil, nil)
-		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: you cannot delete this discussion", nil, nil)
-		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in this course", nil, nil)
-		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to delete discussion", nil, err.Error())
+		if errors.Is(err, ErrDiscussionNotFound) {
+			return utils.JSON(c, http.StatusNotFound, false, "Discussion not found.", nil, err.Error())
 		}
+		if errors.Is(err, ErrAccessDenied) {
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this discussion.", nil, err.Error())
+		}
+		if errors.Is(err, ErrNotEnrolled) {
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
+		}
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete discussion.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "discussion deleted", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Discussion deleted.", map[string]string{"id": id}, nil)
 }
 
-// @Summary TutorDeleteController
-// @Description TutorDeleteController for Discussions (tutors deleting comments in their courses)
-// @Tags Discussions
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
-// @Router /api/v1/discussions/tutor/{id} [delete]
-func (m *DiscussionsModule) TutorDeleteController(ctx *fiber.Ctx) error {
-	tutorID := utils.GetUserID(ctx)
-	id, err := m.TutorDeleteRepository(ctx.Params("id"), tutorID)
+func (m *DiscussionsModule) TutorDeleteController(c *fiber.Ctx) error {
+	tutorID := utils.GetUserID(c)
+	id, err := m.TutorDeleteRepository(c.Params("id"), tutorID)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrDiscussionNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "discussion not found", nil, nil)
-		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: you do not own the course this discussion belongs to", nil, nil)
-		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to delete discussion", nil, err.Error())
+		if errors.Is(err, ErrDiscussionNotFound) {
+			return utils.JSON(c, http.StatusNotFound, false, "Discussion not found.", nil, err.Error())
 		}
+		if errors.Is(err, ErrAccessDenied) {
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You are not the owner of this course.", nil, err.Error())
+		}
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete discussion.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "discussion deleted by tutor", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Discussion deleted.", map[string]string{"id": id}, nil)
 }
 
-// @Summary AdminDeleteController
-// @Description AdminDeleteController for Discussions (admins deleting comments anywhere)
-// @Tags Discussions
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
-// @Router /api/v1/discussions/admin/{id} [delete]
-func (m *DiscussionsModule) AdminDeleteController(ctx *fiber.Ctx) error {
-	id, err := m.AdminDeleteRepository(ctx.Params("id"))
+func (m *DiscussionsModule) AdminListController(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+	list, total, err := m.AdminListRepository(page, limit)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrDiscussionNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "discussion not found", nil, nil)
-		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to delete discussion", nil, err.Error())
-		}
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch discussions.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "discussion deleted by admin", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Discussions fetched.", models.PaginatedResponse[[]Discussion]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	}, nil)
+}
+
+func (m *DiscussionsModule) AdminDeleteController(c *fiber.Ctx) error {
+	id, err := m.AdminDeleteRepository(c.Params("id"))
+	if err != nil {
+		if errors.Is(err, ErrDiscussionNotFound) {
+			return utils.JSON(c, http.StatusNotFound, false, "Discussion not found.", nil, err.Error())
+		}
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete discussion.", nil, nil)
+	}
+	return utils.JSON(c, http.StatusOK, true, "Discussion deleted.", map[string]string{"id": id}, nil)
 }

@@ -2,17 +2,6 @@ package users
 
 import "time"
 
-type User struct {
-	ID            string    `json:"id" db:"id"`
-	Name          string    `json:"name" db:"name"`
-	Email         string    `json:"email" db:"email"`
-	EmailVerified bool      `json:"emailVerified" db:"emailVerified"`
-	Image         *string   `json:"image" db:"image"`
-	Banned        bool      `json:"banned" db:"banned"`
-	CreatedAt     time.Time `json:"createdAt" db:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt" db:"updatedAt"`
-}
-
 type Role struct {
 	ID   int    `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
@@ -31,9 +20,4 @@ type UserListResponse struct {
 	Banned        bool      `json:"banned" db:"banned"`
 	CreatedAt     time.Time `json:"createdAt" db:"createdAt"`
 	Roles         []Role    `json:"roles" db:"-"`
-}
-
-type RoleAssignmentResponse struct {
-	UserID string `json:"user_id"`
-	RoleID int    `json:"role_id"`
 }

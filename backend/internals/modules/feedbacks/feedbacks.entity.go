@@ -18,7 +18,7 @@ type Feedback struct {
 type CreateFeedbackRequest struct {
 	Rating   int     `json:"rating" validate:"required,min=1,max=5"`
 	Content  *string `json:"content"`
-	CourseID string  `json:"course_id"`
+	CourseID string  `json:"course_id" validate:"required,uuid"`
 }
 
 type PinFeedbackRequest struct {

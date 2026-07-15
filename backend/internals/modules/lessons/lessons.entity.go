@@ -70,21 +70,8 @@ type AddResourceRequest struct {
 	FileType *string `json:"file_type"`
 }
 
-type AllowedContent interface {
-	LessonVideoContent | LessonDocumentContent | quiz.QuizMetadata
-}
-
-type LessonContentResponse[T AllowedContent] struct {
-	Content *T `json:"content"`
-}
-
 type SignedURLResponse struct {
 	URL string `json:"url"`
-}
-
-type LessonCompleteResponse struct {
-	LessonID  string `json:"lesson_id"`
-	Completed bool   `json:"completed"`
 }
 
 type AggregatedLessonContentResponse struct {

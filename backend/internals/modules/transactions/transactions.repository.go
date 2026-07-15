@@ -102,14 +102,14 @@ func (m *TransactionsModule) FindByRazorpayOrderIDRepository(ctx context.Context
 	return &t, nil
 }
 
-func (m *TransactionsModule) ListRepository(ctx context.Context, page, limit int, userID string, tutorID string) ([]Transaction, int, error) {
+func (m *TransactionsModule) ListRepository(ctx context.Context, page, limit int, userID, tutorID, status, courseID, dateFrom, dateTo string) ([]Transaction, int, error) {
 	offset := (page - 1) * limit
 	total := 0
 
-	var args []interface{}
+	var args []any
 	var whereClauses []string
 
-	addFilter := func(clause string, val interface{}) {
+	addFilter := func(clause string, val any) {
 		args = append(args, val)
 		whereClauses = append(whereClauses, fmt.Sprintf(clause, len(args)))
 	}
@@ -118,6 +118,18 @@ func (m *TransactionsModule) ListRepository(ctx context.Context, page, limit int
 	}
 	if tutorID != "" {
 		addFilter("c.tutor_id = $%d", tutorID)
+	}
+	if status != "" {
+		addFilter("t.status = $%d", status)
+	}
+	if courseID != "" {
+		addFilter("t.course_id = $%d", courseID)
+	}
+	if dateFrom != "" {
+		addFilter("t.created_at >= $%d", dateFrom)
+	}
+	if dateTo != "" {
+		addFilter("t.created_at <= $%d", dateTo)
 	}
 
 	whereClause := ""
@@ -141,7 +153,7 @@ func (m *TransactionsModule) ListRepository(ctx context.Context, page, limit int
 				'confirmed_at', t.confirmed_at,
 				'created_at', t.created_at,
 				'user', json_build_object('id', t.user_id, 'name', COALESCE(u.name, ''), 'image', u.image),
-				'course', json_build_object('id', t.course_id, 'title', COALESCE(c.title, ''), 'thumbnail', c.thumbnail),
+				'course', json_build_object('id', t.course_id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url),
 				'coupon', CASE WHEN t.coupon_id IS NOT NULL THEN json_build_object('id', t.coupon_id, 'code', COALESCE(cp.code, ''), 'discount_percent', COALESCE(cp.discount_percent, 0)) ELSE json_build_object('id', '', 'code', '', 'discount_percent', 0) END
 			) AS data,
 			COUNT(*) OVER() AS total_count

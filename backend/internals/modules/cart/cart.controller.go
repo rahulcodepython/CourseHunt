@@ -3,73 +3,47 @@ package cart
 import (
 	"net/http"
 
+	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// @Summary ListController
-// @Description ListController for Cart
-// @Tags Cart
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerResponse[[]CartItem]
-// @Router /api/v1/carts [get]
-func (c *CartModule) ListController(ctx *fiber.Ctx) error {
-	list, err := c.ListRepository(utils.GetUserID(ctx))
+func (m *CartModule) ListController(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+	list, total, err := m.ListRepository(utils.GetUserID(c), page, limit)
 	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch cart", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch cart.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "cart fetched", list, nil)
+	return utils.JSON(c, http.StatusOK, true, "Cart fetched.", models.PaginatedResponse[[]CartItem]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	}, nil)
 }
 
-// @Summary AddController
-// @Description AddController for Cart
-// @Tags Cart
-// @Accept json
-// @Produce json
-// @Param courseID path string true "courseID"
-// @Success 200 {object} utils.SwaggerResponse[CartItem]
-// @Router /api/v1/carts [post]
-func (c *CartModule) AddController(ctx *fiber.Ctx) error {
+func (m *CartModule) AddController(c *fiber.Ctx) error {
 	var requestBody CreateCartRequest
-	if ok, err := utils.Validate(ctx, &requestBody); !ok {
+	if ok, err := utils.Validate(c, &requestBody); !ok {
 		return err
 	}
-	item, err := c.AddRepository(utils.GetUserID(ctx), requestBody.CourseId)
+	item, err := m.AddRepository(utils.GetUserID(c), requestBody.CourseId)
 	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to add to cart", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to add to cart.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "added to cart", item, nil)
+	return utils.JSON(c, http.StatusOK, true, "Added to cart.", item, nil)
 }
 
-// @Summary RemoveController
-// @Description RemoveController for Cart
-// @Tags Cart
-// @Accept json
-// @Produce json
-// @Param course_id query string true "Course ID"
-// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
-// @Router /api/v1/carts/{id} [delete]
-func (c *CartModule) RemoveController(ctx *fiber.Ctx) error {
-	id, err := c.RemoveRepository(utils.GetUserID(ctx), ctx.Params("id"))
+func (m *CartModule) RemoveController(c *fiber.Ctx) error {
+	id, err := m.RemoveRepository(utils.GetUserID(c), c.Params("id"))
 	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to remove from cart", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to remove from cart.", nil, nil)
 	}
 
-	return utils.JSON(ctx, http.StatusOK, true, "removed from cart", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Removed from cart.", map[string]string{"id": id}, nil)
 }
 
-// @Summary ClearController
-// @Description ClearController for Cart
-// @Tags Cart
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerResponse[string]
-// @Router /api/v1/carts/clear [delete]
-func (c *CartModule) ClearController(ctx *fiber.Ctx) error {
-	if err := c.ClearRepository(utils.GetUserID(ctx)); err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to clear cart", nil, err.Error())
+func (m *CartModule) ClearController(c *fiber.Ctx) error {
+	if err := m.ClearRepository(utils.GetUserID(c)); err != nil {
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to clear cart.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "cart cleared", nil, nil)
+	return utils.JSON(c, http.StatusOK, true, "Cart cleared.", nil, nil)
 }

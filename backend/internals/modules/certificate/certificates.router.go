@@ -6,8 +6,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (c *CertificateModule) Routes(protected fiber.Router) {
+func (m *CertificateModule) Routes(v1, protected fiber.Router) {
 	certificates := protected.Group("/certificates", middlewares.PermissionGuard("certificate:manage"))
-	certificates.Get("", c.ListController)
-	certificates.Post("/claim/course/:courseID", c.ClaimController)
+	certificates.Get("", m.ListController)
+	certificates.Post("/claim/course/:courseID", m.ClaimController)
 }

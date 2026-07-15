@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (m *DiscussionsModule) Routes(protected fiber.Router) {
+func (m *DiscussionsModule) Routes(v1, protected fiber.Router) {
 	discussions := protected.Group("/discussions")
 
 	// Regular User / Student Routes

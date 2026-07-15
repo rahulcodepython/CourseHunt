@@ -26,10 +26,14 @@ func (m *QuizModule) SubmitQuizService(quizID, userID string, req SubmitQuizRequ
 			fillText = ans.FillText
 		}
 
+		q, exists := evalData.Questions[ans.QuestionID]
+
 		if ans.IsSkipped {
 			resp.SkippedCount++
+			if exists {
+				totalPoints += q.Points
+			}
 		} else {
-			q, exists := evalData.Questions[ans.QuestionID]
 			if !exists {
 				resp.IncorrectCount++
 				continue

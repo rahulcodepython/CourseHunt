@@ -60,3 +60,8 @@ CREATE TABLE IF NOT EXISTS "jwks" (
 CREATE INDEX IF NOT EXISTS "session_userId_idx"          ON "session" ("userId");
 CREATE INDEX IF NOT EXISTS "account_userId_idx"          ON "account" ("userId");
 CREATE INDEX IF NOT EXISTS "verification_identifier_idx" ON "verification" ("identifier");
+
+
+CREATE INDEX IF NOT EXISTS idx_user_name ON "user"(name);
+CREATE INDEX IF NOT EXISTS idx_user_email ON "user"(email);
+CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name);

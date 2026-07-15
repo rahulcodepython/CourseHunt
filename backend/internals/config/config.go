@@ -22,6 +22,10 @@ type Config struct {
 	RazorpayKeyID         string `env:"RAZORPAY_KEY_ID"`
 	RazorpaySecret        string `env:"RAZORPAY_SECRET"`
 	RazorpayWebhookSecret string `env:"RAZORPAY_WEBHOOK_SECRET"`
+	RazorpayBaseURL       string `env:"RAZORPAY_BASE_URL" envDefault:"https://api.razorpay.com/v1"`
+	DBMaxOpenConns        int    `env:"DB_MAX_OPEN_CONNS" envDefault:"25"`
+	DBMaxIdleConns        int    `env:"DB_MAX_IDLE_CONNS" envDefault:"10"`
+	DBConnMaxLifetime     int    `env:"DB_CONN_MAX_LIFETIME" envDefault:"5"`
 }
 
 // Load replaces init() — explicit, testable, no global state

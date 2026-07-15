@@ -6,10 +6,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (c *CartModule) Routes(protected fiber.Router) {
+func (m *CartModule) Routes(v1, protected fiber.Router) {
 	cart := protected.Group("/carts", middlewares.PermissionGuard("cart:manage"))
-	cart.Get("", c.ListController)
-	cart.Post("", c.AddController)
-	cart.Delete("/:id", c.RemoveController)
-	cart.Delete("/clear", c.ClearController)
+	cart.Get("", m.ListController)
+	cart.Post("", m.AddController)
+	cart.Delete("/:id", m.RemoveController)
+	cart.Delete("/clear", m.ClearController)
 }

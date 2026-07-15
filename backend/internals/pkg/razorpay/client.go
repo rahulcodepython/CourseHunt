@@ -8,30 +8,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
-const baseURL = "https://api.razorpay.com/v1"
+var httpClient = &http.Client{Timeout: 30 * time.Second}
 
-// Client holds Razorpay API credentials.
+// ── Types ──
+
 type Client struct {
 	KeyID         string
 	Secret        string
 	WebhookSecret string
+	BaseURL       string
 }
 
-// NewClient creates a new Razorpay API client.
-func NewClient(keyID, secret, webhookSecret string) *Client {
-	return &Client{KeyID: keyID, Secret: secret, WebhookSecret: webhookSecret}
-}
-
-// OrderRequest is the payload sent to Razorpay to create an order.
 type OrderRequest struct {
-	Amount   int64  `json:"amount"`   // in smallest currency unit (paise)
-	Currency string `json:"currency"` // "INR"
-	Receipt  string `json:"receipt"`  // transaction_id
+	Amount   int64  `json:"amount"`
+	Currency string `json:"currency"`
+	Receipt  string `json:"receipt"`
 }
 
-// OrderResponse is the response from Razorpay order creation.
 type OrderResponse struct {
 	ID       string `json:"id"`
 	Entity   string `json:"entity"`
@@ -41,7 +37,14 @@ type OrderResponse struct {
 	Status   string `json:"status"`
 }
 
-// CreateOrder calls POST /orders and returns the Razorpay order.
+// ── Constructor ──
+
+func NewClient(keyID, secret, webhookSecret, baseURL string) *Client {
+	return &Client{KeyID: keyID, Secret: secret, WebhookSecret: webhookSecret, BaseURL: baseURL}
+}
+
+// ── Public Methods ──
+
 func (c *Client) CreateOrder(amount int64, currency, receipt string) (*OrderResponse, error) {
 	payload := OrderRequest{Amount: amount, Currency: currency, Receipt: receipt}
 	body, err := json.Marshal(payload)
@@ -49,14 +52,14 @@ func (c *Client) CreateOrder(amount int64, currency, receipt string) (*OrderResp
 		return nil, fmt.Errorf("razorpay: marshal order: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, baseURL+"/orders", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, c.BaseURL+"/orders", bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("razorpay: new request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(c.KeyID, c.Secret)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("razorpay: do request: %w", err)
 	}
@@ -75,7 +78,6 @@ func (c *Client) CreateOrder(amount int64, currency, receipt string) (*OrderResp
 	return &order, nil
 }
 
-// VerifyWebhookSignature validates the X-Razorpay-Signature header against the raw body.
 func (c *Client) VerifyWebhookSignature(rawBody []byte, signature string) bool {
 	mac := hmac.New(sha256.New, []byte(c.WebhookSecret))
 	mac.Write(rawBody)

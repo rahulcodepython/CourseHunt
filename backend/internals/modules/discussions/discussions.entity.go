@@ -12,7 +12,6 @@ type Discussion struct {
 	User       models.UserInfo `json:"user" db:""`
 	ParentID   *string         `json:"parent_id" db:"parent_id"`
 	Content    string          `json:"content" db:"content"`
-	Depth      int             `json:"depth" db:"depth"`
 	ReplyCount int             `json:"reply_count" db:"reply_count"`
 	CreatedAt  time.Time       `json:"created_at" db:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at" db:"updated_at"`

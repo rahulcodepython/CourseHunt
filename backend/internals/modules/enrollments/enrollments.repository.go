@@ -3,6 +3,8 @@ package enrollments
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 )
 
 var (
@@ -14,16 +16,51 @@ func (m *EnrollmentsModule) RevokeRepository(userID, courseID string) error {
 	return err
 }
 
-func (m *EnrollmentsModule) ListRepository(page, limit int, courseID string) ([]ListEnrollmentResponse, int, error) {
+func (m *EnrollmentsModule) ListRepository(page, limit int, courseID, userID, userName, userEmail, revoked string) ([]ListEnrollmentResponse, int, error) {
 	offset := (page - 1) * limit
+
+	var where []string
+	args := []any{limit, offset}
+	idx := 3
+
+	if courseID != "" {
+		where = append(where, fmt.Sprintf("e.course_id = $%d", idx))
+		args = append(args, courseID)
+		idx++
+	} else {
+		where = append(where, fmt.Sprintf("c.tutor_id = $%d", idx))
+		args = append(args, userID)
+		idx++
+	}
+	if userName != "" {
+		where = append(where, fmt.Sprintf("u.name ILIKE $%d", idx))
+		args = append(args, "%"+userName+"%")
+		idx++
+	}
+	if userEmail != "" {
+		where = append(where, fmt.Sprintf("u.email ILIKE $%d", idx))
+		args = append(args, "%"+userEmail+"%")
+		idx++
+	}
+	if revoked == "true" {
+		where = append(where, "e.revoked = true")
+	} else if revoked == "false" {
+		where = append(where, "e.revoked = false")
+	}
+
+	whereClause := strings.Join(where, " AND ")
 
 	var result struct {
 		Total int             `db:"total"`
 		Data  json.RawMessage `db:"data"`
 	}
-	err := m.DB.Get(&result, `
+	err := m.DB.Get(&result, fmt.Sprintf(`
 		WITH count_cte AS (
-			SELECT COUNT(*) AS total FROM enrollments WHERE course_id = $1
+			SELECT COUNT(*) AS total
+			FROM enrollments e
+			JOIN courses c ON c.id = e.course_id
+			LEFT JOIN "user" u ON e.user_id = u.id
+			WHERE %s
 		),
 		data_cte AS (
 			SELECT 
@@ -34,15 +71,16 @@ func (m *EnrollmentsModule) ListRepository(page, limit int, courseID string) ([]
 				e.revoked,
 				e.enrolled_at
 			FROM enrollments e
+			JOIN courses c ON c.id = e.course_id
 			LEFT JOIN "user" u ON e.user_id = u.id
-			WHERE e.course_id = $1
+			WHERE %s
 			ORDER BY e.enrolled_at DESC
-			LIMIT $2 OFFSET $3
+			LIMIT $1 OFFSET $2
 		)
 		SELECT 
 			COALESCE((SELECT total FROM count_cte), 0) AS total,
 			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
-	`, courseID, limit, offset)
+	`, whereClause, whereClause), args...)
 
 	if err != nil {
 		return nil, 0, err
@@ -56,8 +94,35 @@ func (m *EnrollmentsModule) ListRepository(page, limit int, courseID string) ([]
 	return list, result.Total, nil
 }
 
-func (m *EnrollmentsModule) InspectRepository(page, limit int, courseID, tutorID string) ([]ListEnrollmentResponse, int, error) {
+func (m *EnrollmentsModule) InspectRepository(page, limit int, courseID, tutorID, userName, userEmail, revoked string) ([]ListEnrollmentResponse, int, error) {
 	offset := (page - 1) * limit
+
+	var where []string
+	args := []any{courseID, tutorID}
+	idx := 3
+
+	if userName != "" {
+		where = append(where, fmt.Sprintf("u.name ILIKE $%d", idx))
+		args = append(args, "%"+userName+"%")
+		idx++
+	}
+	if userEmail != "" {
+		where = append(where, fmt.Sprintf("u.email ILIKE $%d", idx))
+		args = append(args, "%"+userEmail+"%")
+		idx++
+	}
+	if revoked == "true" {
+		where = append(where, "e.revoked = true")
+	} else if revoked == "false" {
+		where = append(where, "e.revoked = false")
+	}
+
+	whereClause := strings.Join(where, " AND ")
+	if whereClause != "" {
+		whereClause = " AND " + whereClause
+	}
+
+	args = append(args, limit, offset)
 
 	var result struct {
 		IsOwner bool            `db:"is_owner"`
@@ -65,14 +130,15 @@ func (m *EnrollmentsModule) InspectRepository(page, limit int, courseID, tutorID
 		Data    json.RawMessage `db:"data"`
 	}
 
-	err := m.DB.Get(&result, `
+	err := m.DB.Get(&result, fmt.Sprintf(`
 		WITH auth AS (
 			SELECT EXISTS(SELECT 1 FROM courses WHERE id = $1 AND tutor_id = $2) AS is_owner
 		),
 		count_cte AS (
 			SELECT COUNT(*) AS total FROM enrollments e
+			LEFT JOIN "user" u ON e.user_id = u.id
 			CROSS JOIN auth a
-			WHERE e.course_id = $1 AND a.is_owner = true
+			WHERE e.course_id = $1 AND a.is_owner = true%s
 		),
 		data_cte AS (
 			SELECT 
@@ -85,15 +151,15 @@ func (m *EnrollmentsModule) InspectRepository(page, limit int, courseID, tutorID
 			FROM enrollments e
 			LEFT JOIN "user" u ON e.user_id = u.id
 			CROSS JOIN auth a
-			WHERE e.course_id = $1 AND a.is_owner = true
+			WHERE e.course_id = $1 AND a.is_owner = true%s
 			ORDER BY e.enrolled_at DESC
-			LIMIT $3 OFFSET $4
+			LIMIT $%d OFFSET $%d
 		)
 		SELECT 
 			COALESCE((SELECT is_owner FROM auth), false) AS is_owner,
 			COALESCE((SELECT total FROM count_cte), 0) AS total,
 			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
-	`, courseID, tutorID, limit, offset)
+	`, whereClause, whereClause, idx, idx+1), args...)
 
 	if err != nil {
 		return nil, 0, err

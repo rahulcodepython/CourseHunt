@@ -13,5 +13,5 @@ type WishlistItem struct {
 }
 
 type CreateWishlistRequest struct {
-	CourseID string `json:"course_id" validate:"required"`
+	CourseID string `json:"course_id" validate:"required,uuid"`
 }

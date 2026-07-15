@@ -7,7 +7,7 @@ import (
 )
 
 func (m *FeedbacksModule) Routes(v1, protected fiber.Router) {
-	v1.Get("/pinned-feedbacks", m.ListPinnedController)
+	v1.Get("/feedbacks/pinned", m.ListPinnedController)
 
 	protected.Post("/feedbacks", middlewares.PermissionGuard("feedback:create"), m.CreateController)
 	protected.Get("/feedbacks/inspect", middlewares.PermissionGuard("feedback:inspect"), m.InspectController)

@@ -2,15 +2,36 @@ package category
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
-// ListRepository remains highly optimized by leveraging Postgres JSON functions,
-// but now reads into a string/byte slice via c.DB.Get.
-func (c *CategoryModule) ListRepository() ([]Category, error) {
-	var jsonBytes []byte
-	query := `
-		SELECT COALESCE(
-			json_agg(
+// ListRepository returns paginated root categories with their subcategories.
+func (m *CategoryModule) ListRepository(page, limit int, name string) ([]Category, int, error) {
+	offset := (page - 1) * limit
+
+	args := []any{limit, offset}
+	nameFilter := ""
+	idx := 3
+	if name != "" {
+		nameFilter = fmt.Sprintf(" AND c.name ILIKE $%d", idx)
+		args = append(args, "%"+name+"%")
+		idx++
+	}
+
+	var result struct {
+		Total int             `db:"total_count"`
+		Data  json.RawMessage `db:"data_json"`
+	}
+	err := m.DB.Get(&result, fmt.Sprintf(`
+		WITH count_cte AS (
+			SELECT COUNT(*) AS total_count FROM categories WHERE parent_id IS NULL%s
+		),
+		root_cte AS (
+			SELECT id FROM categories WHERE parent_id IS NULL%s
+			ORDER BY name LIMIT $1 OFFSET $2
+		),
+		data_cte AS (
+			SELECT
 				json_build_object(
 					'id', c.id,
 					'parent_id', c.parent_id,
@@ -31,26 +52,27 @@ func (c *CategoryModule) ListRepository() ([]Category, error) {
 							WHERE s.parent_id = c.id
 						), '[]'::json
 					)
-				) ORDER BY c.name
-			), '[]'::json
+				) AS cat_data
+			FROM categories c
+			WHERE c.id IN (SELECT id FROM root_cte)
+			ORDER BY c.name
 		)
-		FROM categories c
-		WHERE c.parent_id IS NULL`
-
-	// Automatically executes and maps the single column outcome to jsonBytes
-	if err := c.DB.Get(&jsonBytes, query); err != nil {
-		return nil, err
+		SELECT
+			COALESCE((SELECT total_count FROM count_cte), 0) AS total_count,
+			COALESCE((SELECT json_agg(cat_data) FROM data_cte), '[]'::json) AS data_json
+	`, nameFilter, nameFilter), args...)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	var roots []Category
-	if err := json.Unmarshal(jsonBytes, &roots); err != nil {
-		return nil, err
+	if err := json.Unmarshal(result.Data, &roots); err != nil {
+		return nil, 0, err
 	}
-
-	return roots, nil
+	return roots, result.Total, nil
 }
 
-func (c *CategoryModule) CreateRepository(name string, parentID *string) (*Category, error) {
+func (m *CategoryModule) CreateRepository(name string, parentID *string) (*Category, error) {
 	var cat Category
 	cat.Subcategories = []Category{} // Pre-initialize slice to avoid returning 'null' in future JSON operations
 
@@ -59,13 +81,13 @@ func (c *CategoryModule) CreateRepository(name string, parentID *string) (*Categ
 	          RETURNING id, parent_id, name, created_at`
 
 	// Struct mapping eliminates manual .Scan calls
-	if err := c.DB.Get(&cat, query, name, parentID); err != nil {
+	if err := m.DB.Get(&cat, query, name, parentID); err != nil {
 		return nil, err
 	}
 	return &cat, nil
 }
 
-func (c *CategoryModule) UpdateRepository(id, name string) (*Category, error) {
+func (m *CategoryModule) UpdateRepository(id, name string) (*Category, error) {
 	var cat Category
 	cat.Subcategories = []Category{}
 
@@ -74,17 +96,17 @@ func (c *CategoryModule) UpdateRepository(id, name string) (*Category, error) {
 	          WHERE id = $2
 	          RETURNING id, parent_id, name, created_at`
 
-	if err := c.DB.Get(&cat, query, name, id); err != nil {
+	if err := m.DB.Get(&cat, query, name, id); err != nil {
 		return nil, err
 	}
 	return &cat, nil
 }
 
-func (c *CategoryModule) DeleteRepository(id string) (string, error) {
+func (m *CategoryModule) DeleteRepository(id string) (string, error) {
 	var deletedID string
 	query := `DELETE FROM categories WHERE id = $1 RETURNING id`
 
-	if err := c.DB.Get(&deletedID, query, id); err != nil {
+	if err := m.DB.Get(&deletedID, query, id); err != nil {
 		return "", err
 	}
 	return deletedID, nil

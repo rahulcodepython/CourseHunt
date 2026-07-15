@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (m *ChaptersModule) Routes(protected fiber.Router) {
+func (m *ChaptersModule) Routes(v1, protected fiber.Router) {
 	chapters := protected.Group("/chapters", middlewares.PermissionGuard("courses:manage"))
 	chapters.Get("", m.ListController)
 	chapters.Post("", m.CreateController)

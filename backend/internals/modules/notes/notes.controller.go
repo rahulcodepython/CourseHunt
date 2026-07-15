@@ -9,119 +9,85 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// @Summary UpsertController
-// @Description UpsertController for Notes
-// @Tags Notes
-// @Accept json
-// @Produce json
-// @Param lesson_id query string true "lesson_id"
-// @Param body body notes.UpsertNoteRequest true "Request Body"
-// @Success 200 {object} utils.SwaggerResponse[NoteResponse]
-// @Router /api/v1/notes [post]
-func (m *NotesModule) UpsertController(ctx *fiber.Ctx) error {
+func (m *NotesModule) UpsertController(c *fiber.Ctx) error {
 	var req UpsertNoteRequest
-	if ok, err := utils.Validate(ctx, &req); !ok {
+	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	lessonID := ctx.Query("lesson_id")
+	lessonID := c.Query("lesson_id")
 	if lessonID == "" {
-		return utils.JSON(ctx, http.StatusBadRequest, false, "lesson_id query param required", nil, nil)
+		return utils.JSON(c, http.StatusBadRequest, false, "Lesson ID query param required.", nil, nil)
 	}
-	userID := utils.GetUserID(ctx)
+	userID := utils.GetUserID(c)
 	n, err := m.UpsertRepository(userID, lessonID, req.Content)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLessonNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "lesson not found", nil, nil)
+			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in course", nil, nil)
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
 		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to save note", nil, err.Error())
+			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to save note.", nil, nil)
 		}
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "note saved", n, nil)
+	return utils.JSON(c, http.StatusOK, true, "Note saved.", n, nil)
 }
 
-// @Summary ReadController
-// @Description ReadController for Notes
-// @Tags Notes
-// @Accept json
-// @Produce json
-// @Param lesson_id query string true "lesson_id"
-// @Success 200 {object} utils.SwaggerResponse[UserNote]
-// @Router /api/v1/notes [get]
-func (m *NotesModule) ReadController(ctx *fiber.Ctx) error {
-	lessonID := ctx.Query("lesson_id")
+func (m *NotesModule) ReadController(c *fiber.Ctx) error {
+	lessonID := c.Query("lesson_id")
 	if lessonID == "" {
-		return utils.JSON(ctx, http.StatusBadRequest, false, "lesson_id query param required", nil, nil)
+		return utils.JSON(c, http.StatusBadRequest, false, "Lesson ID query param required.", nil, nil)
 	}
-	n, err := m.ReadRepository(utils.GetUserID(ctx), lessonID)
+	n, err := m.ReadRepository(utils.GetUserID(c), lessonID)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLessonNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "lesson not found", nil, nil)
+			return utils.JSON(c, http.StatusNotFound, false, "Lesson not found.", nil, err.Error())
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in course", nil, nil)
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
 		case errors.Is(err, ErrNoteNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "note not found", nil, nil)
+			return utils.JSON(c, http.StatusNotFound, false, "Note not found.", nil, err.Error())
 		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch note", nil, err.Error())
+			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch note.", nil, nil)
 		}
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "note fetched", n, nil)
+	return utils.JSON(c, http.StatusOK, true, "Note fetched.", n, nil)
 }
 
-// @Summary UpdateController
-// @Description UpdateController for Notes
-// @Tags Notes
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Param body body notes.UpsertNoteRequest true "Request Body"
-// @Success 200 {object} utils.SwaggerResponse[NoteResponse]
-// @Router /api/v1/notes/{id} [patch]
-func (m *NotesModule) UpdateController(ctx *fiber.Ctx) error {
+func (m *NotesModule) UpdateController(c *fiber.Ctx) error {
 	var req UpsertNoteRequest
-	if ok, err := utils.Validate(ctx, &req); !ok {
+	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	n, err := m.UpdateRepository(ctx.Params("id"), utils.GetUserID(ctx), req.Content)
+	n, err := m.UpdateRepository(c.Params("id"), utils.GetUserID(c), req.Content)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrNoteNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "note not found", nil, nil)
+			return utils.JSON(c, http.StatusNotFound, false, "Note not found.", nil, err.Error())
 		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: you do not own this note", nil, nil)
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this note.", nil, err.Error())
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in course", nil, nil)
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
 		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to update note", nil, err.Error())
+			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update note.", nil, nil)
 		}
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "note updated", n, nil)
+	return utils.JSON(c, http.StatusOK, true, "Note updated.", n, nil)
 }
 
-// @Summary DeleteController
-// @Description DeleteController for Notes
-// @Tags Notes
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
-// @Router /api/v1/notes/{id} [delete]
-func (m *NotesModule) DeleteController(ctx *fiber.Ctx) error {
-	id, err := m.DeleteRepository(ctx.Params("id"), utils.GetUserID(ctx))
+func (m *NotesModule) DeleteController(c *fiber.Ctx) error {
+	id, err := m.DeleteRepository(c.Params("id"), utils.GetUserID(c))
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrNoteNotFound):
-			return utils.JSON(ctx, http.StatusNotFound, false, "note not found", nil, nil)
+			return utils.JSON(c, http.StatusNotFound, false, "Note not found.", nil, err.Error())
 		case errors.Is(err, ErrAccessDenied):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: you do not own this note", nil, nil)
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. You do not own this note.", nil, err.Error())
 		case errors.Is(err, ErrNotEnrolled):
-			return utils.JSON(ctx, http.StatusForbidden, false, "access denied: not enrolled in course", nil, nil)
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
 		default:
-			return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to delete note", nil, err.Error())
+			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete note.", nil, nil)
 		}
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "note deleted", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Note deleted.", map[string]string{"id": id}, nil)
 }

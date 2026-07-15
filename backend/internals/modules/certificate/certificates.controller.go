@@ -4,48 +4,37 @@ import (
 	"errors"
 	"net/http"
 
+	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// @Summary ClaimController
-// @Description ClaimController for Certificate
-// @Tags Certificate
-// @Accept json
-// @Produce json
-// @Param courseID path string true "courseID"
-// @Success 200 {object} utils.SwaggerResponse[Certificate]
-// @Router /api/v1/certificates/claim/course/{courseID} [post]
-func (c *CertificateModule) ClaimController(ctx *fiber.Ctx) error {
-	userID := utils.GetUserID(ctx)
-	courseID := ctx.Params("courseID")
+func (m *CertificateModule) ClaimController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	courseID := c.Params("courseID")
 
-	cert, err := c.IssueRepository(userID, courseID)
+	cert, err := m.IssueRepository(userID, courseID)
 	if err != nil {
 		if errors.Is(err, ErrNotEnrolled) {
-			return utils.JSON(ctx, http.StatusForbidden, false, err.Error(), nil, nil)
+			return utils.JSON(c, http.StatusForbidden, false, "Access denied. Not enrolled in course.", nil, err.Error())
 		}
 		if errors.Is(err, ErrNotCompleted) {
-			return utils.JSON(ctx, http.StatusForbidden, false, err.Error(), nil, nil)
+			return utils.JSON(c, http.StatusForbidden, false, "Course not completed.", nil, err.Error())
 		}
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to claim certificate", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to claim certificate.", nil, nil)
 	}
 
-	return utils.JSON(ctx, http.StatusCreated, true, "certificate claimed", cert, nil)
+	return utils.JSON(c, http.StatusCreated, true, "Certificate claimed.", cert, nil)
 }
 
-// @Summary ListController
-// @Description ListController for Certificate
-// @Tags Certificate
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerResponse[[]Certificate]
-// @Router /api/v1/certificates [get]
-func (c *CertificateModule) ListController(ctx *fiber.Ctx) error {
-	list, err := c.ListRepository(utils.GetUserID(ctx))
+func (m *CertificateModule) ListController(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+	list, total, err := m.ListRepository(utils.GetUserID(c), page, limit)
 	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch certificates", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch certificates.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "certificates fetched", list, nil)
+	return utils.JSON(c, http.StatusOK, true, "Certificates fetched.", models.PaginatedResponse[[]Certificate]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	}, nil)
 }

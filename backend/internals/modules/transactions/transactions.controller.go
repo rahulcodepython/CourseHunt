@@ -10,15 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// POST /api/transactions/initiate
-// @Summary CreateController
-// @Description CreateController for Transactions
-// @Tags Transactions
-// @Accept json
-// @Produce json
-// @Param body body transactions.InitiateTransactionRequest true "Request Body"
-// @Success 200 {object} utils.SwaggerResponse[InitiateTransactionResponse]
-// @Router /api/v1/transactions/initiate [post]
 func (m *TransactionsModule) CreateController(c *fiber.Ctx) error {
 	var req InitiateTransactionRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -26,19 +17,11 @@ func (m *TransactionsModule) CreateController(c *fiber.Ctx) error {
 	}
 	resp, err := m.InitiateService(c.Context(), utils.GetUserID(c), req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to initiate transaction", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to initiate transaction.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusCreated, true, "transaction initiated", resp, nil)
+	return utils.JSON(c, http.StatusCreated, true, "Transaction initiated.", resp, nil)
 }
 
-// POST /api/transactions/webhook
-// @Summary WebhookController
-// @Description WebhookController for Transactions
-// @Tags Transactions
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerBasicResponse
-// @Router /api/v1/transactions/webhook [post]
 func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 	signature := c.Get("X-Razorpay-Signature")
 	if signature == "" {
@@ -77,7 +60,6 @@ func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 	}
 
 	if err := m.HandleWebhookService(c.Context(), body, signature, webhookPayload); err != nil {
-		// Log error but return 200 to prevent Razorpay from retrying unless it's a critical DB issue
 		fmt.Printf("Webhook error: %v\n", err)
 		if err.Error() == "invalid signature" {
 			return c.Status(fiber.StatusUnauthorized).SendString("invalid signature")
@@ -87,44 +69,24 @@ func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
-// GET /api/transactions
-// @Summary ListController
-// @Description ListController for Transactions
-// @Tags Transactions
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.PaginatedResponse[Transaction]
-// @Router /api/v1/transactions [get]
 func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	tutorID := ""
-	if c.Locals("role") == "tutor" {
-		tutorID = utils.GetUserID(c)
-	}
-	list, total, err := m.ListRepository(c.Context(), page, limit, c.Query("user_id"), tutorID)
+	list, total, err := m.ListRepository(c.Context(), page, limit, c.Query("user_id"), "", c.Query("status"), c.Query("course_id"), c.Query("date_from"), c.Query("date_to"))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch transactions", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch transactions.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "transactions fetched", models.PaginatedResponse[[]Transaction]{
+	return utils.JSON(c, http.StatusOK, true, "Transactions fetched.", models.PaginatedResponse[[]Transaction]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
 }
 
-// GET /api/transactions/me
-// @Summary ListOwnController
-// @Description ListOwnController for Transactions
-// @Tags Transactions
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.PaginatedResponse[Transaction]
-// @Router /api/v1/transactions/me [get]
 func (m *TransactionsModule) ListOwnController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := m.ListRepository(c.Context(), page, limit, utils.GetUserID(c), "")
+	list, total, err := m.ListRepository(c.Context(), page, limit, utils.GetUserID(c), "", "", "", "", "")
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch your transactions", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch your transactions.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "transactions fetched", models.PaginatedResponse[[]Transaction]{
+	return utils.JSON(c, http.StatusOK, true, "Your transactions fetched.", models.PaginatedResponse[[]Transaction]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
 }

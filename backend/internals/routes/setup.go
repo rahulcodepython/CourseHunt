@@ -18,7 +18,6 @@ import (
 	"coursehunt-backend/internals/modules/feedbacks"
 	"coursehunt-backend/internals/modules/lessons"
 	"coursehunt-backend/internals/modules/notes"
-	"coursehunt-backend/internals/modules/profile"
 	"coursehunt-backend/internals/modules/quiz"
 	"coursehunt-backend/internals/modules/transactions"
 	"coursehunt-backend/internals/modules/updates"
@@ -49,7 +48,6 @@ type Router struct {
 	Discussions  *discussions.DiscussionsModule
 	Users        *users.UsersModule
 	Dashboard    *dashboard.DashboardModule
-	Profile      *profile.ProfileModule
 	Updates      *updates.UpdatesModule
 	Feedbacks    *feedbacks.FeedbacksModule
 	Coupons      *coupons.CouponsModule
@@ -75,7 +73,6 @@ func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 	notes := notes.NewNotesModule(sqlxDB, enrollments)
 	discussions := discussions.NewDiscussionsModule(sqlxDB, enrollments, courses)
 	users := users.NewUsersModule(sqlxDB)
-	profile := profile.NewProfileModule(sqlxDB)
 	updates := updates.NewUpdatesModule(sqlxDB)
 	feedbacks := feedbacks.NewFeedbacksModule(sqlxDB, enrollments, courses)
 	coupons := coupons.NewCouponsModule(sqlx.NewDb(db, "postgres"), courses)
@@ -84,14 +81,14 @@ func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 	lessons := lessons.NewLessonsModule(sqlxDB, courses)
 
 	// Modules with cross-deps — order matters, clearly visible
-	rzp := razorpaypkg.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret)
+	rzp := razorpaypkg.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
 	transactions := transactions.NewTransactionsModule(sqlxDB, coupons, courses, enrollments, rzp, cfg)
 
 	return &Router{
 		App: app, API: app.Group("/api"), DB: db, CFG: cfg,
 		Cart: cart, Wishlist: wishlist, Categories: categories,
 		Certificates: certificates, Notes: notes, Discussions: discussions,
-		Users: users, Dashboard: dashboard, Profile: profile,
+		Users: users, Dashboard: dashboard,
 		Updates: updates, Feedbacks: feedbacks, Coupons: coupons,
 		Quiz: quiz, Enrollments: enrollments, Chapters: chapters,
 		Lessons: lessons, Courses: courses, Transactions: transactions,
@@ -110,30 +107,29 @@ func (r *Router) SetUp() {
 		AllowCredentials: true,
 	}))
 
-	r.API.Get("/health", func(c *fiber.Ctx) error {
-		return utils.JSON(c, 200, true, "OK", fiber.Map{"status": "ok", "version": "1.0.0", "database": r.DB.Ping()}, nil)
-	})
-
 	v1 := r.API.Group("/v1")
 	protected := v1.Group("", middlewares.BaseAuthMiddleware(r.CFG))
 
+	v1.Get("/health", func(c *fiber.Ctx) error {
+		return utils.JSON(c, 200, true, "OK", fiber.Map{"status": "ok", "version": "1.0.0", "database": r.DB.Ping()}, nil)
+	})
+
 	// Register Routes
-	r.Cart.Routes(protected)
-	r.Wishlist.Routes(protected)
+	r.Cart.Routes(v1, protected)
+	r.Wishlist.Routes(v1, protected)
 	r.Categories.Routes(v1, protected)
-	r.Certificates.Routes(protected)
-	r.Notes.Routes(protected)
-	r.Discussions.Routes(protected)
-	r.Users.Routes(protected)
-	r.Dashboard.Routes(protected)
-	r.Profile.Routes(protected)
+	r.Certificates.Routes(v1, protected)
+	r.Notes.Routes(v1, protected)
+	r.Discussions.Routes(v1, protected)
+	r.Users.Routes(v1, protected)
+	r.Dashboard.Routes(v1, protected)
 	r.Updates.Routes(v1, protected)
 	r.Feedbacks.Routes(v1, protected)
-	r.Coupons.Routes(protected)
-	r.Quiz.Routes(protected)
-	r.Enrollments.Routes(protected)
-	r.Chapters.Routes(protected)
-	r.Lessons.Routes(protected)
+	r.Coupons.Routes(v1, protected)
+	r.Quiz.Routes(v1, protected)
+	r.Enrollments.Routes(v1, protected)
+	r.Chapters.Routes(v1, protected)
+	r.Lessons.Routes(v1, protected)
 	r.Courses.Routes(v1, protected)
 	r.Transactions.Routes(v1, protected)
 }

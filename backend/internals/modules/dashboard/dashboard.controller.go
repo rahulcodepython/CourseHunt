@@ -8,47 +8,26 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// @Summary UserDashboardController
-// @Description UserDashboardController for Dashboard
-// @Tags Dashboard
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerResponse[UserDashboard]
-// @Router /api/v1/dashboard/user [get]
-func (m *DashboardModule) UserDashboardController(ctx *fiber.Ctx) error {
-	d, err := m.UserDashboardRepository(utils.GetUserID(ctx))
+func (m *DashboardModule) UserDashboardController(c *fiber.Ctx) error {
+	d, err := m.UserDashboardRepository(utils.GetUserID(c))
 	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch user dashboard", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch user dashboard.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "user dashboard fetched", d, nil)
+	return utils.JSON(c, http.StatusOK, true, "User dashboard fetched.", d, nil)
 }
 
-// @Summary TutorDashboardController
-// @Description TutorDashboardController for Dashboard
-// @Tags Dashboard
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerResponse[TutorDashboard]
-// @Router /api/v1/dashboard/tutor [get]
-func (m *DashboardModule) TutorDashboardController(ctx *fiber.Ctx) error {
-	d, err := m.TutorDashboardRepository(utils.GetUserID(ctx))
+func (m *DashboardModule) TutorDashboardController(c *fiber.Ctx) error {
+	d, err := m.TutorDashboardRepository(utils.GetUserID(c))
 	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch tutor dashboard", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch tutor dashboard.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "tutor dashboard fetched", d, nil)
+	return utils.JSON(c, http.StatusOK, true, "Tutor dashboard fetched.", d, nil)
 }
 
-// @Summary AdminDashboardController
-// @Description AdminDashboardController for Dashboard
-// @Tags Dashboard
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerResponse[AdminDashboard]
-// @Router /api/v1/dashboard/admin [get]
-func (m *DashboardModule) AdminDashboardController(ctx *fiber.Ctx) error {
+func (m *DashboardModule) AdminDashboardController(c *fiber.Ctx) error {
 	d, err := m.AdminDashboardRepository()
 	if err != nil {
-		return utils.JSON(ctx, http.StatusInternalServerError, false, "failed to fetch admin dashboard", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch admin dashboard.", nil, nil)
 	}
-	return utils.JSON(ctx, http.StatusOK, true, "admin dashboard fetched", d, nil)
+	return utils.JSON(c, http.StatusOK, true, "Admin dashboard fetched.", d, nil)
 }

@@ -6,8 +6,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (m *CouponsModule) Routes(protected fiber.Router) {
-	protected.Get("/coupons/check", m.CheckController)
+func (m *CouponsModule) Routes(v1, protected fiber.Router) {
+	// Public — no auth required
+	v1.Get("/coupons/check", m.CheckController)
 
 	// Admin actions
 	coupons := protected.Group("/coupons", middlewares.PermissionGuard("coupons:manage"))

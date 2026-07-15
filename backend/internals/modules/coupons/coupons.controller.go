@@ -9,33 +9,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// @Summary ListController
-// @Description ListController for Coupons
-// @Tags Coupons
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.PaginatedResponse[Coupon]
-// @Router /api/v1/coupons [get]
 func (m *CouponsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	userID := utils.GetUserID(c)
-	list, total, err := m.ListRepository(page, limit, userID)
+	list, total, err := m.ListRepository(page, limit, userID, c.Query("status"), c.Query("is_active"), c.Query("code"))
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to fetch coupons", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to fetch coupons.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "coupons fetched", models.PaginatedResponse[[]Coupon]{
+	return utils.JSON(c, http.StatusOK, true, "Coupons fetched.", models.PaginatedResponse[[]Coupon]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	}, nil)
 }
 
-// @Summary CreateController
-// @Description CreateController for Coupons
-// @Tags Coupons
-// @Accept json
-// @Produce json
-// @Param body body coupons.CreateCouponRequest true "Request Body"
-// @Success 200 {object} utils.SwaggerResponse[Coupon]
-// @Router /api/v1/coupons [post]
 func (m *CouponsModule) CreateController(c *fiber.Ctx) error {
 	var req CreateCouponRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -44,20 +29,11 @@ func (m *CouponsModule) CreateController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
 	coupon, err := m.CreateRepository(userID, req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to create coupon", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to create coupon.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusCreated, true, "coupon created", coupon, nil)
+	return utils.JSON(c, http.StatusCreated, true, "Coupon created.", coupon, nil)
 }
 
-// @Summary UpdateController
-// @Description UpdateController for Coupons
-// @Tags Coupons
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Param body body coupons.UpdateCouponRequest true "Request Body"
-// @Success 200 {object} utils.SwaggerResponse[Coupon]
-// @Router /api/v1/coupons/{id} [patch]
 func (m *CouponsModule) UpdateController(c *fiber.Ctx) error {
 	var req UpdateCouponRequest
 	if ok, err := utils.Validate(c, &req); !ok {
@@ -66,41 +42,26 @@ func (m *CouponsModule) UpdateController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
 	coupon, err := m.UpdateRepository(c.Params("id"), userID, req)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to update coupon", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to update coupon.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "coupon updated", coupon, nil)
+	return utils.JSON(c, http.StatusOK, true, "Coupon updated.", coupon, nil)
 }
 
-// @Summary DeleteController
-// @Description DeleteController for Coupons
-// @Tags Coupons
-// @Accept json
-// @Produce json
-// @Param id path string true "id"
-// @Success 200 {object} utils.SwaggerResponse[utils.DeleteResponse]
-// @Router /api/v1/coupons/{id} [delete]
 func (m *CouponsModule) DeleteController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
 	id, err := m.DeleteRepository(c.Params("id"), userID)
 	if err != nil {
-		return utils.JSON(c, http.StatusInternalServerError, false, "failed to delete coupon", nil, err.Error())
+		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete coupon.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "coupon deleted", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Coupon deleted.", map[string]string{"id": id}, nil)
 }
 
-// @Summary CheckController
-// @Description CheckController for Coupons
-// @Tags Coupons
-// @Accept json
-// @Produce json
-// @Success 200 {object} utils.SwaggerResponse[CouponCheckResponse]
-// @Router /api/v1/coupons/check [get]
 func (m *CouponsModule) CheckController(c *fiber.Ctx) error {
 	code := c.Query("code")
 	courseID := c.Query("course_id")
 	if code == "" || courseID == "" {
-		return utils.JSON(c, http.StatusBadRequest, false, "code and course_id required", nil, nil)
+		return utils.JSON(c, http.StatusBadRequest, false, "Code and course ID required.", nil, nil)
 	}
 	resp := m.CheckCoupon(code, courseID)
-	return utils.JSON(c, http.StatusOK, true, "coupon checked", resp, nil)
+	return utils.JSON(c, http.StatusOK, true, "Coupon checked.", resp, nil)
 }
