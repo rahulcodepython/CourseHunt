@@ -15,5 +15,5 @@ func (m *FeedbacksModule) Routes(v1, protected fiber.Router) {
 	feedbacks := protected.Group("/feedbacks", middlewares.PermissionGuard("feedback:manage"))
 	feedbacks.Get("", m.ListController)
 	feedbacks.Delete("/:id", m.DeleteController)
-	feedbacks.Patch("/:id/pin", m.UpdateController)
+	feedbacks.Patch("/:id", m.UpdateController)
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -70,7 +71,7 @@ func (m *QuizModule) DeleteQuestionController(c *fiber.Ctx) error {
 			return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete question.", nil, nil)
 		}
 	}
-	return utils.JSON(c, http.StatusOK, true, "Question deleted successfully.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Question deleted successfully.", models.DeleteResponse{ID: id}, nil)
 }
 
 func (m *QuizModule) GetQuestionController(c *fiber.Ctx) error {

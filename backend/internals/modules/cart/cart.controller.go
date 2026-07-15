@@ -38,12 +38,12 @@ func (m *CartModule) RemoveController(c *fiber.Ctx) error {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to remove from cart.", nil, nil)
 	}
 
-	return utils.JSON(c, http.StatusOK, true, "Removed from cart.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Removed from cart.", models.DeleteResponse{ID: id}, nil)
 }
 
 func (m *CartModule) ClearController(c *fiber.Ctx) error {
 	if err := m.ClearRepository(utils.GetUserID(c)); err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to clear cart.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Cart cleared.", nil, nil)
+	return utils.JSON(c, http.StatusOK, true, "Cart cleared.", models.SuccessResponse{Success: true}, nil)
 }

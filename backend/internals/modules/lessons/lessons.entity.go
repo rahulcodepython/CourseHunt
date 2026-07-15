@@ -80,3 +80,8 @@ type AggregatedLessonContentResponse struct {
 	DocumentContent *LessonDocumentContent `json:"document_content"`
 	QuizContent     *quiz.QuizMetadata     `json:"quiz_content"`
 }
+
+type LessonCompleteResponse struct {
+	LessonID  string `json:"lesson_id"`
+	Completed bool   `json:"completed"`
+}

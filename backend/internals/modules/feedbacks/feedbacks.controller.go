@@ -80,5 +80,5 @@ func (m *FeedbacksModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete feedback.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Feedback deleted.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Feedback deleted.", models.DeleteResponse{ID: id}, nil)
 }

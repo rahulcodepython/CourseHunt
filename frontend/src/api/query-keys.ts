@@ -1,41 +1,35 @@
-// =============================================================================
-// Query Keys
-// =============================================================================
-// Single source of truth for cache keys, shared across every file in
-// hooks/api/. Kept as one file (not one per domain) so e.g. a course
-// mutation can invalidate both ["courses"] and ["dashboard"] without
-// importing hooks/api/dashboard.ts just to reach its key.
-//
-// Convention: each entry is a function, even when it takes no arguments —
-// keeps every usage site consistent (`queryKeys.feedbacks()`, not a mix of
-// `queryKeys.feedbacks` and `queryKeys.course(id)`).
-
 export const queryKeys = {
 	cart: () => ["cart"] as const,
 	categories: () => ["categories"] as const,
 	certificates: () => ["certificates"] as const,
-	certificate: (courseId: string) => ["certificates", courseId] as const,
 	chapters: (courseId: string) => ["chapters", courseId] as const,
 	coupons: () => ["coupons"] as const,
 	couponCheck: () => ["coupons", "check"] as const,
 	courses: () => ["courses"] as const,
+	coursesInspect: () => ["courses", "inspect"] as const,
+	coursesTutor: () => ["courses", "tutor"] as const,
 	courseStudy: (id: string) => ["courses", id, "study"] as const,
 	courseLanding: (slug: string) => ["courses", "landing", slug] as const,
 	dashboardAdmin: () => ["dashboard", "admin"] as const,
 	dashboardTutor: () => ["dashboard", "tutor"] as const,
 	dashboardUser: () => ["dashboard", "user"] as const,
 	discussions: (lessonId: string) => ["discussions", lessonId] as const,
+	discussionsAdmin: () => ["discussions", "admin"] as const,
 	discussionReplies: (id: string) => ["discussions", "replies", id] as const,
 	enrollments: () => ["enrollments"] as const,
+	enrollmentsInspect: (courseId: string) => ["enrollments", "inspect", courseId] as const,
 	feedbacks: () => ["feedbacks"] as const,
+	feedbacksPinned: () => ["feedbacks", "pinned"] as const,
+	feedbacksInspect: () => ["feedbacks", "inspect"] as const,
 	lessons: (chapterId: string) => ["lessons", chapterId] as const,
 	lessonContent: (id: string) => ["lessons", id, "content"] as const,
 	lessonSignedUrl: (id: string) => ["lessons", id, "signed-url"] as const,
 	me: () => ["me"] as const,
 	coursesEnrolled: () => ["courses", "enrolled"] as const,
 	notes: (lessonId: string) => ["notes", lessonId] as const,
-	profileTutor: (id: string) => ["profile", "tutor", id] as const,
+	profileTutor: () => ["profile", "tutor"] as const,
 	profileUser: () => ["profile", "user"] as const,
+	profilesAdmin: () => ["profile", "admin"] as const,
 	transactions: () => ["transactions"] as const,
 	transactionsMe: () => ["transactions", "me"] as const,
 	updates: () => ["updates"] as const,

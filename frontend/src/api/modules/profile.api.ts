@@ -6,43 +6,32 @@ import { z } from "zod";
 import { useApiMutation, useApiQuery } from "@/api/core/generics";
 import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
-import { UserProfileZod, TutorProfileZod, UpdateProfileRequestZod } from "@/types/profile.types";
+import { UserProfileZod, TutorProfileZod, UpdateProfileRequestZod, AdminProfileItemZod } from "@/types/profile.types";
+import { PaginatedResponseZod } from "@/types/common.types";
 
-/**
- * Creates a tutor profile.
- */
 export function useCreateTutorProfileMutation() {
 	return useApiMutation(
 		(data: z.infer<typeof UpdateProfileRequestZod>) =>
 			apiRequest({ url: "/api/v1/profile/tutor", method: "POST", data }, TutorProfileZod),
 		{
-			invalidateKeys: [queryKeys.profileTutor("me")],
+			invalidateKeys: [queryKeys.profileTutor()],
 			successMessage: "Tutor profile created successfully",
 		},
 	);
 }
 
-/**
- * Fetches a tutor profile by ID.
- */
-export function useTutorProfileQuery(id: string) {
-	return useApiQuery(queryKeys.profileTutor(id), () =>
-		apiRequest({ url: `/api/v1/profile/tutor/${id}`, method: "GET" }, TutorProfileZod),
+export function useTutorProfileQuery() {
+	return useApiQuery(queryKeys.profileTutor(), () =>
+		apiRequest({ url: "/api/v1/profile/tutor", method: "GET" }, TutorProfileZod),
 	);
 }
 
-/**
- * Fetches the current user profile.
- */
 export function useUserProfileQuery() {
 	return useApiQuery(queryKeys.profileUser(), () =>
 		apiRequest({ url: "/api/v1/profile/user", method: "GET" }, UserProfileZod),
 	);
 }
 
-/**
- * Creates or updates user profile.
- */
 export function useCreateUserProfileMutation() {
 	return useApiMutation(
 		(data: z.infer<typeof UpdateProfileRequestZod>) =>
@@ -54,5 +43,11 @@ export function useCreateUserProfileMutation() {
 			},
 			successMessage: "User profile updated successfully",
 		},
+	);
+}
+
+export function useAdminProfilesQuery() {
+	return useApiQuery(queryKeys.profilesAdmin(), () =>
+		apiRequest({ url: "/api/v1/profile/admin", method: "GET" }, PaginatedResponseZod(AdminProfileItemZod)),
 	);
 }

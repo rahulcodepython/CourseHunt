@@ -1,14 +1,13 @@
 import { z } from 'zod';
 
-// ── DB Row Structs ────────────────────────────────────────────────────────────
-
 export const LessonZod = z.object({
     id: z.string(),
     chapter_id: z.string(),
     lesson_no: z.number(),
     title: z.string(),
     lesson_type: z.string(),
-    // Note: ShortDescription and PreviewVideoURL are omitted because of `json:"-"`
+    short_description: z.string().nullable().optional(),
+    preview_video_url: z.string().nullable().optional(),
     duration_seconds: z.number(),
     created_at: z.string(),
     updated_at: z.string(),
@@ -18,7 +17,7 @@ export type Lesson = z.infer<typeof LessonZod>;
 export const LessonVideoContentZod = z.object({
     id: z.string(),
     video_url: z.string(),
-    written_content: z.string().optional(),
+    written_content: z.string().nullable().optional(),
 });
 export type LessonVideoContent = z.infer<typeof LessonVideoContentZod>;
 
@@ -32,18 +31,34 @@ export const LessonResourceZod = z.object({
     id: z.string(),
     title: z.string(),
     file_url: z.string(),
-    file_type: z.string().optional(),
+    file_type: z.string().nullable().optional(),
 });
 export type LessonResource = z.infer<typeof LessonResourceZod>;
 
-// ── Lessons ───────────────────────────────────────────────────────────────────
+export const QuizMetadataMiniZod = z.object({
+    id: z.string(),
+    lesson_id: z.string(),
+    title: z.string(),
+    time_limit_seconds: z.number(),
+    total_questions: z.number(),
+    pass_score_percent: z.number(),
+});
+export type QuizMetadataMini = z.infer<typeof QuizMetadataMiniZod>;
+
+export const AggregatedLessonContentResponseZod = z.object({
+    lesson_type: z.string(),
+    video_content: LessonVideoContentZod.nullable().optional(),
+    document_content: LessonDocumentContentZod.nullable().optional(),
+    quiz_content: QuizMetadataMiniZod.nullable().optional(),
+});
+export type AggregatedLessonContentResponse = z.infer<typeof AggregatedLessonContentResponseZod>;
 
 export const CreateLessonRequestZod = z.object({
     title: z.string(),
     lesson_no: z.number(),
     lesson_type: z.string(),
-    short_description: z.string().optional(),
-    preview_video_url: z.string().optional(),
+    short_description: z.string().nullable().optional(),
+    preview_video_url: z.string().nullable().optional(),
     duration_seconds: z.number(),
 });
 export type CreateLessonRequest = z.infer<typeof CreateLessonRequestZod>;
@@ -51,15 +66,15 @@ export type CreateLessonRequest = z.infer<typeof CreateLessonRequestZod>;
 export const UpdateLessonRequestZod = z.object({
     title: z.string().optional(),
     lesson_no: z.number().optional(),
-    short_description: z.string().optional(),
-    preview_video_url: z.string().optional(),
+    short_description: z.string().nullable().optional(),
+    preview_video_url: z.string().nullable().optional(),
     duration_seconds: z.number().optional(),
 });
 export type UpdateLessonRequest = z.infer<typeof UpdateLessonRequestZod>;
 
 export const UpsertVideoContentRequestZod = z.object({
     video_url: z.string(),
-    written_content: z.string().optional(),
+    written_content: z.string().nullable().optional(),
 });
 export type UpsertVideoContentRequest = z.infer<typeof UpsertVideoContentRequestZod>;
 
@@ -71,18 +86,9 @@ export type UpsertDocumentContentRequest = z.infer<typeof UpsertDocumentContentR
 export const AddResourceRequestZod = z.object({
     title: z.string(),
     file_url: z.string(),
-    file_type: z.string().optional(),
+    file_type: z.string().nullable().optional(),
 });
 export type AddResourceRequest = z.infer<typeof AddResourceRequestZod>;
-
-export const LessonContentResponseZod = <T extends z.ZodTypeAny>(contentSchema: T) =>
-    z.object({
-        content: contentSchema.nullable().optional(),
-    });
-
-export type LessonContentResponse<T> = {
-    content?: T | null;
-};
 
 export const SignedURLResponseZod = z.object({
     url: z.string(),

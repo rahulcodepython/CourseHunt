@@ -4726,7 +4726,7 @@ const docTemplate = `{
                 }
             }
         },
-        "utils.DeleteResponse": {
+        "models.DeleteResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -5704,7 +5704,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/utils.DeleteResponse"
+                    "$ref": "#/definitions/models.DeleteResponse"
                 },
                 "errors": {},
                 "message": {

@@ -38,7 +38,7 @@ func (m *UpdatesModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete update.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Update deleted.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Update deleted.", models.DeleteResponse{ID: id}, nil)
 }
 
 func (m *UpdatesModule) FeedController(c *fiber.Ctx) error {

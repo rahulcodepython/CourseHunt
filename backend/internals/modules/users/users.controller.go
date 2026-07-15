@@ -17,7 +17,7 @@ func (m *UsersModule) AssignRoleController(c *fiber.Ctx) error {
 	if err := m.AssignRoleRepository(c.Params("id"), req.RoleID); err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to assign role.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Role assigned.", map[string]interface{}{"user_id": c.Params("id"), "role_id": req.RoleID}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Role assigned.", RoleAssignmentResponse{UserID: c.Params("id"), RoleID: req.RoleID}, nil)
 }
 
 func (m *UsersModule) DeleteRoleController(c *fiber.Ctx) error {
@@ -28,7 +28,7 @@ func (m *UsersModule) DeleteRoleController(c *fiber.Ctx) error {
 	if err := m.DeleteRoleRepository(c.Params("id"), req.RoleID); err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to revoke role.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Role revoked.", map[string]interface{}{"user_id": c.Params("id"), "role_id": req.RoleID}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Role revoked.", RoleAssignmentResponse{UserID: c.Params("id"), RoleID: req.RoleID}, nil)
 }
 
 func (m *UsersModule) ListController(c *fiber.Ctx) error {

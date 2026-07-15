@@ -7,39 +7,43 @@ export const PaginatedResponseZod = <T extends z.ZodTypeAny>(dataSchema: T) =>
         page: z.number(),
         limit: z.number(),
     });
-export type PaginatedResponse = z.infer<typeof PaginatedResponseZod>;
+
+export const DeleteResponseZod = z.object({
+    id: z.string(),
+});
+export type DeleteResponse = z.infer<typeof DeleteResponseZod>;
+
+export const SuccessResponseZod = z.object({
+    success: z.boolean(),
+});
+export type SuccessResponse = z.infer<typeof SuccessResponseZod>;
 
 export const UserInfoZod = z.object({
     id: z.string(),
     name: z.string(),
-    image: z.string().optional(),
+    image: z.string().nullable().optional(),
 });
-export type UserInfo = z.infer<typeof UserInfoZod>;
 
 export const InstructorInfoZod = z.object({
     id: z.string(),
     name: z.string(),
-    image: z.string().optional(),
-    headline: z.string().optional(),
+    image: z.string().nullable().optional(),
+    headline: z.string().nullable().optional(),
 });
-export type InstructorInfo = z.infer<typeof InstructorInfoZod>;
 
 export const CategoryInfoZod = z.object({
     id: z.string(),
     name: z.string(),
 });
-export type CategoryInfo = z.infer<typeof CategoryInfoZod>;
 
 export const CourseInfoZod = z.object({
     id: z.string(),
     title: z.string(),
-    thumbnail: z.string().optional(),
+    thumbnail: z.string().nullable().optional(),
 });
-export type CourseInfo = z.infer<typeof CourseInfoZod>;
 
 export const CouponInfoZod = z.object({
     id: z.string(),
     code: z.string(),
     discount_value: z.number(),
 });
-export type CouponInfo = z.infer<typeof CouponInfoZod>;

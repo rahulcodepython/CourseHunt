@@ -6,67 +6,60 @@ import { z } from "zod";
 import { useApiMutation, useApiQuery } from "@/api/core/generics";
 import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
-import { FeedbackZod, CreateFeedbackRequestZod } from "@/types/feedbacks.types";
+import { FeedbackZod, CreateFeedbackRequestZod, PinFeedbackRequestZod } from "@/types/feedbacks.types";
+import { PaginatedResponseZod, DeleteResponseZod } from "@/types/common.types";
 
-
-
-/**
- * Fetches all feedback.
- */
 export function useFeedbacksQuery() {
 	return useApiQuery(queryKeys.feedbacks(), () =>
-		apiRequest({ url: "/api/v1/feedbacks", method: "GET" }, z.array(FeedbackZod)),
+		apiRequest({ url: "/api/v1/feedbacks", method: "GET" }, PaginatedResponseZod(FeedbackZod)),
 	);
 }
 
-/**
- * Submits feedback for a course.
- * Cache strategy: prepends new feedback to the list.
- */
+export function usePinnedFeedbacksQuery() {
+	return useApiQuery(queryKeys.feedbacksPinned(), () =>
+		apiRequest({ url: "/api/v1/feedbacks/pinned", method: "GET" }, PaginatedResponseZod(FeedbackZod)),
+	);
+}
+
 export function useCreateFeedbackMutation() {
 	return useApiMutation(
-		({ courseId, data }: { courseId: string; data: z.infer<typeof CreateFeedbackRequestZod> }) =>
-			apiRequest({ url: `/api/v1/feedbacks/course/${courseId}`, method: "POST", data }, FeedbackZod),
+		(data: z.infer<typeof CreateFeedbackRequestZod>) =>
+			apiRequest({ url: "/api/v1/feedbacks", method: "POST", data }, FeedbackZod),
 		{
-			updateCache: {
-				queryKey: queryKeys.feedbacks(),
-				updater: cache.prepend(),
-			},
 			successMessage: "Feedback submitted successfully",
 		},
 	);
 }
 
-/**
- * Pins a feedback.
- * Cache strategy: updates the matching feedback in the list.
- */
-export function usePinFeedbackMutation() {
+export function useUpdateFeedbackMutation() {
 	return useApiMutation(
-		({ id, courseId }: { id: string; courseId: string }) => apiRequest({ url: `/api/v1/feedbacks/course/${courseId}/${id}/pin`, method: "PATCH" }, FeedbackZod),
+		({ id, data }: { id: string; data: z.infer<typeof PinFeedbackRequestZod> }) =>
+			apiRequest({ url: `/api/v1/feedbacks/${id}`, method: "PATCH", data }, FeedbackZod),
 		{
 			updateCache: {
 				queryKey: queryKeys.feedbacks(),
-				updater: cache.update((item: any, id: string) => item.id === id),
+				updater: cache.update((item: any, variables: any) => item.id === variables.id, "data"),
 			},
-			successMessage: "Feedback pinned successfully",
+			successMessage: "Feedback updated successfully",
 		},
 	);
 }
 
-/**
- * Deletes a feedback item.
- * Cache strategy: removes matching feedback from the list.
- */
 export function useDeleteFeedbackMutation() {
 	return useApiMutation(
-		({ id, courseId }: { id: string; courseId: string }) => apiRequest({ url: `/api/v1/feedbacks/course/${courseId}/${id}`, method: "DELETE" }, z.any()),
+		(id: string) => apiRequest({ url: `/api/v1/feedbacks/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
 			updateCache: {
 				queryKey: queryKeys.feedbacks(),
-				updater: cache.remove((item: any, id) => item.id === id),
+				updater: cache.remove((item: any, id) => item.id === id, "data"),
 			},
 			successMessage: "Feedback deleted successfully",
 		},
+	);
+}
+
+export function useInspectFeedbacksQuery() {
+	return useApiQuery(queryKeys.feedbacksInspect(), () =>
+		apiRequest({ url: "/api/v1/feedbacks/inspect", method: "GET" }, PaginatedResponseZod(FeedbackZod)),
 	);
 }

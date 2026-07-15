@@ -1407,7 +1407,7 @@ definitions:
           $ref: '#/definitions/users.Role'
         type: array
     type: object
-  utils.DeleteResponse:
+  models.DeleteResponse:
     properties:
       id:
         type: string
@@ -2054,7 +2054,7 @@ definitions:
   utils.SwaggerResponse-utils_DeleteResponse:
     properties:
       data:
-        $ref: '#/definitions/utils.DeleteResponse'
+        $ref: '#/definitions/models.DeleteResponse'
       errors: {}
       message:
         type: string

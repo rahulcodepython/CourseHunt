@@ -37,7 +37,7 @@ func (m *CategoryModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete category.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Category deleted successfully.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Category deleted successfully.", models.DeleteResponse{ID: id}, nil)
 }
 
 func (m *CategoryModule) UpdateController(c *fiber.Ctx) error {

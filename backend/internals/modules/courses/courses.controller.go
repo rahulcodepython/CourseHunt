@@ -143,5 +143,5 @@ func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
 		}
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete course.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Course deleted successfully.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Course deleted successfully.", models.DeleteResponse{ID: id}, nil)
 }

@@ -7,32 +7,20 @@ import { useApiMutation, useApiQuery } from "@/api/core/generics";
 import { queryKeys } from "@/api/query-keys";
 import { cache } from "@/api/core/cache-utils";
 import { CouponZod, CreateCouponRequestZod, UpdateCouponRequestZod, CouponCheckResponseZod } from "@/types/coupons.types";
-import { PaginatedResponseZod } from "@/types/common.types";
+import { PaginatedResponseZod, DeleteResponseZod } from "@/types/common.types";
 
-
-
-/**
- * Fetches all coupons.
- */
 export function useCouponsQuery() {
 	return useApiQuery(queryKeys.coupons(), () =>
 		apiRequest({ url: "/api/v1/coupons", method: "GET" }, PaginatedResponseZod(CouponZod)),
 	);
 }
 
-/**
- * Checks if a coupon is valid.
- */
-export function useCheckCouponQuery() {
+export function useCheckCouponQuery(code: string) {
 	return useApiQuery(queryKeys.couponCheck(), () =>
-		apiRequest({ url: "/api/v1/coupons/check", method: "GET" }, CouponCheckResponseZod),
+		apiRequest({ url: `/api/v1/coupons/check?code=${code}`, method: "GET" }, CouponCheckResponseZod),
 	);
 }
 
-/**
- * Creates a new coupon.
- * Cache strategy: prepends to the coupons list.
- */
 export function useCreateCouponMutation() {
 	return useApiMutation(
 		(data: z.infer<typeof CreateCouponRequestZod>) =>
@@ -47,10 +35,6 @@ export function useCreateCouponMutation() {
 	);
 }
 
-/**
- * Updates a coupon.
- * Cache strategy: updates the matching coupon in the paginated list cache.
- */
 export function useUpdateCouponMutation() {
 	return useApiMutation(
 		({ id, data }: { id: string; data: z.infer<typeof UpdateCouponRequestZod> }) =>
@@ -65,13 +49,9 @@ export function useUpdateCouponMutation() {
 	);
 }
 
-/**
- * Deletes a coupon.
- * Cache strategy: removes the coupon from the list cache.
- */
 export function useDeleteCouponMutation() {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/coupons/${id}`, method: "DELETE" }, z.any()),
+		(id: string) => apiRequest({ url: `/api/v1/coupons/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
 			updateCache: {
 				queryKey: queryKeys.coupons(),

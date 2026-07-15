@@ -1,29 +1,35 @@
-import { CategoryInfoZod, CourseInfoZod, InstructorInfoZod } from '@/types/common.types';
+import { CategoryInfoZod, InstructorInfoZod } from '@/types/common.types';
 import { z } from 'zod';
 
-// ── DB Row Structs ────────────────────────────────────────────────────────────
-
-export const CourseZod = z.object({
-    id: z.string(),
-    // Note: Fields with `json:"-"` in Go are omitted from this Zod schema.
-    slug: z.string(),
+export const CreateCourseRequestZod = z.object({
     title: z.string(),
+    short_description: z.string().nullable().optional(),
+    category_id: z.string().nullable().optional(),
+    subcategory_id: z.string().nullable().optional(),
     language: z.string(),
     level: z.string(),
-    actual_price: z.number(),
-    final_price: z.number(),
-    benefits: z.array(z.string()),
-    requirements: z.array(z.string()),
-    coupon_allowed: z.boolean(),
-    total_lectures: z.number(),
-    total_duration_seconds: z.number(),
-    rating_avg: z.number(),
-    feedback_count: z.number(),
     status: z.string(),
-    created_at: z.string(),
-    updated_at: z.string(),
 });
-export type Course = z.infer<typeof CourseZod>;
+export type CreateCourseRequest = z.infer<typeof CreateCourseRequestZod>;
+
+export const UpdateCourseRequestZod = z.object({
+    title: z.string().optional(),
+    short_description: z.string().nullable().optional(),
+    long_description: z.string().nullable().optional(),
+    image_url: z.string().nullable().optional(),
+    preview_video_url: z.string().nullable().optional(),
+    language: z.string().optional(),
+    level: z.string().optional(),
+    actual_price: z.number().optional(),
+    final_price: z.number().optional(),
+    benefits: z.array(z.string()).optional(),
+    requirements: z.array(z.string()).optional(),
+    category_id: z.string().nullable().optional(),
+    subcategory_id: z.string().nullable().optional(),
+    coupon_allowed: z.boolean().optional(),
+    status: z.string().optional(),
+});
+export type UpdateCourseRequest = z.infer<typeof UpdateCourseRequestZod>;
 
 export const StudyLessonItemZod = z.object({
     id: z.string(),
@@ -52,63 +58,13 @@ export const StudyChapterItemZod = z.object({
 });
 export type StudyChapterItem = z.infer<typeof StudyChapterItemZod>;
 
-// ── Courses ───────────────────────────────────────────────────────────────────
-
-export const CreateCourseRequestZod = z.object({
-    title: z.string(),
-    short_description: z.string().optional(),
-    category_id: z.string().optional(),
-    subcategory_id: z.string().optional(),
-    language: z.string(),
-    level: z.string(),
-    status: z.string(),
-});
-export type CreateCourseRequest = z.infer<typeof CreateCourseRequestZod>;
-
-export const UpdateCourseRequestZod = z.object({
-    title: z.string().optional(),
-    short_description: z.string().optional(),
-    long_description: z.string().optional(),
-    image_url: z.string().optional(),
-    preview_video_url: z.string().optional(),
-    language: z.string().optional(),
-    level: z.string().optional(),
-    actual_price: z.number().optional(),
-    final_price: z.number().optional(),
-    benefits: z.array(z.string()).optional(), // Omitted fields might fallback to optional arrays depending on your Go JSON parser
-    requirements: z.array(z.string()).optional(),
-    category_id: z.string().optional(),
-    subcategory_id: z.string().optional(),
-    coupon_allowed: z.boolean().optional(),
-    status: z.string().optional(),
-});
-export type UpdateCourseRequest = z.infer<typeof UpdateCourseRequestZod>;
-
-// ── Course Responses ──────────────────────────────────────────────────────────
-
-export const CourseCardResponseZod = z.object({
-    id: z.string(),
-    slug: z.string(),
-    title: z.string(),
-    short_description: z.string().optional(),
-    image_url: z.string().optional(),
-    actual_price: z.number(),
-    final_price: z.number(),
-    benefits: z.array(z.string()),
-    level: z.string(),
-    rating_avg: z.number(),
-    feedback_count: z.number(),
-    instructor: InstructorInfoZod,
-});
-export type CourseCardResponse = z.infer<typeof CourseCardResponseZod>;
-
 export const LessonCardResponseZod = z.object({
     id: z.string(),
     lesson_no: z.number(),
     title: z.string(),
     lesson_type: z.string(),
-    short_description: z.string().optional(),
-    preview_video_url: z.string().optional(),
+    short_description: z.string().nullable().optional(),
+    preview_video_url: z.string().nullable().optional(),
     duration_seconds: z.number(),
 });
 export type LessonCardResponse = z.infer<typeof LessonCardResponseZod>;
@@ -127,18 +83,18 @@ export const CourseLandingResponseZod = z.object({
     id: z.string(),
     slug: z.string(),
     title: z.string(),
-    short_description: z.string().optional(),
-    long_description: z.string().optional(),
-    image_url: z.string().optional(),
-    preview_video_url: z.string().optional(),
+    short_description: z.string().nullable().optional(),
+    long_description: z.string().nullable().optional(),
+    image_url: z.string().nullable().optional(),
+    preview_video_url: z.string().nullable().optional(),
     language: z.string(),
     level: z.string(),
     actual_price: z.number(),
     final_price: z.number(),
     benefits: z.array(z.string()),
     requirements: z.array(z.string()),
-    category: CategoryInfoZod.optional(),
-    subcategory: CategoryInfoZod.optional(),
+    category: CategoryInfoZod.nullable().optional(),
+    subcategory: CategoryInfoZod.nullable().optional(),
     instructor: InstructorInfoZod,
     total_lectures: z.number(),
     total_duration_seconds: z.number(),
@@ -153,13 +109,11 @@ export const EnrolledCourseResponseZod = z.object({
     id: z.string(),
     slug: z.string(),
     title: z.string(),
-    image_url: z.string().optional(),
+    image_url: z.string().nullable().optional(),
     completion_percent: z.number(),
-    last_accessed_lesson_id: z.string().optional(),
+    last_accessed_lesson_id: z.string().nullable().optional(),
 });
 export type EnrolledCourseResponse = z.infer<typeof EnrolledCourseResponseZod>;
-
-// ── Course Created/Updated Response ───────────────────────────────────────────
 
 export const CourseCreatedResponseZod = z.object({
     id: z.string(),
@@ -170,15 +124,57 @@ export const CourseCreatedResponseZod = z.object({
 });
 export type CourseCreatedResponse = z.infer<typeof CourseCreatedResponseZod>;
 
-export const EnrollmentStudyInfoZod = z.object({
+export const CourseStudyResponseZod = z.object({
+    course: z.object({ id: z.string(), title: z.string(), thumbnail: z.string().nullable().optional() }),
     completion_percent: z.number(),
     completed: z.boolean(),
-});
-export type EnrollmentStudyInfo = z.infer<typeof EnrollmentStudyInfoZod>;
-
-export const CourseStudyResponseZod = z.object({
-    course: CourseInfoZod,
-    enrollment: EnrollmentStudyInfoZod,
     chapters: z.array(StudyChapterItemZod),
 });
 export type CourseStudyResponse = z.infer<typeof CourseStudyResponseZod>;
+
+export const CoursePublicResponseZod = z.object({
+    id: z.string(),
+    slug: z.string(),
+    title: z.string(),
+    short_description: z.string().nullable().optional(),
+    image_url: z.string().nullable().optional(),
+    actual_price: z.number(),
+    final_price: z.number(),
+    benefits: z.array(z.string()),
+    level: z.string(),
+    rating_avg: z.number(),
+    feedback_count: z.number(),
+    category: CategoryInfoZod.nullable().optional(),
+    subcategory: CategoryInfoZod.nullable().optional(),
+    instructor: InstructorInfoZod,
+});
+export type CoursePublicResponse = z.infer<typeof CoursePublicResponseZod>;
+
+export const CourseInspectResponseZod = z.object({
+    id: z.string(),
+    slug: z.string(),
+    title: z.string(),
+    short_description: z.string().nullable().optional(),
+    long_description: z.string().nullable().optional(),
+    image_url: z.string().nullable().optional(),
+    preview_video_url: z.string().nullable().optional(),
+    language: z.string(),
+    level: z.string(),
+    actual_price: z.number(),
+    final_price: z.number(),
+    benefits: z.array(z.string()),
+    requirements: z.array(z.string()),
+    coupon_allowed: z.boolean(),
+    status: z.string(),
+    total_lectures: z.number(),
+    total_duration_seconds: z.number(),
+    rating_avg: z.number(),
+    feedback_count: z.number(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    category: CategoryInfoZod.nullable().optional(),
+    subcategory: CategoryInfoZod.nullable().optional(),
+    instructor: InstructorInfoZod,
+    chapters: z.array(ChapterCardResponseZod),
+});
+export type CourseInspectResponse = z.infer<typeof CourseInspectResponseZod>;

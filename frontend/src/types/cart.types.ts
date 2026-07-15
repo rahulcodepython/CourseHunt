@@ -8,3 +8,8 @@ export const CartItemZod = z.object({
     added_at: z.string(),
 });
 export type CartItem = z.infer<typeof CartItemZod>;
+
+export const CreateCartRequestZod = z.object({
+    course_id: z.string(),
+});
+export type CreateCartRequest = z.infer<typeof CreateCartRequestZod>;

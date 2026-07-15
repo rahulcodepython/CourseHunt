@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/pkg/minio"
 	"coursehunt-backend/internals/utils"
 
@@ -83,7 +84,7 @@ func (m *LessonsModule) DeleteController(c *fiber.Ctx) error {
 		}
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete lesson.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Lesson deleted successfully.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Lesson deleted successfully.", models.DeleteResponse{ID: id}, nil)
 }
 
 func (m *LessonsModule) UpsertVideoContentController(c *fiber.Ctx) error {
@@ -148,7 +149,7 @@ func (m *LessonsModule) UpdateCompleteController(c *fiber.Ctx) error {
 		}
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to mark lesson complete.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Lesson marked as complete.", map[string]interface{}{"lesson_id": c.Params("id"), "completed": true}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Lesson marked as complete.", LessonCompleteResponse{LessonID: c.Params("id"), Completed: true}, nil)
 }
 
 func (m *LessonsModule) CreateResourceController(c *fiber.Ctx) error {
@@ -182,7 +183,7 @@ func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
 		}
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete resource.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Resource deleted successfully.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Resource deleted successfully.", models.DeleteResponse{ID: id}, nil)
 }
 
 func (m *LessonsModule) GetSignedURLController(c *fiber.Ctx) error {
@@ -196,5 +197,5 @@ func (m *LessonsModule) GetSignedURLController(c *fiber.Ctx) error {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to generate signed URL.", nil, nil)
 	}
 
-	return utils.JSON(c, http.StatusOK, true, "Signed URL generated successfully.", map[string]string{"url": url}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Signed URL generated successfully.", SignedURLResponse{URL: url}, nil)
 }

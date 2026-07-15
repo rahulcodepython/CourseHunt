@@ -50,3 +50,12 @@ type UserContext struct {
 	Roles       []string `json:"roles"`
 	Permissions []string `json:"permissions"`
 }
+
+// DeleteResponse represents the generic response envelope returned when a resource is deleted.
+type DeleteResponse struct {
+	ID string `json:"id"`
+}
+
+type SuccessResponse struct {
+	Success bool `json:"success"`
+}

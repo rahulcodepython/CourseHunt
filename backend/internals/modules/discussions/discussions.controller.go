@@ -112,7 +112,7 @@ func (m *DiscussionsModule) DeleteController(c *fiber.Ctx) error {
 		}
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete discussion.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Discussion deleted.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Discussion deleted.", models.DeleteResponse{ID: id}, nil)
 }
 
 func (m *DiscussionsModule) TutorDeleteController(c *fiber.Ctx) error {
@@ -127,7 +127,7 @@ func (m *DiscussionsModule) TutorDeleteController(c *fiber.Ctx) error {
 		}
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete discussion.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Discussion deleted.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Discussion deleted.", models.DeleteResponse{ID: id}, nil)
 }
 
 func (m *DiscussionsModule) AdminListController(c *fiber.Ctx) error {
@@ -149,5 +149,5 @@ func (m *DiscussionsModule) AdminDeleteController(c *fiber.Ctx) error {
 		}
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete discussion.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Discussion deleted.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Discussion deleted.", models.DeleteResponse{ID: id}, nil)
 }

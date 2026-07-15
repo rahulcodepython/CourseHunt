@@ -7,68 +7,52 @@ import { useApiMutation } from "@/api/core/generics";
 import {
 	CreateQuizRequestZod, NextQuestionRequestZod,
 	SubmitQuizRequestZod, CreateQuestionRequestZod, NextQuestionResponseZod,
-	SubmitQuizResponseZod, QuizAttemptZod
+	SubmitQuizResponseZod, QuizMetadataZod, QuizQuestionZod
 } from "@/types/quiz.types";
+import { DeleteResponseZod } from "@/types/common.types";
 
-
-
-/**
- * Creates a new quiz for a lesson.
- */
-export function useCreateQuizMutation(courseId: string, lessonId: string) {
+export function useCreateQuizMutation() {
 	return useApiMutation(
-		(data: z.infer<typeof CreateQuizRequestZod>) =>
-			apiRequest({ url: `/api/v1/quiz/course/${courseId}/lesson/${lessonId}`, method: "POST", data }, z.any()),
+		({ lessonId, data }: { lessonId: string; data: z.infer<typeof CreateQuizRequestZod> }) =>
+			apiRequest({ url: `/api/v1/quiz/metadata?lesson_id=${lessonId}`, method: "POST", data }, QuizMetadataZod),
 		{
 			successMessage: "Quiz created successfully",
 		},
 	);
 }
 
-/**
- * Fetches a question in a quiz attempt.
- */
-export function useGetQuestionMutation(courseId: string, lessonId: string, quizId: string) {
+export function useCreateQuestionMutation() {
 	return useApiMutation(
-		(data: z.infer<typeof NextQuestionRequestZod>) =>
-			apiRequest({ url: `/api/v1/quiz/course/${courseId}/lesson/${lessonId}/quiz/${quizId}/question`, method: "POST", data }, NextQuestionResponseZod),
-	);
-}
-
-/**
- * Submits a quiz attempt.
- */
-export function useSubmitQuizMutation(courseId: string, lessonId: string, quizId: string) {
-	return useApiMutation(
-		(data: z.infer<typeof SubmitQuizRequestZod>) =>
-			apiRequest({ url: `/api/v1/quiz/course/${courseId}/lesson/${lessonId}/quiz/${quizId}/submit`, method: "POST", data }, SubmitQuizResponseZod),
+		({ quizId, data }: { quizId: string; data: z.infer<typeof CreateQuestionRequestZod> }) =>
+			apiRequest({ url: `/api/v1/quiz/questions?quiz_id=${quizId}`, method: "POST", data }, QuizQuestionZod),
 		{
-			successMessage: "Quiz submitted",
+			successMessage: "Question created successfully",
 		},
 	);
 }
 
-/**
- * Deletes a question from a quiz.
- */
-export function useDeleteQuestionMutation(courseId: string) {
+export function useDeleteQuestionMutation() {
 	return useApiMutation(
-		(id: string) => apiRequest({ url: `/api/v1/quiz/course/${courseId}/questions/${id}`, method: "DELETE" }, z.any()),
+		(id: string) => apiRequest({ url: `/api/v1/quiz/questions/${id}`, method: "DELETE" }, DeleteResponseZod),
 		{
 			successMessage: "Question deleted successfully",
 		},
 	);
 }
 
-/**
- * Creates a question for a quiz.
- */
-export function useCreateQuestionMutation(courseId: string, quizId: string) {
+export function useGetQuestionMutation() {
 	return useApiMutation(
-		(data: z.infer<typeof CreateQuestionRequestZod>) =>
-			apiRequest({ url: `/api/v1/quiz/course/${courseId}/${quizId}/questions`, method: "POST", data }, z.any()),
+		({ quizId, data }: { quizId: string; data: z.infer<typeof NextQuestionRequestZod> }) =>
+			apiRequest({ url: `/api/v1/quiz/question?quiz_id=${quizId}`, method: "POST", data }, NextQuestionResponseZod),
+	);
+}
+
+export function useSubmitQuizMutation() {
+	return useApiMutation(
+		({ quizId, data }: { quizId: string; data: z.infer<typeof SubmitQuizRequestZod> }) =>
+			apiRequest({ url: `/api/v1/quiz/submit?quiz_id=${quizId}`, method: "POST", data }, SubmitQuizResponseZod),
 		{
-			successMessage: "Question created successfully",
+			successMessage: "Quiz submitted",
 		},
 	);
 }

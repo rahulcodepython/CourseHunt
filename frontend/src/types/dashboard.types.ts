@@ -4,7 +4,7 @@ export const RecentCourseCardZod = z.object({
     id: z.string(),
     slug: z.string(),
     title: z.string(),
-    image_url: z.string().optional(),
+    image_url: z.string().nullable().optional(),
     completion_percent: z.number(),
 });
 export type RecentCourseCard = z.infer<typeof RecentCourseCardZod>;
@@ -55,8 +55,8 @@ export type TutorDashboard = z.infer<typeof TutorDashboardZod>;
 
 export const AdminRecentTransactionZod = z.object({
     id: z.string(),
-    user_id: z.string().optional(),
-    course_id: z.string().optional(),
+    user_id: z.string().nullable().optional(),
+    course_id: z.string().nullable().optional(),
     amount: z.number(),
     status: z.string(),
     created_at: z.string(),

@@ -3,6 +3,7 @@ package chapters
 import (
 	"net/http"
 
+	"coursehunt-backend/internals/models"
 	"coursehunt-backend/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -46,5 +47,5 @@ func (m *ChaptersModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete chapter.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Chapter deleted successfully.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Chapter deleted successfully.", models.DeleteResponse{ID: id}, nil)
 }

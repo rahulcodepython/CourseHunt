@@ -37,5 +37,5 @@ func (m *WishlistModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to remove from wishlist.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Removed from wishlist.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Removed from wishlist.", models.DeleteResponse{ID: id}, nil)
 }

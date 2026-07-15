@@ -53,7 +53,7 @@ func (m *CouponsModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.JSON(c, http.StatusInternalServerError, false, "Failed to delete coupon.", nil, nil)
 	}
-	return utils.JSON(c, http.StatusOK, true, "Coupon deleted.", map[string]string{"id": id}, nil)
+	return utils.JSON(c, http.StatusOK, true, "Coupon deleted.", models.DeleteResponse{ID: id}, nil)
 }
 
 func (m *CouponsModule) CheckController(c *fiber.Ctx) error {

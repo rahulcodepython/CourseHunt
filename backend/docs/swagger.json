@@ -4720,7 +4720,7 @@
                 }
             }
         },
-        "utils.DeleteResponse": {
+        "models.DeleteResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -5698,7 +5698,7 @@
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/utils.DeleteResponse"
+                    "$ref": "#/definitions/models.DeleteResponse"
                 },
                 "errors": {},
                 "message": {

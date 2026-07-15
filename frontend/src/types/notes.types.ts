@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-// ── DB Row Structs ────────────────────────────────────────────────────────────
-
 export const UserNoteZod = z.object({
     id: z.string(),
     user_id: z.string(),
@@ -12,14 +10,10 @@ export const UserNoteZod = z.object({
 });
 export type UserNote = z.infer<typeof UserNoteZod>;
 
-// ── Notes ─────────────────────────────────────────────────────────────────────
-
 export const UpsertNoteRequestZod = z.object({
     content: z.string(),
 });
 export type UpsertNoteRequest = z.infer<typeof UpsertNoteRequestZod>;
-
-// ── Note Response ─────────────────────────────────────────────────────────────
 
 export const NoteResponseZod = z.object({
     id: z.string(),

@@ -3,7 +3,7 @@ import { CourseInfoZod } from './common.types';
 
 export const CreateCouponRequestZod = z.object({
     code: z.string(),
-    course_id: z.string().optional(),
+    course_id: z.string().nullable().optional(),
     discount_percent: z.number(),
     max_usage: z.number(),
     expires_at: z.string(),
@@ -22,7 +22,7 @@ export type UpdateCouponRequest = z.infer<typeof UpdateCouponRequestZod>;
 export const CouponCheckResponseZod = z.object({
     valid: z.boolean(),
     discount_percent: z.number(),
-    reason: z.string().optional(),
+    reason: z.string().nullable().optional(),
 });
 export type CouponCheckResponse = z.infer<typeof CouponCheckResponseZod>;
 
@@ -35,7 +35,7 @@ export const CouponZod = z.object({
     usage_count: z.number(),
     expires_at: z.string(),
     is_active: z.boolean(),
-    created_by: z.string().optional(),
+    created_by: z.string().nullable().optional(),
     created_at: z.string(),
 });
 export type Coupon = z.infer<typeof CouponZod>;
