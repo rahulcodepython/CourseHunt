@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
-import { z, ZodSchema } from "zod";
+import { z } from "zod";
 import { ApiResponse, ApiResponseZod } from "@/types/common.types";
 
 // =============================================================================
