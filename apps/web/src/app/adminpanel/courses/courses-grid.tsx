@@ -2,7 +2,7 @@
 
 import CourseCard from '@/components/course-card'
 import LoadingButton from '@/components/loading-button'
-import { Button } from '@/components/ui/button'
+import { Button } from '@package/ui/button'
 import { useAdminCoursesQuery, useDeleteCourseMutation } from '@/hooks/api'
 import Link from 'next/link'
 import CreateCourse from './create-course'

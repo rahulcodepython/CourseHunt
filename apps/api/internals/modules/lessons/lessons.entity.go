@@ -1,7 +1,7 @@
 package lessons
 
 import (
-	"coursehunt-backend/internals/modules/quiz"
+	"coursehunt/api/internals/modules/quiz"
 	"time"
 )
 

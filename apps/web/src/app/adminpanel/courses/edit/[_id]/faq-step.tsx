@@ -4,11 +4,11 @@ import { Icon } from "@/components/icon";
 
 
 import LoadingButton from "@/components/loading-button"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@package/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
+import { Input } from "@package/ui/input"
+import { Label } from "@package/ui/label"
+import { Textarea } from "@package/ui/textarea"
 import { useUpdateCourseMutation } from "@/hooks/api"
 import { CourseType, FAQType } from "@/types/course.type"
 

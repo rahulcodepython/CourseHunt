@@ -3,7 +3,7 @@
 import { Icon } from "@/components/icon";
 
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@package/ui/button"
 import { useAdminCourseSingleQuery, useCourseCategoriesQuery } from "@/hooks/api"
 import { CourseType } from "@/types/course.type"
 

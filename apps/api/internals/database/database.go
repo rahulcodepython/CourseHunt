@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	"coursehunt-backend/internals/config"
-	"coursehunt-backend/internals/migrations"
+	"coursehunt/api/internals/config"
+	"coursehunt/api/internals/migrations"
 
 	_ "github.com/lib/pq"
 )

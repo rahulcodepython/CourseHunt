@@ -4,11 +4,11 @@ import { Icon } from "@/components/icon";
 
 import Loading from "@/components/loading"
 import LoadingButton from "@/components/loading-button"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Progress } from "@/components/ui/progress"
+import { Badge } from "@package/ui/badge"
+import { Button } from "@package/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@package/ui/collapsible"
+import { Progress } from "@package/ui/progress"
 import {
     useCourseStudyQuery,
     useUpdateLastViewedMutation,
@@ -19,9 +19,9 @@ import {
 import { ChapterType, LessonType, ResourcesType } from "@/types/course.type"
 import { CourseProgressType, ViewedLessonType } from "@/types/study.type"
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@package/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar"
+import { Textarea } from "@package/ui/textarea"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import React, { useEffect, useState } from "react"

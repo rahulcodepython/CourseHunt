@@ -5,10 +5,10 @@ import { Icon } from "@/components/icon";
 
 import FileUpload from "@/components/file-upload"
 import LoadingButton from "@/components/loading-button"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@package/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
+import { Input } from "@package/ui/input"
+import { Label } from "@package/ui/label"
 import { useUpdateCourseMutation } from "@/hooks/api"
 import { CourseType, MediaUrlType, ResourcesType } from "@/types/course.type"
 

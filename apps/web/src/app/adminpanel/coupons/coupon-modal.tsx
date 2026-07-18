@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@package/ui/dialog"
 import { Coupon } from "@/types/coupon.type"
 import CouponForm from "./coupon-form"
 

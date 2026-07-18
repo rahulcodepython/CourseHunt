@@ -1,5 +1,5 @@
 {
-    "name": "frontend",
+    "name": "@coursehunt/web",
     "version": "0.0.1",
     "type": "module",
     "private": true,
@@ -9,7 +9,8 @@
         "start": "next start",
         "lint": "eslint",
         "format": "prettier --write \"**/*.{ts,tsx}\"",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "clean": "rm -rf .next"
     },
     "dependencies": {
         "@imagekit/next": "^2.1.5",

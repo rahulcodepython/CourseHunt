@@ -1,7 +1,7 @@
 package courses
 
 import (
-	"coursehunt-backend/internals/modules/enrollments"
+	"coursehunt/api/internals/modules/enrollments"
 
 	"github.com/jmoiron/sqlx"
 )

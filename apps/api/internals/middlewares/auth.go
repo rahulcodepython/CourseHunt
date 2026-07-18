@@ -6,9 +6,9 @@ import (
 	"slices"
 	"time"
 
-	"coursehunt-backend/internals/config"
-	"coursehunt-backend/internals/models"
-	"coursehunt-backend/internals/utils"
+	"coursehunt/api/internals/config"
+	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/lestrrat-go/jwx/v2/jwk"

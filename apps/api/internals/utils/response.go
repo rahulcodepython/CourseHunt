@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"coursehunt-backend/internals/models"
+	"coursehunt/api/internals/models"
 
 	"github.com/gofiber/fiber/v2"
 )

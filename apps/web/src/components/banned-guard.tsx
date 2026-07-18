@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "@/lib/auth-client";
+import { useSession } from "@package/auth/auth-client";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 

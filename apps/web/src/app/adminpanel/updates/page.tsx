@@ -3,15 +3,15 @@
 import { Icon } from "@/components/icon";
 
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@package/ui/badge";
+import { Button } from "@package/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@/components/ui/card";
+} from "@package/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -20,9 +20,9 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@package/ui/dialog";
+import { Input } from "@package/ui/input";
+import { Label } from "@package/ui/label";
 import {
 	Table,
 	TableBody,
@@ -30,8 +30,8 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
+} from "@package/ui/table";
+import { Textarea } from "@package/ui/textarea";
 import {
 	useAdminUpdatesQuery,
 	useCreateUpdateMutation,

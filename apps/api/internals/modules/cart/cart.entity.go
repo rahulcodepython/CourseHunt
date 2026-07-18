@@ -1,7 +1,7 @@
 package cart
 
 import (
-	"coursehunt-backend/internals/models"
+	"coursehunt/api/internals/models"
 	"time"
 )
 

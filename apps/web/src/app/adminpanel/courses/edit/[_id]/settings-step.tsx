@@ -1,10 +1,10 @@
 "use client";
 
 import LoadingButton from "@/components/loading-button"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { Button } from "@package/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
+import { Label } from "@package/ui/label"
+import { Switch } from "@package/ui/switch"
 import { useUpdateCourseMutation } from "@/hooks/api"
 import { CourseSettingsFormType } from "@/types/course.form.type"
 import { CourseType } from "@/types/course.type"

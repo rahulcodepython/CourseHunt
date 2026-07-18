@@ -2,7 +2,7 @@
 
 import { Icon } from "@/components/icon";
 import { useUserDashboardQuery } from "@/hooks/api";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@package/ui/skeleton";
 import Loading from "@/components/loading";
 import Stats from "@/app/dashboard/stats";
 import Courses from "@/app/dashboard/courses";

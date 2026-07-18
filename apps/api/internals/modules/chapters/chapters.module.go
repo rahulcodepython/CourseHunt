@@ -1,7 +1,7 @@
 package chapters
 
 import (
-	"coursehunt-backend/internals/modules/courses"
+	"coursehunt/api/internals/modules/courses"
 
 	"github.com/jmoiron/sqlx"
 )

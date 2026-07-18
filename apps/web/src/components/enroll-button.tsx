@@ -1,9 +1,9 @@
 "use client";
 
-import { useSession } from '@/lib/auth-client'
+import { useSession } from '@package/auth/auth-client'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
-import { Button } from './ui/button'
+import { Button } from '@package/ui/button'
 
 export default function EnrollButton({ _id, className }: { _id: number, className?: string }) {
     const { data: session } = useSession()

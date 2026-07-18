@@ -1,5 +1,5 @@
 import { Icon } from "@/components/icon";
-import { Button } from '@/components/ui/button';
+import { Button } from '@package/ui/button';
 
 import React from 'react';
 

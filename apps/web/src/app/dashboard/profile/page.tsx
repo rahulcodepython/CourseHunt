@@ -5,12 +5,12 @@ import { Icon } from "@/components/icon";
 
 import FileUpload from "@/components/file-upload"
 import LoadingButton from "@/components/loading-button"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@package/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card"
+import { Input } from "@package/ui/input"
+import { Label } from "@package/ui/label"
+import { Separator } from "@package/ui/separator"
+import { Badge } from "@package/ui/badge"
 import { useUpdateUserMutation, useUserDetailsQuery } from "@/hooks/api"
 import { UserProfileType } from "@/types/user.type"
 

@@ -3,7 +3,7 @@
 import { Icon } from "@/components/icon";
 
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { useUserDashboardQuery } from "@/hooks/api";
 
 

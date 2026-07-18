@@ -3,7 +3,7 @@ package notes
 import (
 	"errors"
 
-	"coursehunt-backend/internals/utils"
+	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 )

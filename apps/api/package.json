@@ -1,0 +1,11 @@
+{
+  "name": "@coursehunt/api",
+  "private": true,
+  "scripts": {
+    "dev": "go run ./cmd/server",
+    "build": "go build -o cmd/bin/server ./cmd/server",
+    "start": "./cmd/bin/server",
+    "lint": "golangci-lint run",
+    "clean": "rm -f cmd/bin/server"
+  }
+}

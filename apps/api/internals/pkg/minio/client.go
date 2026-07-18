@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"coursehunt-backend/internals/config"
+	"coursehunt/api/internals/config"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"

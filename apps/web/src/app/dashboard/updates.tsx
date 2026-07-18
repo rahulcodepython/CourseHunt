@@ -1,13 +1,13 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@package/ui/badge";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@/components/ui/card";
+} from "@package/ui/card";
 import { useUnseenUpdatesQuery } from "@/hooks/api/updates-hooks";
 
 export default function DashboardUpdatesSlot() {

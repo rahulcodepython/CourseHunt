@@ -25,6 +25,24 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@/package/*": [
+        "../../package/*"
+      ],
+      "@package/schema/*": [
+        "../../package/schema/*"
+      ],
+      "@package/auth/*": [
+        "../../package/auth/*"
+      ],
+      "@package/react-query/*": [
+        "../../package/react-query/*"
+      ],
+      "@package/query-hooks/*": [
+        "../../package/query-hooks/*"
+      ],
+      "@package/ui/*": [
+        "../../package/ui/*"
       ]
     }
   },

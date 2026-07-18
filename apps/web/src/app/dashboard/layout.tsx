@@ -2,7 +2,7 @@
 
 import { AppSidebar } from "@/components/app-sidebar";
 import BreadcrumbComponent from "@/components/breadcrumb";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@package/ui/sidebar";
 import { NavbarDataType } from "@/types/navbar.type";
 
 export default function UserLayout({

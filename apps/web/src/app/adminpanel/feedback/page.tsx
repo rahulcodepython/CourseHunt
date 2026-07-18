@@ -2,11 +2,11 @@
 
 import { Icon } from "@/components/icon";
 
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Badge } from "@package/ui/badge"
+import { Card, CardContent, CardHeader } from "@package/ui/card"
 import { useAdminFeedbackQuery, usePinFeedbackMutation, useDeleteFeedbackMutation } from "@/hooks/api"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@package/ui/button"
 import Loading from "@/components/loading";
 
 export default function FeedbackPage() {

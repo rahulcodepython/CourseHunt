@@ -3,11 +3,11 @@
 import { Icon } from "@/components/icon";
 
 
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@package/ui/separator";
 import Loading from "@/components/loading";
-import { Button } from "@/components/ui/button";
+import { Button } from "@package/ui/button";
 
-import { useSession } from "@/lib/auth-client";
+import { useSession } from "@package/auth/auth-client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 

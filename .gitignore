@@ -41,5 +41,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# backend
-backend/server
+# turbo
+.turbo
+
+# api (Go backend)
+apps/api/server

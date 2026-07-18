@@ -3,10 +3,10 @@
 import { Icon } from "@/components/icon";
 
 
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@package/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@package/ui/chart"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@package/ui/tabs"
 
 import { useState } from "react"
 import { Bar, BarChart, Line, LineChart as RechartsLineChart, XAxis, YAxis } from "recharts"

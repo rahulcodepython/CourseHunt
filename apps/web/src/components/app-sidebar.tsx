@@ -7,7 +7,7 @@ import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@package/ui/collapsible"
 import {
     Sidebar,
     SidebarContent,
@@ -23,14 +23,14 @@ import {
     SidebarMenuSubItem,
     SidebarRail,
     useSidebar
-} from "@/components/ui/sidebar"
+} from "@package/ui/sidebar"
 
 
 import {
     Avatar,
     AvatarFallback,
     AvatarImage
-} from "@/components/ui/avatar"
+} from "@package/ui/avatar"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -39,8 +39,8 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu"
-import { signOut, useSession } from "@/lib/auth-client"
+} from "@package/ui/dropdown-menu"
+import { signOut, useSession } from "@package/auth/auth-client"
 import { NavbarDataType, NavGroupType } from "@/types/navbar.type"
 
 import Link from "next/link"

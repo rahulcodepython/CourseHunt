@@ -3,9 +3,9 @@
 import { Icon } from "@/components/icon";
 
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@package/ui/button"
+import { Input } from "@package/ui/input"
+import { Label } from "@package/ui/label"
 import { useUploadMediaMutation } from "@/hooks/api"
 
 import Image from "next/image"

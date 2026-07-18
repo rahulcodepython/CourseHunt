@@ -1,7 +1,7 @@
 package updates
 
 import (
-	"coursehunt-backend/internals/models"
+	"coursehunt/api/internals/models"
 	"encoding/json"
 )
 

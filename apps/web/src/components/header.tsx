@@ -2,8 +2,8 @@
 
 import { Icon } from "@/components/icon";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar"
+import { Button } from '@package/ui/button'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,8 +12,8 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu"
-import { signOut, useSession } from '@/lib/auth-client'
+} from "@package/ui/dropdown-menu"
+import { signOut, useSession } from '@package/auth/auth-client'
 import { cn } from '@/lib/utils'
 
 import Link from 'next/link'

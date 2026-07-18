@@ -5,13 +5,13 @@ import { Icon } from "@/components/icon";
 
 import Image from "next/image"
 import React from "react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@package/ui/skeleton"
 import Loading from "@/components/loading"
 import EnrollButton from "@/components/enroll-button"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@package/ui/accordion"
+import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar"
+import { Badge } from "@package/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
 import { usePublicCourseSingleQuery } from "@/hooks/api"
 
 export default function CourseSingle({ params }: { params: Promise<{ _id: string }> }) {

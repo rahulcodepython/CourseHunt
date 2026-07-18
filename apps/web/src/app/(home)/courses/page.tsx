@@ -1,9 +1,9 @@
 "use client";
 
 import CourseCard from '@/components/course-card';
-import { Input } from '@/components/ui/input';
+import { Input } from '@package/ui/input';
 import { usePublicCoursesQuery } from '@/hooks/api';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@package/ui/skeleton';
 import Loading from '@/components/loading';
 
 const Courses = () => {

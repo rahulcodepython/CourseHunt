@@ -1,11 +1,11 @@
 package transactions
 
 import (
-	"coursehunt-backend/internals/config"
-	"coursehunt-backend/internals/modules/coupons"
-	"coursehunt-backend/internals/modules/courses"
-	"coursehunt-backend/internals/modules/enrollments"
-	razorpaypkg "coursehunt-backend/internals/pkg/razorpay"
+	"coursehunt/api/internals/config"
+	"coursehunt/api/internals/modules/coupons"
+	"coursehunt/api/internals/modules/courses"
+	"coursehunt/api/internals/modules/enrollments"
+	razorpaypkg "coursehunt/api/internals/pkg/razorpay"
 
 	"github.com/jmoiron/sqlx"
 )

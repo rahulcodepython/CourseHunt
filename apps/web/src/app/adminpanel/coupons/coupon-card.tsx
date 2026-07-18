@@ -3,10 +3,10 @@
 import { Icon } from "@/components/icon";
 
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import { Badge } from "@package/ui/badge"
+import { Button } from "@package/ui/button"
+import { Card, CardContent, CardFooter, CardHeader } from "@package/ui/card"
+import { Progress } from "@package/ui/progress"
 import { useDeleteCouponMutation, useUpdateCouponMutation } from "@/hooks/api"
 import { Coupon } from "@/types/coupon.type"
 

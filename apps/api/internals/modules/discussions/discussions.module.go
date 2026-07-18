@@ -1,8 +1,8 @@
 package discussions
 
 import (
-	"coursehunt-backend/internals/modules/courses"
-	"coursehunt-backend/internals/modules/enrollments"
+	"coursehunt/api/internals/modules/courses"
+	"coursehunt/api/internals/modules/enrollments"
 
 	"github.com/jmoiron/sqlx"
 )

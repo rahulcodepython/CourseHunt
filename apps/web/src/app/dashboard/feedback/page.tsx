@@ -4,11 +4,11 @@ import { Icon } from "@/components/icon";
 
 
 import LoadingButton from "@/components/loading-button"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@package/ui/button"
+import { Card, CardContent } from "@package/ui/card"
+import { Label } from "@package/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@package/ui/select"
+import { Textarea } from "@package/ui/textarea"
 import { useCourseNamesQuery, useCreateFeedbackMutation } from "@/hooks/api"
 
 import { useState } from "react"

@@ -3,16 +3,16 @@
 import { Icon } from "@/components/icon";
 
 import CourseCard from "@/components/course-card"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@package/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@package/ui/card"
+import { Input } from "@package/ui/input"
+import { Label } from "@package/ui/label"
+import { Textarea } from "@package/ui/textarea"
 import { usePublicCoursesQuery } from "@/hooks/api"
 
 import Image from "next/image"
 import Link from "next/link"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@package/ui/skeleton"
 import Loading from "@/components/loading"
 
 const testimonials = [

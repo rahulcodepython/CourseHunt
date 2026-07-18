@@ -2,12 +2,12 @@
 
 import { Icon } from "@/components/icon";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@package/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table"
 import { useUserTransactionsQuery } from "@/hooks/api"
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@package/ui/skeleton";
 import Loading from "@/components/loading";
 
 export default function Transaction() {

@@ -3,9 +3,9 @@
 import { Icon } from "@/components/icon";
 
 
-import { authClient } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { authClient } from "@package/auth/auth-client";
+import { Button } from "@package/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 
 import React from "react";
 import { toast } from "sonner";

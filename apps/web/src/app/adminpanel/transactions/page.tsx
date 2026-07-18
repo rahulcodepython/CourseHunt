@@ -1,14 +1,14 @@
 "use client";
 
 import { Icon } from "@/components/icon";
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@package/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table"
 import { useAdminTransactionsQuery, useAcceptRefundMutation, useRejectRefundMutation } from "@/hooks/api"
 import { toast } from "sonner";
 import Loading from "@/components/loading";
 
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@package/ui/badge"
 
 export default function Transaction() {
     const { data: responseData, isLoading } = useAdminTransactionsQuery()

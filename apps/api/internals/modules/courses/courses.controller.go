@@ -3,8 +3,8 @@ package courses
 import (
 	"errors"
 
-	"coursehunt-backend/internals/models"
-	"coursehunt-backend/internals/utils"
+	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 )

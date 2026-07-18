@@ -4,7 +4,7 @@ import { Icon } from "@/components/icon";
 
 
 import { useAdminCouponsQuery } from "@/hooks/api"
-import { Button } from "@/components/ui/button"
+import { Button } from "@package/ui/button"
 import { Coupon } from "@/types/coupon.type"
 
 import { useState } from "react"

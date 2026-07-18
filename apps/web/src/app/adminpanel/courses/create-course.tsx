@@ -4,7 +4,7 @@ import { Icon } from "@/components/icon";
 
 
 import LoadingButton from "@/components/loading-button"
-import { Button } from "@/components/ui/button"
+import { Button } from "@package/ui/button"
 import {
     Dialog,
     DialogClose,
@@ -13,10 +13,10 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger
-} from "@/components/ui/dialog"
+} from "@package/ui/dialog"
 import { useCreateCourseMutation } from "@/hooks/api"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Input } from "@package/ui/input"
+import { Label } from "@package/ui/label"
 
 import React from 'react'
 import { toast } from "sonner"

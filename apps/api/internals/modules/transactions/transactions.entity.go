@@ -1,7 +1,7 @@
 package transactions
 
 import (
-	"coursehunt-backend/internals/models"
+	"coursehunt/api/internals/models"
 	"time"
 )
 

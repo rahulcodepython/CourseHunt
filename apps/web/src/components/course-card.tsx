@@ -1,11 +1,11 @@
 import { Icon } from "@/components/icon";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@package/ui/badge";
 import {
 	Card,
 	CardContent,
 	CardFooter,
 	CardHeader,
-} from "@/components/ui/card";
+} from "@package/ui/card";
 import { CourseCardType } from "@/types/course.type";
 
 import Image from "next/image";

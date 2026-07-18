@@ -2,11 +2,11 @@
 
 import { Icon } from "@/components/icon";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table"
 import { useAdminDashboardQuery } from "@/hooks/api"
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@package/ui/skeleton";
 import Loading from "@/components/loading";
 
 const Admin = () => {

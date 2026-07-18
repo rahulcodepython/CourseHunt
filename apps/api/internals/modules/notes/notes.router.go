@@ -1,7 +1,7 @@
 package notes
 
 import (
-	"coursehunt-backend/internals/middlewares"
+	"coursehunt/api/internals/middlewares"
 
 	"github.com/gofiber/fiber/v2"
 )

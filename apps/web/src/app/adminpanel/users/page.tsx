@@ -2,14 +2,14 @@
 
 import { Icon } from "@/components/icon";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar"
+import { Badge } from "@package/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
+import { Input } from "@package/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@package/ui/dropdown-menu"
 import Loading from "@/components/loading"
-import { Button } from "@/components/ui/button"
+import { Button } from "@package/ui/button"
 import { useAdminUsersQuery, useBanUserMutation, useUnbanUserMutation, useSwitchUserRoleMutation, type AdminUserType } from "@/hooks/api"
 
 import { useState } from "react"

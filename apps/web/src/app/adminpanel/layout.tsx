@@ -3,8 +3,8 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import Loading from "@/components/loading";
 import BreadcrumbComponent from "@/components/breadcrumb";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { useSession } from "@/lib/auth-client";
+import { SidebarProvider, SidebarTrigger } from "@package/ui/sidebar";
+import { useSession } from "@package/auth/auth-client";
 import { NavbarDataType } from "@/types/navbar.type";
 import { useRouter } from "next/navigation";
 import React from "react";

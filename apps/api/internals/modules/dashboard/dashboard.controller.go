@@ -1,7 +1,7 @@
 package dashboard
 
 import (
-	"coursehunt-backend/internals/utils"
+	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
