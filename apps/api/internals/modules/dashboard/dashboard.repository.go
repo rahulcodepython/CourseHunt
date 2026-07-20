@@ -60,27 +60,15 @@ func (m *DashboardModule) TutorDashboardRepository(tutorID string) (*TutorDashbo
 				JOIN courses c ON c.id = t.course_id
 				WHERE c.tutor_id = $1 AND t.status = 'success'
 			), 0.0),
-			'recent_transactions', COALESCE((
-				SELECT json_agg(tx_rows) FROM (
-					SELECT u.name AS user_name, c.title AS course_title, t.amount, t.created_at AS date
-					FROM transactions t
-					JOIN "user" u ON u.id = t.user_id
-					JOIN courses c ON c.id = t.course_id
-					WHERE c.tutor_id = $1 AND t.status = 'success'
-					ORDER BY t.created_at DESC LIMIT 10
-				) tx_rows
-			), '[]'::json),
 			'course_stats', COALESCE((
 				SELECT json_agg(stats_rows) FROM (
 					SELECT c.id AS course_id, c.title,
-					       COUNT(DISTINCT e.user_id) AS students,
-					       COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'success'), 0.0) AS revenue
+					       COUNT(DISTINCT e.user_id) AS students
 					FROM courses c
 					LEFT JOIN enrollments e ON e.course_id = c.id
-					LEFT JOIN transactions t ON t.course_id = c.id
 					WHERE c.tutor_id = $1
 					GROUP BY c.id, c.title
-					ORDER BY revenue DESC
+					ORDER BY students DESC
 				) stats_rows
 			), '[]'::json)
 		)`

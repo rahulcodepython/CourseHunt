@@ -4,7 +4,7 @@ import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import { useAdminDiscussionsQuery, useTutorDeleteDiscussionMutation, useUpdateDiscussionMutation, useCreateDiscussionMutation } from "@package/query-hooks/discussions.api";
+import { useAdminDiscussionsQuery, useTutorDeleteDiscussionMutation, useTutorUpdateDiscussionMutation, useTutorCreateDiscussionMutation } from "@package/query-hooks/discussions.api";
 import { useSession } from "@package/auth/auth-client";
 import type { Discussion } from "@package/schema/discussions.types";
 import { useState } from "react";
@@ -19,8 +19,8 @@ export default function TutorDiscussionsPage() {
 
     const { data: raw, isLoading } = useAdminDiscussionsQuery();
     const deleteDiscussion = useTutorDeleteDiscussionMutation();
-    const updateDiscussion = useUpdateDiscussionMutation();
-    const createReply = useCreateDiscussionMutation();
+    const updateDiscussion = useTutorUpdateDiscussionMutation();
+    const createReply = useTutorCreateDiscussionMutation();
 
     const { data: session } = useSession();
     const currentUserId = session?.user?.id;
@@ -78,7 +78,7 @@ export default function TutorDiscussionsPage() {
         {
             header: "Lesson",
             render: (d) => (
-                <span className="text-xs text-muted-foreground truncate block max-w-[150px]">
+                <span className="text-xs text-muted-foreground truncate block max-w-37.5">
                     {d.lesson_id}
                 </span>
             ),
@@ -86,7 +86,7 @@ export default function TutorDiscussionsPage() {
         {
             header: "Message",
             render: (d) => (
-                <span className="text-sm line-clamp-2 block max-w-[300px]">{d.content}</span>
+                <span className="text-sm line-clamp-2 block max-w-75">{d.content}</span>
             ),
         },
         {
@@ -125,7 +125,7 @@ export default function TutorDiscussionsPage() {
                                     value={replyContent}
                                     onChange={(e) => setReplyContent(e.target.value)}
                                     placeholder="Write your reply..."
-                                    className="min-h-[100px]"
+                                    className="min-h-25"
                                 />
                                 <Button onClick={handleReply} className="w-full">Post Reply</Button>
                             </div>
@@ -146,7 +146,7 @@ export default function TutorDiscussionsPage() {
                                     <Textarea
                                         value={editContent}
                                         onChange={(e) => setEditContent(e.target.value)}
-                                        className="min-h-[100px]"
+                                        className="min-h-25"
                                     />
                                     <Button onClick={handleEdit} className="w-full">Save</Button>
                                 </div>

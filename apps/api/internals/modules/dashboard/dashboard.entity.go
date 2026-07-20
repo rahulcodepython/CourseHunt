@@ -36,21 +36,19 @@ type TutorRecentTransaction struct {
 }
 
 type TutorCourseStat struct {
-	CourseID string  `json:"course_id"`
-	Title    string  `json:"title"`
-	Students int     `json:"students"`
-	Revenue  float64 `json:"revenue"`
+	CourseID string `json:"course_id"`
+	Title    string `json:"title"`
+	Students int    `json:"students"`
 }
 
 type TutorDashboard struct {
-	TotalCourses       int                      `json:"total_courses"`
-	PublishedCourses   int                      `json:"published_courses"`
-	DraftCourses       int                      `json:"draft_courses"`
-	TotalStudents      int                      `json:"total_students"`
-	TotalRevenue       float64                  `json:"total_revenue"`
-	RatingAvg          float64                  `json:"rating_avg"`
-	RecentTransactions []TutorRecentTransaction `json:"recent_transactions"`
-	CourseStats        []TutorCourseStat        `json:"course_stats"`
+	TotalCourses     int               `json:"total_courses"`
+	PublishedCourses int               `json:"published_courses"`
+	DraftCourses     int               `json:"draft_courses"`
+	TotalStudents    int               `json:"total_students"`
+	TotalRevenue     float64           `json:"total_revenue"`
+	RatingAvg        float64           `json:"rating_avg"`
+	CourseStats      []TutorCourseStat `json:"course_stats"`
 }
 
 // ── Admin Dashboard ────────────────────────────────────────────────────────────

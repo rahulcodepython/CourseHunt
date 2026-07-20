@@ -5,48 +5,45 @@ import (
 	"errors"
 )
 
-var (
-	ErrNotEnrolled        = errors.New("access denied: not enrolled in course")
-	ErrLessonNotFound     = errors.New("lesson not found")
-	ErrDiscussionNotFound = errors.New("discussion not found")
-	ErrAccessDenied       = errors.New("access denied")
-	ErrParentNotFound     = errors.New("parent discussion not found")
-	ErrParentInvalid      = errors.New("parent discussion is in a different lesson")
-)
-
-func (m *DiscussionsModule) ListByLessonRepository(lessonID, userID string, page, limit int) ([]Discussion, int, error) {
+func (m *DiscussionsModule) StudentListRepository(lessonID, parentID, userID string, page, limit int) ([]Discussion, int, error) {
+	if lessonID == "" && parentID == "" {
+		return nil, 0, ErrMissingTarget
+	}
 	offset := (page - 1) * limit
 
 	var result struct {
-		LessonExists bool            `db:"lesson_exists"`
+		TargetExists bool            `db:"target_exists"`
 		IsAuthorized bool            `db:"is_authorized"`
 		Total        int             `db:"total"`
 		Data         json.RawMessage `db:"data"`
 	}
 
 	query := `
-		WITH lesson_info AS (
-			SELECT l.id AS lesson_id, ch.course_id
+		WITH target_info AS (
+			SELECT l.id AS target_id, ch.course_id
 			FROM lessons l
 			JOIN chapters ch ON ch.id = l.chapter_id
-			WHERE l.id = $1
+			WHERE l.id = $1 AND $1 != ''
+			UNION ALL
+			SELECT d.id AS target_id, d.course_id
+			FROM discussions d
+			WHERE d.id = $2 AND $2 != ''
 		),
 		auth AS (
 			SELECT EXISTS (
 				SELECT 1 FROM enrollments e
-				JOIN lesson_info li ON e.course_id = li.course_id
-				WHERE e.user_id = $2 AND e.revoked = false
-				UNION ALL
-				SELECT 1 FROM courses c
-				JOIN lesson_info li ON c.id = li.course_id
-				WHERE c.tutor_id = $2
+				JOIN target_info ti ON e.course_id = ti.course_id
+				WHERE e.user_id = $3 AND e.revoked = false
 			) AS is_authorized
 		),
 		count_cte AS (
 			SELECT COUNT(*) AS total
 			FROM discussions d
 			CROSS JOIN auth a
-			WHERE d.lesson_id = $1 AND d.parent_id IS NULL AND a.is_authorized = true
+			WHERE 
+				(($1 != '' AND d.lesson_id = $1 AND d.parent_id IS NULL) OR
+				($2 != '' AND d.parent_id = $2))
+				AND a.is_authorized = true
 		),
 		data_cte AS (
 			SELECT d.id, d.lesson_id, d.course_id, d.parent_id, d.content, d.reply_count, d.created_at, d.updated_at,
@@ -54,25 +51,30 @@ func (m *DiscussionsModule) ListByLessonRepository(lessonID, userID string, page
 			FROM discussions d
 			JOIN "user" u ON u.id = d.user_id
 			CROSS JOIN auth a
-			WHERE d.lesson_id = $1 AND d.parent_id IS NULL AND a.is_authorized = true
-			ORDER BY d.created_at DESC
-			LIMIT $3 OFFSET $4
+			WHERE 
+				(($1 != '' AND d.lesson_id = $1 AND d.parent_id IS NULL) OR
+				($2 != '' AND d.parent_id = $2))
+				AND a.is_authorized = true
+			ORDER BY 
+				CASE WHEN $1 != '' THEN d.created_at END DESC,
+				CASE WHEN $2 != '' THEN d.created_at END ASC
+			LIMIT $4 OFFSET $5
 		)
 		SELECT
-			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
+			EXISTS(SELECT 1 FROM target_info) AS target_exists,
 			COALESCE((SELECT is_authorized FROM auth), false) AS is_authorized,
 			COALESCE((SELECT total FROM count_cte), 0) AS total,
 			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
 	`
 
-	err := m.DB.Get(&result, query, lessonID, userID, limit, offset)
+	err := m.DB.Get(&result, query, lessonID, parentID, userID, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	switch {
-	case !result.LessonExists:
-		return nil, 0, ErrLessonNotFound
+	case !result.TargetExists:
+		return nil, 0, ErrTargetNotFound
 	case !result.IsAuthorized:
 		return nil, 0, ErrNotEnrolled
 	}
@@ -85,75 +87,7 @@ func (m *DiscussionsModule) ListByLessonRepository(lessonID, userID string, page
 	return list, result.Total, nil
 }
 
-func (m *DiscussionsModule) ListRepliesRepository(parentID, userID string, page, limit int) ([]Discussion, int, error) {
-	offset := (page - 1) * limit
-
-	var result struct {
-		ParentExists bool            `db:"parent_exists"`
-		IsAuthorized bool            `db:"is_authorized"`
-		Total        int             `db:"total"`
-		Data         json.RawMessage `db:"data"`
-	}
-
-	query := `
-		WITH parent_info AS (
-			SELECT id, course_id FROM discussions WHERE id = $1
-		),
-		auth AS (
-			SELECT EXISTS (
-				SELECT 1 FROM enrollments e
-				JOIN parent_info pi ON e.course_id = pi.course_id
-				WHERE e.user_id = $2 AND e.revoked = false
-				UNION ALL
-				SELECT 1 FROM courses c
-				JOIN parent_info pi ON c.id = pi.course_id
-				WHERE c.tutor_id = $2
-			) AS is_authorized
-		),
-		count_cte AS (
-			SELECT COUNT(*) AS total
-			FROM discussions d
-			CROSS JOIN auth a
-			WHERE d.parent_id = $1 AND a.is_authorized = true
-		),
-		data_cte AS (
-			SELECT d.id, d.lesson_id, d.course_id, d.parent_id, d.content, d.reply_count, d.created_at, d.updated_at,
-			       json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', COALESCE(u.image, '')) AS "user"
-			FROM discussions d
-			JOIN "user" u ON u.id = d.user_id
-			CROSS JOIN auth a
-			WHERE d.parent_id = $1 AND a.is_authorized = true
-			ORDER BY d.created_at ASC
-			LIMIT $3 OFFSET $4
-		)
-		SELECT
-			EXISTS(SELECT 1 FROM parent_info) AS parent_exists,
-			COALESCE((SELECT is_authorized FROM auth), false) AS is_authorized,
-			COALESCE((SELECT total FROM count_cte), 0) AS total,
-			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
-	`
-
-	err := m.DB.Get(&result, query, parentID, userID, limit, offset)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	switch {
-	case !result.ParentExists:
-		return nil, 0, ErrDiscussionNotFound
-	case !result.IsAuthorized:
-		return nil, 0, ErrNotEnrolled
-	}
-
-	var list []Discussion
-	if err := json.Unmarshal(result.Data, &list); err != nil {
-		return nil, 0, err
-	}
-
-	return list, result.Total, nil
-}
-
-func (m *DiscussionsModule) CreateRepository(userID string, req CreateDiscussionRequest) (*Discussion, error) {
+func (m *DiscussionsModule) StudentCreateRepository(userID string, req CreateDiscussionRequest) (*Discussion, error) {
 	var result struct {
 		LessonExists bool             `db:"lesson_exists"`
 		IsAuthorized bool             `db:"is_authorized"`
@@ -177,10 +111,6 @@ func (m *DiscussionsModule) CreateRepository(userID string, req CreateDiscussion
 				SELECT 1 FROM enrollments e
 				JOIN lesson_info li ON e.course_id = li.course_id
 				WHERE e.user_id = $3 AND e.revoked = false
-				UNION ALL
-				SELECT 1 FROM courses c
-				JOIN lesson_info li ON c.id = li.course_id
-				WHERE c.tutor_id = $3
 			) AS is_authorized
 		),
 		parent_validation AS (
@@ -238,11 +168,10 @@ func (m *DiscussionsModule) CreateRepository(userID string, req CreateDiscussion
 	if err := json.Unmarshal(*result.InsertedData, &d); err != nil {
 		return nil, err
 	}
-
 	return &d, nil
 }
 
-func (m *DiscussionsModule) UpdateRepository(id, userID string, content string) (*Discussion, error) {
+func (m *DiscussionsModule) StudentUpdateRepository(id, userID string, content string) (*Discussion, error) {
 	var result struct {
 		DiscussionExists bool             `db:"discussion_exists"`
 		IsOwner          bool             `db:"is_owner"`
@@ -259,10 +188,6 @@ func (m *DiscussionsModule) UpdateRepository(id, userID string, content string) 
 				SELECT 1 FROM enrollments e
 				JOIN discussion_info di ON e.course_id = di.course_id
 				WHERE e.user_id = $2 AND e.revoked = false
-				UNION ALL
-				SELECT 1 FROM courses c
-				JOIN discussion_info di ON c.id = di.course_id
-				WHERE c.tutor_id = $2
 			) AS is_authorized
 		),
 		updated AS (
@@ -306,11 +231,10 @@ func (m *DiscussionsModule) UpdateRepository(id, userID string, content string) 
 	if err := json.Unmarshal(*result.UpdatedData, &d); err != nil {
 		return nil, err
 	}
-
 	return &d, nil
 }
 
-func (m *DiscussionsModule) DeleteRepository(id, userID string) (string, error) {
+func (m *DiscussionsModule) StudentDeleteRepository(id, userID string) (string, error) {
 	var result struct {
 		DiscussionExists bool    `db:"discussion_exists"`
 		IsOwner          bool    `db:"is_owner"`
@@ -327,10 +251,6 @@ func (m *DiscussionsModule) DeleteRepository(id, userID string) (string, error) 
 				SELECT 1 FROM enrollments e
 				JOIN discussion_info di ON e.course_id = di.course_id
 				WHERE e.user_id = $2 AND e.revoked = false
-				UNION ALL
-				SELECT 1 FROM courses c
-				JOIN discussion_info di ON c.id = di.course_id
-				WHERE c.tutor_id = $2
 			) AS is_authorized
 		),
 		deleted AS (

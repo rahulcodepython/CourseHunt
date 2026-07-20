@@ -189,6 +189,7 @@ type CourseInspectResponse struct {
 	TotalDurationSeconds int                   `json:"total_duration_seconds" db:"total_duration_seconds"`
 	RatingAvg            float64               `json:"rating_avg" db:"rating_avg"`
 	FeedbackCount        int                   `json:"feedback_count" db:"feedback_count"`
+	StudentCount         int                   `json:"student_count" db:"student_count"`
 	CreatedAt            time.Time             `json:"created_at" db:"created_at"`
 	UpdatedAt            time.Time             `json:"updated_at" db:"updated_at"`
 	Category             *models.CategoryInfo  `json:"category"`

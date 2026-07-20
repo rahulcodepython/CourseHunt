@@ -4,28 +4,7 @@ import { Icon } from "@package/components/icon";
 import { useTutorDashboardQuery } from "@package/query-hooks/dashboard.api";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { Skeleton } from "@package/ui/skeleton";
-import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import type { TutorRecentTransaction, TutorCourseStat } from "@package/schema/dashboard.types";
-import { useState } from "react";
-
-const transactionColumns: DataTableColumn<TutorRecentTransaction>[] = [
-    { header: "User", render: (tx) => <span className="font-medium">{tx.user_name}</span> },
-    { header: "Course", render: (tx) => <span className="text-sm">{tx.course_title}</span> },
-    {
-        header: "Amount",
-        render: (tx) => <span className="font-bold">₹{tx.amount}</span>,
-        className: "text-right",
-    },
-    {
-        header: "Date",
-        render: (tx) => (
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {new Date(tx.date).toLocaleDateString()}
-            </span>
-        ),
-        className: "text-right",
-    },
-];
+import type { TutorCourseStat } from "@package/schema/dashboard.types";
 
 export default function TutorDashboard() {
     const { data: raw, isLoading } = useTutorDashboardQuery();
@@ -34,7 +13,7 @@ export default function TutorDashboard() {
     if (isLoading) {
         return (
             <div className="space-y-8">
-                <Skeleton className="h-10 w-[300px]" />
+                <Skeleton className="h-10 w-75" />
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                     {[...Array(4)].map((_, i) => (
                         <Skeleton key={i} className="h-28 rounded-xl" />
@@ -58,9 +37,11 @@ export default function TutorDashboard() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-full w-fit">
                     <Icon name="IconCalendar" className="w-5 h-5" />
-                    {new Date().toLocaleDateString(undefined, {
-                        weekday: "long", year: "numeric", month: "long", day: "numeric",
-                    })}
+                    {
+                        new Date().toLocaleDateString(undefined, {
+                            weekday: "long", year: "numeric", month: "long", day: "numeric",
+                        })
+                    }
                 </div>
             </div>
 
@@ -116,40 +97,19 @@ export default function TutorDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {dashboard.course_stats.map((stat: TutorCourseStat) => (
-                                <div key={stat.course_id} className="flex items-center justify-between py-2 border-b last:border-0">
+                            {
+                                dashboard.course_stats.map((stat: TutorCourseStat) => <div key={stat.course_id} className="flex items-center justify-between py-2 border-b last:border-0">
                                     <div>
                                         <p className="font-medium text-sm">{stat.title}</p>
                                         <p className="text-xs text-muted-foreground">{stat.students} students</p>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-sm">₹{stat.revenue}</p>
-                                    </div>
                                 </div>
-                            ))}
-                            {dashboard.course_stats.length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">No course data yet.</p>
-                            )}
+                                )
+                            }
+                            {
+                                dashboard.course_stats.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No course data yet.</p>
+                            }
                         </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Recent Transactions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <DataTable
-                            columns={transactionColumns}
-                            data={dashboard.recent_transactions}
-                            keyExtractor={(_, i) => String(i)}
-                            page={1}
-                            totalPages={1}
-                            total={dashboard.recent_transactions.length}
-                            pageSize={dashboard.recent_transactions.length}
-                            onPageChange={() => {}}
-                            label="transactions"
-                        />
                     </CardContent>
                 </Card>
             </div>

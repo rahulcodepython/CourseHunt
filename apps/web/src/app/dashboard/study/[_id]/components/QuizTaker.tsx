@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Button } from "@package/ui/button";
-import { Icon } from "@package/components/icon";
 import Loading from "@package/components/loading";
 import { useGetQuestionMutation, useSubmitQuizMutation } from "@package/query-hooks/quiz.api";
 import type { SubmitQuizAnswerInput } from "@package/schema/quiz.types";
 import { toast } from "sonner";
+import { QuizIntro } from "./QuizIntro";
+import { QuizResultView } from "./QuizResultView";
+import { QuizQuestionView } from "./QuizQuestionView";
 
 interface QuizTakerProps {
 	quizMetadata: {
@@ -18,6 +19,10 @@ interface QuizTakerProps {
 	};
 }
 
+// This component keeps all quiz STATE and network calls; QuizIntro,
+// QuizResultView, and QuizQuestionView are pure presentational pieces that
+// just receive props, which makes each one trivial to reuse or restyle
+// independently of the fetch/answer-tracking logic.
 export function QuizTaker({ quizMetadata }: QuizTakerProps) {
 	const [quizStarted, setQuizStarted] = useState(false);
 	const [currentQuestion, setCurrentQuestion] = useState<any>(null);
@@ -101,75 +106,39 @@ export function QuizTaker({ quizMetadata }: QuizTakerProps) {
 
 	if (!quizStarted) {
 		return (
-			<div className="text-center max-w-sm space-y-4 py-8 mx-auto">
-				<Icon name="IconHelp" className="w-12 h-12 text-primary mx-auto" />
-				<h3 className="font-bold text-base">{quizMetadata.title}</h3>
-				<div className="flex justify-center gap-6 text-xs text-muted-foreground">
-					<span>Questions: {quizMetadata.total_questions}</span>
-					<span>Time Limit: {quizMetadata.time_limit_seconds}s</span>
-					<span>Pass Score: {quizMetadata.pass_score_percent}%</span>
-				</div>
-				<Button onClick={startQuiz} className="w-full mt-4 text-white bg-primary cursor-pointer">
-					Start Quiz
-				</Button>
-			</div>
+			<QuizIntro
+				title={quizMetadata.title}
+				totalQuestions={quizMetadata.total_questions}
+				timeLimitSeconds={quizMetadata.time_limit_seconds}
+				passScorePercent={quizMetadata.pass_score_percent}
+				onStart={startQuiz}
+			/>
 		);
 	}
 
 	if (quizResult) {
 		return (
-			<div className="text-center max-w-sm space-y-4 py-8 mx-auto">
-				<Icon
-					name={quizResult.passed ? "IconCircleCheck" : "IconAlertCircle"}
-					className={`w-12 h-12 mx-auto ${quizResult.passed ? "text-green-500" : "text-red-500"}`}
-				/>
-				<h3 className="font-bold text-lg">{quizResult.passed ? "Congratulations!" : "Keep Trying!"}</h3>
-				<p className="text-sm">
-					Your score is <span className="font-bold">{quizResult.total_score}%</span> (Required: {quizMetadata.pass_score_percent}%)
-				</p>
-				<Button onClick={startQuiz} variant="outline" className="w-full mt-2 cursor-pointer">
-					Retake Quiz
-				</Button>
-			</div>
+			<QuizResultView
+				passed={quizResult.passed}
+				totalScore={quizResult.total_score}
+				passScorePercent={quizMetadata.pass_score_percent}
+				onRetake={startQuiz}
+			/>
 		);
 	}
 
-	if (getQuestionMutation.isPending) return <Loading />;
+	if (getQuestionMutation.isPending || !currentQuestion) return <Loading />;
 
 	return (
-		<div className="w-full max-w-lg space-y-6 py-6 mx-auto">
-			<div className="flex justify-between items-center text-xs text-muted-foreground border-b pb-2">
-				<span>Question {fetchedQuestionIds.length} of {quizMetadata.total_questions}</span>
-			</div>
-			{currentQuestion ? (
-				<>
-					<h3 className="font-semibold text-sm leading-snug">{currentQuestion.question_text}</h3>
-					<div className="grid gap-3 pt-2">
-						{currentQuestion.options?.map((option: any) => (
-							<button
-								key={option.id}
-								onClick={() => setSelectedAnswer(option.id)}
-								className={`flex items-center text-left p-3.5 rounded-lg border text-xs cursor-pointer bg-transparent transition-all ${
-									selectedAnswer === option.id
-										? "border-primary bg-primary/5 text-primary font-medium"
-										: "border-muted hover:bg-muted/30"
-								}`}
-							>
-								{option.option_text}
-							</button>
-						))}
-					</div>
-					<Button
-						disabled={!selectedAnswer}
-						onClick={handleNextQuestion}
-						className="w-full text-white bg-primary mt-6 cursor-pointer"
-					>
-						{remainingQuestions > 0 ? "Next Question" : "Submit Quiz"}
-					</Button>
-				</>
-			) : (
-				<Loading />
-			)}
-		</div>
+		<QuizQuestionView
+			questionText={currentQuestion.question_text}
+			options={currentQuestion.options ?? []}
+			selectedAnswer={selectedAnswer}
+			onSelectAnswer={setSelectedAnswer}
+			questionNumber={fetchedQuestionIds.length}
+			totalQuestions={quizMetadata.total_questions}
+			isLastQuestion={remainingQuestions === 0}
+			onNext={handleNextQuestion}
+		/>
 	);
 }

@@ -12,7 +12,11 @@ import (
 func (m *EnrollmentsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	userID := utils.GetUserID(c)
-	list, total, err := m.ListRepository(page, limit, c.Query("course_id"), userID,
+	courseID := c.Params("course_id")
+	if courseID == "" {
+		return utils.BadRequest(c, "Course ID query param required.", nil)
+	}
+	list, total, err := m.ListRepository(page, limit, courseID, userID,
 		c.Query("user_name"), c.Query("user_email"), c.Query("revoked"))
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch enrollments.", err)
@@ -23,7 +27,7 @@ func (m *EnrollmentsModule) ListController(c *fiber.Ctx) error {
 }
 
 func (m *EnrollmentsModule) InspectController(c *fiber.Ctx) error {
-	courseID := c.Query("course_id")
+	courseID := c.Params("course_id")
 	if courseID == "" {
 		return utils.BadRequest(c, "Course ID query param required.", nil)
 	}

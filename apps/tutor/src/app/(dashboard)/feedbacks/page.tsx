@@ -42,7 +42,7 @@ const columns: DataTableColumn<Feedback>[] = [
     {
         header: "Comment",
         render: (fb) => (
-            <span className="text-xs text-muted-foreground line-clamp-2 max-w-[250px] block">
+            <span className="text-xs text-muted-foreground line-clamp-2 max-w-62.5 block">
                 {fb.content || "—"}
             </span>
         ),

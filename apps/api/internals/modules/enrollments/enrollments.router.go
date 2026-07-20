@@ -7,7 +7,7 @@ import (
 )
 
 func (m *EnrollmentsModule) Routes(v1, protected fiber.Router) {
-	enrollments := protected.Group("/enrollments")
+	enrollments := protected.Group("/enrollments/:course_id")
 	enrollments.Get("", middlewares.PermissionGuard("enrollments:read"), m.ListController)
 	enrollments.Get("/inspect", middlewares.PermissionGuard("enrollments:inspect"), m.InspectController)
 }

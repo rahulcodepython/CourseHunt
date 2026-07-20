@@ -7,14 +7,14 @@ import { queryKeys } from "@/package/react-query/query-keys";
 import { ListEnrollmentResponseZod } from "@/package/schema/enrollments.types";
 import { PaginatedResponseZod } from "@/package/schema/common.types";
 
-export function useEnrollmentsQuery() {
-	return useAppQuery(queryKeys.enrollments(), () =>
-		apiRequest({ url: "/api/v1/enrollments", method: "GET" }, PaginatedResponseZod(ListEnrollmentResponseZod)),
+export function useEnrollmentsQuery(courseId: string) {
+	return useAppQuery(queryKeys.enrollments(courseId), () =>
+		apiRequest({ url: `/api/v1/enrollments/${courseId}`, method: "GET" }, PaginatedResponseZod(ListEnrollmentResponseZod)),
 	);
 }
 
 export function useInspectEnrollmentsQuery(courseId: string) {
 	return useAppQuery(queryKeys.enrollmentsInspect(courseId), () =>
-		apiRequest({ url: `/api/v1/enrollments/inspect?course_id=${courseId}`, method: "GET" }, PaginatedResponseZod(ListEnrollmentResponseZod)),
+		apiRequest({ url: `/api/v1/enrollments/${courseId}/inspect`, method: "GET" }, PaginatedResponseZod(ListEnrollmentResponseZod)),
 	);
 }

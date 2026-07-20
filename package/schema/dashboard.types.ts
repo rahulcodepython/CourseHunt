@@ -37,7 +37,6 @@ export const TutorCourseStatZod = z.object({
     course_id: z.string(),
     title: z.string(),
     students: z.number(),
-    revenue: z.number(),
 });
 export type TutorCourseStat = z.infer<typeof TutorCourseStatZod>;
 
@@ -48,7 +47,6 @@ export const TutorDashboardZod = z.object({
     total_students: z.number(),
     total_revenue: z.number(),
     rating_avg: z.number(),
-    recent_transactions: z.array(TutorRecentTransactionZod),
     course_stats: z.array(TutorCourseStatZod),
 });
 export type TutorDashboard = z.infer<typeof TutorDashboardZod>;

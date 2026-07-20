@@ -72,14 +72,35 @@ export function useDeleteCourseMutation() {
 	});
 }
 
-export function useInspectCoursesQuery() {
-	return useAppQuery(queryKeys.coursesInspect(), () =>
-		apiRequest({ url: "/api/v1/courses/inspect", method: "GET" }, PaginatedResponseZod(CourseInspectResponseZod)),
+export function useInspectCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; subcategory_id?: string; level?: string; tutor_id?: string; status?: string }) {
+	const searchParams = new URLSearchParams();
+	if (params?.page) searchParams.set("page", params.page.toString());
+	if (params?.limit) searchParams.set("limit", params.limit.toString());
+	if (params?.search) searchParams.set("search", params.search);
+	if (params?.category_id) searchParams.set("category_id", params.category_id);
+	if (params?.subcategory_id) searchParams.set("subcategory_id", params.subcategory_id);
+	if (params?.level) searchParams.set("level", params.level);
+	if (params?.tutor_id) searchParams.set("tutor_id", params.tutor_id);
+	if (params?.status) searchParams.set("status", params.status);
+	const qs = searchParams.toString();
+	const url = qs ? `/api/v1/courses/inspect?${qs}` : "/api/v1/courses/inspect";
+	return useAppQuery(queryKeys.coursesInspect(params), () =>
+		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CourseInspectResponseZod)),
 	);
 }
 
-export function useTutorCoursesQuery() {
-	return useAppQuery(queryKeys.coursesTutor(), () =>
-		apiRequest({ url: "/api/v1/courses", method: "GET" }, PaginatedResponseZod(CourseInspectResponseZod)),
+export function useTutorCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; subcategory_id?: string; level?: string; status?: string }) {
+	const searchParams = new URLSearchParams();
+	if (params?.page) searchParams.set("page", params.page.toString());
+	if (params?.limit) searchParams.set("limit", params.limit.toString());
+	if (params?.search) searchParams.set("search", params.search);
+	if (params?.category_id) searchParams.set("category_id", params.category_id);
+	if (params?.subcategory_id) searchParams.set("subcategory_id", params.subcategory_id);
+	if (params?.level) searchParams.set("level", params.level);
+	if (params?.status) searchParams.set("status", params.status);
+	const qs = searchParams.toString();
+	const url = qs ? `/api/v1/courses?${qs}` : "/api/v1/courses";
+	return useAppQuery(queryKeys.coursesTutor(params), () =>
+		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CourseInspectResponseZod)),
 	);
 }

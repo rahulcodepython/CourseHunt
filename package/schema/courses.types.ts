@@ -170,6 +170,7 @@ export const CourseInspectResponseZod = z.object({
     total_duration_seconds: z.number(),
     rating_avg: z.number(),
     feedback_count: z.number(),
+    student_count: z.number(),
     created_at: z.string(),
     updated_at: z.string(),
     category: CategoryInfoZod.nullable().optional(),

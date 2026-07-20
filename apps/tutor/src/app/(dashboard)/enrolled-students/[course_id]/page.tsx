@@ -1,16 +1,12 @@
 "use client";
 
-import { Icon } from "@package/components/icon";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import { useTutorCoursesQuery } from "@package/query-hooks/courses.api";
-import { useInspectEnrollmentsQuery } from "@package/query-hooks/enrollments.api";
-import type { CourseInspectResponse } from "@package/schema/courses.types";
+import { useEnrollmentsQuery } from "@package/query-hooks/enrollments.api";
 import type { ListEnrollmentResponse } from "@package/schema/enrollments.types";
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@package/ui/select";
-import { Label } from "@package/ui/label";
 import { Badge } from "@package/ui/badge";
+import { useParams } from "next/navigation";
 
 const columns: DataTableColumn<ListEnrollmentResponse>[] = [
     {
@@ -67,14 +63,12 @@ const columns: DataTableColumn<ListEnrollmentResponse>[] = [
 ];
 
 export default function EnrolledStudentsPage() {
+    const params = useParams();
+    const courseId = params.course_id as string;
     const [page, setPage] = useState(1);
-    const [selectedCourse, setSelectedCourse] = useState<string>("");
     const limit = 10;
 
-    const { data: coursesRaw } = useTutorCoursesQuery();
-    const courses: CourseInspectResponse[] = coursesRaw?.data?.data ?? [];
-
-    const { data: enrollmentsRaw, isLoading } = useInspectEnrollmentsQuery(selectedCourse);
+    const { data: enrollmentsRaw, isLoading } = useEnrollmentsQuery(courseId);
     const enrollments: ListEnrollmentResponse[] = enrollmentsRaw?.data?.data ?? [];
     const total = enrollmentsRaw?.data?.total ?? 0;
     const totalPages = enrollmentsRaw?.data ? Math.ceil(enrollmentsRaw.data.total / enrollmentsRaw.data.limit) : 0;
@@ -88,47 +82,25 @@ export default function EnrolledStudentsPage() {
                 </div>
             </div>
 
-            <div className="max-w-xs space-y-2">
-                <Label>Filter by Course</Label>
-                <Select value={selectedCourse} onValueChange={(v) => { setSelectedCourse(v || ""); setPage(1); }}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {courses.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-
-            {selectedCourse ? (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Students</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <DataTable
-                            columns={columns}
-                            data={enrollments}
-                            keyExtractor={(enr) => enr.id}
-                            isLoading={isLoading}
-                            page={page}
-                            totalPages={totalPages}
-                            total={total}
-                            pageSize={limit}
-                            onPageChange={setPage}
-                            label="students"
-                        />
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-xl">
-                    <Icon name="IconUsers" className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-                    <p className="text-lg font-medium">Select a course to view enrolled students</p>
-                    <p className="text-sm mt-1">Choose a course from the dropdown above.</p>
-                </div>
-            )}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Students</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <DataTable
+                        columns={columns}
+                        data={enrollments}
+                        keyExtractor={(enr) => enr.id}
+                        isLoading={isLoading}
+                        page={page}
+                        totalPages={totalPages}
+                        total={total}
+                        pageSize={limit}
+                        onPageChange={setPage}
+                        label="students"
+                    />
+                </CardContent>
+            </Card>
         </div>
     );
 }
