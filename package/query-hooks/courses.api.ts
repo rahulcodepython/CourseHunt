@@ -9,9 +9,18 @@ import { queryKeys } from "@/package/react-query/query-keys";
 import { CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CoursePublicResponseZod, EnrolledCourseResponseZod, CourseCreatedResponseZod, CourseInspectResponseZod } from "@/package/schema/courses.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/package/schema/common.types";
 
-export function useCoursesQuery() {
-	return useAppQuery(queryKeys.courses(), () =>
-		apiRequest({ url: "/api/v1/courses", method: "GET" }, PaginatedResponseZod(CoursePublicResponseZod)),
+export function useCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; subcategory_id?: string; level?: string }) {
+	const searchParams = new URLSearchParams();
+	if (params?.page) searchParams.set("page", params.page.toString());
+	if (params?.limit) searchParams.set("limit", params.limit.toString());
+	if (params?.search) searchParams.set("search", params.search);
+	if (params?.category_id) searchParams.set("category_id", params.category_id);
+	if (params?.subcategory_id) searchParams.set("subcategory_id", params.subcategory_id);
+	if (params?.level) searchParams.set("level", params.level);
+	const qs = searchParams.toString();
+	const url = qs ? `/api/v1/courses?${qs}` : "/api/v1/courses";
+	return useAppQuery(queryKeys.courses(params), () =>
+		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CoursePublicResponseZod)),
 	);
 }
 

@@ -1,219 +1,149 @@
 "use client";
 
-import { Button } from "@package/ui/button"
-import { Input } from "@package/ui/input"
-import { Label } from "@package/ui/label"
-import { Switch } from "@package/ui/switch"
-import { Textarea } from "@package/ui/textarea"
-import { useCreateCouponMutation, useUpdateCouponMutation } from "@/hooks/api"
-import { Coupon } from "@/types/coupon.type"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { Button } from "@package/ui/button";
+import { Input } from "@package/ui/input";
+import { Label } from "@package/ui/label";
+import { Switch } from "@package/ui/switch";
+import { Textarea } from "@package/ui/textarea";
+import { useCreateCouponMutation, useUpdateCouponMutation } from "@package/query-hooks/coupons.api";
+import type { Coupon } from "@package/schema/coupons.types";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+export interface CouponFormData {
+	code: string;
+	expires_at: string;
+	usage_count: number;
+	max_usage: number;
+	discount_percent: number;
+	is_active: boolean;
+}
 
 interface CouponFormProps {
-    onSave: (coupon: Coupon) => void
-    onCancel: () => void
-    initialData: Coupon | null
+	onSave: (coupon: CouponFormData) => void;
+	onCancel: () => void;
+	initialData: Coupon | null;
 }
 
 export default function CouponForm({ onSave, onCancel, initialData }: CouponFormProps) {
-    const [formData, setFormData] = useState<Coupon>({
-        id: 0,
-        _id: 0, // Optional, only used when editing an existing coupon
-        code: "",
-        expiryDate: "",
-        usage: 0,
-        maxUsage: 100,
-        offerValue: 10,
-        isActive: true,
-        description: "",
-    })
-    const createCouponMutation = useCreateCouponMutation()
-    const updateCouponMutation = useUpdateCouponMutation()
-    const isLoading = createCouponMutation.isPending || updateCouponMutation.isPending
+	const [formData, setFormData] = useState<CouponFormData>({
+		code: "",
+		expires_at: "",
+		usage_count: 0,
+		max_usage: 100,
+		discount_percent: 10,
+		is_active: true,
+	});
+	const createCouponMutation = useCreateCouponMutation();
+	const updateCouponMutation = useUpdateCouponMutation();
+	const isLoading = createCouponMutation.isPending || updateCouponMutation.isPending;
 
-    useEffect(() => {
-        if (initialData) {
-            setFormData({
-                id: initialData.id,
-                _id: initialData._id, // Include _id if editing an existing coupon
-                code: initialData.code,
-                expiryDate: initialData.expiryDate,
-                usage: initialData.usage,
-                maxUsage: initialData.maxUsage,
-                offerValue: initialData.offerValue,
-                isActive: initialData.isActive,
-                description: initialData.description || "",
-            })
-        }
-    }, [initialData])
+	useEffect(() => {
+		if (initialData) {
+			setFormData({
+				code: initialData.code,
+				expires_at: initialData.expires_at,
+				usage_count: initialData.usage_count,
+				max_usage: initialData.max_usage,
+				discount_percent: initialData.discount_percent,
+				is_active: initialData.is_active,
+			});
+		}
+	}, [initialData]);
 
-    const validateForm = () => {
-        if (!formData.code.trim()) {
-            toast.warning("Coupon code is required")
-            return false
-        } else if (formData.code.length < 3) {
-            toast.warning("Coupon code must be at least 3 characters")
-            return false
-        }
+	const validateForm = () => {
+		if (!formData.code.trim()) {
+			toast.warning("Coupon code is required");
+			return false;
+		}
+		if (formData.code.length < 3) {
+			toast.warning("Coupon code must be at least 3 characters");
+			return false;
+		}
+		if (!formData.expires_at) {
+			toast.warning("Expiry date is required");
+			return false;
+		}
+		if (formData.discount_percent <= 0 || formData.discount_percent > 100) {
+			toast.warning("Offer value must be between 1 and 100");
+			return false;
+		}
+		if (formData.max_usage <= 0) {
+			toast.warning("Max usage must be greater than 0");
+			return false;
+		}
+		return true;
+	};
 
-        if (!formData.expiryDate) {
-            toast.warning("Expiry date is required")
-            return false
-        } else if (new Date(formData.expiryDate) <= new Date()) {
-            toast.warning("Expiry date must be in the future")
-            return false
-        }
+	const handleSubmit = async () => {
+		if (!validateForm()) return;
 
-        if (formData.offerValue <= 0 || formData.offerValue > 100) {
-            toast.warning("Offer value must be between 1 and 100")
-            return false
-        }
+		if (initialData) {
+			await updateCouponMutation.execute({
+				id: initialData.id,
+				data: {
+					discount_percent: formData.discount_percent,
+					max_usage: formData.max_usage,
+					expires_at: new Date(formData.expires_at).toISOString(),
+					is_active: formData.is_active,
+				},
+			});
+			onSave(formData);
+			toast.success("Coupon updated successfully");
+		} else {
+			await createCouponMutation.execute({
+				code: formData.code,
+				discount_percent: formData.discount_percent,
+				max_usage: formData.max_usage,
+				expires_at: new Date(formData.expires_at).toISOString(),
+				is_active: formData.is_active,
+				course_id: null,
+			});
+			onSave(formData);
+			toast.success("Coupon created successfully");
+		}
+	};
 
-        if (formData.maxUsage <= 0) {
-            toast.warning("Max usage must be greater than 0")
-            return false
-        }
+	const handleInputChange = (field: keyof CouponFormData, value: string | number | boolean) => {
+		setFormData((prev: CouponFormData) => ({ ...prev, [field]: value }));
+	};
 
-        if (formData.usage < 0) {
-            toast.warning("Usage cannot be negative")
-            return false
-        }
-
-        if (formData.usage > formData.maxUsage) {
-            toast.warning("Usage cannot exceed max usage")
-            return false
-        }
-
-        return true
-    }
-
-    const handleSubmit = async () => {
-        if (validateForm()) {
-
-            if (initialData) {
-                const responseData = await updateCouponMutation.updateCoupon({
-                    id: initialData._id.toString(),
-                    data: {
-                        ...formData,
-                        expiryDate: new Date(formData.expiryDate).toISOString(),
-                    },
-                })
-                if (responseData) {
-                    onSave(responseData.coupon)
-                    toast.success("Coupon updated successfully")
-                }
-            } else {
-                const { _id, ...newFormData } = formData;
-                const responseData = await createCouponMutation.createCoupon({
-                    ...newFormData,
-                    expiryDate: new Date(formData.expiryDate).toISOString(),
-                })
-                if (responseData) {
-                    onSave(responseData.coupon)
-                    toast.success("Coupon created successfully")
-                }
-            }
-        }
-    }
-
-    const handleInputChange = (field: string, value: string | number | boolean) => {
-        setFormData((prev) => ({ ...prev, [field]: value }))
-    }
-
-    return (
-        <div className="space-y-4">
-            {/* Coupon Code */}
-            <div className="space-y-2">
-                <Label htmlFor="code">Coupon Code *</Label>
-                <Input
-                    id="code"
-                    value={formData.code}
-                    onChange={(e) => handleInputChange("code", e.target.value.toUpperCase())}
-                    placeholder="e.g., SAVE20"
-                />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => handleInputChange("description", e.target.value)}
-                    placeholder="Brief description of the offer"
-                    rows={2}
-                />
-            </div>
-
-            {/* Offer Value */}
-            <div className="space-y-2">
-                <Label htmlFor="offerValue">Offer Value (%) *</Label>
-                <Input
-                    id="offerValue"
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={formData.offerValue}
-                    onChange={(e) => handleInputChange("offerValue", Number.parseInt(e.target.value) || 0)}
-                />
-            </div>
-
-            {/* Expiry Date */}
-            <div className="space-y-2">
-                <Label htmlFor="expiryDate">Expiry Date *</Label>
-                <Input
-                    id="expiryDate"
-                    type="date"
-                    value={formData.expiryDate.split("T")[0]}
-                    onChange={(e) => handleInputChange("expiryDate", e.target.value)}
-                />
-            </div>
-
-            {/* Usage Limits */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="usage">Current Usage</Label>
-                    <Input
-                        id="usage"
-                        type="number"
-                        min="0"
-                        value={formData.usage}
-                        readOnly // Make usage read-only if editing an existing coupon
-                        onChange={(e) => handleInputChange("usage", Number.parseInt(e.target.value) || 0)}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="maxUsage">Max Usage *</Label>
-                    <Input
-                        id="maxUsage"
-                        type="number"
-                        min="1"
-                        value={formData.maxUsage}
-                        onChange={(e) => handleInputChange("maxUsage", Number.parseInt(e.target.value) || 0)}
-                    />
-                </div>
-            </div>
-
-            {/* Active Status */}
-            <div className="flex items-center space-x-2">
-                <Switch
-                    id="isActive"
-                    checked={formData.isActive}
-                    onCheckedChange={(checked) => handleInputChange("isActive", checked)}
-                />
-                <Label htmlFor="isActive">Active</Label>
-            </div>
-
-            {/* Form Actions */}
-            <div className="flex gap-3 pt-4">
-                <Button type="submit" className="flex-1 cursor-pointer" onClick={handleSubmit} disabled={isLoading}>
-                    {initialData ? "Update Coupon" : "Create Coupon"}
-                </Button>
-                <Button type="button" variant="outline" onClick={onCancel} className="flex-1 cursor-pointer">
-                    Cancel
-                </Button>
-            </div>
-        </div>
-    )
+	return (
+		<div className="space-y-4 p-4">
+			<div className="space-y-2">
+				<Label htmlFor="code">Coupon Code *</Label>
+				<Input id="code" value={formData.code} onChange={(e) => handleInputChange("code", e.target.value.toUpperCase())} placeholder="e.g., SAVE20" />
+			</div>
+			<div className="space-y-2">
+				<Label htmlFor="discount_percent">Offer Value (%) *</Label>
+				<Input id="discount_percent" type="number" min="1" max="100" value={formData.discount_percent} onChange={(e) => handleInputChange("discount_percent", Number.parseInt(e.target.value) || 0)} />
+			</div>
+			<div className="space-y-2">
+				<Label htmlFor="expires_at">Expiry Date *</Label>
+				<Input id="expires_at" type="date" value={formData.expires_at?.split("T")[0] || ""} onChange={(e) => handleInputChange("expires_at", e.target.value)} />
+			</div>
+			<div className="grid grid-cols-2 gap-4">
+				<div className="space-y-2">
+					<Label htmlFor="usage_count">Current Usage</Label>
+					<Input id="usage_count" type="number" min="0" value={formData.usage_count} readOnly />
+				</div>
+				<div className="space-y-2">
+					<Label htmlFor="max_usage">Max Usage *</Label>
+					<Input id="max_usage" type="number" min="1" value={formData.max_usage} onChange={(e) => handleInputChange("max_usage", Number.parseInt(e.target.value) || 0)} />
+				</div>
+			</div>
+			<div className="flex items-center space-x-2">
+				<Switch id="is_active" checked={formData.is_active} onCheckedChange={(checked) => handleInputChange("is_active", checked)} />
+				<Label htmlFor="is_active">Active</Label>
+			</div>
+			<div className="flex gap-3 pt-4">
+				<Button type="submit" className="flex-1 cursor-pointer" onClick={handleSubmit} disabled={isLoading}>
+					{initialData ? "Update Coupon" : "Create Coupon"}
+				</Button>
+				<Button type="button" variant="outline" onClick={onCancel} className="flex-1 cursor-pointer">
+					Cancel
+				</Button>
+			</div>
+		</div>
+	);
 }

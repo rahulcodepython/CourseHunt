@@ -9,9 +9,9 @@ import { queryKeys } from "@/package/react-query/query-keys";
 import { DiscussionZod, CreateDiscussionRequestZod, UpdateDiscussionRequestZod } from "@/package/schema/discussions.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/package/schema/common.types";
 
-export function useDiscussionsQuery(lessonId: string) {
-	return useAppQuery(queryKeys.discussions(lessonId), () =>
-		apiRequest({ url: `/api/v1/discussions?lessonID=${lessonId}`, method: "GET" }, PaginatedResponseZod(DiscussionZod)),
+export function useDiscussionsQuery(lessonId: string, page: number = 1, limit: number = 10) {
+	return useAppQuery([...queryKeys.discussions(lessonId), page, limit], () =>
+		apiRequest({ url: `/api/v1/discussions?lessonID=${lessonId}&page=${page}&limit=${limit}`, method: "GET" }, PaginatedResponseZod(DiscussionZod)),
 	);
 }
 
@@ -24,9 +24,9 @@ export function useCreateDiscussionMutation() {
 	});
 }
 
-export function useDiscussionRepliesQuery(id: string) {
-	return useAppQuery(queryKeys.discussionReplies(id), () =>
-		apiRequest({ url: `/api/v1/discussions/replies/${id}`, method: "GET" }, PaginatedResponseZod(DiscussionZod)),
+export function useDiscussionRepliesQuery(id: string, page: number = 1, limit: number = 10) {
+	return useAppQuery([...queryKeys.discussionReplies(id), page, limit], () =>
+		apiRequest({ url: `/api/v1/discussions/replies/${id}?page=${page}&limit=${limit}`, method: "GET" }, PaginatedResponseZod(DiscussionZod)),
 	);
 }
 

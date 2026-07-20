@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"coursehunt/api/internals/models"
-	"coursehunt/api/internals/pkg/minio"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -185,16 +184,17 @@ func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
 	return utils.OK(c, "Resource deleted successfully.", models.DeleteResponse{ID: id})
 }
 
-func (m *LessonsModule) GetSignedURLController(c *fiber.Ctx) error {
-	fileName := c.Query("file_name")
-	if fileName == "" {
-		return utils.BadRequest(c, "File name query param required.", nil)
-	}
-
-	url, err := minio.MINIO.GetSignedURL(c.Context(), fileName)
+func (m *LessonsModule) ReadResourcesController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	resources, err := m.ReadResourcesRepository(c.Params("id"), userID)
 	if err != nil {
-		return utils.InternalError(c, "Failed to generate signed URL.", err)
+		if errors.Is(err, ErrLessonNotFound) {
+			return utils.NotFound(c, "Lesson not found.", err)
+		}
+		if errors.Is(err, ErrNotEnrolled) {
+			return utils.Forbidden(c, "Access denied. Not enrolled in course.", err)
+		}
+		return utils.InternalError(c, "Failed to fetch resources.", err)
 	}
-
-	return utils.OK(c, "Signed URL generated successfully.", SignedURLResponse{URL: url})
+	return utils.OK(c, "Resources fetched successfully.", resources)
 }

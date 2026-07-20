@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const PaginatedResponseZod = <T extends z.ZodTypeAny>(dataSchema: T) =>
     z.object({
-        data: dataSchema,
+        data: z.array(dataSchema),
         total: z.number(),
         page: z.number(),
         limit: z.number(),

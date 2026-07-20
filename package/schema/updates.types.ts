@@ -26,11 +26,13 @@ export const UpdateFeedItemZod = z.object({
     message: z.string(),
     course: CourseInfoZod,
     created_at: z.string(),
+    is_unseen: z.boolean(),
 });
 export type UpdateFeedItem = z.infer<typeof UpdateFeedItemZod>;
 
 export const UpdateFeedResponseZod = z.object({
-    unseen: z.array(UpdateFeedItemZod),
-    older: PaginatedResponseZod(z.array(UpdateFeedItemZod)),
+    updates: PaginatedResponseZod(UpdateFeedItemZod),
 });
 export type UpdateFeedResponse = z.infer<typeof UpdateFeedResponseZod>;
+
+

@@ -9,7 +9,7 @@ import {
 import React from "react";
 import { toast } from "sonner";
 
-const showErrorToast = (error: unknown) => {
+const showErrorToast = (error: Error) => {
     const message = error instanceof Error ? error.message : "Something went wrong";
     toast.error(message);
 };

@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"context"
+	cryptorand "crypto/rand"
 	"errors"
 	"fmt"
 	"log"
@@ -13,6 +14,20 @@ const (
 	minRazorpayAmountPaise int64 = 100
 )
 
+// newTransactionID generates a random UUIDv4 client-side so it can be used as
+// the Razorpay order reference BEFORE the transaction row exists in the DB.
+// This is what lets InitiateService create the Razorpay order first and only
+// touch the database once, instead of insert-then-update.
+func newTransactionID() (string, error) {
+	b := make([]byte, 16)
+	if _, err := cryptorand.Read(b); err != nil {
+		return "", err
+	}
+	b[6] = (b[6] & 0x0f) | 0x40 // version 4
+	b[8] = (b[8] & 0x3f) | 0x80 // variant 10
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16]), nil
+}
+
 func (m *TransactionsModule) InitiateService(ctx context.Context, userID string, req InitiateTransactionRequest) (*InitiateTransactionResponse, error) {
 	amount, err := m.GetCoursePriceRepository(ctx, req.CourseID)
 	if err != nil {
@@ -21,6 +36,11 @@ func (m *TransactionsModule) InitiateService(ctx context.Context, userID string,
 
 	var couponID *string
 	if req.CouponCode != nil && *req.CouponCode != "" {
+		// NOTE: CheckCoupon and ReadByCodeRepository both hit the DB for the
+		// same coupon code. That duplicate lookup lives in the coupons
+		// module (not included here) - worth collapsing into a single
+		// "CheckAndFetchCoupon(code, courseID)" call over there so this
+		// call site only pays for one round trip instead of two.
 		check := m.Coupons.CheckCoupon(*req.CouponCode, req.CourseID)
 		if !check.Valid {
 			reason := "invalid coupon"
@@ -48,24 +68,37 @@ func (m *TransactionsModule) InitiateService(ctx context.Context, userID string,
 		amountPaise = minRazorpayAmountPaise
 	}
 
-	// Create pending transaction first so we have an id to attach to the
-	// Razorpay order as a reference.
-	tx, err := m.CreateRepository(ctx, userID, req.CourseID, couponID, "", amount)
+	// Generate the id up front so it can be used as the Razorpay order
+	// reference before any DB write happens.
+	txID, err := newTransactionID()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate transaction id: %w", err)
 	}
 
-	order, err := m.Razorpay.CreateOrder(amountPaise, "INR", tx.ID)
+	// Create the Razorpay order FIRST. Previously the flow was:
+	//   INSERT (pending, no order id) -> call Razorpay -> UPDATE (attach order id)
+	//   or, on gateway failure:
+	//   INSERT (pending, no order id) -> call Razorpay fails -> UPDATE (mark failed)
+	// i.e. always 2 DB round trips. By generating the id ourselves and
+	// calling Razorpay first, the common (success) path becomes a single
+	// INSERT with the order id already attached, and the failure path
+	// becomes ZERO DB writes (nothing was ever written for an order that
+	// never got created).
+	order, err := m.Razorpay.CreateOrder(amountPaise, "INR", txID)
 	if err != nil {
-		// Don't leave the row stuck in "pending" forever with no order id.
-		if markErr := m.MarkOrderCreationFailedRepository(ctx, tx.ID); markErr != nil {
-			log.Printf("transactions: failed to mark tx %s as failed after order-create error: %v", tx.ID, markErr)
-		}
 		return nil, fmt.Errorf("failed to create payment order: %w", err)
 	}
 
-	if err := m.UpdateRazorpayOrderIDRepository(ctx, tx.ID, order.ID); err != nil {
-		return nil, fmt.Errorf("failed to update transaction order id: %w", err)
+	tx, err := m.CreateRepository(ctx, txID, userID, req.CourseID, couponID, order.ID, amount)
+	if err != nil {
+		// Order exists on Razorpay's side but we couldn't persist it locally.
+		// This trades away the old "always have a local row" guarantee for
+		// one fewer round trip on every successful initiate; a DB write
+		// failing right after a successful read is rare, and should be
+		// caught by error monitoring/alerting rather than paid for on every
+		// request with an extra write. If that tradeoff isn't acceptable,
+		// keep the original insert-before-order-create ordering instead.
+		return nil, fmt.Errorf("failed to persist transaction: %w", err)
 	}
 
 	return &InitiateTransactionResponse{
@@ -82,21 +115,15 @@ func (m *TransactionsModule) HandleWebhookService(ctx context.Context, rawBody [
 		return fmt.Errorf("invalid signature")
 	}
 
-	processed, err := m.WebhookEventExistsRepository(ctx, payload.EventID)
+	// Single round trip: logs the event (idempotent no-op on retry) AND
+	// tells us whether it was already fully processed, replacing the old
+	// WebhookEventExistsRepository + StoreWebhookEventRepository pair.
+	alreadyProcessed, err := m.UpsertWebhookEventRepository(ctx, payload.EventID, payload.Event)
 	if err != nil {
-		// A DB error here must NOT be treated as "not seen yet" - that risks
-		// double-processing a payment (double enrollment, double coupon usage)
-		// during a DB blip. Fail loud so Razorpay retries.
-		return fmt.Errorf("failed to check webhook event: %w", err)
+		return fmt.Errorf("failed to upsert webhook event: %w", err)
 	}
-	if processed {
+	if alreadyProcessed {
 		return nil
-	}
-
-	// Recorded as unprocessed until the business-logic side effects below
-	// succeed. ON CONFLICT DO NOTHING makes this safe to re-run on retry.
-	if err := m.StoreWebhookEventRepository(ctx, payload.EventID, payload.Event); err != nil {
-		return fmt.Errorf("failed to log webhook event: %w", err)
 	}
 
 	tx, err := m.FindByRazorpayOrderIDRepository(ctx, payload.OrderID)
@@ -106,15 +133,23 @@ func (m *TransactionsModule) HandleWebhookService(ctx context.Context, rawBody [
 
 	switch payload.Event {
 	case "payment.captured":
-		if err := m.MarkSuccessRepository(ctx, tx.ID, payload.PaymentID); err != nil {
+		// Single atomic statement: updates the transaction AND flips the
+		// webhook event to processed in one round trip (previously 2 calls:
+		// MarkSuccessRepository then MarkWebhookEventProcessedRepository).
+		// Being one SQL statement also closes a consistency gap that
+		// existed before - a mid-flight crash can no longer leave the
+		// transaction marked success while the webhook event stays
+		// unprocessed (or vice versa).
+		if err := m.MarkSuccessAndWebhookProcessedRepository(ctx, tx.ID, payload.PaymentID, payload.EventID); err != nil {
 			return fmt.Errorf("failed to mark transaction success: %w", err)
 		}
 
 		// NOTE: Coupons/Enrollments live in separate modules with their own
-		// DB handles, so this can't be wrapped in a single sqlx.Tx without
-		// those repositories accepting a shared transaction. Errors are
-		// surfaced (not silently dropped) so the webhook fails and Razorpay
-		// retries, rather than looking successful while enrollment is missing.
+		// DB handles, so this can't be folded into the statement above
+		// without those repositories accepting a shared transaction. Errors
+		// are surfaced (not silently dropped) so the webhook fails and
+		// Razorpay retries, rather than looking successful while enrollment
+		// is missing.
 		if tx.Coupon.ID != "" && tx.User.ID != "" && tx.Course.ID != "" {
 			if err := m.Coupons.RecordUsageRepository(tx.Coupon.ID, tx.User.ID, tx.Course.ID); err != nil {
 				return fmt.Errorf("failed to record coupon usage for tx %s: %w", tx.ID, err)
@@ -127,16 +162,18 @@ func (m *TransactionsModule) HandleWebhookService(ctx context.Context, rawBody [
 		}
 
 	case "payment.failed":
-		if err := m.MarkFailedRepository(ctx, tx.ID, &payload.ErrorDescription); err != nil {
+		// Same idea: one round trip instead of two.
+		if err := m.MarkFailedAndWebhookProcessedRepository(ctx, tx.ID, &payload.ErrorDescription, payload.EventID); err != nil {
 			return fmt.Errorf("failed to mark transaction failed: %w", err)
 		}
-	}
 
-	if err := m.MarkWebhookEventProcessedRepository(ctx, payload.EventID); err != nil {
-		// Side effects already succeeded; log rather than fail, since
-		// returning an error here would trigger a needless retry that
-		// re-attempts (idempotent) enrollment/status updates.
-		log.Printf("transactions: failed to mark webhook event %s processed: %v", payload.EventID, err)
+	default:
+		// Event type we don't act on - nothing to change on the transaction,
+		// but still close out the webhook_events row so Razorpay stops
+		// retrying it.
+		if err := m.MarkWebhookEventProcessedRepository(ctx, payload.EventID); err != nil {
+			log.Printf("transactions: failed to mark webhook event %s processed: %v", payload.EventID, err)
+		}
 	}
 
 	return nil

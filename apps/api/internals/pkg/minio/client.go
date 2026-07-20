@@ -71,3 +71,8 @@ func (s *MinioStorage) GetSignedURL(ctx context.Context, objectName string) (str
 
 	return url.String(), nil
 }
+
+// GetPublicURL returns the public URL for a given object name
+func (s *MinioStorage) GetPublicURL(objectName string) string {
+	return fmt.Sprintf("%s/%s", s.baseURL, objectName)
+}

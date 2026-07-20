@@ -78,78 +78,72 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 	offset := (page - 1) * limit
 
 	var result struct {
-		Unseen json.RawMessage `db:"unseen"`
-		Total  int             `db:"total"`
-		Older  json.RawMessage `db:"older"`
+		Total   int             `db:"total"`
+		Updates json.RawMessage `db:"updates"`
 	}
 
 	err := m.DB.Get(&result, `
-		WITH target_unseen AS (
+		WITH current_seen AS (
+			SELECT cu.created_at AS last_seen_at
+			FROM update_seen us
+			JOIN course_updates cu ON cu.id = us.update_id
+			WHERE us.user_id = $1
+		),
+		latest_update AS (
 			SELECT cu.id
 			FROM course_updates cu
-			LEFT JOIN update_seen us ON us.update_id = cu.id AND us.user_id = $1
-			WHERE us.id IS NULL
-			  AND (cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
+			WHERE (cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
+			ORDER BY cu.created_at DESC
+			LIMIT 1
 		),
-		mark_as_seen AS (
+		delete_old_seen AS (
+			DELETE FROM update_seen
+			WHERE user_id = $1
+			RETURNING 1
+		),
+		insert_seen AS (
 			INSERT INTO update_seen (user_id, update_id)
-			SELECT $1, id FROM target_unseen
-			ON CONFLICT DO NOTHING
+			SELECT $1, id FROM latest_update
+			WHERE EXISTS (SELECT 1 FROM (SELECT 1 FROM delete_old_seen UNION ALL SELECT 1 LIMIT 1) d)
 		),
-		unseen_cte AS (
+		eligible_updates AS (
 			SELECT cu.id, cu.message, cu.created_at,
 				   json_build_object(
 				   		'id', COALESCE(cu.course_id, ''),
 				   		'title', COALESCE(c.title, ''),
 				   		'thumbnail', c.image_url
-				   ) AS course
+				   ) AS course,
+				   (cu.created_at > COALESCE((SELECT last_seen_at FROM current_seen), '-infinity'::timestamptz)) AS is_unseen
 			FROM course_updates cu
 			LEFT JOIN courses c ON c.id = cu.course_id
-			WHERE cu.id IN (SELECT id FROM target_unseen)
-			ORDER BY cu.created_at DESC
+			WHERE (cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
 		),
 		count_cte AS (
-			SELECT COUNT(*) AS total
-			FROM course_updates cu
-			WHERE (cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
+			SELECT COUNT(*) AS total FROM eligible_updates
 		),
-		older_cte AS (
-			SELECT cu.id, cu.message, cu.created_at,
-				   json_build_object(
-				   		'id', COALESCE(cu.course_id, ''),
-				   		'title', COALESCE(c.title, ''),
-				   		'thumbnail', c.image_url
-				   ) AS course
-			FROM course_updates cu
-			LEFT JOIN courses c ON c.id = cu.course_id
-			WHERE (cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
-			ORDER BY cu.created_at DESC
+		data_cte AS (
+			SELECT id, message, created_at, course, is_unseen
+			FROM eligible_updates
+			ORDER BY is_unseen DESC, created_at DESC
 			LIMIT $2 OFFSET $3
 		)
 		SELECT 
-			COALESCE((SELECT json_agg(unseen_cte) FROM unseen_cte), '[]'::json) AS unseen,
 			COALESCE((SELECT total FROM count_cte), 0) AS total,
-			COALESCE((SELECT json_agg(older_cte) FROM older_cte), '[]'::json) AS older`,
+			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS updates`,
 		userID, limit, offset,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	var unseen []UpdateFeedItem
-	if err := json.Unmarshal(result.Unseen, &unseen); err != nil {
-		return nil, err
-	}
-
-	var older []UpdateFeedItem
-	if err := json.Unmarshal(result.Older, &older); err != nil {
+	var updates []UpdateFeedItem
+	if err := json.Unmarshal(result.Updates, &updates); err != nil {
 		return nil, err
 	}
 
 	return &UpdateFeedResponse{
-		Unseen: unseen,
-		Older: models.PaginatedResponse[[]UpdateFeedItem]{
-			Data: older, Total: result.Total, Page: page, Limit: limit,
+		Updates: models.PaginatedResponse[[]UpdateFeedItem]{
+			Data: updates, Total: result.Total, Page: page, Limit: limit,
 		},
 	}, nil
 }

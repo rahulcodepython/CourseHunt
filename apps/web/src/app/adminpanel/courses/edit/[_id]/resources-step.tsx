@@ -2,28 +2,29 @@
 
 import { Icon } from "@/components/icon";
 
-
 import FileUpload from "@/components/file-upload"
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@package/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
 import { Input } from "@package/ui/input"
 import { Label } from "@package/ui/label"
-import { useUpdateCourseMutation } from "@/hooks/api"
-import { CourseType, MediaUrlType, ResourcesType } from "@/types/course.type"
+import { useUpdateCourseMutation } from "@package/query-hooks/courses.api"
+import type { CourseLandingResponse } from "@package/schema/courses.types"
 
 import { useState } from "react"
 import { toast } from "sonner"
 
-interface ResourcesStepProps {
-    courseData: CourseType
-    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
+interface ResourceFormData {
+    title: string;
+    fileUrl: { url: string; fileType: string };
 }
 
-export default function ResourcesStep({ courseData, setCourseData }: ResourcesStepProps) {
-    const [resources, setResources] = useState<ResourcesType[]>(courseData.resources || [{ title: "", fileUrl: { url: "", fileType: "" } }])
-
-    const { isPending, updateCourse } = useUpdateCourseMutation()
+export default function ResourcesStep({ courseData, setCourseData }: {
+    courseData: CourseLandingResponse
+    setCourseData: React.Dispatch<React.SetStateAction<CourseLandingResponse | null>>
+}) {
+    const [resources, setResources] = useState<ResourceFormData[]>([{ title: "", fileUrl: { url: "", fileType: "" } }])
+    const mutation = useUpdateCourseMutation()
 
     const addResource = () => {
         setResources((prev) => [...prev, { title: "", fileUrl: { url: "", fileType: "" } }])
@@ -33,7 +34,7 @@ export default function ResourcesStep({ courseData, setCourseData }: ResourcesSt
         setResources((prev) => prev.filter((_, i) => i !== index))
     }
 
-    const updateResource = (index: number, field: string, value: string | MediaUrlType) => {
+    const updateResource = (index: number, field: keyof ResourceFormData, value: string | { url: string; fileType: string }) => {
         setResources((prev) => prev.map((resource, i) => (i === index ? { ...resource, [field]: value } : resource)))
     }
 
@@ -42,14 +43,14 @@ export default function ResourcesStep({ courseData, setCourseData }: ResourcesSt
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await updateCourse({
-            id: courseData._id.toString(),
-            data: { resources },
+        const updatedCourseData = await mutation.execute({
+            id: courseData.id,
+            data: { resources } as unknown as Record<string, unknown>,
         })
 
-        if (updatedCourseData) {
+        if (updatedCourseData?.data) {
             toast.success("Course resources saved successfully")
-            setCourseData(updatedCourseData)
+            setCourseData(updatedCourseData.data as unknown as CourseLandingResponse)
         }
     }
 
@@ -100,7 +101,7 @@ export default function ResourcesStep({ courseData, setCourseData }: ResourcesSt
                 </Button>
 
                 <div className="flex justify-end">
-                    <LoadingButton isLoading={isPending} title="Saving Changes...">
+                    <LoadingButton isLoading={mutation.isPending} title="Saving Changes...">
                         <Button onClick={handleSaveAndContinue}>Save Changes</Button>
                     </LoadingButton>
                 </div>

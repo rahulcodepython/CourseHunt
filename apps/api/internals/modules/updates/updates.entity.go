@@ -27,9 +27,10 @@ type UpdateFeedItem struct {
 	Message   string            `json:"message" db:"message"`
 	Course    models.CourseInfo `json:"course" db:""`
 	CreatedAt time.Time         `json:"created_at" db:"created_at"`
+	IsUnseen  bool              `json:"is_unseen" db:"is_unseen"`
 }
 
 type UpdateFeedResponse struct {
-	Unseen []UpdateFeedItem                           `json:"unseen"`
-	Older  models.PaginatedResponse[[]UpdateFeedItem] `json:"older"`
+	Updates models.PaginatedResponse[[]UpdateFeedItem] `json:"updates"`
 }
+

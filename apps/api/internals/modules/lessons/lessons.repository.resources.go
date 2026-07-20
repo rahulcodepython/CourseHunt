@@ -87,3 +87,60 @@ func (m *LessonsModule) DeleteResourceRepository(resourceID, tutorID string) (st
 
 	return *result.DeletedID, nil
 }
+
+func (m *LessonsModule) ReadResourcesRepository(lessonID, userID string) ([]LessonResource, error) {
+	var result struct {
+		LessonExists bool             `db:"lesson_exists"`
+		IsEnrolled   bool             `db:"is_enrolled"`
+		Resources    *json.RawMessage `db:"resources"`
+	}
+
+	query := `
+		WITH lesson_info AS (
+			SELECT l.id AS lesson_id, ch.course_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			WHERE l.id = $1
+		),
+		enrollment_auth AS (
+			SELECT EXISTS (
+				SELECT 1 FROM enrollments e
+				JOIN lesson_info li ON e.course_id = li.course_id
+				WHERE e.user_id = $2 AND e.revoked = false
+			) AS is_enrolled
+		),
+		resources_cte AS (
+			SELECT lr.id, lr.lesson_id, lr.title, lr.file_url, lr.file_type
+			FROM lesson_resources lr
+			JOIN enrollment_auth ea ON ea.is_enrolled = true
+			WHERE lr.lesson_id = $1
+		)
+		SELECT 
+			EXISTS (SELECT 1 FROM lesson_info) AS lesson_exists,
+			COALESCE((SELECT is_enrolled FROM enrollment_auth), false) AS is_enrolled,
+			(SELECT json_agg(resources_cte) FROM resources_cte) AS resources
+	`
+	err := m.DB.Get(&result, query, lessonID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case !result.LessonExists:
+		return nil, ErrLessonNotFound
+	case !result.IsEnrolled:
+		return nil, ErrNotEnrolled
+	}
+
+	var list []LessonResource
+	if result.Resources != nil {
+		if err := json.Unmarshal(*result.Resources, &list); err != nil {
+			return nil, err
+		}
+	} else {
+		list = []LessonResource{}
+	}
+
+	return list, nil
+}
+

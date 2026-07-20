@@ -2,27 +2,29 @@
 
 import { Icon } from "@/components/icon";
 
-
 import LoadingButton from "@/components/loading-button"
 import { Button } from "@package/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
 import { Input } from "@package/ui/input"
 import { Label } from "@package/ui/label"
 import { Textarea } from "@package/ui/textarea"
-import { useUpdateCourseMutation } from "@/hooks/api"
-import { CourseType, FAQType } from "@/types/course.type"
+import { useUpdateCourseMutation } from "@package/query-hooks/courses.api"
+import type { CourseLandingResponse } from "@package/schema/courses.types"
 
 import { useState } from "react"
 import { toast } from "sonner"
 
-interface FAQStepProps {
-    courseData: CourseType
-    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
+interface FAQFormData {
+    question: string;
+    answer: string;
 }
 
-export default function FAQStep({ courseData, setCourseData }: FAQStepProps) {
-    const [faqs, setFaqs] = useState<FAQType[]>(courseData.faq || [{ question: "", answer: "" }])
-    const { isPending, updateCourse } = useUpdateCourseMutation()
+export default function FAQStep({ courseData, setCourseData }: {
+    courseData: CourseLandingResponse
+    setCourseData: React.Dispatch<React.SetStateAction<CourseLandingResponse | null>>
+}) {
+    const [faqs, setFaqs] = useState<FAQFormData[]>([{ question: "", answer: "" }])
+    const mutation = useUpdateCourseMutation()
 
     const addFAQ = () => {
         setFaqs((prev) => [...prev, { question: "", answer: "" }])
@@ -32,19 +34,19 @@ export default function FAQStep({ courseData, setCourseData }: FAQStepProps) {
         setFaqs((prev) => prev.filter((_, i) => i !== index))
     }
 
-    const updateFAQ = (index: number, field: string, value: string) => {
+    const updateFAQ = (index: number, field: keyof FAQFormData, value: string) => {
         setFaqs((prev) => prev.map((faq, i) => (i === index ? { ...faq, [field]: value } : faq)))
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await updateCourse({
-            id: courseData._id.toString(),
-            data: { faq: faqs },
+        const updatedCourseData = await mutation.execute({
+            id: courseData.id,
+            data: { faq: faqs } as unknown as Record<string, unknown>,
         })
 
-        if (updatedCourseData) {
+        if (updatedCourseData?.data) {
             toast.success("Course FAQ saved successfully")
-            setCourseData(updatedCourseData)
+            setCourseData(updatedCourseData.data as unknown as CourseLandingResponse)
         }
     }
 
@@ -96,7 +98,7 @@ export default function FAQStep({ courseData, setCourseData }: FAQStepProps) {
                 </Button>
 
                 <div className="flex justify-end">
-                    <LoadingButton isLoading={isPending} title="Saving Changes...">
+                    <LoadingButton isLoading={mutation.isPending} title="Saving Changes...">
                         <Button onClick={handleSaveAndContinue}>Save Changes</Button>
                     </LoadingButton>
                 </div>

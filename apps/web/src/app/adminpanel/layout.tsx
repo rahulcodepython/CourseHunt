@@ -5,9 +5,22 @@ import Loading from "@/components/loading";
 import BreadcrumbComponent from "@/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@package/ui/sidebar";
 import { useSession } from "@package/auth/auth-client";
-import { NavbarDataType } from "@/types/navbar.type";
+import type { ComponentType } from "react";
+
+interface NavGroupType {
+    title: string;
+    url?: string;
+    icon?: ComponentType<{ className?: string }>;
+    isActive?: boolean;
+    items?: NavGroupType[];
+    children?: NavGroupType[];
+}
+
+interface NavbarDataType {
+    navMain: NavGroupType[];
+}
 import { useRouter } from "next/navigation";
-import React from "react";
+import { useEffect } from "react";
 
 
 
@@ -17,19 +30,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const router = useRouter()
 
-    React.useEffect(() => {
+    const userRole = (user as { id: string; name: string; email: string; image?: string | null; role?: string })?.role;
+
+    useEffect(() => {
         if (!isPending && !user) {
             router.push('/login')
-        } else if (!isPending && user && user.role !== 'admin' && user.role !== 'tutor') {
+        } else if (!isPending && user && userRole !== 'admin' && userRole !== 'tutor') {
             router.push('/dashboard')
         }
-    }, [user, isPending, router])
+    }, [user, userRole, isPending, router])
 
     if (isPending) {
         return <Loading />
     }
 
-    if (!user || (user.role !== 'admin' && user.role !== 'tutor')) {
+    if (!user || (userRole !== 'admin' && userRole !== 'tutor')) {
         return null
     }
 
@@ -39,7 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { title: "Feedback", url: "/adminpanel/feedback" },
     ];
 
-    if (user.role === 'admin') {
+    if (userRole === 'admin') {
         navItems.push(
             { title: "Coupons", url: "/adminpanel/coupons" },
             { title: "Transactions", url: "/adminpanel/transactions" },
@@ -52,7 +67,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const dynamicData: NavbarDataType = {
         navMain: [
             {
-                title: user.role === 'tutor' ? "Tutor Panel" : "Admin Panel",
+                title: userRole === 'tutor' ? "Tutor Panel" : "Admin Panel",
                 children: navItems,
             }
         ]

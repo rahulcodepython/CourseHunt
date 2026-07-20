@@ -3,7 +3,18 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import BreadcrumbComponent from "@/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@package/ui/sidebar";
-import { NavbarDataType } from "@/types/navbar.type";
+interface NavGroupType {
+    title: string;
+    url?: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    isActive?: boolean;
+    items?: NavGroupType[];
+    children?: NavGroupType[];
+}
+
+interface NavbarDataType {
+    navMain: NavGroupType[];
+}
 
 export default function UserLayout({
     children,

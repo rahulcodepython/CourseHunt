@@ -8,36 +8,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@package/ui/input"
 import { Label } from "@package/ui/label"
 import { Textarea } from "@package/ui/textarea"
-import { usePublicCoursesQuery } from "@/hooks/api"
-
+import { useCoursesQuery } from "@package/query-hooks/courses.api"
+import { usePinnedFeedbacksQuery } from "@package/query-hooks/feedbacks.api"
+import type { CoursePublicResponse } from "@package/schema/courses.types"
+import type { Feedback } from "@package/schema/feedbacks.types"
+import { Skeleton } from "@package/ui/skeleton"
 import Image from "next/image"
 import Link from "next/link"
-import { Skeleton } from "@package/ui/skeleton"
-import Loading from "@/components/loading"
-
-const testimonials = [
-    {
-        name: "Alex Rodriguez",
-        role: "Software Developer",
-        content: "CourseHunt transformed my career. The courses are well-structured and the instructors are top-notch!",
-        rating: 5,
-        avatar: "/placeholder.svg?height=60&width=60",
-    },
-    {
-        name: "Emily Davis",
-        role: "Data Analyst",
-        content: "I landed my dream job after completing the Python course. Highly recommended!",
-        rating: 5,
-        avatar: "/placeholder.svg?height=60&width=60",
-    },
-    {
-        name: "David Wilson",
-        role: "Freelancer",
-        content: "The practical projects helped me build a strong portfolio. Amazing platform!",
-        rating: 5,
-        avatar: "/placeholder.svg?height=60&width=60",
-    },
-]
 
 const brands = [
     { name: "Google", logo: "/placeholder.svg?height=60&width=120" },
@@ -48,13 +25,18 @@ const brands = [
 ]
 
 export default function Home() {
-    const { data: courses, isLoading } = usePublicCoursesQuery()
-    const courseList = courses ?? [];
+    const { data: response, isLoading } = useCoursesQuery({ limit: 6 })
+    const paginatedData = response?.data;
+    const courseList: CoursePublicResponse[] = paginatedData ? (paginatedData.data as CoursePublicResponse[]) : [];
+
+    const { data: feedbackResponse, isLoading: isFeedbackLoading } = usePinnedFeedbacksQuery()
+    const feedbackPaginated = feedbackResponse?.data;
+    const feedbackList: Feedback[] = feedbackPaginated ? (feedbackPaginated.data as Feedback[]) : [];
 
     return (
         <div className="min-h-screen bg-background">
             {/* Hero Section */}
-            <section className="py-20 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+            <section className="py-20 bg-linear-to-br from-primary/10 via-background to-secondary/10">
                 <div className="container mx-auto px-4">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         <div className="space-y-8">
@@ -254,19 +236,44 @@ export default function Home() {
                         </p>
                     </div>
                     {
-                        isLoading ? <Loading /> :
-                            courseList.length === 0 ? <div className="text-center py-2">
-                                <h3 className="text-xl font-semibold">No courses found</h3>
-                            </div> : <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                                {
-                                    courseList.map((course, index) => (
-                                        <CourseCard
-                                            key={index}
-                                            courseData={course}
-                                        />
-                                    ))
-                                }
-                            </div>
+                        isLoading ? <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                            {
+                                Array.from({ length: 6 }).map((_, i) => <div key={i} className="w-full max-w-sm mx-auto h-full">
+                                    <div className="overflow-hidden rounded-xl border pt-0 pb-1 h-full justify-between flex flex-col">
+                                        <div>
+                                            <Skeleton className="w-full h-48 rounded-none" />
+                                            <div className="p-4 space-y-3">
+                                                <Skeleton className="h-5 w-3/4" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-5/6" />
+                                                <div className="flex gap-4">
+                                                    <Skeleton className="h-4 w-20" />
+                                                    <Skeleton className="h-4 w-16" />
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    {Array.from({ length: 5 }).map((_, s) => <Skeleton key={s} className="h-5 w-5" />)}
+                                                    <Skeleton className="h-4 w-16 ml-1" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 pt-0">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex gap-2">
+                                                    <Skeleton className="h-7 w-16" />
+                                                    <Skeleton className="h-5 w-12 mt-1" />
+                                                </div>
+                                                <Skeleton className="h-9 w-24 rounded-md" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                )
+                            }
+                        </div> : courseList.length === 0 ? <div className="text-center py-2">
+                            <h3 className="text-xl font-semibold">No courses found</h3>
+                        </div> : <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                            {courseList.map((course, index) => <CourseCard key={index} courseData={course} />)}
+                        </div>
                     }
                     <div className="text-center mt-12">
                         <Link href="/courses">
@@ -288,35 +295,65 @@ export default function Home() {
                             Don't just take our word for it. Here's what our students have to say.
                         </p>
                     </div>
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {testimonials.map((testimonial, index) => (
-                            <Card key={index}>
-                                <CardHeader>
-                                    <div className="flex items-center gap-4">
-                                        <Image
-                                            src={testimonial.avatar || "/placeholder.svg"}
-                                            alt={testimonial.name}
-                                            width={60}
-                                            height={60}
-                                            className="rounded-full"
-                                        />
-                                        <div>
-                                            <CardTitle className="text-lg">{testimonial.name}</CardTitle>
-                                            <CardDescription>{testimonial.role}</CardDescription>
+                    {
+                        isFeedbackLoading ? <div className="grid md:grid-cols-3 gap-8">
+                            {
+                                Array.from({ length: 3 }).map((_, i) => <Card key={i}>
+                                    <CardHeader>
+                                        <div className="flex items-center gap-4">
+                                            <Skeleton className="w-[60px] h-[60px] rounded-full shrink-0" />
+                                            <div className="space-y-2">
+                                                <Skeleton className="h-5 w-32" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        {[...Array(testimonial.rating)].map((_, i) => (
-                                            <Icon name="IconStar" key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                                        ))}
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-muted-foreground">"{testimonial.content}"</p>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
+                                        <div className="flex gap-1 mt-3">
+                                            {Array.from({ length: 5 }).map((_, s) => (
+                                                <Skeleton key={s} className="h-5 w-5" />
+                                            ))}
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-5/6 mt-2" />
+                                    </CardContent>
+                                </Card>
+                                )
+                            }
+                        </div> : feedbackList.length === 0 ? <div className="text-center text-gray-500 py-8">
+                            <p className="text-lg font-medium">No testimonials yet</p>
+                        </div> : <div className="grid md:grid-cols-3 gap-8">
+                            {
+                                feedbackList.map((feedback) => <Card key={feedback.id}>
+                                    <CardHeader>
+                                        <div className="flex items-center gap-4">
+                                            <Image
+                                                src={feedback.user.image || "/placeholder.svg"}
+                                                alt={feedback.user.name}
+                                                width={60}
+                                                height={60}
+                                                className="rounded-full"
+                                            />
+                                            <div>
+                                                <CardTitle className="text-lg">{feedback.user.name}</CardTitle>
+                                                <CardDescription>{feedback.course.title}</CardDescription>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {
+                                                [...Array(feedback.rating)].map((_, i) => <Icon name="IconStar" key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />)
+                                            }
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-muted-foreground">"{feedback.content}"</p>
+                                    </CardContent>
+                                </Card>
+                                )
+                            }
+                        </div>
+
+                    }
                 </div>
             </section>
 
@@ -328,8 +365,8 @@ export default function Home() {
                         <p className="text-xl text-muted-foreground">Our graduates work at top companies worldwide.</p>
                     </div>
                     <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
-                        {brands.map((brand, index) => (
-                            <Image
+                        {
+                            brands.map((brand, index) => <Image
                                 key={index}
                                 src={brand.logo || "/placeholder.svg"}
                                 alt={brand.name}
@@ -338,7 +375,8 @@ export default function Home() {
                                 style={{ width: "auto", height: "auto" }}
                                 className="grayscale hover:grayscale-0 transition-all"
                             />
-                        ))}
+                            )
+                        }
                     </div>
                 </div>
             </section>

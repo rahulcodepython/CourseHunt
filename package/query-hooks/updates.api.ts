@@ -15,9 +15,14 @@ export function useUpdatesQuery() {
 	);
 }
 
-export function useUpdateFeedQuery() {
-	return useAppQuery(queryKeys.updateFeed(), () =>
-		apiRequest({ url: "/api/v1/updates/feed", method: "GET" }, UpdateFeedResponseZod),
+export function useUpdateFeedQuery(params?: { page?: number; limit?: number }) {
+	const searchParams = new URLSearchParams();
+	if (params?.page) searchParams.set("page", params.page.toString());
+	if (params?.limit) searchParams.set("limit", params.limit.toString());
+	const qs = searchParams.toString();
+	const url = qs ? `/api/v1/updates/feed?${qs}` : "/api/v1/updates/feed";
+	return useAppQuery(queryKeys.updateFeed(params), () =>
+		apiRequest({ url, method: "GET" }, UpdateFeedResponseZod),
 	);
 }
 

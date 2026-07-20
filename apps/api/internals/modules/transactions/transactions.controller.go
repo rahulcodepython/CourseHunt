@@ -68,6 +68,23 @@ func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
+func (m *TransactionsModule) StatusController(c *fiber.Ctx) error {
+	resp, err := m.GetTransactionStatusRepository(c.Context(), c.Params("id"), utils.GetUserID(c))
+	if err != nil {
+		return utils.InternalError(c, "Failed to fetch transaction status.", err)
+	}
+	return utils.OK(c, "Transaction status fetched.", resp)
+}
+
+func (m *TransactionsModule) CheckoutController(c *fiber.Ctx) error {
+	courseID := c.Params("courseId")
+	resp, err := m.GetCheckoutCourseRepository(c.Context(), courseID)
+	if err != nil {
+		return utils.InternalError(c, "Failed to fetch checkout course info.", err)
+	}
+	return utils.OK(c, "Checkout course info fetched.", resp)
+}
+
 func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := m.ListRepository(c.Context(), page, limit, c.Query("user_id"), "", c.Query("status"), c.Query("course_id"), c.Query("date_from"), c.Query("date_to"))

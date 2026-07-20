@@ -70,10 +70,6 @@ type AddResourceRequest struct {
 	FileType *string `json:"file_type"`
 }
 
-type SignedURLResponse struct {
-	URL string `json:"url"`
-}
-
 type AggregatedLessonContentResponse struct {
 	LessonType      string                 `json:"lesson_type"`
 	VideoContent    *LessonVideoContent    `json:"video_content"`

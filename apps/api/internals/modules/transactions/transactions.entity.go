@@ -35,6 +35,27 @@ type InitiateTransactionResponse struct {
 	RazorpayKey     string  `json:"razorpay_key"`
 }
 
+// ── Checkout Course Response ──
+
+type CheckoutCourseResponse struct {
+	ID          string                `json:"id"`
+	Title       string                `json:"title"`
+	ImageURL    *string               `json:"image_url"`
+	Instructor  models.InstructorInfo `json:"instructor"`
+	ActualPrice float64               `json:"actual_price"`
+	FinalPrice  float64               `json:"final_price"`
+}
+
+// ── Transaction Status Response ──
+
+type TransactionStatusResponse struct {
+	ID               string  `json:"id"`
+	Status           string  `json:"status"`
+	ErrorDescription *string `json:"error_description,omitempty"`
+	WebhookProcessed bool    `json:"webhook_processed"`
+	RazorpayOrderID  *string `json:"razorpay_order_id"`
+}
+
 type WebhookPayload struct {
 	EventID          string
 	Event            string

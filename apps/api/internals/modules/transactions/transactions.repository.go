@@ -49,13 +49,22 @@ func (r transactionRow) toTransaction() Transaction {
 
 // ── Writes ──
 
-func (m *TransactionsModule) CreateRepository(ctx context.Context, userID, courseID string, couponID *string, razorpayOrderID string, amount float64) (*Transaction, error) {
+// CreateRepository now takes the pre-generated id AND the already-known
+// Razorpay order id, so the transaction row is written ONCE, fully formed.
+// Previously this was: INSERT (pending, no order id) -> UPDATE (attach order
+// id) = 2 round trips every single time. The service layer now creates the
+// Razorpay order first (using a client-generated id as the reference) and
+// only writes to the DB once that succeeds, so this is the only DB write in
+// the common path, and there is NO write at all if order creation fails
+// (previously a "pending" row was inserted and then immediately flipped to
+// "failed" - a wasted INSERT + UPDATE on every gateway error).
+func (m *TransactionsModule) CreateRepository(ctx context.Context, id, userID, courseID string, couponID *string, razorpayOrderID string, amount float64) (*Transaction, error) {
 	var row transactionRow
 	err := m.DB.GetContext(ctx, &row, `
-		INSERT INTO transactions (user_id, course_id, coupon_id, razorpay_order_id, amount, currency, status)
-		VALUES ($1, $2, $3, $4, $5, 'INR', 'pending')
+		INSERT INTO transactions (id, user_id, course_id, coupon_id, razorpay_order_id, amount, currency, status)
+		VALUES ($1, $2, $3, $4, $5, $6, 'INR', 'pending')
 		RETURNING `+transactionColumns,
-		userID, courseID, couponID, razorpayOrderID, amount,
+		id, userID, courseID, couponID, razorpayOrderID, amount,
 	)
 	if err != nil {
 		return nil, err
@@ -64,29 +73,25 @@ func (m *TransactionsModule) CreateRepository(ctx context.Context, userID, cours
 	return &t, nil
 }
 
-func (m *TransactionsModule) UpdateRazorpayOrderIDRepository(ctx context.Context, id, razorpayOrderID string) error {
-	_, err := m.DB.ExecContext(ctx, `UPDATE transactions SET razorpay_order_id = $1 WHERE id = $2`, razorpayOrderID, id)
-	return err
-}
-
-// MarkOrderCreationFailedRepository marks a pending transaction as failed when
-// Razorpay order creation fails after the local row was already inserted, so
-// it doesn't get stuck as a dangling "pending" row with no order id.
-func (m *TransactionsModule) MarkOrderCreationFailedRepository(ctx context.Context, id string) error {
-	desc := "failed to create razorpay order"
-	_, err := m.DB.ExecContext(ctx, `UPDATE transactions SET status = 'failed', error_description = $1 WHERE id = $2`, desc, id)
-	return err
-}
-
-func (m *TransactionsModule) MarkSuccessRepository(ctx context.Context, id, razorpayPaymentID string) error {
+func (m *TransactionsModule) MarkSuccessAndWebhookProcessedRepository(ctx context.Context, txID, razorpayPaymentID, eventID string) error {
 	_, err := m.DB.ExecContext(ctx, `
-		UPDATE transactions SET status = 'success', razorpay_payment_id = $1, confirmed_at = CURRENT_TIMESTAMP WHERE id = $2`,
-		razorpayPaymentID, id)
+		WITH updated_tx AS (
+			UPDATE transactions
+			SET status = 'success', razorpay_payment_id = $1, confirmed_at = CURRENT_TIMESTAMP
+			WHERE id = $2
+		)
+		UPDATE webhook_events SET processed = true WHERE razorpay_event_id = $3`,
+		razorpayPaymentID, txID, eventID)
 	return err
 }
 
-func (m *TransactionsModule) MarkFailedRepository(ctx context.Context, id string, desc *string) error {
-	_, err := m.DB.ExecContext(ctx, `UPDATE transactions SET status = 'failed', error_description = $1 WHERE id = $2`, desc, id)
+func (m *TransactionsModule) MarkFailedAndWebhookProcessedRepository(ctx context.Context, txID string, desc *string, eventID string) error {
+	_, err := m.DB.ExecContext(ctx, `
+		WITH updated_tx AS (
+			UPDATE transactions SET status = 'failed', error_description = $1 WHERE id = $2
+		)
+		UPDATE webhook_events SET processed = true WHERE razorpay_event_id = $3`,
+		desc, txID, eventID)
 	return err
 }
 
@@ -140,6 +145,9 @@ func (m *TransactionsModule) ListRepository(ctx context.Context, page, limit int
 		}
 	}
 
+	// Already efficient: single query returns both the page of rows AND the
+	// total count via COUNT(*) OVER(), and joins are done in SQL rather than
+	// N+1 fetches from Go. Left unchanged except for formatting.
 	query := `
 		SELECT 
 			json_build_object(
@@ -195,32 +203,67 @@ func (m *TransactionsModule) GetCoursePriceRepository(ctx context.Context, cours
 }
 
 // ── Webhook events ──
-//
-// Events are stored as unprocessed first, then flipped to processed only
-// after the business-logic side effects (enrollment, coupon usage, status
-// update) have completed. This prevents a crash mid-webhook from causing
-// WebhookEventExistsRepository to report a paid-but-unenrolled event as
-// already handled, which would silently swallow a paying customer.
 
-func (m *TransactionsModule) WebhookEventExistsRepository(ctx context.Context, eventID string) (bool, error) {
-	var exists bool
-	err := m.DB.GetContext(ctx, &exists, `SELECT EXISTS(SELECT 1 FROM webhook_events WHERE razorpay_event_id = $1 AND processed = true)`, eventID)
-	if err != nil {
-		return false, err
-	}
-	return exists, nil
+// UpsertWebhookEventRepository replaces the previous pair of calls
+// (WebhookEventExistsRepository + StoreWebhookEventRepository), which always
+// cost 2 round trips before any real processing began. This does an
+// INSERT ... ON CONFLICT DO UPDATE ... RETURNING processed, which is a single
+// round trip whether the event is new or a retry:
+//   - New event: row is inserted as unprocessed, RETURNING gives back `false`.
+//   - Retry (already logged, not yet processed - e.g. previous attempt
+//     crashed mid-webhook): the DO UPDATE is a no-op write that still lets us
+//     RETURNING the current `processed` value.
+//   - Retry (already fully processed): RETURNING gives back `true`, caller
+//     short-circuits.
+func (m *TransactionsModule) UpsertWebhookEventRepository(ctx context.Context, eventID, eventType string) (alreadyProcessed bool, err error) {
+	err = m.DB.GetContext(ctx, &alreadyProcessed, `
+		INSERT INTO webhook_events (razorpay_event_id, event_type, processed)
+		VALUES ($1, $2, false)
+		ON CONFLICT (razorpay_event_id) DO UPDATE SET event_type = webhook_events.event_type
+		RETURNING processed`, eventID, eventType)
+	return alreadyProcessed, err
 }
 
-func (m *TransactionsModule) StoreWebhookEventRepository(ctx context.Context, eventID, eventType string) error {
-	_, err := m.DB.ExecContext(ctx, `
-		INSERT INTO webhook_events (razorpay_event_id, event_type, processed) 
-		VALUES ($1, $2, false) ON CONFLICT DO NOTHING`, eventID, eventType)
-	return err
-}
-
+// MarkWebhookEventProcessedRepository is kept only for event types the
+// switch in HandleWebhookService doesn't otherwise handle (nothing to update
+// on the transactions table, but we still need to close out the event so
+// Razorpay stops retrying it). For "payment.captured" / "payment.failed" use
+// the combined Mark*AndWebhookProcessedRepository functions above instead.
 func (m *TransactionsModule) MarkWebhookEventProcessedRepository(ctx context.Context, eventID string) error {
 	_, err := m.DB.ExecContext(ctx, `UPDATE webhook_events SET processed = true WHERE razorpay_event_id = $1`, eventID)
 	return err
 }
 
-// ── Public API ──
+func (m *TransactionsModule) GetTransactionStatusRepository(ctx context.Context, txID, userID string) (*TransactionStatusResponse, error) {
+	var resp TransactionStatusResponse
+	err := m.DB.GetContext(ctx, &resp, `
+		SELECT
+			id,
+			status,
+			error_description,
+			CASE WHEN status IN ('success', 'failed') THEN true ELSE false END AS webhook_processed,
+			razorpay_order_id
+		FROM transactions
+		WHERE id = $1 AND user_id = $2`, txID, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func (m *TransactionsModule) GetCheckoutCourseRepository(ctx context.Context, courseID string) (*CheckoutCourseResponse, error) {
+	var resp CheckoutCourseResponse
+	err := m.DB.GetContext(ctx, &resp, `
+		SELECT
+			c.id, c.title, c.image_url, c.actual_price, c.final_price,
+			u.id AS "instructor.id",
+			COALESCE(u.name, '') AS "instructor.name",
+			u.image AS "instructor.image"
+		FROM courses c
+		JOIN "user" u ON u.id = c.tutor_id
+		WHERE c.id = $1`, courseID)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}

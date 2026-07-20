@@ -102,3 +102,10 @@ export function useSignedUrlQuery(id: string, fileName: string) {
 		apiRequest({ url: `/api/v1/lessons/${id}/signed-url?file_name=${encodeURIComponent(fileName)}`, method: "GET" }, SignedURLResponseZod),
 	);
 }
+
+export function useLessonResourcesQuery(id: string) {
+	return useAppQuery(["lessons", id, "resources"], () =>
+		apiRequest({ url: `/api/v1/lessons/${id}/resources`, method: "GET" }, z.array(LessonResourceZod)),
+	);
+}
+

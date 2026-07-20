@@ -20,6 +20,7 @@ import (
 	"coursehunt/api/internals/modules/quiz"
 	"coursehunt/api/internals/modules/transactions"
 	"coursehunt/api/internals/modules/updates"
+	"coursehunt/api/internals/modules/upload"
 	"coursehunt/api/internals/modules/users"
 	"coursehunt/api/internals/modules/wishlist"
 
@@ -58,6 +59,7 @@ type Router struct {
 	Lessons      *lessons.LessonsModule
 	Courses      *courses.CoursesModule
 	Transactions *transactions.TransactionsModule
+	Upload       *upload.UploadModule
 }
 
 func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
@@ -80,6 +82,7 @@ func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 	quiz := quiz.NewQuizModule(sqlxDB, enrollments, courses)
 	chapters := chapters.NewChaptersModule(sqlx.NewDb(db, "postgres"), courses)
 	lessons := lessons.NewLessonsModule(sqlxDB, courses)
+	uploadMod := upload.NewUploadModule(sqlxDB)
 
 	// Modules with cross-deps — order matters, clearly visible
 	rzp := razorpaypkg.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
@@ -93,6 +96,7 @@ func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 		Updates: updates, Feedbacks: feedbacks, Coupons: coupons,
 		Quiz: quiz, Enrollments: enrollments, Chapters: chapters,
 		Lessons: lessons, Courses: courses, Transactions: transactions,
+		Upload: uploadMod,
 	}
 }
 
@@ -133,4 +137,5 @@ func (r *Router) SetUp() {
 	r.Lessons.Routes(v1, protected)
 	r.Courses.Routes(v1, protected)
 	r.Transactions.Routes(v1, protected)
+	r.Upload.Routes(v1, protected)
 }

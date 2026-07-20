@@ -2,7 +2,6 @@
 
 import { Icon } from "@/components/icon";
 
-
 import FileUpload from "@/components/file-upload"
 import LoadingButton from "@/components/loading-button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@package/ui/accordion"
@@ -13,25 +12,50 @@ import { Label } from "@package/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@package/ui/select"
 import { Switch } from "@package/ui/switch"
 import { Textarea } from "@package/ui/textarea"
-import { useUpdateCourseMutation } from "@/hooks/api"
-import { ChapterType, CourseType, LessonType } from "@/types/course.type"
+import { useUpdateCourseMutation } from "@package/query-hooks/courses.api"
+import type { CourseLandingResponse } from "@package/schema/courses.types"
 
 import { useState } from "react"
 import { toast } from "sonner"
 
-type LessonInputType = string | { url: string, fileType: string }
-type ChapterInputType = string | boolean | LessonInputType[] | number
+type LessonInputType = string | { url: string; fileType: string };
 
-// LessonCard.tsx
-interface LessonCardProps {
-    lesson: LessonType
-    index: number
-    onLessonChange: (field: string, value: LessonInputType) => void
-    onRemove: () => void
-    showRemove: boolean
+interface LessonFormField {
+    id?: number;
+    title: string;
+    duration: string;
+    type: string;
+    content: string;
+    videoUrl: { url: string; fileType: string };
 }
 
-function LessonCard({ lesson, index, onLessonChange, onRemove, showRemove }: LessonCardProps) {
+interface ChapterFormField {
+    id?: number;
+    _id?: number;
+    title: string;
+    totallessons?: number;
+    preview: boolean;
+    lessons: LessonFormField[];
+}
+
+interface ChapterAccordionItemProps {
+    chapter: ChapterFormField;
+    index: number;
+    onChapterChange: (field: string, value: string | boolean) => void;
+    onLessonChange: (lessonIndex: number, field: string, value: LessonInputType) => void;
+    onAddLesson: () => void;
+    onRemoveChapter: () => void;
+    onRemoveLesson: (lessonIndex: number) => void;
+    showRemove: boolean;
+}
+
+function LessonCard({ lesson, index, onLessonChange, onRemove, showRemove }: {
+    lesson: LessonFormField;
+    index: number;
+    onLessonChange: (field: string, value: LessonInputType) => void;
+    onRemove: () => void;
+    showRemove: boolean;
+}) {
     return (
         <Card className="p-4">
             <div className="space-y-4">
@@ -104,18 +128,6 @@ function LessonCard({ lesson, index, onLessonChange, onRemove, showRemove }: Les
     )
 }
 
-// ChapterAccordionItem.tsx
-interface ChapterAccordionItemProps {
-    chapter: ChapterType
-    index: number
-    onChapterChange: (field: string, value: ChapterInputType) => void
-    onLessonChange: (lessonIndex: number, field: string, value: LessonInputType) => void
-    onAddLesson: () => void
-    onRemoveChapter: () => void
-    onRemoveLesson: (lessonIndex: number) => void
-    showRemove: boolean
-}
-
 function ChapterAccordionItem({
     chapter,
     index,
@@ -174,7 +186,7 @@ function ChapterAccordionItem({
 
                         <div className="space-y-4">
                             {
-                                chapter.lessons.map((lesson, lessonIndex) => (
+                                chapter.lessons.map((lesson: LessonFormField, lessonIndex: number) => (
                                     <LessonCard
                                         key={lessonIndex}
                                         lesson={lesson}
@@ -204,17 +216,12 @@ function ChapterAccordionItem({
     )
 }
 
-interface ChapterLessonStepProps {
-    courseData: CourseType
-    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
-}
-
-// Updated ChapterLessonStep.tsx
-export default function ChapterLessonStep({ courseData, setCourseData }: ChapterLessonStepProps) {
-    const [chapters, setChapters] = useState<ChapterType[]>(courseData.chapters || [])
-    const [chaptersCount, setChaptersCount] = useState<number>(courseData.chaptersCount || 0)
-    const [lessonsCount, setLessonsCount] = useState<number>(courseData.lessonsCount || 0)
-    const { isPending, updateCourse } = useUpdateCourseMutation()
+export default function ChapterLessonStep({ courseData, setCourseData }: {
+    courseData: CourseLandingResponse;
+    setCourseData: React.Dispatch<React.SetStateAction<CourseLandingResponse | null>>;
+}) {
+    const [chapters, setChapters] = useState<ChapterFormField[]>(courseData.chapters as unknown as ChapterFormField[] || [])
+    const mutation = useUpdateCourseMutation()
 
     const addChapter = () => {
         setChapters((prev) => [
@@ -236,19 +243,14 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
                 }] 
             },
         ])
-        setChaptersCount((prev) => prev + 1)
-        setLessonsCount((prev) => prev + 1)
     }
 
     const removeChapter = (chapterIndex: number) => {
-        const lessonsToRemove = chapters[chapterIndex].totallessons
         setChapters((prev) => prev.filter((_, i) => i !== chapterIndex))
-        setChaptersCount((prev) => prev - 1)
-        setLessonsCount((prev) => prev - lessonsToRemove)
     }
 
-    const updateChapter = (chapterIndex: number, field: string, value: ChapterInputType) => {
-        setChapters((prev) => prev.map((chapter, i) => (i === chapterIndex ? { ...chapter, [field]: value } as ChapterType : chapter)))
+    const updateChapter = (chapterIndex: number, field: string, value: string | boolean) => {
+        setChapters((prev) => prev.map((chapter, i) => (i === chapterIndex ? { ...chapter, [field]: value } : chapter)))
     }
 
     const addLesson = (chapterIndex: number) => {
@@ -257,10 +259,8 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
                 i === chapterIndex
                     ? { 
                         ...chapter, 
-                        totallessons: chapter.totallessons + 1, 
                         lessons: [...chapter.lessons, { 
                             id: 0, 
-                            _id: 0, 
                             title: "", 
                             duration: "", 
                             type: "video", 
@@ -271,16 +271,14 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
                     : chapter,
             ),
         )
-        setLessonsCount((prev) => prev + 1)
     }
 
     const removeLesson = (chapterIndex: number, lessonIndex: number) => {
         setChapters((prev) =>
             prev.map((chapter, i) =>
-                i === chapterIndex ? { ...chapter, totallessons: chapter.totallessons - 1, lessons: chapter.lessons.filter((_, j) => j !== lessonIndex) } : chapter,
+                i === chapterIndex ? { ...chapter, lessons: chapter.lessons.filter((_, j) => j !== lessonIndex) } : chapter,
             ),
         )
-        setLessonsCount((prev) => prev - 1)
     }
 
     const updateLesson = (chapterIndex: number, lessonIndex: number, field: string, value: LessonInputType) => {
@@ -289,7 +287,7 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
                 i === chapterIndex
                     ? {
                         ...chapter,
-                        lessons: chapter.lessons.map((lesson, j) => (j === lessonIndex ? { ...lesson, [field]: value } as LessonType : lesson)),
+                        lessons: chapter.lessons.map((lesson, j) => (j === lessonIndex ? { ...lesson, [field]: value } : lesson)),
                     }
                     : chapter,
             ),
@@ -297,18 +295,14 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
     }
 
     const handleSaveAndContinue = async () => {
-        const updatedCourseData = await updateCourse({
-            id: courseData._id.toString(),
-            data: {
-                chapters,
-                chaptersCount,
-                lessonsCount,
-            },
+        const updatedCourseData = await mutation.execute({
+            id: courseData.id,
+            data: { chapters } as unknown as Record<string, unknown>,
         })
 
-        if (updatedCourseData) {
+        if (updatedCourseData?.data) {
             toast.success("Course chapters & lessons saved successfully")
-            setCourseData(updatedCourseData)
+            setCourseData(updatedCourseData.data as unknown as CourseLandingResponse)
         }
     }
 
@@ -320,7 +314,7 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
             <CardContent className="space-y-6">
                 <Accordion type="multiple" className="space-y-4">
                     {
-                        chapters.map((chapter, chapterIndex) => (
+                        chapters.map((chapter: ChapterFormField, chapterIndex: number) => (
                             <ChapterAccordionItem
                                 key={chapterIndex}
                                 chapter={chapter}
@@ -342,7 +336,7 @@ export default function ChapterLessonStep({ courseData, setCourseData }: Chapter
                 </Button>
 
                 <div className="flex justify-end pt-4 border-t">
-                    <LoadingButton isLoading={isPending} title="Saving Changes...">
+                    <LoadingButton isLoading={mutation.isPending} title="Saving Changes...">
                         <Button onClick={handleSaveAndContinue} className="px-10">Save Changes</Button>
                     </LoadingButton>
                 </div>

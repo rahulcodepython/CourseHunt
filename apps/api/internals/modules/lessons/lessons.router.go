@@ -10,6 +10,7 @@ func (m *LessonsModule) Routes(v1, protected fiber.Router) {
 	studentLessonOperation := protected.Group("/lessons", middlewares.PermissionGuard("courses:study"))
 	studentLessonOperation.Get("/:id/content", m.ReadContentController)
 	studentLessonOperation.Post("/:id/complete", m.UpdateCompleteController)
+	studentLessonOperation.Get("/:id/resources", m.ReadResourcesController)
 
 	lessons := protected.Group("/lessons", middlewares.PermissionGuard("courses:manage"))
 	lessons.Get("", m.ListController)
@@ -22,6 +23,4 @@ func (m *LessonsModule) Routes(v1, protected fiber.Router) {
 
 	lessons.Post("/:id/resources", m.CreateResourceController)
 	lessons.Delete("/:id/resources/:resourceID", m.DeleteResourceController)
-
-	lessons.Get("/:id/signed-url", m.GetSignedURLController)
 }

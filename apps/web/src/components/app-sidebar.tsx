@@ -41,7 +41,19 @@ import {
     DropdownMenuTrigger
 } from "@package/ui/dropdown-menu"
 import { signOut, useSession } from "@package/auth/auth-client"
-import { NavbarDataType, NavGroupType } from "@/types/navbar.type"
+
+interface NavGroupType {
+    title: string;
+    url?: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    isActive?: boolean;
+    items?: NavGroupType[];
+    children?: NavGroupType[];
+}
+
+interface NavbarDataType {
+    navMain: NavGroupType[];
+}
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -76,10 +88,10 @@ export function NavMain({ items }: { items: NavGroupType[] }) {
                         </SidebarGroupLabel>
                         <SidebarMenu>
                             {
-                                item.children.map((item) => (
+                                (item.children || []).map((item: NavGroupType) => (
                                     !item.items || item.items.length <= 0 ? <SidebarMenuSubItem key={item.title} className="ml-4">
                                         <SidebarMenuSubButton asChild>
-                                            <Link href={item.url}>
+                                            <Link href={item.url || "#"}>
                                                 <span>{item.title}</span>
                                             </Link>
                                         </SidebarMenuSubButton>
@@ -100,10 +112,10 @@ export function NavMain({ items }: { items: NavGroupType[] }) {
                                                 </CollapsibleTrigger>
                                                 <CollapsibleContent>
                                                     <SidebarMenuSub>
-                                                        {item.items?.map((subItem) => (
+                                                        {(item.items || []).map((subItem: NavGroupType) => (
                                                             <SidebarMenuSubItem key={subItem.title}>
                                                                 <SidebarMenuSubButton asChild>
-                                                                    <Link href={subItem.url}>
+                                                                    <Link href={subItem.url || "#"}>
                                                                         <span>{subItem.title}</span>
                                                                     </Link>
                                                                 </SidebarMenuSubButton>

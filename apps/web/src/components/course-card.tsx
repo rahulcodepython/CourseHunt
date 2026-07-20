@@ -6,7 +6,7 @@ import {
 	CardFooter,
 	CardHeader,
 } from "@package/ui/card";
-import { CourseCardType } from "@/types/course.type";
+import type { CoursePublicResponse } from "@package/schema/courses.types";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -17,12 +17,12 @@ export default function CourseCard({
 	edit = null,
 	study = null,
 }: {
-	courseData: CourseCardType;
+	courseData: CoursePublicResponse;
 	edit?: null | React.ReactNode;
 	study?: null | React.ReactNode;
 }) {
-	const imageUrl = courseData.imageUrl?.url || "/placeholder.svg";
-	const rating = courseData.rating || 0;
+	const imageUrl = courseData.image_url || "/placeholder.svg";
+	const rating = courseData.rating_avg || 0;
 
 	return (
 		<div className="w-full max-w-sm mx-auto h-full hover:scale-105 transition-transform duration-300">
@@ -37,35 +37,37 @@ export default function CourseCard({
 							className="w-full h-48 object-cover"
 						/>
 						<Badge className="absolute top-3 left-3 bg-green-600 hover:bg-green-700 text-white">
-							{courseData.category}
+							{courseData.category?.name || "General"}
 						</Badge>
-						<div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
-							{courseData.discount}
-						</div>
+						{courseData.final_price < courseData.actual_price && (
+							<div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
+								{Math.round((1 - courseData.final_price / courseData.actual_price) * 100)}% OFF
+							</div>
+						)}
 					</div>
 				</CardHeader>
 
 				<CardContent className="p-4 flex-grow">
 					<div className="space-y-4">
 						<Link
-							href={`/courses/${courseData._id}`}
+							href={`/courses/${courseData.id}`}
 							className="font-bold text-lg leading-tight line-clamp-2"
 						>
 							{courseData.title}
 						</Link>
 
 						<p className="text-sm text-muted-foreground line-clamp-3">
-							{courseData.duration} {/* Fallback if no description */}
+							{courseData.short_description || ""}
 						</p>
 
 						<div className="flex items-center gap-4 text-sm text-muted-foreground">
 							<div className="flex items-center gap-1">
 								<Icon name="IconClock" className="w-5 h-5" />
-								<span>{courseData.duration}</span>
+								<span>{courseData.short_description || ""}</span>
 							</div>
 							<div className="flex items-center gap-1">
 								<Icon name="IconUsers" className="w-5 h-5" />
-								<span>{courseData.students} students</span>
+								<span>{courseData.feedback_count} students</span>
 							</div>
 						</div>
 
@@ -86,7 +88,7 @@ export default function CourseCard({
 								{rating}
 							</span>
 							<span className="text-sm text-muted-foreground">
-								({courseData.reviews} reviews)
+								({courseData.feedback_count} reviews)
 							</span>
 						</div>
 					</div>
@@ -96,10 +98,10 @@ export default function CourseCard({
 					<div className="flex items-center justify-between w-full">
 						<div className="flex items-center gap-2">
 							<span className="text-2xl font-bold text-green-600">
-								₹{courseData.price}
+								₹{courseData.final_price}
 							</span>
 							<span className="text-sm text-muted-foreground line-through">
-								₹{courseData.originalPrice}
+								₹{courseData.actual_price}
 							</span>
 						</div>
 						{edit ? (
@@ -107,7 +109,7 @@ export default function CourseCard({
 						) : study ? (
 							study
 						) : (
-							<EnrollButton _id={courseData._id} />
+							<EnrollButton _id={courseData.id} />
 						)}
 					</div>
 				</CardFooter>

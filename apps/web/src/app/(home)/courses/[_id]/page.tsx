@@ -1,283 +1,173 @@
 "use client";
 
 import { Icon } from "@/components/icon";
+import { Badge } from "@package/ui/badge";
+import { Card, CardContent } from "@package/ui/card";
+import { useCourseLandingQuery } from "@package/query-hooks/courses.api";
+import type { CourseLandingResponse, ChapterCardResponse, LessonCardResponse } from "@package/schema/courses.types";
+import { useParams } from "next/navigation";
+import Loading from "@/components/loading";
+import EnrollButton from "@/components/enroll-button";
+import Image from "next/image";
 
+export default function CourseDetail() {
+	const { _id } = useParams();
+	const { data: course, isLoading } = useCourseLandingQuery(_id as string);
 
-import Image from "next/image"
-import React from "react"
-import { Skeleton } from "@package/ui/skeleton"
-import Loading from "@/components/loading"
-import EnrollButton from "@/components/enroll-button"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@package/ui/accordion"
-import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar"
-import { Badge } from "@package/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
-import { usePublicCourseSingleQuery } from "@/hooks/api"
+	if (isLoading) return <Loading />;
+	if (!course?.data) return <div className="text-center py-20">Course not found.</div>;
 
-export default function CourseSingle({ params }: { params: Promise<{ _id: string }> }) {
-    const { _id } = React.use(params)
-    const { data: course, isLoading } = usePublicCourseSingleQuery(_id)
+	const c: CourseLandingResponse = course.data;
 
-    const testimonials = [
-        {
-            name: "Sarah Johnson",
-            role: "Frontend Developer at Google",
-            content: "This course completely transformed my career. The instructor explains complex concepts in a way that's easy to understand, and the projects are incredibly practical.",
-            avatar: "/placeholder.svg?height=40&width=40",
-            rating: 5,
-        },
-        {
-            name: "Michael Chen",
-            role: "Full Stack Developer",
-            content: "Best web development course I've ever taken. The curriculum is up-to-date and covers everything you need to know to become a professional developer.",
-            avatar: "/placeholder.svg?height=40&width=40",
-            rating: 5,
-        },
-        {
-            name: "Emily Rodriguez",
-            role: "Software Engineer at Microsoft",
-            content: "The hands-on approach and real-world projects make this course stand out. I landed my dream job just 3 months after completing it!",
-            avatar: "/placeholder.svg?height=40&width=40",
-            rating: 5,
-        },
-    ]
+	return (
+		<div className="min-h-screen bg-background">
+			<div className="bg-linear-to-br primary/10 via-background to-secondary/10">
+				<div className="container mx-auto px-4 py-12">
+					<div className="grid lg:grid-cols-3 gap-8">
+						<div className="lg:col-span-2 space-y-6">
+							<div className="space-y-4">
+								<div className="flex items-center gap-3">
+									<Badge variant="secondary">{c.level}</Badge>
+									{c.category && <Badge variant="outline">{c.category.name}</Badge>}
+								</div>
+								<h1 className="text-4xl font-bold">{c.title}</h1>
+								<p className="text-xl text-muted-foreground">{c.short_description}</p>
+							</div>
 
-    if (isLoading) return <Loading />
+							<div className="flex items-center gap-6 text-sm">
+								<div className="flex items-center gap-1">
+									<Icon name="IconStar" className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+									<span className="font-semibold">{c.rating_avg?.toFixed(1)}</span>
+									<span className="text-muted-foreground">({c.feedback_count} reviews)</span>
+								</div>
+								<div className="flex items-center gap-1">
+									<Icon name="IconUsers" className="h-5 w-5 text-muted-foreground" />
+									<span>{c.total_lectures} lectures</span>
+								</div>
+								<div className="flex items-center gap-1">
+									<Icon name="IconLanguage" className="h-5 w-5 text-muted-foreground" />
+									<span>{c.language}</span>
+								</div>
+							</div>
 
-    return (
-        !course ? <div className="min-h-screen bg-background flex items-start justify-center my-12">
-            <p className="text-lg text-muted-foreground">Course not found</p>
-        </div> :
-            <div className="min-h-screen bg-background">
-                <div className="py-12">
-                    <div className="container mx-auto px-4">
-                        <div className="grid lg:grid-cols-3 gap-8">
-                            <div className="lg:col-span-2 flex flex-col">
-                                <div className="mb-4">
-                                    <Badge variant="secondary" className="mb-2">
-                                        {course.category}
-                                    </Badge>
-                                    <h1 className="text-3xl md:text-4xl font-bold mb-4">{course.title}</h1>
-                                    <p className="text-lg text-muted-foreground mb-6">{course.description}</p>
-                                </div>
+							{
+								c.instructor && <div className="flex items-center gap-3 pt-2">
+									<div className="w-12 h-12 rounded-full bg-muted overflow-hidden">
+										{
+											c.instructor.image ? <Image src={c.instructor.image} alt={c.instructor.name} width={48} height={48} className="object-cover" />
+												: <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
+													{c.instructor.name?.charAt(0)}
+												</div>
+										}
+									</div>
+									<div>
+										<p className="text-sm text-muted-foreground">Instructor</p>
+										<p className="font-semibold">{c.instructor.name}</p>
+										{c.instructor.headline && <p className="text-xs text-muted-foreground">{c.instructor.headline}</p>}
+									</div>
+								</div>
+							}
+						</div>
 
-                                <div className="flex flex-wrap items-center gap-6 mb-6">
-                                    <div className="flex items-center gap-1">
-                                        <span className="font-semibold text-lg">{course.rating}</span>
-                                        <div className="flex">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Icon name="IconStar"
-                                                    key={i}
-                                                    className={`w-5 h-5 ${i < Math.floor(course.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                                        }`}
-                                                />
-                                            ))}
-                                        </div>
-                                        <span className="text-sm text-muted-foreground">({course.reviews} reviews)</span>
-                                    </div>
+						<div className="lg:col-span-1">
+							<Card className="sticky top-24">
+								<CardContent className="p-6 space-y-4">
+									{
+										c.image_url && <Image src={c.image_url} alt={c.title} width={400} height={250} className="w-full rounded-lg object-cover" />
+									}
+									<div className="flex items-baseline gap-2">
+										<span className="text-3xl font-bold">₹{c.final_price}</span>
+										<span className="text-lg text-muted-foreground line-through">₹{c.actual_price}</span>
+									</div>
+									<EnrollButton _id={c.id} />
+									<div className="space-y-2 text-sm">
+										<div className="flex items-center gap-2"><Icon name="IconVideo" className="h-4 w-4 text-muted-foreground" />{c.total_lectures} lectures</div>
+										<div className="flex items-center gap-2"><Icon name="IconClock" className="h-4 w-4 text-muted-foreground" />{Math.floor(c.total_duration_seconds / 3600)}h {Math.floor((c.total_duration_seconds % 3600) / 60)}m</div>
+										<div className="flex items-center gap-2"><Icon name="IconAward" className="h-4 w-4 text-muted-foreground" />Certificate of completion</div>
+									</div>
+								</CardContent>
+							</Card>
+						</div>
+					</div>
+				</div>
+			</div>
 
-                                    <div className="flex items-center gap-1">
-                                        <Icon name="IconUsers" className="w-5 h-5 text-muted-foreground" />
-                                        <span className="text-sm">{course.students.toLocaleString()} students</span>
-                                    </div>
+			<div className="container mx-auto px-4 py-12">
+				<div className="grid lg:grid-cols-3 gap-8">
+					<div className="lg:col-span-2 space-y-8">
+						{
+							c.long_description && <section>
+								<h2 className="text-2xl font-bold mb-4">About This Course</h2>
+								<p className="text-muted-foreground whitespace-pre-line">{c.long_description}</p>
+							</section>
+						}
 
-                                    <div className="flex items-center gap-1">
-                                        <Icon name="IconClock" className="w-5 h-5 text-muted-foreground" />
-                                        <span className="text-sm">{course.duration} total</span>
-                                    </div>
-                                </div>
+						{
+							c.benefits?.length > 0 && <section>
+								<h2 className="text-2xl font-bold mb-4">What You'll Learn</h2>
+								<div className="grid md:grid-cols-2 gap-3">
+									{
+										c.benefits.map((b: string, i: number) => <div key={i} className="flex items-center gap-2">
+											<Icon name="IconCircleCheck" className="h-5 w-5 text-green-500 shrink-0" />
+											<span>{b}</span>
+										</div>
+										)
+									}
+								</div>
+							</section>
+						}
 
-                                <div className="flex-1 aspect-video">
-                                    <video controls className="w-full rounded-lg h-[500px]" src={course.previewVideoUrl?.url || '/demo-video.mp4'} />
-                                </div>
-                            </div>
+						{
+							c.requirements?.length > 0 && <section>
+								<h2 className="text-2xl font-bold mb-4">Requirements</h2>
+								<ul className="space-y-2">
+									{c.requirements.map((r: string, i: number) => (
+										<li key={i} className="flex items-center gap-2">
+											<Icon name="IconCircle" className="h-5 w-5 text-muted-foreground" />
+											<span>{r}</span>
+										</li>
+									))}
+								</ul>
+							</section>
+						}
 
-                            <div className="lg:col-span-1">
-                                <Card className="sticky top-4 py-0">
-                                    <CardContent className="p-6">
-                                        <div className="aspect-video mb-4 rounded-lg overflow-hidden">
-                                            <Image
-                                                src={course.imageUrl?.url || "/placeholder.svg"}
-                                                alt={course.title}
-                                                width={400}
-                                                height={225}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-
-                                        <div className="mb-4">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <span className="text-3xl font-bold">₹{course.price}</span>
-                                                <span className="text-lg text-muted-foreground line-through">₹{course.originalPrice}</span>
-                                                <Badge variant="destructive">{course.discount}% off</Badge>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground">Limited time offer!</p>
-                                        </div>
-
-                                        <EnrollButton _id={course._id} className="w-full" />
-                                        <div className="text-center text-sm text-muted-foreground mt-2">30-day money-back guarantee</div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="container mx-auto px-4 py-12">
-                    <div className="grid lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-12">
-                            <section>
-                                <h2 className="text-2xl font-bold mb-4">About This Course</h2>
-                                <p className="text-muted-foreground leading-relaxed">{course.longDescription}</p>
-                            </section>
-
-                            <section>
-                                <h2 className="text-2xl font-bold mb-6">What You'll Learn</h2>
-                                <div className="grid md:grid-cols-2 gap-3">
-                                    {course.whatYouWillLearn.map((item, index) => (
-                                        <div key={index} className="flex items-start gap-3">
-                                            <Icon name="IconCheck" className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                                            <span className="text-sm">{item}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            <section>
-                                <h2 className="text-2xl font-bold mb-6">Course Content</h2>
-                                <div className="mb-4 text-sm text-muted-foreground">
-                                    {course.chaptersCount} sections • {course.lessonsCount} lectures • {course.duration} total length
-                                </div>
-
-                                <Accordion type="single" collapsible className="w-full">
-                                    {course.chapters.map((chapter, chapterIndex) => (
-                                        <AccordionItem key={chapterIndex} value={`chapter-${chapterIndex}`}>
-                                            <AccordionTrigger className="text-left">
-                                                <div className="flex justify-between items-center w-full pr-4">
-                                                    <span className="font-medium">{chapter.title}</span>
-                                                    <span className="text-sm text-muted-foreground">{chapter.lessons.length} lectures</span>
-                                                </div>
-                                            </AccordionTrigger>
-                                            <AccordionContent>
-                                                <div className="space-y-2 pt-2">
-                                                    {chapter.lessons.map((lesson, lessonIndex) => (
-                                                        <div
-                                                            key={lessonIndex}
-                                                            className="flex items-center justify-between py-2 px-4 hover:bg-muted/50 rounded-md"
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <Icon name="IconPlayerPlay" className="w-5 h-5 text-muted-foreground" />
-                                                                <span className="text-sm">{lesson.title}</span>
-                                                            </div>
-                                                            <span className="text-sm text-muted-foreground">{lesson.duration}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    ))}
-                                </Accordion>
-                            </section>
-
-                            <section>
-                                <h2 className="text-2xl font-bold mb-6">Student Testimonials</h2>
-                                <div className="space-y-6">
-                                    {testimonials.map((testimonial, index) => (
-                                        <Card key={index}>
-                                            <CardContent className="p-6">
-                                                <div className="flex items-start gap-4">
-                                                    <Avatar>
-                                                        <AvatarImage src={testimonial.avatar || "/placeholder.svg"} alt={testimonial.name} />
-                                                        <AvatarFallback>
-                                                            {testimonial.name
-                                                                .split(" ")
-                                                                .map((n) => n[0])
-                                                                .join("")}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <h4 className="font-semibold">{testimonial.name}</h4>
-                                                            <div className="flex">
-                                                                {[...Array(testimonial.rating)].map((_, i) => (
-                                                                    <Icon name="IconStar" key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                        <p className="text-sm text-muted-foreground mb-2">{testimonial.role}</p>
-                                                        <p className="text-sm leading-relaxed">{testimonial.content}</p>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            </section>
-
-                            <section>
-                                <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
-                                <Accordion type="single" collapsible className="w-full">
-                                    {course.faq.map((faq, index) => (
-                                        <AccordionItem key={index} value={`faq-${index}`}>
-                                            <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
-                                            <AccordionContent>
-                                                <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    ))}
-                                </Accordion>
-                            </section>
-                        </div>
-
-                        <div className="lg:col-span-1">
-                            <Card className="sticky top-4">
-                                <CardHeader>
-                                    <CardTitle>Instructor</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <Avatar className="w-16 h-16">
-                                            <AvatarImage src="/placeholder.svg?height=64&width=64" alt="John Doe" />
-                                            <AvatarFallback>JD</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <h3 className="font-semibold">John Doe</h3>
-                                            <p className="text-sm text-muted-foreground">Senior Full Stack Developer</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Experience:</span>
-                                            <span>8+ years</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Students:</span>
-                                            <span>50,000+</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Courses:</span>
-                                            <span>12</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Rating:</span>
-                                            <div className="flex items-center gap-1">
-                                                <span>4.9</span>
-                                                <Icon name="IconStar" className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
-                                        John is a passionate educator and experienced developer who has worked with companies like Google and
-                                        Microsoft. He specializes in modern web technologies and has helped thousands of students launch their
-                                        careers in tech.
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    )
+						{
+							c.chapters?.length > 0 && <section>
+								<h2 className="text-2xl font-bold mb-4">Course Content</h2>
+								<div className="space-y-4">
+									{
+										c.chapters.map((ch: ChapterCardResponse, i: number) => <Card key={ch.id || i}>
+											<CardContent className="p-4">
+												<div className="flex items-center justify-between">
+													<div>
+														<h3 className="font-semibold">Chapter {ch.chapter_no}: {ch.title}</h3>
+														<p className="text-sm text-muted-foreground">{ch.total_lectures} lectures • {Math.floor(ch.total_duration_seconds / 60)} min</p>
+													</div>
+												</div>
+												{
+													ch.lessons?.length > 0 && <div className="mt-3 space-y-2 pl-4 border-l-2 border-muted">
+														{
+															ch.lessons.map((lesson: LessonCardResponse, j: number) => <div key={lesson.id || j} className="flex items-center gap-2 text-sm">
+																<Icon name="IconVideo" className="h-4 w-4 text-muted-foreground" />
+																<span>{lesson.title}</span>
+																<span className="text-xs text-muted-foreground ml-auto">
+																	{Math.floor(lesson.duration_seconds / 60)}:{String(lesson.duration_seconds % 60).padStart(2, "0")}
+																</span>
+															</div>
+															)
+														}
+													</div>
+												}
+											</CardContent>
+										</Card>
+										)
+									}
+								</div>
+							</section>
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

@@ -4,8 +4,10 @@ import { Icon } from "@/components/icon";
 
 
 import { Button } from "@package/ui/button"
-import { useAdminCourseSingleQuery, useCourseCategoriesQuery } from "@/hooks/api"
-import { CourseType } from "@/types/course.type"
+import { useCourseLandingQuery } from "@package/query-hooks/courses.api"
+import { useCategoriesQuery } from "@package/query-hooks/categories.api"
+import type { CourseLandingResponse, ChapterCardResponse } from "@package/schema/courses.types"
+import type { Category } from "@package/schema/category.types"
 
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -21,12 +23,12 @@ const steps = ["Basic", "Details", "Chapter & Lesson", "FAQ", "Resources", "Sett
 
 export default function CourseEditForm() {
     const [currentStep, setCurrentStep] = useState(0)
-    const [courseData, setCourseData] = useState<CourseType | null>(null)
+    const [courseData, setCourseData] = useState<CourseLandingResponse | null>(null)
 
     const { _id } = useParams()
-    const courseQuery = useAdminCourseSingleQuery(_id?.toString() || "")
-    const categoryQuery = useCourseCategoriesQuery()
-    const categories = categoryQuery.data ?? []
+    const courseQuery = useCourseLandingQuery(_id?.toString() || "")
+    const categoryQuery = useCategoriesQuery()
+    const categories: Category[] = (categoryQuery.data?.data as unknown as Category[]) ?? []
     const isLoading = courseQuery.isPending || categoryQuery.isPending
     const notFound = courseQuery.isError && !courseData
 
@@ -37,8 +39,8 @@ export default function CourseEditForm() {
     }, [_id])
 
     useEffect(() => {
-        if (courseQuery.data) {
-            setCourseData(courseQuery.data)
+        if (courseQuery.data?.data) {
+            setCourseData(courseQuery.data.data)
         }
     }, [courseQuery.data])
 

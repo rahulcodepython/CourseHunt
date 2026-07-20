@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserInfoZod, CourseInfoZod, CouponInfoZod } from '@/package/schema/common.types';
+import { UserInfoZod, CourseInfoZod, CouponInfoZod, InstructorInfoZod } from '@/package/schema/common.types';
 
 export const TransactionZod = z.object({
     id: z.string(),
@@ -31,3 +31,22 @@ export const InitiateTransactionResponseZod = z.object({
     razorpay_key: z.string(),
 });
 export type InitiateTransactionResponse = z.infer<typeof InitiateTransactionResponseZod>;
+
+export const TransactionStatusResponseZod = z.object({
+    id: z.string(),
+    status: z.string(),
+    error_description: z.string().nullable().optional(),
+    webhook_processed: z.boolean(),
+    razorpay_order_id: z.string().nullable().optional(),
+});
+export type TransactionStatusResponse = z.infer<typeof TransactionStatusResponseZod>;
+
+export const CheckoutCourseResponseZod = z.object({
+    id: z.string(),
+    title: z.string(),
+    image_url: z.string().nullable().optional(),
+    instructor: InstructorInfoZod,
+    actual_price: z.number(),
+    final_price: z.number(),
+});
+export type CheckoutCourseResponse = z.infer<typeof CheckoutCourseResponseZod>;

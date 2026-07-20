@@ -8,68 +8,59 @@ import { Input } from "@package/ui/input"
 import { Label } from "@package/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@package/ui/select"
 import { Textarea } from "@package/ui/textarea"
-import { useUpdateCourseMutation } from "@/hooks/api"
-import { CourseCategoryType } from "@/types/course.category.type"
-import { CourseBasicFormType } from "@/types/course.form.type"
-import { CourseType } from "@/types/course.type"
+import { useUpdateCourseMutation } from "@package/query-hooks/courses.api"
+import type { Category } from "@package/schema/category.types"
+import type { CourseLandingResponse } from "@package/schema/courses.types"
 import { useState } from "react"
 import { toast } from "sonner"
 
+interface BasicFormData {
+    title: string;
+    short_description: string;
+    category_id: string;
+    image_url: string;
+    language: string;
+    level: string;
+}
+
 interface BasicStepProps {
-    categories: CourseCategoryType[]
-    courseData: CourseType
-    setCourseData: React.Dispatch<React.SetStateAction<CourseType | null>>
+    categories: Category[]
+    courseData: CourseLandingResponse
+    setCourseData: React.Dispatch<React.SetStateAction<CourseLandingResponse | null>>
 }
 
 export default function BasicStep({ categories, courseData, setCourseData }: BasicStepProps) {
-    const { isPending, updateCourse } = useUpdateCourseMutation()
+    const mutation = useUpdateCourseMutation()
 
-    const [formData, setFormData] = useState<CourseBasicFormType>({
+    const [formData, setFormData] = useState<BasicFormData>({
         title: courseData.title || "",
-        description: courseData.description || "",
-        duration: courseData.duration || "",
-        price: courseData.price || 0,
-        originalPrice: courseData.originalPrice || 0,
-        category: courseData.category || "",
-        imageUrl: {
-            url: courseData.imageUrl?.url || "",
-            fileType: courseData.imageUrl.fileType || ""
-        },
-        previewVideoUrl: {
-            url: courseData.previewVideoUrl?.url || "",
-            fileType: courseData.previewVideoUrl.fileType || ""
-        }
+        short_description: courseData.short_description || "",
+        category_id: courseData.category?.id || "",
+        image_url: courseData.image_url || "",
+        language: courseData.language || "",
+        level: courseData.level || "",
     })
 
-    const handleInputChange = (field: string, value: string) => {
-        setFormData((prev: CourseBasicFormType) => ({ ...prev, [field]: value }))
+    const handleInputChange = (field: keyof BasicFormData, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }))
     }
 
     const handleSaveAndContinue = async () => {
-        const discount = (formData.originalPrice - formData.price) / formData.originalPrice * 100
-
-        const updatedCourseData = await updateCourse({
-            id: courseData._id.toString(),
-            data: {
-                ...formData,
-                discount: `${isNaN(discount) ? 0 : Math.round(discount)}%`,
-            },
+        const updatedCourseData = await mutation.execute({
+            id: courseData.id,
+            data: formData,
         })
 
-        if (updatedCourseData) {
+        if (updatedCourseData?.data) {
             toast.success("Course basic information saved successfully")
-            setCourseData(updatedCourseData)
+            setCourseData(updatedCourseData.data as unknown as CourseLandingResponse)
         }
     }
 
-    const handleMediaUpload = (field: string, url: string, fileType?: string) => {
-        setFormData((prev: CourseBasicFormType) => ({
-            ...prev,
-            [field]: {
-                url,
-                fileType
-            }
-        }))
+    const handleMediaUpload = (field: string, url: string) => {
+        if (field === "image_url") {
+            setFormData((prev) => ({ ...prev, image_url: url }))
+        }
     }
 
     return (
@@ -90,17 +81,17 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="category">
+                        <Label htmlFor="category_id">
                             Category *
                         </Label>
-                        <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value || "")}>
+                        <Select value={formData.category_id} onValueChange={(value) => handleInputChange("category_id", value || "")}>
                             <SelectTrigger className={`w-full`}>
                                 <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent>
                                 {
-                                    categories.map((category) => (
-                                        category && <SelectItem key={category._id} value={category.name}>
+                                    categories.map((category: Category) => (
+                                        category && <SelectItem key={category.id} value={category.id}>
                                             {category.name}
                                         </SelectItem>
                                     ))
@@ -111,11 +102,11 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="description">Description *</Label>
+                    <Label htmlFor="short_description">Description *</Label>
                     <Textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => handleInputChange("description", e.target.value)}
+                        id="short_description"
+                        value={formData.short_description}
+                        onChange={(e) => handleInputChange("short_description", e.target.value)}
                         placeholder="Enter course description"
                         rows={3}
                     />
@@ -123,34 +114,32 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="duration">Duration *</Label>
+                        <Label htmlFor="language">Language</Label>
                         <Input
-                            id="duration"
-                            value={formData.duration}
-                            onChange={(e) => handleInputChange("duration", e.target.value)}
-                            placeholder="e.g., 10 hours"
+                            id="language"
+                            value={formData.language}
+                            onChange={(e) => handleInputChange("language", e.target.value)}
+                            placeholder="e.g., English"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="price">Price *</Label>
+                        <Label htmlFor="level">Level *</Label>
                         <Input
-                            id="price"
-                            type="number"
-                            value={formData.price}
-                            onChange={(e) => handleInputChange("price", e.target.value)}
-                            placeholder="99.99"
+                            id="level"
+                            value={formData.level}
+                            onChange={(e) => handleInputChange("level", e.target.value)}
+                            placeholder="beginner"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="originalPrice">Original Price *</Label>
+                        <Label htmlFor="image_url">Image URL</Label>
                         <Input
-                            id="originalPrice"
-                            type="number"
-                            value={formData.originalPrice}
-                            onChange={(e) => handleInputChange("originalPrice", e.target.value)}
-                            placeholder="199.99"
+                            id="image_url"
+                            value={formData.image_url}
+                            onChange={(e) => handleInputChange("image_url", e.target.value)}
+                            placeholder="https://..."
                         />
                     </div>
                 </div>
@@ -159,22 +148,14 @@ export default function BasicStep({ categories, courseData, setCourseData }: Bas
                     <FileUpload
                         label="Course Image *"
                         onChange={handleMediaUpload}
-                        field="imageUrl"
+                        field="image_url"
                         accept="image"
-                        value={formData.imageUrl}
-                    />
-
-                    <FileUpload
-                        label="Preview Video *"
-                        onChange={handleMediaUpload}
-                        field="previewVideoUrl"
-                        accept="video"
-                        value={formData.previewVideoUrl}
+                        value={{ url: formData.image_url, fileType: "image" }}
                     />
                 </div>
 
                 <div className="flex justify-end">
-                    <LoadingButton isLoading={isPending} title="Saving Changes...">
+                    <LoadingButton isLoading={mutation.isPending} title="Saving Changes...">
                         <Button onClick={handleSaveAndContinue}>Save Changes</Button>
                     </LoadingButton>
                 </div>

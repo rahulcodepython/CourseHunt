@@ -1,16 +1,15 @@
 "use client";
 
 import { Icon } from "@/components/icon";
-import { useUserDashboardQuery } from "@/hooks/api";
-import { Skeleton } from "@package/ui/skeleton";
+import { useUserDashboardQuery } from "@package/query-hooks/dashboard.api";
 import Loading from "@/components/loading";
-import Stats from "@/app/dashboard/stats";
-import Courses from "@/app/dashboard/courses";
-import Updates from "@/app/dashboard/updates";
-import { Suspense } from "react";
+import Stats from "@/app/dashboard/(home)/components/stats";
+import Courses from "@/app/dashboard/(home)/components/courses";
+import Updates from "@/app/dashboard/(home)/components/updates";
 
 export default function StudentDashboard() {
-	const { data: responseData, isLoading } = useUserDashboardQuery();
+	const { data: raw, isLoading } = useUserDashboardQuery();
+	const responseData = raw?.data;
 
 	if (isLoading) return <Loading />;
 	if (!responseData) return <div className="p-8">Failed to load dashboard.</div>;
@@ -20,7 +19,7 @@ export default function StudentDashboard() {
 			<div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6 w-full">
 				<div className="space-y-1">
 					<h2 className="text-3xl font-bold tracking-tight text-white">
-						Welcome back, {responseData.user.name}! 👋
+						Welcome back! 👋
 					</h2>
 					<p className="text-muted-foreground">
 						Track your learning progress and upcoming tasks.
@@ -38,20 +37,14 @@ export default function StudentDashboard() {
 			</div>
 
 			<div className="space-y-8">
-				<Suspense fallback={<Skeleton className="w-full h-32 rounded-xl" />}>
-					<Stats />
-				</Suspense>
+				<Stats data={responseData} />
 
 				<div className="grid gap-8 lg:grid-cols-3">
 					<div className="lg:col-span-2">
-						<Suspense fallback={<Skeleton className="w-full h-[400px] rounded-xl" />}>
-							<Courses />
-						</Suspense>
+						<Courses data={responseData} />
 					</div>
 					<div>
-						<Suspense fallback={<Skeleton className="w-full h-[400px] rounded-xl" />}>
-							<Updates />
-						</Suspense>
+						<Updates />
 					</div>
 				</div>
 			</div>

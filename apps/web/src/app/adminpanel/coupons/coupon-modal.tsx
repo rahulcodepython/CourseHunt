@@ -1,11 +1,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@package/ui/dialog"
-import { Coupon } from "@/types/coupon.type"
+
 import CouponForm from "./coupon-form"
+import type { CouponFormData } from "./coupon-form"
+import type { Coupon } from "@package/schema/coupons.types";
 
 interface CouponModalProps {
     isOpen: boolean
     onClose: () => void
-    onSave: (coupon: Coupon) => void
+    onSave: (coupon: CouponFormData) => void
     editingCoupon: Coupon | null
 }
 
