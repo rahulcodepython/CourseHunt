@@ -1,19 +1,18 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextRequest, NextResponse } from "next/server";
 
-const protectedRoutes = ["/admin", "/user", "/checkout", "/study"];
-const authRoutes = ["/login"];
+const protectedRoutes = ["/adminpanel", "/dashboard", "/checkout"];
+const authRoutes = ["/auth/login"];
 
-export default async function proxy(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
     const sessionCookie = getSessionCookie(request);
     const { pathname } = request.nextUrl;
 
-    // Check if it's a protected route
-    const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-    const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+    const isProtectedRoute = protectedRoutes.some((route) => pathname === route || pathname.startsWith(route + "/"));
+    const isAuthRoute = authRoutes.some((route) => pathname === route || pathname.startsWith(route + "/"));
 
     if (isProtectedRoute && !sessionCookie) {
-        return NextResponse.redirect(new URL("/login", request.url));
+        return NextResponse.redirect(new URL("/auth/login", request.url));
     }
 
     if (isAuthRoute && sessionCookie) {

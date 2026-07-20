@@ -5,7 +5,7 @@ import { Button } from "@package/ui/button";
 import { Card, CardContent } from "@package/ui/card";
 import { Label } from "@package/ui/label";
 import { Textarea } from "@package/ui/textarea";
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { useCreateFeedbackMutation } from "@package/query-hooks/feedbacks.api";
 import { toast } from "sonner";
 

@@ -1,13 +1,13 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table";
 import { useTransactionsQuery } from "@package/query-hooks/transactions.api";
 import type { Transaction } from "@package/schema/transactions.types";
 import { toast } from "sonner";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 import { Badge } from "@package/ui/badge";
 
 export default function Transaction() {

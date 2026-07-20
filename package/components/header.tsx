@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@package/ui/dropdown-menu";
 import { signOut, useSession } from "@package/auth/auth-client";

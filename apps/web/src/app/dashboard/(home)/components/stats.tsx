@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import type { UserDashboard } from "@package/schema/dashboard.types";
 

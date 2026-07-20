@@ -1,12 +1,12 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Badge } from "@package/ui/badge";
 import { Card, CardContent, CardHeader } from "@package/ui/card";
 import { useInspectFeedbacksQuery, useUpdateFeedbackMutation, useDeleteFeedbackMutation } from "@package/query-hooks/feedbacks.api";
 import type { Feedback } from "@package/schema/feedbacks.types";
 import { Button } from "@package/ui/button";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 
 export default function FeedbackPage() {
 	const { data: raw, isLoading } = useInspectFeedbacksQuery();

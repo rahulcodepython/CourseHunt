@@ -2,7 +2,7 @@
 
 import { Badge } from "@package/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DataTable, type DataTableColumn } from "@package/components/data-table";
 import { useUpdateFeedQuery } from "@package/query-hooks/updates.api";
 import type { UpdateFeedItem } from "@package/schema/updates.types";
 import { useState } from "react";
@@ -11,7 +11,7 @@ const columns: DataTableColumn<UpdateFeedItem>[] = [
 	{
 		header: "Course",
 		render: (item) => (
-			<span className="font-medium text-sm truncate block max-w-[120px]">
+			<span className="font-medium text-sm truncate block max-w-30">
 				{item.course?.title || "Update"}
 			</span>
 		),
@@ -19,7 +19,7 @@ const columns: DataTableColumn<UpdateFeedItem>[] = [
 	{
 		header: "Message",
 		render: (item) => (
-			<span className="text-xs text-muted-foreground line-clamp-2 block max-w-[200px]">
+			<span className="text-xs text-muted-foreground line-clamp-2 block max-w-50">
 				{item.message}
 			</span>
 		),

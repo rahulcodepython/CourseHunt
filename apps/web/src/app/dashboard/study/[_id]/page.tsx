@@ -1,10 +1,10 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Card, CardContent } from "@package/ui/card";
 import { useLessonContentQuery, useCompleteLessonMutation } from "@package/query-hooks/lessons.api";
 import { useParams, useSearchParams } from "next/navigation";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 import { toast } from "sonner";
 import { LessonContentPlayer } from "@/app/dashboard/study/[_id]/components/LessonContentPlayer";
 import { DiscussionsTab } from "@/app/dashboard/study/[_id]/components/DiscussionsTab";

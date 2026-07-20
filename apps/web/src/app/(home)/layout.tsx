@@ -1,5 +1,5 @@
-import FooterSection from '@/components/footer'
-import Header from '@/components/header'
+import FooterSection from "@package/components/footer"
+import Header from "@package/components/header"
 import React from 'react'
 
 const HomeLayout = ({ children }: { children: React.ReactNode }) => {

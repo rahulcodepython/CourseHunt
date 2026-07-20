@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@package/ui/button";
 import { Textarea } from "@package/ui/textarea";
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { useNotesQuery, useCreateNoteMutation } from "@package/query-hooks/notes.api";
 import { toast } from "sonner";
 

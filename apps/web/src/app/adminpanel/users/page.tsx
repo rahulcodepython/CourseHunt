@@ -1,13 +1,13 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar";
 import { Badge } from "@package/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@package/ui/dropdown-menu";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 import { Button } from "@package/ui/button";
 import { useUsersQuery } from "@package/query-hooks/users.api";
 import type { UserListResponse } from "@package/schema/users.types";

@@ -6,7 +6,7 @@ import { Card, CardContent } from "@package/ui/card";
 import { Input } from "@package/ui/input";
 import { Label } from "@package/ui/label";
 import { Textarea } from "@package/ui/textarea";
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { useDiscussionsQuery, useCreateDiscussionMutation, useDiscussionRepliesQuery } from "@package/query-hooks/discussions.api";
 
 interface DiscussionsTabProps {

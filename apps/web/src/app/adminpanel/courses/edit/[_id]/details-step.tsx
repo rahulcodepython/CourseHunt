@@ -1,8 +1,8 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 
-import LoadingButton from "@/components/loading-button"
+import LoadingButton from "@package/components/loading-button"
 import { Button } from "@package/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
 import { Input } from "@package/ui/input"

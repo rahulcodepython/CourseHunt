@@ -1,13 +1,13 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Badge } from "@package/ui/badge";
 import { Card, CardContent } from "@package/ui/card";
 import { useCourseLandingQuery } from "@package/query-hooks/courses.api";
 import type { CourseLandingResponse, ChapterCardResponse, LessonCardResponse } from "@package/schema/courses.types";
 import { useParams } from "next/navigation";
-import Loading from "@/components/loading";
-import EnrollButton from "@/components/enroll-button";
+import Loading from "@package/components/loading";
+import EnrollButton from "@package/components/enroll-button";
 import Image from "next/image";
 
 export default function CourseDetail() {

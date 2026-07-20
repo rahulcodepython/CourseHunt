@@ -43,6 +43,18 @@
       ],
       "@package/ui/*": [
         "../../package/ui/*"
+      ],
+      "@package/components/*": [
+        "../../package/components/*"
+      ],
+      "@package/hooks/*": [
+        "../../package/hooks/*"
+      ],
+      "@package/lib/*": [
+        "../../package/lib/*"
+      ],
+      "@package/styles/*": [
+        "../../package/styles/*"
       ]
     }
   },

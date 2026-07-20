@@ -1,7 +1,7 @@
 "use client";
 
-import FileUpload from "@/components/file-upload"
-import LoadingButton from "@/components/loading-button"
+import FileUpload from "@package/components/file-upload"
+import LoadingButton from "@package/components/loading-button"
 import { Button } from "@package/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"
 import { Input } from "@package/ui/input"

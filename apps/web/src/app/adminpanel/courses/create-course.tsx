@@ -1,7 +1,7 @@
 "use client";
 
-import { Icon } from "@/components/icon";
-import LoadingButton from "@/components/loading-button";
+import { Icon } from "@package/components/icon";
+import LoadingButton from "@package/components/loading-button";
 import { Button } from "@package/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@package/ui/dialog";
 import { useCreateCourseMutation } from "@package/query-hooks/courses.api";

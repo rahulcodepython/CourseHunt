@@ -3,7 +3,7 @@
 import React from "react";
 import { Progress } from "@package/ui/progress";
 import { Badge } from "@package/ui/badge";
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import type { StudyChapterItem } from "@package/schema/courses.types";
 
 interface CourseSidebarProps {

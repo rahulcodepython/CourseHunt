@@ -1,8 +1,8 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Separator } from "@package/ui/separator";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 import { Button } from "@package/ui/button";
 import { useSession } from "@package/auth/auth-client";
 import { useEffect } from "react";

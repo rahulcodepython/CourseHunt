@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from '@package/auth/auth-client'
-import { cn } from '@/lib/utils'
+import { cn } from "@package/lib/utils"
 import { useRouter } from 'next/navigation'
 import { Button } from '@package/ui/button'
 

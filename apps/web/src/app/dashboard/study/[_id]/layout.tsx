@@ -2,7 +2,7 @@
 
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCourseStudyQuery } from "@package/query-hooks/courses.api";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 import React, { useEffect, useState } from "react";
 import { CourseSidebar } from "@/app/dashboard/study/[_id]/components/CourseSidebar";
 

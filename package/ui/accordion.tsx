@@ -1,7 +1,7 @@
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@package/lib/utils"
 function Accordion({
   className,
   type,

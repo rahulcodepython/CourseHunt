@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { useCouponsQuery } from "@package/query-hooks/coupons.api";
 import { Button } from "@package/ui/button";
 import type { Coupon } from "@package/schema/coupons.types";

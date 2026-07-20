@@ -1,7 +1,7 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar";
-import BreadcrumbComponent from "@/components/breadcrumb";
+import BreadcrumbComponent from "@package/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@package/ui/sidebar";
 interface NavGroupType {
     title: string;

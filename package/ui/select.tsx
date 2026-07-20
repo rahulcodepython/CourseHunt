@@ -1,12 +1,12 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 
 
 import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@package/lib/utils"
 const Select = SelectPrimitive.Root
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {

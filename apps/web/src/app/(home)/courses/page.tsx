@@ -6,11 +6,11 @@ import { Input } from "@package/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@package/ui/select";
 import { useCategoriesQuery } from "@package/query-hooks/categories.api";
 import { useCoursesQuery } from "@package/query-hooks/courses.api";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DataTable, type DataTableColumn } from "@package/components/data-table";
 import type { Category } from "@package/schema/category.types";
 import type { CoursePublicResponse } from "@package/schema/courses.types";
-import { useDebounce } from "@/hooks/use-debounce";
-import Loading from "@/components/loading";
+import { useDebounce } from "@package/hooks/use-debounce";
+import Loading from "@package/components/loading";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 

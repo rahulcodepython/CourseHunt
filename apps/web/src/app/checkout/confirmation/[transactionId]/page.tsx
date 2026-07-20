@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { useTransactionStatusQuery } from "@package/query-hooks/transactions.api";
 import { useParams, useRouter } from "next/navigation";

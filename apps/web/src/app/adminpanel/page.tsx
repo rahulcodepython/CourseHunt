@@ -1,11 +1,11 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table";
 import { useAdminDashboardQuery } from "@package/query-hooks/dashboard.api";
 import type { AdminDashboard, AdminTopCourse, UserGrowth } from "@package/schema/dashboard.types";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 
 const Admin = () => {
 	const { data: raw, isLoading } = useAdminDashboardQuery();

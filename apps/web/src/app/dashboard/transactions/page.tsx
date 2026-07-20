@@ -1,9 +1,9 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DataTable, type DataTableColumn } from "@package/components/data-table";
 import { useMyTransactionsQuery } from "@package/query-hooks/transactions.api";
 import type { Transaction } from "@package/schema/transactions.types";
 import { useState } from "react";

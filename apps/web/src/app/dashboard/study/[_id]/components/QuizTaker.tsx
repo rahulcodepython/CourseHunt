@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@package/ui/button";
-import { Icon } from "@/components/icon";
-import Loading from "@/components/loading";
+import { Icon } from "@package/components/icon";
+import Loading from "@package/components/loading";
 import { useGetQuestionMutation, useSubmitQuizMutation } from "@package/query-hooks/quiz.api";
 import type { SubmitQuizAnswerInput } from "@package/schema/quiz.types";
 import { toast } from "sonner";

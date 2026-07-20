@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 
 
 import * as React from "react"
@@ -8,8 +8,8 @@ import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { useIsMobile } from "@/hooks/use-mobile"
-import { cn } from "@/lib/utils"
+import { useIsMobile } from "@package/hooks/use-mobile"
+import { cn } from "@package/lib/utils"
 import { Button } from "./button"
 import { Input } from "./input"
 import { Separator } from "./separator"

@@ -1,8 +1,8 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar"
-import Loading from "@/components/loading";
-import BreadcrumbComponent from "@/components/breadcrumb";
+import Loading from "@package/components/loading";
+import BreadcrumbComponent from "@package/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@package/ui/sidebar";
 import { useSession } from "@package/auth/auth-client";
 import type { ComponentType } from "react";

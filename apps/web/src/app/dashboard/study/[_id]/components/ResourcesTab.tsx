@@ -3,7 +3,7 @@
 import React from "react";
 import { Button } from "@package/ui/button";
 import { Card, CardContent } from "@package/ui/card";
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { useLessonResourcesQuery } from "@package/query-hooks/lessons.api";
 
 interface ResourcesTabProps {

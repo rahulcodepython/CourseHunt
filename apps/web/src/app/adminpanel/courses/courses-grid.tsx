@@ -1,7 +1,7 @@
 "use client";
 
-import CourseCard from "@/components/course-card";
-import LoadingButton from "@/components/loading-button";
+import CourseCard from "@package/components/course-card";
+import LoadingButton from "@package/components/loading-button";
 import { Button } from "@package/ui/button";
 import { useInspectCoursesQuery, useDeleteCourseMutation } from "@package/query-hooks/courses.api";
 import type { CourseInspectResponse } from "@package/schema/courses.types";

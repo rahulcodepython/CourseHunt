@@ -1,8 +1,8 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 
-import CourseCard from "@/components/course-card"
+import CourseCard from "@package/components/course-card"
 import { Button } from "@package/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@package/ui/card"
 import { Input } from "@package/ui/input"

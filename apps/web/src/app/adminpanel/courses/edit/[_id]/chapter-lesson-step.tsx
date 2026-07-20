@@ -1,9 +1,9 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 
-import FileUpload from "@/components/file-upload"
-import LoadingButton from "@/components/loading-button"
+import FileUpload from "@package/components/file-upload"
+import LoadingButton from "@package/components/loading-button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@package/ui/accordion"
 import { Button } from "@package/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card"

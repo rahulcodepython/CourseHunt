@@ -2,7 +2,7 @@
 
 import { Button } from "@package/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table";
-import { cn } from "@/lib/utils";
+import { cn } from "@package/lib/utils";
 import type { ReactNode } from "react";
 
 export interface DataTableColumn<T> {
@@ -15,7 +15,7 @@ export interface DataTableColumn<T> {
 export interface DataTableProps<T> {
     columns: DataTableColumn<T>[];
     data: T[];
-    keyExtractor: (item: T) => string;
+    keyExtractor: (item: T, index: number) => string;
     isLoading?: boolean;
     page: number;
     totalPages: number;
@@ -78,8 +78,8 @@ function DataTable<T>({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {data.map((item) => (
-                        <TableRow key={keyExtractor(item)}>
+                    {data.map((item, index) => (
+                        <TableRow key={keyExtractor(item, index)}>
                             {columns.map((col, i) => (
                                 <TableCell key={i} className={cn(col.className)}>{col.render(item)}</TableCell>
                             ))}
@@ -89,7 +89,7 @@ function DataTable<T>({
             </Table>
 
             {
-                totalPages > 0 && <div className="flex items-center justify-between">
+                totalPages > 1 && <div className="flex items-center justify-between p-4">
                     <p className="text-sm text-muted-foreground">
                         Showing {((page - 1) * pageSize) + 1}–{Math.min(page * pageSize, total)} of {total} {label}
                     </p>

@@ -1,8 +1,8 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { useUserDashboardQuery } from "@package/query-hooks/dashboard.api";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 import Stats from "@/app/dashboard/(home)/components/stats";
 import Courses from "@/app/dashboard/(home)/components/courses";
 import Updates from "@/app/dashboard/(home)/components/updates";

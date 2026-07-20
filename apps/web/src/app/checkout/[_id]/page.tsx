@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
@@ -10,7 +10,7 @@ import { useCheckoutCourseQuery, useInitiateTransactionMutation } from "@package
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 import Image from "next/image";
 
 function loadRazorpayScript(): Promise<boolean> {

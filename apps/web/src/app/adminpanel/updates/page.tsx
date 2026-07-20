@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import { Icon } from "@package/components/icon";
 import { Badge } from "@package/ui/badge";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@package/ui/textarea";
 import { useUpdatesQuery, useCreateUpdateMutation, useDeleteUpdateMutation, useUpdateUpdateMutation } from "@package/query-hooks/updates.api";
 import type { CourseUpdate } from "@package/schema/updates.types";
-import Loading from "@/components/loading";
+import Loading from "@package/components/loading";
 import { useState } from "react";
 import { toast } from "sonner";
 
