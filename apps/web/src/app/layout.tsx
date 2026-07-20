@@ -1,6 +1,5 @@
 import { ThemeProvider } from "@package/components/theme-provider";
 import { QueryProvider } from "@package/components/query-provider";
-import { BannedGuard } from "@package/components/banned-guard";
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import { Montserrat } from "next/font/google"
@@ -24,9 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 			<body className="antialiased">
 				<QueryProvider>
 					<ThemeProvider>
-						<BannedGuard>
-							{children}
-						</BannedGuard>
+						{children}
 						<Toaster />
 					</ThemeProvider>
 				</QueryProvider>

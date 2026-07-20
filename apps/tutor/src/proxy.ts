@@ -40,6 +40,11 @@ export default async function middleware(request: NextRequest) {
 
     const payload = decodeJwtPayload(sessionCookie);
     const hasAccess = hasTutorAccess(payload);
+    const isBanned = payload?.banned === true;
+
+    if (isBanned) {
+        return NextResponse.redirect(new URL("/restricted", request.url));
+    }
 
     if (isAuthRoute) {
         return NextResponse.redirect(new URL(hasAccess ? "/" : "/auth/waiting", request.url));

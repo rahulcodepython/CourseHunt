@@ -28,7 +28,7 @@ export const auth = betterAuth({
 				gracePeriod: 60 * 60 * 24, // 1 day
 			},
 			jwt: {
-				expirationTime: "1h",
+				expirationTime: "15m",
 				definePayload: async ({ user }) => {
 					// Fetch roles assigned to this user
 					const rolesResult = await pool.query<{ name: string }>(
@@ -51,11 +51,19 @@ export const auth = betterAuth({
 					);
 					const permissions = permsResult.rows.map((p) => p.name);
 
+					// Fetch user banned status directly from DB to get the most updated state when generating the token
+					const userResult = await pool.query<{ banned: boolean }>(
+						`SELECT banned FROM "user" WHERE id = $1`,
+						[user.id]
+					);
+					const banned = userResult.rows[0]?.banned || false;
+
 					return {
 						user_id: user.id,
 						email: user.email,
 						roles,
 						permissions,
+						banned,
 					};
 				},
 			},
