@@ -3,13 +3,13 @@
 import CourseCard from "@package/components/course-card";
 import LoadingButton from "@package/components/loading-button";
 import { Button } from "@package/ui/button";
-import { useInspectCoursesQuery, useDeleteCourseMutation } from "@package/query-hooks/courses.api";
+import { useManageCoursesQuery, useDeleteCourseMutation } from "@package/query-hooks/courses.api";
 import type { Course } from "@package/schema/courses.types";
 import Link from "next/link";
 import CreateCourse from "./create-course";
 
 const CoursesGrid = () => {
-	const coursesQuery = useInspectCoursesQuery();
+	const coursesQuery = useManageCoursesQuery();
 	const paginatedData = coursesQuery.data?.data;
 	const courseData: Course[] = paginatedData ? (paginatedData.data as unknown as Course[]) : [];
 

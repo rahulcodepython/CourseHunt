@@ -4,7 +4,7 @@ import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import { useAdminDiscussionsQuery, useTutorDeleteDiscussionMutation, useTutorUpdateDiscussionMutation, useTutorCreateDiscussionMutation, useTutorDiscussionsQuery } from "@package/query-hooks/discussions.api";
+import { useDiscussionsQuery, useCreateDiscussionMutation, useUpdateDiscussionMutation, useDeleteDiscussionMutation } from "@package/query-hooks/discussions.api";
 import { useSession } from "@package/auth/auth-client";
 import type { Discussion } from "@package/schema/discussions.types";
 import { useState } from "react";
@@ -22,10 +22,10 @@ export default function TutorDiscussionsPage() {
     const params = useParams();
     const lessonId = params.lesson_id as string;
 
-    const { data: raw, isLoading } = useTutorDiscussionsQuery(lessonId, page);
-    const deleteDiscussion = useTutorDeleteDiscussionMutation();
-    const updateDiscussion = useTutorUpdateDiscussionMutation();
-    const createReply = useTutorCreateDiscussionMutation();
+    const { data: raw, isLoading } = useDiscussionsQuery(lessonId, page);
+    const deleteDiscussion = useDeleteDiscussionMutation();
+    const updateDiscussion = useUpdateDiscussionMutation();
+    const createReply = useCreateDiscussionMutation();
 
     const { data: session } = useSession();
     const currentUserId = session?.user?.id;

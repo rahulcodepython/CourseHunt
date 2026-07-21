@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useStudentDiscussionsQuery, useStudentCreateDiscussionMutation } from "@package/query-hooks/discussions.api";
+import { useDiscussionsQuery, useCreateDiscussionMutation } from "@package/query-hooks/discussions.api";
 import { NewDiscussionForm } from "./NewDiscussionForm";
 import { DiscussionThread } from "./DiscussionThread";
 
@@ -10,8 +10,8 @@ interface DiscussionsTabProps {
 }
 
 export function DiscussionsTab({ lessonId }: DiscussionsTabProps) {
-	const discussionsQuery = useStudentDiscussionsQuery(lessonId, 1, 10);
-	const createDiscussionMutation = useStudentCreateDiscussionMutation();
+	const discussionsQuery = useDiscussionsQuery(lessonId, 1, 10);
+	const createDiscussionMutation = useCreateDiscussionMutation();
 
 	// Shared by the top-level form AND every nested DiscussionThread reply
 	// box - a reply at any depth posts through this same function.

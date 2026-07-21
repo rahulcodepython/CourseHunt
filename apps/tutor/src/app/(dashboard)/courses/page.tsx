@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
-import { useTutorCoursesQuery } from "@package/query-hooks/courses.api";
+import { useManageCoursesQuery } from "@package/query-hooks/courses.api";
 import { useState } from "react";
 import { CoursesToolbar } from "./components/CoursesToolbar";
 import { CoursesTable } from "./components/CoursesTable";
@@ -16,7 +16,7 @@ export default function TutorCoursesPage() {
 	const [status, setStatus] = useState("all");
 	const [level, setLevel] = useState("all");
 
-	const { data: raw, isLoading } = useTutorCoursesQuery({
+	const { data: raw, isLoading } = useManageCoursesQuery({
 		page,
 		limit,
 		search: search || undefined,

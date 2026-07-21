@@ -46,8 +46,4 @@ export function useDeleteChapterMutation(courseId: string) {
 	});
 }
 
-export function useInspectChaptersQuery(courseId: string) {
-	return useAppQuery(["chapters", "inspect", courseId], () =>
-		apiRequest({ url: `/api/v1/chapters/inspect/${courseId}`, method: "GET" }, z.array(ChapterZod)),
-	);
-}
+

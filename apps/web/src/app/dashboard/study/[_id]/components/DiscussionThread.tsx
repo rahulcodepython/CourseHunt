@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@package/ui/button";
 import { Card, CardContent } from "@package/ui/card";
 import { Input } from "@package/ui/input";
-import { useStudentDiscussionRepliesQuery } from "@package/query-hooks/discussions.api";
+import { useDiscussionRepliesQuery } from "@package/query-hooks/discussions.api";
 
 export interface DiscussionNode {
 	id: string;
@@ -111,7 +111,7 @@ function DiscussionRepliesList({
 	onReply: PostReply;
 }) {
 	const [page, setPage] = useState(1);
-	const repliesQuery = useStudentDiscussionRepliesQuery(parentId, page, 10);
+	const repliesQuery = useDiscussionRepliesQuery(parentId, page, 10);
 	const replies: DiscussionNode[] = repliesQuery.data?.data?.data ?? [];
 	const total = repliesQuery.data?.data?.total ?? 0;
 	const hasMore = replies.length > 0 && replies.length < total;

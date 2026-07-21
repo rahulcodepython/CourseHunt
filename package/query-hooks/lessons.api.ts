@@ -109,21 +109,5 @@ export function useLessonResourcesQuery(id: string) {
 	);
 }
 
-export function useInspectLessonsQuery(chapterId: string) {
-	return useAppQuery(["lessons", "inspect", "chapter", chapterId], () =>
-		apiRequest({ url: `/api/v1/lessons/inspect/chapter/${chapterId}`, method: "GET" }, z.array(LessonZod)),
-	);
-}
 
-export function useInspectLessonContentQuery(lessonId: string) {
-	return useAppQuery(["lessons", "inspect", lessonId, "content"], () =>
-		apiRequest({ url: `/api/v1/lessons/inspect/${lessonId}/content`, method: "GET" }, AggregatedLessonContentResponseZod),
-	);
-}
-
-export function useInspectLessonResourcesQuery(lessonId: string) {
-	return useAppQuery(["lessons", "inspect", lessonId, "resources"], () =>
-		apiRequest({ url: `/api/v1/lessons/inspect/${lessonId}/resources`, method: "GET" }, z.array(LessonResourceZod)),
-	);
-}
 

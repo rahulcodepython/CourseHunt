@@ -42,37 +42,7 @@ export function useEnrolledCoursesQuery() {
 	);
 }
 
-export function useCreateCourseMutation() {
-	return useSimpleMutation({
-		mutationFn: (data: z.infer<typeof CreateCourseRequestZod>) =>
-			apiRequest({ url: "/api/v1/courses", method: "POST", data }, CourseZod),
-		invalidateKeys: [queryKeys.courses(), queryKeys.coursesInspect(), queryKeys.coursesTutor()],
-		showToast: true,
-	});
-}
-
-export function useUpdateCourseMutation() {
-	return useSimpleMutation({
-		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateCourseRequestZod> }) =>
-			apiRequest({ url: `/api/v1/courses/${id}`, method: "PATCH", data }, CourseZod),
-		invalidateKeys: [queryKeys.courses(), queryKeys.coursesInspect(), queryKeys.coursesTutor()],
-		showToast: true,
-	});
-}
-
-export function useDeleteCourseMutation() {
-	return usePaginatedMutation({
-		mutationFn: (id: string) =>
-			apiRequest({ url: `/api/v1/courses/${id}`, method: "DELETE" }, DeleteResponseZod),
-		queryKey: queryKeys.courses(),
-		invalidateKeys: [queryKeys.coursesInspect(), queryKeys.coursesTutor()],
-		updater: (res) => removeFromPaginated(res.id),
-		optimistic: (id) => removeFromPaginated(id),
-		showToast: true,
-	});
-}
-
-export function useInspectCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; subcategory_id?: string; level?: string; tutor_id?: string; status?: string }) {
+export function useManageCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; subcategory_id?: string; level?: string; tutor_id?: string; status?: string }) {
 	const searchParams = new URLSearchParams();
 	if (params?.page) searchParams.set("page", params.page.toString());
 	if (params?.limit) searchParams.set("limit", params.limit.toString());
@@ -83,24 +53,38 @@ export function useInspectCoursesQuery(params?: { page?: number; limit?: number;
 	if (params?.tutor_id) searchParams.set("tutor_id", params.tutor_id);
 	if (params?.status) searchParams.set("status", params.status);
 	const qs = searchParams.toString();
-	const url = qs ? `/api/v1/courses/inspect?${qs}` : "/api/v1/courses/inspect";
-	return useAppQuery(queryKeys.coursesInspect(params), () =>
+	const url = qs ? `/api/v1/courses/manage?${qs}` : "/api/v1/courses/manage";
+	return useAppQuery(queryKeys.coursesManage(params), () =>
 		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CourseZod)),
 	);
 }
 
-export function useTutorCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; subcategory_id?: string; level?: string; status?: string }) {
-	const searchParams = new URLSearchParams();
-	if (params?.page) searchParams.set("page", params.page.toString());
-	if (params?.limit) searchParams.set("limit", params.limit.toString());
-	if (params?.search) searchParams.set("search", params.search);
-	if (params?.category_id) searchParams.set("category_id", params.category_id);
-	if (params?.subcategory_id) searchParams.set("subcategory_id", params.subcategory_id);
-	if (params?.level) searchParams.set("level", params.level);
-	if (params?.status) searchParams.set("status", params.status);
-	const qs = searchParams.toString();
-	const url = qs ? `/api/v1/courses?${qs}` : "/api/v1/courses";
-	return useAppQuery(queryKeys.coursesTutor(params), () =>
-		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CourseZod)),
-	);
+export function useCreateCourseMutation() {
+	return useSimpleMutation({
+		mutationFn: (data: z.infer<typeof CreateCourseRequestZod>) =>
+			apiRequest({ url: "/api/v1/courses", method: "POST", data }, CourseZod),
+		invalidateKeys: [queryKeys.courses(), queryKeys.coursesManage()],
+		showToast: true,
+	});
+}
+
+export function useUpdateCourseMutation() {
+	return useSimpleMutation({
+		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateCourseRequestZod> }) =>
+			apiRequest({ url: `/api/v1/courses/${id}`, method: "PATCH", data }, CourseZod),
+		invalidateKeys: [queryKeys.courses(), queryKeys.coursesManage()],
+		showToast: true,
+	});
+}
+
+export function useDeleteCourseMutation() {
+	return usePaginatedMutation({
+		mutationFn: (id: string) =>
+			apiRequest({ url: `/api/v1/courses/${id}`, method: "DELETE" }, DeleteResponseZod),
+		queryKey: queryKeys.courses(),
+		invalidateKeys: [queryKeys.coursesManage()],
+		updater: (res) => removeFromPaginated(res.id),
+		optimistic: (id) => removeFromPaginated(id),
+		showToast: true,
+	});
 }
