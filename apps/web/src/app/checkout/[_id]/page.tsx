@@ -5,7 +5,7 @@ import { Button } from "@package/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
 import { Separator } from "@package/ui/separator";
-import { useSession } from "@package/auth/auth-client";
+import { useSessionStore } from "@/stores/session-store";
 import { useCheckoutCourseQuery, useInitiateTransactionMutation } from "@package/query-hooks/transactions.api";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -30,7 +30,7 @@ function loadRazorpayScript(): Promise<boolean> {
 export default function CheckoutPage() {
     const { _id } = useParams();
     const router = useRouter();
-    const { data: session } = useSession();
+    const session = useSessionStore((s) => s.data);
     const { data: course, isLoading } = useCheckoutCourseQuery(_id as string);
     const initiateMutation = useInitiateTransactionMutation();
     const [couponCode, setCouponCode] = useState("");

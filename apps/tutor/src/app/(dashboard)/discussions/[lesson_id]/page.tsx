@@ -5,7 +5,7 @@ import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
 import { useDiscussionsQuery, useCreateDiscussionMutation, useUpdateDiscussionMutation, useDeleteDiscussionMutation } from "@package/query-hooks/discussions.api";
-import { useSession } from "@package/auth/auth-client";
+import { useSessionStore } from "@/stores/session-store";
 import type { Discussion } from "@package/schema/discussions.types";
 import { useState } from "react";
 import { Input } from "@package/ui/input";
@@ -27,7 +27,7 @@ export default function TutorDiscussionsPage() {
     const updateDiscussion = useUpdateDiscussionMutation();
     const createReply = useCreateDiscussionMutation();
 
-    const { data: session } = useSession();
+    const session = useSessionStore((s) => s.data);
     const currentUserId = session?.user?.id;
 
     const discussions = raw?.data?.data ?? [];

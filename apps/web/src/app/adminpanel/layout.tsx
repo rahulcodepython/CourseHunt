@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import Loading from "@package/components/loading";
 import BreadcrumbComponent from "@package/components/breadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@package/ui/sidebar";
-import { useSession } from "@package/auth/auth-client";
+import { useSessionStore } from "@/stores/session-store";
 import type { ComponentType } from "react";
 
 interface NavGroupType {
@@ -25,7 +25,8 @@ import { useEffect } from "react";
 
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-    const { data: session, isPending } = useSession()
+    const session = useSessionStore((s) => s.data)
+    const isPending = useSessionStore((s) => s.isPending)
     const user = session?.user
 
     const router = useRouter()

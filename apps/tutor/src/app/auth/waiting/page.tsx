@@ -2,13 +2,14 @@
 
 import { Icon } from "@package/components/icon";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
-import { useSession, signOut } from "@package/auth/auth-client";
+import { useSessionStore } from "@/stores/session-store";
+import { signOut } from "@package/auth/auth-client";
 import { Button } from "@package/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export default function PermissionPendingPage() {
-    const { data: session } = useSession();
+    const session = useSessionStore((s) => s.data);
     const router = useRouter();
 
     const handleLogout = async () => {

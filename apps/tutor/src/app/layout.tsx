@@ -1,3 +1,4 @@
+import { SessionProvider } from "@/components/session-provider";
 import { ThemeProvider } from "@package/components/theme-provider";
 import { QueryProvider } from "@package/components/query-provider";
 import type { Metadata } from "next";
@@ -18,10 +19,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <html lang="en" suppressHydrationWarning className={cn("antialiased", montserrat.variable)}>
             <body className="antialiased">
                 <QueryProvider>
-                    <ThemeProvider>
-                        {children}
-                        <Toaster />
-                    </ThemeProvider>
+                    <SessionProvider>
+                        <ThemeProvider>
+                            {children}
+                            <Toaster />
+                        </ThemeProvider>
+                    </SessionProvider>
                 </QueryProvider>
             </body>
         </html>

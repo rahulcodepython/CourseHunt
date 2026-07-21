@@ -40,7 +40,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@package/ui/dropdown-menu"
-import { signOut, useSession } from "@package/auth/auth-client"
+import { useSessionStore } from "@/stores/session-store";
+import { signOut } from "@package/auth/auth-client"
 
 interface NavGroupType {
     title: string;
@@ -138,7 +139,7 @@ export function NavMain({ items }: { items: NavGroupType[] }) {
 
 export function NavUser() {
     const { isMobile } = useSidebar()
-    const { data: session } = useSession()
+    const session = useSessionStore((s) => s.data)
     const user = session?.user
 
     const router = useRouter()

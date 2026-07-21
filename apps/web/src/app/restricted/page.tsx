@@ -4,7 +4,7 @@ import { Icon } from "@package/components/icon";
 import { Separator } from "@package/ui/separator";
 import Loading from "@package/components/loading";
 import { Button } from "@package/ui/button";
-import { useSession } from "@package/auth/auth-client";
+import { useSessionStore } from "@/stores/session-store";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -17,7 +17,8 @@ interface SessionUser {
 }
 
 export default function RestrictedPage() {
-	const { data: session, isPending } = useSession();
+	const session = useSessionStore((s) => s.data);
+	const isPending = useSessionStore((s) => s.isPending);
 	const router = useRouter();
 	const userBanned = (session?.user as SessionUser)?.banned;
 

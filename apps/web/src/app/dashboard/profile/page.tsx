@@ -10,7 +10,8 @@ import { Badge } from "@package/ui/badge";
 import { Textarea } from "@package/ui/textarea";
 import { useUserProfileQuery, useCreateUserProfileMutation } from "@package/query-hooks/users.api";
 import { useUploadMediaMutation } from "@package/query-hooks/upload.api";
-import { authClient, useSession } from "@package/auth/auth-client";
+import { useSessionStore } from "@/stores/session-store";
+import { authClient } from "@package/auth/auth-client";
 import { useEnrollmentsQuery } from "@package/query-hooks/enrollments.api";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -27,7 +28,9 @@ interface UserProfileType {
 }
 
 export default function Component() {
-	const { data: session, isPending: isSessionLoading } = useSession();
+	const session = useSessionStore((s) => s.data);
+	const isSessionLoading = useSessionStore((s) => s.isPending);
+	const updateUser = useSessionStore((s) => s.updateUser);
 	const userProfileQuery = useUserProfileQuery();
 	const enrollmentsQuery = useEnrollmentsQuery();
 	const { isPending: isSaving, mutateAsync: updateUserProfile } = useCreateUserProfileMutation();
@@ -97,6 +100,8 @@ export default function Component() {
 				toast.error(authRes.error.message || "Failed to update profile name/avatar");
 				return;
 			}
+
+			updateUser({ name: formData.name, image: formData.avatarUrl || null });
 
 			// Update user profile metadata (headline, bio, website)
 			await updateUserProfile({
