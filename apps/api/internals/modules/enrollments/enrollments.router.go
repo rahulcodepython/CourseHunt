@@ -1,6 +1,7 @@
 package enrollments
 
 import (
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/middlewares"
 
 	"github.com/gofiber/fiber/v2"
@@ -8,6 +9,6 @@ import (
 
 func (m *EnrollmentsModule) Routes(v1, protected fiber.Router) {
 	enrollments := protected.Group("/enrollments/:course_id")
-	enrollments.Get("", middlewares.PermissionGuard("enrollments:read"), m.ListController)
-	enrollments.Get("/inspect", middlewares.PermissionGuard("enrollments:inspect"), m.InspectController)
+	enrollments.Get("", middlewares.PermissionGuard(generic.UserEnrollmentsRead), m.ListController)
+	enrollments.Get("/inspect", middlewares.PermissionGuard(generic.AdminEnrollmentsInspect), m.InspectController)
 }

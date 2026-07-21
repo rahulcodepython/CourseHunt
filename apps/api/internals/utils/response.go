@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -9,7 +9,7 @@ import (
 // json is the canonical response helper used throughout all handlers.
 // Signature: utils.json(c, statusCode, success, message, data, errors)
 func json[T any](c *fiber.Ctx, status int, success bool, message string, data T, error error) error {
-	body := models.Response[T]{
+	body := generic.Response[T]{
 		Success: success,
 		Message: message,
 		Data:    data,

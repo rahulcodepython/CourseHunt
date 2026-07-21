@@ -3,7 +3,7 @@ package enrollments
 import (
 	"errors"
 
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +21,7 @@ func (m *EnrollmentsModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch enrollments.", err)
 	}
-	return utils.OK(c, "Enrollments fetched.", models.PaginatedResponse[[]ListEnrollmentResponse]{
+	return utils.OK(c, "Enrollments fetched.", generic.PaginatedResponse[[]ListEnrollmentResponse]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -41,7 +41,7 @@ func (m *EnrollmentsModule) InspectController(c *fiber.Ctx) error {
 		}
 		return utils.InternalError(c, "Failed to inspect enrollments.", err)
 	}
-	return utils.OK(c, "Enrollments inspected.", models.PaginatedResponse[[]ListEnrollmentResponse]{
+	return utils.OK(c, "Enrollments inspected.", generic.PaginatedResponse[[]ListEnrollmentResponse]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }

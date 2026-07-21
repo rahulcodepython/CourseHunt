@@ -1,7 +1,7 @@
 package cart
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,7 +13,7 @@ func (m *CartModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch cart.", err)
 	}
-	return utils.OK(c, "Cart fetched.", models.PaginatedResponse[[]CartItem]{
+	return utils.OK(c, "Cart fetched.", generic.PaginatedResponse[[]CartItem]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -36,12 +36,12 @@ func (m *CartModule) RemoveController(c *fiber.Ctx) error {
 		return utils.InternalError(c, "Failed to remove from cart.", err)
 	}
 
-	return utils.OK(c, "Removed from cart.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Removed from cart.", generic.DeleteResponse{ID: id})
 }
 
 func (m *CartModule) ClearController(c *fiber.Ctx) error {
 	if err := m.ClearRepository(utils.GetUserID(c)); err != nil {
 		return utils.InternalError(c, "Failed to clear cart.", err)
 	}
-	return utils.OK(c, "Cart cleared.", models.SuccessResponse{Success: true})
+	return utils.OK(c, "Cart cleared.", generic.SuccessResponse{Success: true})
 }

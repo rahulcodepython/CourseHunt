@@ -3,7 +3,7 @@ package certificate
 import (
 	"errors"
 
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -33,7 +33,7 @@ func (m *CertificateModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch certificates.", err)
 	}
-	return utils.OK(c, "Certificates fetched.", models.PaginatedResponse[[]Certificate]{
+	return utils.OK(c, "Certificates fetched.", generic.PaginatedResponse[[]Certificate]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }

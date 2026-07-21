@@ -3,6 +3,8 @@ package chapters
 import (
 	"encoding/json"
 	"errors"
+
+	"coursehunt/api/internals/generic"
 )
 
 // Explicit, granular domain errors
@@ -12,58 +14,77 @@ var (
 	ErrChapterNotFound = errors.New("chapter not found")
 )
 
-func (m *ChaptersModule) ListRepository(courseID, userID string) ([]Chapter, error) {
-	query := `
-		WITH auth_check AS (
-			SELECT
-				CASE
-					WHEN NOT EXISTS(SELECT 1 FROM courses WHERE id = $1) THEN 0
-					WHEN NOT EXISTS(SELECT 1 FROM courses WHERE id = $1 AND tutor_id = $2) THEN 1
-					ELSE 2
-				END as status_code
-		)
-		SELECT
-			ac.status_code AS status_flag,
-			COALESCE(
-				(
-					SELECT json_agg(
-						json_build_object(
-							'id', ch.id,
-							'course_id', ch.course_id,
-							'chapter_no', ch.chapter_no,
-							'title', ch.title,
-							'total_lectures', ch.total_lectures,
-							'total_duration_seconds', ch.total_duration_seconds,
-							'created_at', ch.created_at,
-							'updated_at', ch.updated_at
-						) ORDER BY ch.chapter_no ASC
-					)
-					FROM chapters ch
-					WHERE ch.course_id = $1
-				), '[]'::json
-			) AS data_json
-		FROM auth_check ac`
-
-	var res struct {
-		StatusFlag int    `db:"status_flag"`
-		DataJSON   []byte `db:"data_json"`
-	}
-
-	if err := m.DB.Get(&res, query, courseID, userID); err != nil {
-		return nil, err
-	}
-
-	switch res.StatusFlag {
-	case 0:
-		return nil, ErrCourseNotFound
-	case 1:
-		return nil, ErrUnauthorized
-	default:
+func (m *ChaptersModule) ListRepository(courseID, userID string, scope generic.AuthScope) ([]Chapter, error) {
+	switch scope {
+	case generic.ScopeAdmin:
 		var chapters []Chapter
-		if err := json.Unmarshal(res.DataJSON, &chapters); err != nil {
+		err := m.DB.Select(&chapters, `
+			SELECT id, course_id, chapter_no, title, total_lectures, total_duration_seconds, created_at, updated_at
+			FROM chapters
+			WHERE course_id = $1
+			ORDER BY chapter_no ASC
+		`, courseID)
+		if err != nil {
 			return nil, err
 		}
+		if chapters == nil {
+			chapters = []Chapter{}
+		}
 		return chapters, nil
+
+	default:
+		query := `
+			WITH auth_check AS (
+				SELECT
+					CASE
+						WHEN NOT EXISTS(SELECT 1 FROM courses WHERE id = $1) THEN 0
+						WHEN NOT EXISTS(SELECT 1 FROM courses WHERE id = $1 AND tutor_id = $2) THEN 1
+						ELSE 2
+					END as status_code
+			)
+			SELECT
+				ac.status_code AS status_flag,
+				COALESCE(
+					(
+						SELECT json_agg(
+							json_build_object(
+								'id', ch.id,
+								'course_id', ch.course_id,
+								'chapter_no', ch.chapter_no,
+								'title', ch.title,
+								'total_lectures', ch.total_lectures,
+								'total_duration_seconds', ch.total_duration_seconds,
+								'created_at', ch.created_at,
+								'updated_at', ch.updated_at
+							) ORDER BY ch.chapter_no ASC
+						)
+						FROM chapters ch
+						WHERE ch.course_id = $1
+					), '[]'::json
+				) AS data_json
+			FROM auth_check ac`
+
+		var res struct {
+			StatusFlag int    `db:"status_flag"`
+			DataJSON   []byte `db:"data_json"`
+		}
+
+		if err := m.DB.Get(&res, query, courseID, userID); err != nil {
+			return nil, err
+		}
+
+		switch res.StatusFlag {
+		case 0:
+			return nil, ErrCourseNotFound
+		case 1:
+			return nil, ErrUnauthorized
+		default:
+			var chapters []Chapter
+			if err := json.Unmarshal(res.DataJSON, &chapters); err != nil {
+				return nil, err
+			}
+			return chapters, nil
+		}
 	}
 }
 
@@ -255,19 +276,4 @@ func (m *ChaptersModule) DeleteRepository(id, userID string) (string, error) {
 	}
 }
 
-func (m *ChaptersModule) InspectListRepository(courseID string) ([]Chapter, error) {
-	var chapters []Chapter
-	err := m.DB.Select(&chapters, `
-		SELECT id, course_id, chapter_no, title, total_lectures, total_duration_seconds, created_at, updated_at
-		FROM chapters
-		WHERE course_id = $1
-		ORDER BY chapter_no ASC
-	`, courseID)
-	if err != nil {
-		return nil, err
-	}
-	if chapters == nil {
-		chapters = []Chapter{}
-	}
-	return chapters, nil
-}
+

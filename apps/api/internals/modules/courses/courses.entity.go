@@ -1,7 +1,7 @@
 package courses
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"time"
 )
 
@@ -97,9 +97,9 @@ type CoursePublicResponse struct {
 	Level            string                `json:"level" db:"level"`
 	RatingAvg        float64               `json:"rating_avg" db:"rating_avg"`
 	FeedbackCount    int                   `json:"feedback_count" db:"feedback_count"`
-	Category         *models.CategoryInfo  `json:"category"`
-	Subcategory      *models.CategoryInfo  `json:"subcategory"`
-	Instructor       models.InstructorInfo `json:"instructor" db:""`
+	Category         *generic.CategoryInfo  `json:"category"`
+	Subcategory      *generic.CategoryInfo  `json:"subcategory"`
+	Instructor       generic.InstructorInfo `json:"instructor" db:""`
 }
 
 type LessonResponse struct {
@@ -135,9 +135,9 @@ type CourseLandingResponse struct {
 	FinalPrice           float64               `json:"final_price"`
 	Benefits             []string              `json:"benefits"`
 	Requirements         []string              `json:"requirements"`
-	Category             *models.CategoryInfo  `json:"category"`
-	Subcategory          *models.CategoryInfo  `json:"subcategory"`
-	Instructor           models.InstructorInfo `json:"instructor"`
+	Category             *generic.CategoryInfo  `json:"category"`
+	Subcategory          *generic.CategoryInfo  `json:"subcategory"`
+	Instructor           generic.InstructorInfo `json:"instructor"`
 	TotalLectures        int                   `json:"total_lectures"`
 	TotalDurationSeconds int                   `json:"total_duration_seconds"`
 	RatingAvg            float64               `json:"rating_avg"`
@@ -156,7 +156,7 @@ type EnrolledCourseResponse struct {
 }
 
 type CourseStudyResponse struct {
-	Course            models.CourseInfo  `json:"course"`
+	Course            generic.CourseInfo  `json:"course"`
 	CompletionPercent float64            `json:"completion_percent"`
 	Completed         bool               `json:"completed"`
 	Chapters          []StudyChapterItem `json:"chapters"`

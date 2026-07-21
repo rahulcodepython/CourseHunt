@@ -3,7 +3,7 @@ package courses
 import (
 	"errors"
 
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -20,7 +20,7 @@ func (m *CoursesModule) PublicListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch public courses.", err)
 	}
-	return utils.OK(c, "Public courses fetched successfully.", models.PaginatedResponse[[]CoursePublicResponse]{
+	return utils.OK(c, "Public courses fetched successfully.", generic.PaginatedResponse[[]CoursePublicResponse]{
 		Data: cards, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -57,44 +57,29 @@ func (m *CoursesModule) EnrolledListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch enrolled courses.", err)
 	}
-	return utils.OK(c, "Enrolled courses fetched successfully.", models.PaginatedResponse[[]EnrolledCourseResponse]{
+	return utils.OK(c, "Enrolled courses fetched successfully.", generic.PaginatedResponse[[]EnrolledCourseResponse]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
 
-func (m *CoursesModule) InspectController(c *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(c)
-	list, total, err := m.InspectRepository(page, limit,
-		c.Query("category_id"),
-		c.Query("subcategory_id"),
-		c.Query("level"),
-		c.Query("search"),
-		c.Query("tutor_id"),
-		c.Query("status"),
-	)
-	if err != nil {
-		return utils.InternalError(c, "Failed to inspect courses.", err)
-	}
-	return utils.OK(c, "Courses inspected successfully.", models.PaginatedResponse[[]Course]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	})
-}
-
-func (m *CoursesModule) ListController(c *fiber.Ctx) error {
+func (m *CoursesModule) ManageListController(c *fiber.Ctx) error {
+	scope := m.resolveScope(c)
 	page, limit := utils.PaginationParams(c)
 	userID := utils.GetUserID(c)
-	list, total, err := m.TutorListRepository(page, limit,
-		userID,
+
+	list, total, err := m.ListRepository(page, limit,
+		userID, scope,
 		c.Query("category_id"),
 		c.Query("subcategory_id"),
 		c.Query("level"),
 		c.Query("search"),
 		c.Query("status"),
+		c.Query("tutor_id"),
 	)
 	if err != nil {
-		return utils.InternalError(c, "Failed to fetch your courses.", err)
+		return utils.InternalError(c, "Failed to fetch courses.", err)
 	}
-	return utils.OK(c, "Your courses fetched successfully.", models.PaginatedResponse[[]Course]{
+	return utils.OK(c, "Courses fetched successfully.", generic.PaginatedResponse[[]Course]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -142,5 +127,5 @@ func (m *CoursesModule) DeleteController(c *fiber.Ctx) error {
 		}
 		return utils.InternalError(c, "Failed to delete course.", err)
 	}
-	return utils.OK(c, "Course deleted successfully.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Course deleted successfully.", generic.DeleteResponse{ID: id})
 }

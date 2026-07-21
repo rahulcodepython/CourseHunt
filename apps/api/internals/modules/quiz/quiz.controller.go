@@ -3,7 +3,7 @@ package quiz
 import (
 	"errors"
 
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -70,7 +70,7 @@ func (m *QuizModule) DeleteQuestionController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to delete question.", err)
 		}
 	}
-	return utils.OK(c, "Question deleted successfully.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Question deleted successfully.", generic.DeleteResponse{ID: id})
 }
 
 func (m *QuizModule) GetQuestionController(c *fiber.Ctx) error {

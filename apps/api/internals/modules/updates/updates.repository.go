@@ -1,7 +1,7 @@
 package updates
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"encoding/json"
 )
 
@@ -142,7 +142,7 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 	}
 
 	return &UpdateFeedResponse{
-		Updates: models.PaginatedResponse[[]UpdateFeedItem]{
+		Updates: generic.PaginatedResponse[[]UpdateFeedItem]{
 			Data: updates, Total: result.Total, Page: page, Limit: limit,
 		},
 	}, nil

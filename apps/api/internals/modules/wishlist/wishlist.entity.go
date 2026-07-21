@@ -1,14 +1,14 @@
 package wishlist
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"time"
 )
 
 type WishlistItem struct {
 	ID      string            `json:"id" db:"id"`
 	UserID  string            `json:"user_id" db:"user_id"`
-	Course  models.CourseInfo `json:"course" db:""`
+	Course  generic.CourseInfo `json:"course" db:""`
 	AddedAt time.Time         `json:"added_at" db:"added_at"`
 }
 

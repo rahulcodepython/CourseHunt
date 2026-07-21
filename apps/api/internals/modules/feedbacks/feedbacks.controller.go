@@ -3,7 +3,7 @@ package feedbacks
 import (
 	"errors"
 
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,7 +31,7 @@ func (m *FeedbacksModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch feedbacks.", err)
 	}
-	return utils.OK(c, "Feedbacks fetched.", models.PaginatedResponse[[]Feedback]{
+	return utils.OK(c, "Feedbacks fetched.", generic.PaginatedResponse[[]Feedback]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -43,7 +43,7 @@ func (m *FeedbacksModule) InspectController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to inspect feedbacks.", err)
 	}
-	return utils.OK(c, "Feedbacks inspected.", models.PaginatedResponse[[]Feedback]{
+	return utils.OK(c, "Feedbacks inspected.", generic.PaginatedResponse[[]Feedback]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -54,7 +54,7 @@ func (m *FeedbacksModule) ListPinnedController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch pinned feedbacks.", err)
 	}
-	return utils.OK(c, "Pinned feedbacks fetched.", models.PaginatedResponse[[]Feedback]{
+	return utils.OK(c, "Pinned feedbacks fetched.", generic.PaginatedResponse[[]Feedback]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -79,5 +79,5 @@ func (m *FeedbacksModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to delete feedback.", err)
 	}
-	return utils.OK(c, "Feedback deleted.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Feedback deleted.", generic.DeleteResponse{ID: id})
 }

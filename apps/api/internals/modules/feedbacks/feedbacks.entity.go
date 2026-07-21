@@ -1,14 +1,14 @@
 package feedbacks
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"time"
 )
 
 type Feedback struct {
 	ID        string            `json:"id" db:"id"`
-	Course    models.CourseInfo `json:"course" db:""`
-	User      models.UserInfo   `json:"user" db:""`
+	Course    generic.CourseInfo `json:"course" db:""`
+	User      generic.UserInfo   `json:"user" db:""`
 	Rating    int               `json:"rating" db:"rating"`
 	Content   *string           `json:"content" db:"content"`
 	IsPinned  bool              `json:"is_pinned" db:"is_pinned"`

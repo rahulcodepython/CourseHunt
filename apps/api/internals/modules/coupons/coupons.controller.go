@@ -1,7 +1,7 @@
 package coupons
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +14,7 @@ func (m *CouponsModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch coupons.", err)
 	}
-	return utils.OK(c, "Coupons fetched.", models.PaginatedResponse[[]Coupon]{
+	return utils.OK(c, "Coupons fetched.", generic.PaginatedResponse[[]Coupon]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -51,7 +51,7 @@ func (m *CouponsModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to delete coupon.", err)
 	}
-	return utils.OK(c, "Coupon deleted.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Coupon deleted.", generic.DeleteResponse{ID: id})
 }
 
 func (m *CouponsModule) CheckController(c *fiber.Ctx) error {

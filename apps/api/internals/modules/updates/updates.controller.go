@@ -1,7 +1,7 @@
 package updates
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -36,7 +36,7 @@ func (m *UpdatesModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to delete update.", err)
 	}
-	return utils.OK(c, "Update deleted.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Update deleted.", generic.DeleteResponse{ID: id})
 }
 
 func (m *UpdatesModule) FeedController(c *fiber.Ctx) error {
@@ -54,7 +54,7 @@ func (m *UpdatesModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch updates.", err)
 	}
-	return utils.OK(c, "Updates fetched.", models.PaginatedResponse[[]CourseUpdate]{
+	return utils.OK(c, "Updates fetched.", generic.PaginatedResponse[[]CourseUpdate]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }

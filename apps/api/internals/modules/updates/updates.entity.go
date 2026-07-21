@@ -1,13 +1,13 @@
 package updates
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"time"
 )
 
 type CourseUpdate struct {
 	ID        string            `json:"id" db:"id"`
-	Course    models.CourseInfo `json:"course" db:""`
+	Course    generic.CourseInfo `json:"course" db:""`
 	CreatedBy *string           `json:"created_by" db:"created_by"`
 	Message   string            `json:"message" db:"message"`
 	CreatedAt time.Time         `json:"created_at" db:"created_at"`
@@ -25,12 +25,12 @@ type UpdateUpdateRequest struct {
 type UpdateFeedItem struct {
 	ID        string            `json:"id" db:"id"`
 	Message   string            `json:"message" db:"message"`
-	Course    models.CourseInfo `json:"course" db:""`
+	Course    generic.CourseInfo `json:"course" db:""`
 	CreatedAt time.Time         `json:"created_at" db:"created_at"`
 	IsUnseen  bool              `json:"is_unseen" db:"is_unseen"`
 }
 
 type UpdateFeedResponse struct {
-	Updates models.PaginatedResponse[[]UpdateFeedItem] `json:"updates"`
+	Updates generic.PaginatedResponse[[]UpdateFeedItem] `json:"updates"`
 }
 

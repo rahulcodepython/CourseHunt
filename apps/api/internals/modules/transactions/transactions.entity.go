@@ -1,15 +1,15 @@
 package transactions
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"time"
 )
 
 type Transaction struct {
 	ID                string            `json:"id"`
-	User              models.UserInfo   `json:"user"`
-	Course            models.CourseInfo `json:"course"`
-	Coupon            models.CouponInfo `json:"coupon"`
+	User              generic.UserInfo   `json:"user"`
+	Course            generic.CourseInfo `json:"course"`
+	Coupon            generic.CouponInfo `json:"coupon"`
 	RazorpayOrderID   *string           `json:"razorpay_order_id"`
 	RazorpayPaymentID *string           `json:"razorpay_payment_id"`
 	Amount            float64           `json:"amount"`
@@ -41,7 +41,7 @@ type CheckoutCourseResponse struct {
 	ID          string                `json:"id"`
 	Title       string                `json:"title"`
 	ImageURL    *string               `json:"image_url"`
-	Instructor  models.InstructorInfo `json:"instructor"`
+	Instructor  generic.InstructorInfo `json:"instructor"`
 	ActualPrice float64               `json:"actual_price"`
 	FinalPrice  float64               `json:"final_price"`
 }

@@ -1,7 +1,7 @@
 package wishlist
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,7 +13,7 @@ func (m *WishlistModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch wishlist.", err)
 	}
-	return utils.OK(c, "Wishlist fetched.", models.PaginatedResponse[[]WishlistItem]{
+	return utils.OK(c, "Wishlist fetched.", generic.PaginatedResponse[[]WishlistItem]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -35,5 +35,5 @@ func (m *WishlistModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to remove from wishlist.", err)
 	}
-	return utils.OK(c, "Removed from wishlist.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Removed from wishlist.", generic.DeleteResponse{ID: id})
 }

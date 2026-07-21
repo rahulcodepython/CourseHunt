@@ -1,4 +1,4 @@
-package models
+package generic
 
 // PaginatedResponse is a generic paginated list wrapper.
 type PaginatedResponse[T any] struct {

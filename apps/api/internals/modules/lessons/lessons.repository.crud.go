@@ -3,6 +3,8 @@ package lessons
 import (
 	"encoding/json"
 	"errors"
+
+	"coursehunt/api/internals/generic"
 )
 
 var (
@@ -13,7 +15,24 @@ var (
 	ErrAccessDenied     = errors.New("access denied")
 )
 
-func (m *LessonsModule) ListRepository(chapterID, tutorID string) ([]Lesson, error) {
+func (m *LessonsModule) ListRepository(chapterID, userID string, scope generic.AuthScope) ([]Lesson, error) {
+	if scope == generic.ScopeAdmin {
+		var lessons []Lesson
+		err := m.DB.Select(&lessons, `
+			SELECT id, chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds, created_at, updated_at
+			FROM lessons
+			WHERE chapter_id = $1
+			ORDER BY lesson_no ASC
+		`, chapterID)
+		if err != nil {
+			return nil, err
+		}
+		if lessons == nil {
+			lessons = []Lesson{}
+		}
+		return lessons, nil
+	}
+
 	var result struct {
 		ChapterExists bool            `db:"chapter_exists"`
 		IsOwner       bool            `db:"is_owner"`
@@ -39,7 +58,7 @@ func (m *LessonsModule) ListRepository(chapterID, tutorID string) ([]Lesson, err
 			EXISTS(SELECT 1 FROM chapter_auth WHERE tutor_id = $2) AS is_owner,
 			COALESCE((SELECT json_agg(lessons_data) FROM lessons_data), '[]'::json) AS data
 	`
-	err := m.DB.Get(&result, query, chapterID, tutorID)
+	err := m.DB.Get(&result, query, chapterID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -212,19 +231,4 @@ func (m *LessonsModule) DeleteRepository(id, tutorID string) (string, error) {
 	return *result.DeletedID, nil
 }
 
-func (m *LessonsModule) InspectListRepository(chapterID string) ([]Lesson, error) {
-	var lessons []Lesson
-	err := m.DB.Select(&lessons, `
-		SELECT id, chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds, created_at, updated_at
-		FROM lessons
-		WHERE chapter_id = $1
-		ORDER BY lesson_no ASC
-	`, chapterID)
-	if err != nil {
-		return nil, err
-	}
-	if lessons == nil {
-		lessons = []Lesson{}
-	}
-	return lessons, nil
-}
+

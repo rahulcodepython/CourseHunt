@@ -3,7 +3,7 @@ package transactions
 import (
 	"fmt"
 
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -91,7 +91,7 @@ func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch transactions.", err)
 	}
-	return utils.OK(c, "Transactions fetched.", models.PaginatedResponse[[]Transaction]{
+	return utils.OK(c, "Transactions fetched.", generic.PaginatedResponse[[]Transaction]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -102,7 +102,7 @@ func (m *TransactionsModule) ListOwnController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch your transactions.", err)
 	}
-	return utils.OK(c, "Your transactions fetched.", models.PaginatedResponse[[]Transaction]{
+	return utils.OK(c, "Your transactions fetched.", generic.PaginatedResponse[[]Transaction]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }

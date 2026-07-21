@@ -1,7 +1,7 @@
 package category
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,7 +13,7 @@ func (m *CategoryModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch categories.", err)
 	}
-	return utils.OK(c, "Categories fetched successfully.", models.PaginatedResponse[[]Category]{
+	return utils.OK(c, "Categories fetched successfully.", generic.PaginatedResponse[[]Category]{
 		Data: cats, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -35,7 +35,7 @@ func (m *CategoryModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to delete category.", err)
 	}
-	return utils.OK(c, "Category deleted successfully.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Category deleted successfully.", generic.DeleteResponse{ID: id})
 }
 
 func (m *CategoryModule) UpdateController(c *fiber.Ctx) error {

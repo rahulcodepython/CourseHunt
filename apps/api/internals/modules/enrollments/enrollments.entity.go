@@ -1,13 +1,13 @@
 package enrollments
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"time"
 )
 
 type ListEnrollmentResponse struct {
 	ID                string          `json:"id" db:"id"`
-	User              models.UserInfo `json:"user" db:""`
+	User              generic.UserInfo `json:"user" db:""`
 	CompletionPercent float64         `json:"completion_percent" db:"completion_percent"`
 	Completed         bool            `json:"completed" db:"completed"`
 	Revoked           bool            `json:"revoked" db:"revoked"`

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"coursehunt/api/internals/config"
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -84,13 +84,13 @@ func extractStringSlice(token jwt.Token, key string) []string {
 }
 
 // extractUserContext builds a UserContext from a validated JWT token.
-func extractUserContext(token jwt.Token) models.UserContext {
+func extractUserContext(token jwt.Token) generic.UserContext {
 	var email string
 	if raw, ok := token.Get("email"); ok {
 		email = fmt.Sprintf("%v", raw)
 	}
 
-	return models.UserContext{
+	return generic.UserContext{
 		UserID:      token.Subject(),
 		Email:       email,
 		Roles:       extractStringSlice(token, "roles"),
@@ -139,24 +139,30 @@ func BaseAuthMiddleware(cfg *config.Config) fiber.Handler {
 	}
 }
 
-// PermissionGuard restricts access to users who have the specified permission
-// embedded in their JWT payload. Use this instead of the old RoleGuard.
+// PermissionGuard restricts access to users who have at least one of the
+// specified permissions. The first matched permission is stored in
+// c.Locals("permission") for downstream scope resolution.
 //
 // Example:
 //
-//	routes.Post("/courses", middlewares.PermissionGuard("courses:create"), handler)
-func PermissionGuard(requiredPermission string) fiber.Handler {
+//	routes.Get("/discussions",
+//	    middlewares.PermissionGuard("admin:discussion:read", "tutor:discussion:read"),
+//	    handler)
+func PermissionGuard(requiredPermissions ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user, ok := c.Locals("user").(models.UserContext)
+		user, ok := c.Locals("user").(generic.UserContext)
 		if !ok {
 			return utils.Unauthorized(c, "Unauthorized.", fmt.Errorf("user context not found in locals"))
 		}
 
-		if !slices.Contains(user.Permissions, requiredPermission) {
-			return c.Status(fiber.StatusForbidden).
-				JSON(fiber.Map{"error": "Permission denied: " + requiredPermission + " required"})
+		for _, perm := range requiredPermissions {
+			if slices.Contains(user.Permissions, perm) {
+				c.Locals("permission", perm)
+				return c.Next()
+			}
 		}
 
-		return c.Next()
+		return c.Status(fiber.StatusForbidden).
+			JSON(fiber.Map{"error": "Permission denied"})
 	}
 }

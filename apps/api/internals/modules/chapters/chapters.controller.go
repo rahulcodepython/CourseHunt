@@ -1,16 +1,27 @@
 package chapters
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func (m *ChaptersModule) ListController(c *fiber.Ctx) error {
+	scope := m.resolveScope(c)
 	courseID := c.Query("course_id")
-	chapters, err := m.ListRepository(courseID, utils.GetUserID(c))
+	if courseID == "" {
+		return utils.BadRequest(c, "Course ID query param required.", nil)
+	}
+
+	chapters, err := m.ListRepository(courseID, utils.GetUserID(c), scope)
 	if err != nil {
+		if err == ErrCourseNotFound {
+			return utils.NotFound(c, "Course not found.", err)
+		}
+		if err == ErrUnauthorized {
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
+		}
 		return utils.InternalError(c, "Failed to fetch chapters.", err)
 	}
 	return utils.OK(c, "Chapters fetched successfully.", chapters)
@@ -45,14 +56,5 @@ func (m *ChaptersModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to delete chapter.", err)
 	}
-	return utils.OK(c, "Chapter deleted successfully.", models.DeleteResponse{ID: id})
-}
-
-func (m *ChaptersModule) InspectListController(c *fiber.Ctx) error {
-	courseID := c.Params("courseId")
-	chapters, err := m.InspectListRepository(courseID)
-	if err != nil {
-		return utils.InternalError(c, "Failed to inspect chapters.", err)
-	}
-	return utils.OK(c, "Chapters inspected successfully.", chapters)
+	return utils.OK(c, "Chapter deleted successfully.", generic.DeleteResponse{ID: id})
 }

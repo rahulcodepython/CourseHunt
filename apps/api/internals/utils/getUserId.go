@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -14,9 +14,9 @@ func GetUserID(c *fiber.Ctx) string {
 	return ""
 }
 
-func GetUserFromCtx(c *fiber.Ctx) *models.UserContext {
+func GetUserFromCtx(c *fiber.Ctx) *generic.UserContext {
 	if v := c.Locals("user"); v != nil {
-		u, ok := v.(models.UserContext)
+		u, ok := v.(generic.UserContext)
 		if ok {
 			return &u
 		}

@@ -3,19 +3,20 @@ package lessons
 import (
 	"errors"
 
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func (m *LessonsModule) ListController(c *fiber.Ctx) error {
+	scope := m.resolveScope(c)
 	chapterID := c.Query("chapter_id")
 	if chapterID == "" {
 		return utils.BadRequest(c, "Chapter ID query param required.", nil)
 	}
 	userID := utils.GetUserID(c)
-	lessons, err := m.ListRepository(chapterID, userID)
+	lessons, err := m.ListRepository(chapterID, userID, scope)
 	if err != nil {
 		if errors.Is(err, ErrChapterNotFound) {
 			return utils.NotFound(c, "Chapter not found.", err)
@@ -82,7 +83,7 @@ func (m *LessonsModule) DeleteController(c *fiber.Ctx) error {
 		}
 		return utils.InternalError(c, "Failed to delete lesson.", err)
 	}
-	return utils.OK(c, "Lesson deleted successfully.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Lesson deleted successfully.", generic.DeleteResponse{ID: id})
 }
 
 func (m *LessonsModule) UpsertVideoContentController(c *fiber.Ctx) error {
@@ -124,7 +125,8 @@ func (m *LessonsModule) UpsertDocumentContentController(c *fiber.Ctx) error {
 }
 
 func (m *LessonsModule) ReadContentController(c *fiber.Ctx) error {
-	resp, err := m.ReadContentAggregatedRepository(c.Params("id"), utils.GetUserID(c))
+	scope := m.resolveScope(c)
+	resp, err := m.ReadContentRepository(c.Params("id"), utils.GetUserID(c), scope)
 	if err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
 			return utils.NotFound(c, "Lesson not found.", err)
@@ -181,12 +183,13 @@ func (m *LessonsModule) DeleteResourceController(c *fiber.Ctx) error {
 		}
 		return utils.InternalError(c, "Failed to delete resource.", err)
 	}
-	return utils.OK(c, "Resource deleted successfully.", models.DeleteResponse{ID: id})
+	return utils.OK(c, "Resource deleted successfully.", generic.DeleteResponse{ID: id})
 }
 
 func (m *LessonsModule) ReadResourcesController(c *fiber.Ctx) error {
+	scope := m.resolveScope(c)
 	userID := utils.GetUserID(c)
-	resources, err := m.ReadResourcesRepository(c.Params("id"), userID)
+	resources, err := m.ReadResourcesRepository(c.Params("id"), userID, scope)
 	if err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
 			return utils.NotFound(c, "Lesson not found.", err)
@@ -197,34 +200,4 @@ func (m *LessonsModule) ReadResourcesController(c *fiber.Ctx) error {
 		return utils.InternalError(c, "Failed to fetch resources.", err)
 	}
 	return utils.OK(c, "Resources fetched successfully.", resources)
-}
-
-func (m *LessonsModule) InspectListController(c *fiber.Ctx) error {
-	chapterID := c.Params("chapterId")
-	lessons, err := m.InspectListRepository(chapterID)
-	if err != nil {
-		return utils.InternalError(c, "Failed to inspect lessons.", err)
-	}
-	return utils.OK(c, "Lessons inspected successfully.", lessons)
-}
-
-func (m *LessonsModule) InspectContentController(c *fiber.Ctx) error {
-	lessonID := c.Params("id")
-	resp, err := m.InspectContentRepository(lessonID)
-	if err != nil {
-		if errors.Is(err, ErrLessonNotFound) {
-			return utils.NotFound(c, "Lesson not found.", err)
-		}
-		return utils.InternalError(c, "Failed to inspect lesson content.", err)
-	}
-	return utils.OK(c, "Lesson content inspected successfully.", resp)
-}
-
-func (m *LessonsModule) InspectResourcesController(c *fiber.Ctx) error {
-	lessonID := c.Params("id")
-	resources, err := m.InspectResourcesRepository(lessonID)
-	if err != nil {
-		return utils.InternalError(c, "Failed to inspect lesson resources.", err)
-	}
-	return utils.OK(c, "Lesson resources inspected successfully.", resources)
 }

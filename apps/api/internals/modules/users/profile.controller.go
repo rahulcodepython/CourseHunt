@@ -3,7 +3,7 @@ package users
 import (
 	"errors"
 
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -62,7 +62,7 @@ func (m *UsersModule) AdminListProfilesController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to list profiles.", err)
 	}
-	return utils.OK(c, "Profiles listed.", models.PaginatedResponse[[]AdminProfileItem]{
+	return utils.OK(c, "Profiles listed.", generic.PaginatedResponse[[]AdminProfileItem]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }

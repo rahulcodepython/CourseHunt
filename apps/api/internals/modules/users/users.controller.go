@@ -1,7 +1,7 @@
 package users
 
 import (
-	"coursehunt/api/internals/models"
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,7 +35,7 @@ func (m *UsersModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch users.", err)
 	}
-	return utils.OK(c, "Users fetched.", models.PaginatedResponse[[]UserListResponse]{
+	return utils.OK(c, "Users fetched.", generic.PaginatedResponse[[]UserListResponse]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
