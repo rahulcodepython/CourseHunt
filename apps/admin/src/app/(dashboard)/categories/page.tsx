@@ -257,10 +257,10 @@ function CategoryTreeItem({
                     <Icon name="IconTrash" className="h-3.5 w-3.5" />
                 </button>
             </div>
-            {expanded && children.length > 0 && (
-                <div>
-                    {children.map((child: any) => (
-                        <CategoryTreeItem
+            {
+            expanded && children.length > 0 && <div>
+                    {
+                    children.map((child: any) => <CategoryTreeItem
                             key={child.id}
                             category={child}
                             getChildren={getChildren}
@@ -268,9 +268,10 @@ function CategoryTreeItem({
                             onDelete={onDelete}
                             depth={depth + 1}
                         />
-                    ))}
+                    )
+                    }
                 </div>
-            )}
+            }
         </div>
     );
 }
