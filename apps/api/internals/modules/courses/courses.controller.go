@@ -75,7 +75,7 @@ func (m *CoursesModule) InspectController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to inspect courses.", err)
 	}
-	return utils.OK(c, "Courses inspected successfully.", models.PaginatedResponse[[]CourseInspectResponse]{
+	return utils.OK(c, "Courses inspected successfully.", models.PaginatedResponse[[]Course]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -94,7 +94,7 @@ func (m *CoursesModule) ListController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch your courses.", err)
 	}
-	return utils.OK(c, "Your courses fetched successfully.", models.PaginatedResponse[[]CourseInspectResponse]{
+	return utils.OK(c, "Your courses fetched successfully.", models.PaginatedResponse[[]Course]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }

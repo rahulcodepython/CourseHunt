@@ -4,7 +4,7 @@ import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import { useAdminDiscussionsQuery, useTutorDeleteDiscussionMutation, useTutorUpdateDiscussionMutation, useTutorCreateDiscussionMutation } from "@package/query-hooks/discussions.api";
+import { useAdminDiscussionsQuery, useTutorDeleteDiscussionMutation, useTutorUpdateDiscussionMutation, useTutorCreateDiscussionMutation, useTutorDiscussionsQuery } from "@package/query-hooks/discussions.api";
 import { useSession } from "@package/auth/auth-client";
 import type { Discussion } from "@package/schema/discussions.types";
 import { useState } from "react";
@@ -12,12 +12,17 @@ import { Input } from "@package/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@package/ui/dialog";
 import { Textarea } from "@package/ui/textarea";
 import { toast } from "sonner";
+import { useParams } from "next/navigation";
 
 export default function TutorDiscussionsPage() {
     const [page, setPage] = useState(1);
     const limit = 10;
 
-    const { data: raw, isLoading } = useAdminDiscussionsQuery();
+
+    const params = useParams();
+    const lessonId = params.lesson_id as string;
+
+    const { data: raw, isLoading } = useTutorDiscussionsQuery(lessonId, page);
     const deleteDiscussion = useTutorDeleteDiscussionMutation();
     const updateDiscussion = useTutorUpdateDiscussionMutation();
     const createReply = useTutorCreateDiscussionMutation();

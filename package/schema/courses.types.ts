@@ -115,14 +115,32 @@ export const EnrolledCourseResponseZod = z.object({
 });
 export type EnrolledCourseResponse = z.infer<typeof EnrolledCourseResponseZod>;
 
-export const CourseCreatedResponseZod = z.object({
+export const CourseZod = z.object({
     id: z.string(),
+    tutor_id: z.string().optional(),
     slug: z.string(),
     title: z.string(),
+    short_description: z.string().nullable().optional(),
+    long_description: z.string().nullable().optional(),
+    image_url: z.string().nullable().optional(),
+    preview_video_url: z.string().nullable().optional(),
+    language: z.string(),
+    level: z.string(),
+    actual_price: z.number(),
+    final_price: z.number(),
+    benefits: z.array(z.string()),
+    requirements: z.array(z.string()),
+    coupon_allowed: z.boolean(),
+    total_lectures: z.number(),
+    total_duration_seconds: z.number(),
+    rating_avg: z.number(),
+    feedback_count: z.number(),
+    student_count: z.number(),
     status: z.string(),
     created_at: z.string(),
+    updated_at: z.string(),
 });
-export type CourseCreatedResponse = z.infer<typeof CourseCreatedResponseZod>;
+export type Course = z.infer<typeof CourseZod>;
 
 export const CourseStudyResponseZod = z.object({
     course: z.object({ id: z.string(), title: z.string(), thumbnail: z.string().nullable().optional() }),
@@ -149,33 +167,3 @@ export const CoursePublicResponseZod = z.object({
     instructor: InstructorInfoZod,
 });
 export type CoursePublicResponse = z.infer<typeof CoursePublicResponseZod>;
-
-export const CourseInspectResponseZod = z.object({
-    id: z.string(),
-    slug: z.string(),
-    title: z.string(),
-    short_description: z.string().nullable().optional(),
-    long_description: z.string().nullable().optional(),
-    image_url: z.string().nullable().optional(),
-    preview_video_url: z.string().nullable().optional(),
-    language: z.string(),
-    level: z.string(),
-    actual_price: z.number(),
-    final_price: z.number(),
-    benefits: z.array(z.string()),
-    requirements: z.array(z.string()),
-    coupon_allowed: z.boolean(),
-    status: z.string(),
-    total_lectures: z.number(),
-    total_duration_seconds: z.number(),
-    rating_avg: z.number(),
-    feedback_count: z.number(),
-    student_count: z.number(),
-    created_at: z.string(),
-    updated_at: z.string(),
-    category: CategoryInfoZod.nullable().optional(),
-    subcategory: CategoryInfoZod.nullable().optional(),
-    instructor: InstructorInfoZod,
-    chapters: z.array(ChapterCardResponseZod),
-});
-export type CourseInspectResponse = z.infer<typeof CourseInspectResponseZod>;

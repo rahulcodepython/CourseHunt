@@ -199,3 +199,81 @@ func (m *LessonsModule) UpsertDocumentContentRepository(lessonID, tutorID, conte
 	}
 	return &dc, nil
 }
+
+func (m *LessonsModule) InspectContentRepository(lessonID string) (*AggregatedLessonContentResponse, error) {
+	var result struct {
+		LessonExists bool             `db:"lesson_exists"`
+		ContentData  *json.RawMessage `db:"content_data"`
+	}
+
+	query := `
+		WITH lesson_info AS (
+			SELECT l.id AS lesson_id, l.lesson_type
+			FROM lessons l
+			WHERE l.id = $1
+		),
+		content_cte AS (
+			SELECT 
+				li.lesson_type,
+				CASE 
+					WHEN li.lesson_type = 'video' THEN (
+						SELECT json_build_object(
+							'id', vc.id,
+							'video_url', vc.video_url,
+							'written_content', vc.written_content
+						)
+						FROM lesson_video_content vc
+						WHERE vc.lesson_id = li.lesson_id
+					)
+					ELSE NULL
+				END AS video_content,
+				CASE 
+					WHEN li.lesson_type = 'document' THEN (
+						SELECT json_build_object(
+							'id', dc.id,
+							'content', dc.content
+						)
+						FROM lesson_document_content dc
+						WHERE dc.lesson_id = li.lesson_id
+					)
+					ELSE NULL
+				END AS document_content,
+				CASE 
+					WHEN li.lesson_type = 'quiz' THEN (
+						SELECT json_build_object(
+							'id', qm.id,
+							'lesson_id', qm.lesson_id,
+							'title', qm.title,
+							'time_limit_seconds', qm.time_limit_seconds,
+							'total_questions', qm.total_questions,
+							'pass_score_percent', qm.pass_score_percent
+						)
+						FROM quiz_metadata qm
+						WHERE qm.lesson_id = li.lesson_id
+					)
+					ELSE NULL
+				END AS quiz_content
+			FROM lesson_info li
+		)
+		SELECT 
+			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
+			(SELECT row_to_json(content_cte.*) FROM content_cte) AS content_data
+	`
+	err := m.DB.Get(&result, query, lessonID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case !result.LessonExists:
+		return nil, ErrLessonNotFound
+	case result.ContentData == nil:
+		return nil, errors.New("failed to retrieve content")
+	}
+
+	var resp AggregatedLessonContentResponse
+	if err := json.Unmarshal(*result.ContentData, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}

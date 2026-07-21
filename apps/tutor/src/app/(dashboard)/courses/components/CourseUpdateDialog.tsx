@@ -8,12 +8,12 @@ import { Label } from "@package/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@package/ui/select";
 import { useUpdateCourseMutation } from "@package/query-hooks/courses.api";
 import { useState, useEffect } from "react";
-import type { CourseInspectResponse } from "@package/schema/courses.types";
+import type { Course } from "@package/schema/courses.types";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@package/ui/tabs";
 
 interface CourseUpdateDialogProps {
-	course: CourseInspectResponse | null;
+	course: Course | null;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }

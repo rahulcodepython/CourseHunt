@@ -12,4 +12,6 @@ func (m *ChaptersModule) Routes(v1, protected fiber.Router) {
 	chapters.Post("", m.CreateController)
 	chapters.Patch("/:id", m.UpdateController)
 	chapters.Delete("/:id", m.DeleteController)
+
+	protected.Get("/chapters/inspect/:courseId", middlewares.PermissionGuard("courses:inspect"), m.InspectListController)
 }

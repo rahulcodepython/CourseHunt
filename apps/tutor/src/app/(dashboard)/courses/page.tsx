@@ -7,7 +7,7 @@ import { CoursesToolbar } from "./components/CoursesToolbar";
 import { CoursesTable } from "./components/CoursesTable";
 import { CourseCreateDialog } from "./components/CourseCreateDialog";
 import { CourseUpdateDialog } from "./components/CourseUpdateDialog";
-import type { CourseInspectResponse } from "@package/schema/courses.types";
+import type { Course } from "@package/schema/courses.types";
 
 export default function TutorCoursesPage() {
 	const [page, setPage] = useState(1);
@@ -29,7 +29,7 @@ export default function TutorCoursesPage() {
 	const totalPages = raw?.data ? Math.ceil(raw.data.total / raw.data.limit) : 0;
 
 	const [createOpen, setCreateOpen] = useState(false);
-	const [updateCourse, setUpdateCourse] = useState<CourseInspectResponse | null>(null);
+	const [updateCourse, setUpdateCourse] = useState<Course | null>(null);
 
 	return (
 		<div className="space-y-6">

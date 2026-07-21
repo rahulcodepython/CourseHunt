@@ -254,3 +254,20 @@ func (m *ChaptersModule) DeleteRepository(id, userID string) (string, error) {
 		return deletedObj.ID, nil
 	}
 }
+
+func (m *ChaptersModule) InspectListRepository(courseID string) ([]Chapter, error) {
+	var chapters []Chapter
+	err := m.DB.Select(&chapters, `
+		SELECT id, course_id, chapter_no, title, total_lectures, total_duration_seconds, created_at, updated_at
+		FROM chapters
+		WHERE course_id = $1
+		ORDER BY chapter_no ASC
+	`, courseID)
+	if err != nil {
+		return nil, err
+	}
+	if chapters == nil {
+		chapters = []Chapter{}
+	}
+	return chapters, nil
+}

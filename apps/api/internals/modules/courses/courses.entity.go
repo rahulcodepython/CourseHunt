@@ -27,6 +27,7 @@ type Course struct {
 	TotalDurationSeconds int       `json:"total_duration_seconds" db:"total_duration_seconds"`
 	RatingAvg            float64   `json:"rating_avg" db:"rating_avg"`
 	FeedbackCount        int       `json:"feedback_count" db:"feedback_count"`
+	StudentCount         int       `json:"student_count" db:"student_count"`
 	Status               string    `json:"status" db:"status"`
 	CreatedAt            time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at" db:"updated_at"`
@@ -154,46 +155,9 @@ type EnrolledCourseResponse struct {
 	LastAccessedLessonID *string `json:"last_accessed_lesson_id" db:"last_accessed_lesson_id"`
 }
 
-type CourseCreatedResponse struct {
-	ID        string    `json:"id" db:"id"`
-	Slug      string    `json:"slug" db:"slug"`
-	Title     string    `json:"title" db:"title"`
-	Status    string    `json:"status" db:"status"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-}
-
 type CourseStudyResponse struct {
 	Course            models.CourseInfo  `json:"course"`
 	CompletionPercent float64            `json:"completion_percent"`
 	Completed         bool               `json:"completed"`
 	Chapters          []StudyChapterItem `json:"chapters"`
-}
-
-type CourseInspectResponse struct {
-	ID                   string                `json:"id" db:"id"`
-	Slug                 string                `json:"slug" db:"slug"`
-	Title                string                `json:"title" db:"title"`
-	ShortDescription     *string               `json:"short_description" db:"short_description"`
-	LongDescription      *string               `json:"long_description" db:"long_description"`
-	ImageURL             *string               `json:"image_url" db:"image_url"`
-	PreviewVideoURL      *string               `json:"preview_video_url" db:"preview_video_url"`
-	Language             string                `json:"language" db:"language"`
-	Level                string                `json:"level" db:"level"`
-	ActualPrice          float64               `json:"actual_price" db:"actual_price"`
-	FinalPrice           float64               `json:"final_price" db:"final_price"`
-	Benefits             []string              `json:"benefits" db:"benefits"`
-	Requirements         []string              `json:"requirements" db:"requirements"`
-	CouponAllowed        bool                  `json:"coupon_allowed" db:"coupon_allowed"`
-	Status               string                `json:"status" db:"status"`
-	TotalLectures        int                   `json:"total_lectures" db:"total_lectures"`
-	TotalDurationSeconds int                   `json:"total_duration_seconds" db:"total_duration_seconds"`
-	RatingAvg            float64               `json:"rating_avg" db:"rating_avg"`
-	FeedbackCount        int                   `json:"feedback_count" db:"feedback_count"`
-	StudentCount         int                   `json:"student_count" db:"student_count"`
-	CreatedAt            time.Time             `json:"created_at" db:"created_at"`
-	UpdatedAt            time.Time             `json:"updated_at" db:"updated_at"`
-	Category             *models.CategoryInfo  `json:"category"`
-	Subcategory          *models.CategoryInfo  `json:"subcategory"`
-	Instructor           models.InstructorInfo `json:"instructor"`
-	Chapters             []ChapterResponse     `json:"chapters"`
 }

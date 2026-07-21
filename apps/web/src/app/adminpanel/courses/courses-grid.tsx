@@ -4,14 +4,14 @@ import CourseCard from "@package/components/course-card";
 import LoadingButton from "@package/components/loading-button";
 import { Button } from "@package/ui/button";
 import { useInspectCoursesQuery, useDeleteCourseMutation } from "@package/query-hooks/courses.api";
-import type { CourseInspectResponse } from "@package/schema/courses.types";
+import type { Course } from "@package/schema/courses.types";
 import Link from "next/link";
 import CreateCourse from "./create-course";
 
 const CoursesGrid = () => {
 	const coursesQuery = useInspectCoursesQuery();
 	const paginatedData = coursesQuery.data?.data;
-	const courseData: CourseInspectResponse[] = paginatedData ? (paginatedData.data as unknown as CourseInspectResponse[]) : [];
+	const courseData: Course[] = paginatedData ? (paginatedData.data as unknown as Course[]) : [];
 
 	return (
 		<div className="container mx-auto p-6">
@@ -27,10 +27,10 @@ const CoursesGrid = () => {
 			)}
 			{courseData.length > 0 && (
 				<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4">
-					{courseData.map((course: CourseInspectResponse, index: number) => (
+					{courseData.map((course: Course, index: number) => (
 						<CourseCard
 							key={index}
-							courseData={course}
+							courseData={course as any}
 							edit={
 								<div className="flex items-center gap-2">
 									<Link href={`/adminpanel/courses/edit/${course.id}/`}>

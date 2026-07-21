@@ -23,4 +23,8 @@ func (m *LessonsModule) Routes(v1, protected fiber.Router) {
 
 	lessons.Post("/:id/resources", m.CreateResourceController)
 	lessons.Delete("/:id/resources/:resourceID", m.DeleteResourceController)
+
+	protected.Get("/lessons/inspect/chapter/:chapterId", middlewares.PermissionGuard("courses:inspect"), m.InspectListController)
+	protected.Get("/lessons/inspect/:id/content", middlewares.PermissionGuard("courses:inspect"), m.InspectContentController)
+	protected.Get("/lessons/inspect/:id/resources", middlewares.PermissionGuard("courses:inspect"), m.InspectResourcesController)
 }

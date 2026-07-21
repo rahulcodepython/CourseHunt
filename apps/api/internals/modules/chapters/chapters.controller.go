@@ -47,3 +47,12 @@ func (m *ChaptersModule) DeleteController(c *fiber.Ctx) error {
 	}
 	return utils.OK(c, "Chapter deleted successfully.", models.DeleteResponse{ID: id})
 }
+
+func (m *ChaptersModule) InspectListController(c *fiber.Ctx) error {
+	courseID := c.Params("courseId")
+	chapters, err := m.InspectListRepository(courseID)
+	if err != nil {
+		return utils.InternalError(c, "Failed to inspect chapters.", err)
+	}
+	return utils.OK(c, "Chapters inspected successfully.", chapters)
+}

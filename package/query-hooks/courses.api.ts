@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useSimpleMutation, usePaginatedMutation, removeFromPaginated } from "@/package/react-query/mutation";
 import { useAppQuery } from "@/package/react-query/query";
 import { queryKeys } from "@/package/react-query/query-keys";
-import { CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CoursePublicResponseZod, EnrolledCourseResponseZod, CourseCreatedResponseZod, CourseInspectResponseZod } from "@/package/schema/courses.types";
+import { CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CoursePublicResponseZod, EnrolledCourseResponseZod, CourseZod } from "@/package/schema/courses.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/package/schema/common.types";
 
 export function useCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; subcategory_id?: string; level?: string }) {
@@ -45,7 +45,7 @@ export function useEnrolledCoursesQuery() {
 export function useCreateCourseMutation() {
 	return useSimpleMutation({
 		mutationFn: (data: z.infer<typeof CreateCourseRequestZod>) =>
-			apiRequest({ url: "/api/v1/courses", method: "POST", data }, CourseCreatedResponseZod),
+			apiRequest({ url: "/api/v1/courses", method: "POST", data }, CourseZod),
 		invalidateKeys: [queryKeys.courses(), queryKeys.coursesInspect(), queryKeys.coursesTutor()],
 		showToast: true,
 	});
@@ -54,7 +54,7 @@ export function useCreateCourseMutation() {
 export function useUpdateCourseMutation() {
 	return useSimpleMutation({
 		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateCourseRequestZod> }) =>
-			apiRequest({ url: `/api/v1/courses/${id}`, method: "PATCH", data }, CourseCreatedResponseZod),
+			apiRequest({ url: `/api/v1/courses/${id}`, method: "PATCH", data }, CourseZod),
 		invalidateKeys: [queryKeys.courses(), queryKeys.coursesInspect(), queryKeys.coursesTutor()],
 		showToast: true,
 	});
@@ -85,7 +85,7 @@ export function useInspectCoursesQuery(params?: { page?: number; limit?: number;
 	const qs = searchParams.toString();
 	const url = qs ? `/api/v1/courses/inspect?${qs}` : "/api/v1/courses/inspect";
 	return useAppQuery(queryKeys.coursesInspect(params), () =>
-		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CourseInspectResponseZod)),
+		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CourseZod)),
 	);
 }
 
@@ -101,6 +101,6 @@ export function useTutorCoursesQuery(params?: { page?: number; limit?: number; s
 	const qs = searchParams.toString();
 	const url = qs ? `/api/v1/courses?${qs}` : "/api/v1/courses";
 	return useAppQuery(queryKeys.coursesTutor(params), () =>
-		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CourseInspectResponseZod)),
+		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CourseZod)),
 	);
 }

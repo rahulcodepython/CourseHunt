@@ -93,7 +93,7 @@ export function useTutorDeleteDiscussionMutation() {
 
 // --- Admin Hooks ---
 
-export function useAdminDiscussionsQuery(lessonId: string = "", page: number = 1, limit: number = 10) {
+export function useAdminDiscussionsQuery(lessonId: string, page: number = 1, limit: number = 10) {
 	return useAppQuery([...queryKeys.discussionsAdmin(), lessonId, page, limit], () =>
 		apiRequest({ url: `/api/v1/discussions/admin/${lessonId}?page=${page}&limit=${limit}`, method: "GET" }, PaginatedResponseZod(DiscussionZod)),
 	);

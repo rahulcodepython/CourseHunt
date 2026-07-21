@@ -4,21 +4,21 @@ import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { Badge } from "@package/ui/badge";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import type { CourseInspectResponse } from "@package/schema/courses.types";
+import type { Course } from "@package/schema/courses.types";
 import Link from "next/link";
 import { useState } from "react";
 import { ConfirmDeleteDialog } from "@package/components/confirm-delete-dialog";
 import { useDeleteCourseMutation } from "@package/query-hooks/courses.api";
 
 interface CoursesTableProps {
-	courses: CourseInspectResponse[];
+	courses: Course[];
 	isLoading: boolean;
 	page: number;
 	totalPages: number;
 	total: number;
 	limit: number;
 	onPageChange: (page: number) => void;
-	onUpdateClick: (course: CourseInspectResponse) => void;
+	onUpdateClick: (course: Course) => void;
 }
 
 export function CoursesTable({
@@ -41,7 +41,7 @@ export function CoursesTable({
 		}
 	};
 
-	const columns: DataTableColumn<CourseInspectResponse>[] = [
+	const columns: DataTableColumn<Course>[] = [
 		{
 			header: "Course",
 			render: (course) => (

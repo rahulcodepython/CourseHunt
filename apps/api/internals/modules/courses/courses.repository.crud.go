@@ -15,13 +15,13 @@ var (
 	ErrAccessDenied   = errors.New("access denied")
 )
 
-func (m *CoursesModule) CreateRepository(tutorID string, req CreateCourseRequest) (*CourseCreatedResponse, error) {
+func (m *CoursesModule) CreateRepository(tutorID string, req CreateCourseRequest) (*Course, error) {
 	slug := utils.Slugify(req.Title)
-	var resp CourseCreatedResponse
+	var resp Course
 	err := m.DB.Get(&resp, `
 		INSERT INTO courses (tutor_id, slug, title, short_description, category_id, subcategory_id, language, level, status, benefits, requirements)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE(NULLIF($8, ''), 'all'), COALESCE(NULLIF($9, ''), 'draft'), $10, $11)
-		RETURNING id, slug, title, status, created_at`,
+		RETURNING *, 0 AS student_count`,
 		tutorID, slug, req.Title, req.ShortDescription, req.CategoryID, req.SubcategoryID,
 		req.Language, req.Level, req.Status,
 		pq.Array([]string{}), pq.Array([]string{}))
@@ -84,7 +84,12 @@ func (m *CoursesModule) UpdateRepository(id, tutorID string, req UpdateCourseReq
 		)
 		SELECT 
 			(SELECT tutor_id FROM target_course) AS db_tutor_id,
-			row_to_json(updated.*) AS updated_data
+			(
+				SELECT row_to_json(u) FROM (
+					SELECT updated.*, (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = updated.id AND e.revoked = false) AS student_count
+					FROM updated
+				) u
+			) AS updated_data
 		FROM (SELECT 1) dummy
 		LEFT JOIN updated ON true
 	`

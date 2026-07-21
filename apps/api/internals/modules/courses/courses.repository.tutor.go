@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (m *CoursesModule) TutorListRepository(page, limit int, tutorID, categoryID, subcategoryID, level, search, status string) ([]CourseInspectResponse, int, error) {
+func (m *CoursesModule) TutorListRepository(page, limit int, tutorID, categoryID, subcategoryID, level, search, status string) ([]Course, int, error) {
 	offset := (page - 1) * limit
 	where := []string{"c.tutor_id = $1"}
 	args := []interface{}{tutorID}
@@ -51,35 +51,12 @@ func (m *CoursesModule) TutorListRepository(page, limit int, tutorID, categoryID
 			SELECT COUNT(*) AS total FROM courses c WHERE %s
 		),
 		data_cte AS (
-			SELECT c.id, c.slug, c.title, c.short_description, c.long_description, c.image_url, c.preview_video_url,
+			SELECT c.id, c.tutor_id, c.slug, c.title, c.short_description, c.long_description, c.image_url, c.preview_video_url,
 			       c.language, c.level, c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits, COALESCE(c.requirements, '{}') AS requirements,
-			       c.coupon_allowed, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
+			       c.category_id, c.subcategory_id, c.coupon_allowed, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
 			       (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id AND e.revoked = false) AS student_count,
-			       c.created_at, c.updated_at,
-			       CASE WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name) ELSE NULL END AS category,
-			       CASE WHEN subcat.id IS NOT NULL THEN json_build_object('id', subcat.id, 'name', subcat.name) ELSE NULL END AS subcategory,
-			       json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS instructor,
-			       (
-			       		SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
-			       		FROM (
-			       			SELECT 
-			       				ch.id, ch.chapter_no, ch.title, ch.total_lectures, ch.total_duration_seconds,
-			       				(
-			       					SELECT COALESCE(json_agg(lessons_tree ORDER BY lessons_tree.lesson_no), '[]'::json)
-			       					FROM (
-			       						SELECT l.id, l.lesson_no, l.title, l.lesson_type, l.short_description, l.preview_video_url, l.duration_seconds
-			       						FROM lessons l
-			       						WHERE l.chapter_id = ch.id
-			       					) lessons_tree
-			       				) AS lessons
-			       			FROM chapters ch
-			       			WHERE ch.course_id = c.id
-			       		) chapters_tree
-			       ) AS chapters
+			       c.created_at, c.updated_at
 			FROM courses c
-			LEFT JOIN categories cat ON c.category_id = cat.id
-			LEFT JOIN categories subcat ON c.subcategory_id = subcat.id
-			LEFT JOIN "user" u ON u.id = c.tutor_id
 			WHERE %s
 			ORDER BY c.created_at DESC
 			LIMIT $%d OFFSET $%d
@@ -93,14 +70,14 @@ func (m *CoursesModule) TutorListRepository(page, limit int, tutorID, categoryID
 		return nil, 0, err
 	}
 
-	var list []CourseInspectResponse
+	var list []Course
 	if err := json.Unmarshal(result.Data, &list); err != nil {
 		return nil, 0, err
 	}
 	return list, result.Total, nil
 }
 
-func (m *CoursesModule) InspectRepository(page, limit int, categoryID, subcategoryID, level, search, tutorID, status string) ([]CourseInspectResponse, int, error) {
+func (m *CoursesModule) InspectRepository(page, limit int, categoryID, subcategoryID, level, search, tutorID, status string) ([]Course, int, error) {
 	offset := (page - 1) * limit
 	where := []string{"1=1"}
 	args := []interface{}{}
@@ -150,35 +127,12 @@ func (m *CoursesModule) InspectRepository(page, limit int, categoryID, subcatego
 			SELECT COUNT(*) AS total FROM courses c WHERE %s
 		),
 		data_cte AS (
-			SELECT c.id, c.slug, c.title, c.short_description, c.long_description, c.image_url, c.preview_video_url,
+			SELECT c.id, c.tutor_id, c.slug, c.title, c.short_description, c.long_description, c.image_url, c.preview_video_url,
 			       c.language, c.level, c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits, COALESCE(c.requirements, '{}') AS requirements,
-			       c.coupon_allowed, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
+			       c.category_id, c.subcategory_id, c.coupon_allowed, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
 			       (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id AND e.revoked = false) AS student_count,
-			       c.created_at, c.updated_at,
-			       CASE WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name) ELSE NULL END AS category,
-			       CASE WHEN subcat.id IS NOT NULL THEN json_build_object('id', subcat.id, 'name', subcat.name) ELSE NULL END AS subcategory,
-			       json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS instructor,
-			       (
-			       		SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
-			       		FROM (
-			       			SELECT 
-			       				ch.id, ch.chapter_no, ch.title, ch.total_lectures, ch.total_duration_seconds,
-			       				(
-			       					SELECT COALESCE(json_agg(lessons_tree ORDER BY lessons_tree.lesson_no), '[]'::json)
-			       					FROM (
-			       						SELECT l.id, l.lesson_no, l.title, l.lesson_type, l.short_description, l.preview_video_url, l.duration_seconds
-			       						FROM lessons l
-			       						WHERE l.chapter_id = ch.id
-			       					) lessons_tree
-			       				) AS lessons
-			       			FROM chapters ch
-			       			WHERE ch.course_id = c.id
-			       		) chapters_tree
-			       ) AS chapters
+			       c.created_at, c.updated_at
 			FROM courses c
-			LEFT JOIN categories cat ON c.category_id = cat.id
-			LEFT JOIN categories subcat ON c.subcategory_id = subcat.id
-			LEFT JOIN "user" u ON u.id = c.tutor_id
 			WHERE %s
 			ORDER BY c.created_at DESC
 			LIMIT $%d OFFSET $%d
@@ -192,7 +146,7 @@ func (m *CoursesModule) InspectRepository(page, limit int, categoryID, subcatego
 		return nil, 0, err
 	}
 
-	var list []CourseInspectResponse
+	var list []Course
 	if err := json.Unmarshal(result.Data, &list); err != nil {
 		return nil, 0, err
 	}

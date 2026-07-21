@@ -198,3 +198,33 @@ func (m *LessonsModule) ReadResourcesController(c *fiber.Ctx) error {
 	}
 	return utils.OK(c, "Resources fetched successfully.", resources)
 }
+
+func (m *LessonsModule) InspectListController(c *fiber.Ctx) error {
+	chapterID := c.Params("chapterId")
+	lessons, err := m.InspectListRepository(chapterID)
+	if err != nil {
+		return utils.InternalError(c, "Failed to inspect lessons.", err)
+	}
+	return utils.OK(c, "Lessons inspected successfully.", lessons)
+}
+
+func (m *LessonsModule) InspectContentController(c *fiber.Ctx) error {
+	lessonID := c.Params("id")
+	resp, err := m.InspectContentRepository(lessonID)
+	if err != nil {
+		if errors.Is(err, ErrLessonNotFound) {
+			return utils.NotFound(c, "Lesson not found.", err)
+		}
+		return utils.InternalError(c, "Failed to inspect lesson content.", err)
+	}
+	return utils.OK(c, "Lesson content inspected successfully.", resp)
+}
+
+func (m *LessonsModule) InspectResourcesController(c *fiber.Ctx) error {
+	lessonID := c.Params("id")
+	resources, err := m.InspectResourcesRepository(lessonID)
+	if err != nil {
+		return utils.InternalError(c, "Failed to inspect lesson resources.", err)
+	}
+	return utils.OK(c, "Lesson resources inspected successfully.", resources)
+}

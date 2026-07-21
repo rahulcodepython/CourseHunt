@@ -144,3 +144,19 @@ func (m *LessonsModule) ReadResourcesRepository(lessonID, userID string) ([]Less
 	return list, nil
 }
 
+func (m *LessonsModule) InspectResourcesRepository(lessonID string) ([]LessonResource, error) {
+	var list []LessonResource
+	err := m.DB.Select(&list, `
+		SELECT id, lesson_id, title, file_url, file_type
+		FROM lesson_resources
+		WHERE lesson_id = $1
+	`, lessonID)
+	if err != nil {
+		return nil, err
+	}
+	if list == nil {
+		list = []LessonResource{}
+	}
+	return list, nil
+}
+
