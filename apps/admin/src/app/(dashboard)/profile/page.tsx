@@ -12,34 +12,22 @@ import { useUserProfileQuery, useCreateUserProfileMutation } from "@package/quer
 import { useUploadMediaMutation } from "@package/query-hooks/upload.api";
 import { useSessionStore } from "@/stores/session-store";
 import { authClient } from "@package/auth/auth-client";
-import { useEnrolledCoursesQuery } from "@package/query-hooks/courses.api";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
 
-interface UserProfileType {
-	name: string;
-	email: string;
-	role: string;
-	avatarUrl: string;
-	headline: string;
-	bio: string;
-	website: string;
-}
-
-export default function Component() {
+export default function AdminProfilePage() {
 	const session = useSessionStore((s) => s.data);
 	const isSessionLoading = useSessionStore((s) => s.isPending);
 	const updateUser = useSessionStore((s) => s.updateUser);
 	const userProfileQuery = useUserProfileQuery();
-	const enrolledCoursesQuery = useEnrolledCoursesQuery();
-	const { isPending: isSaving, mutateAsync: updateUserProfile } = useCreateUserProfileMutation();
+	const { isPending: isSaving, mutateAsync: updateAdminProfile } = useCreateUserProfileMutation();
 	const { isPending: isUploading, uploadMedia } = useUploadMediaMutation();
 
-	const [formData, setFormData] = useState<UserProfileType>({
+	const [formData, setFormData] = useState({
 		name: "",
 		email: "",
-		role: "student",
+		role: "admin",
 		avatarUrl: "",
 		headline: "",
 		bio: "",
@@ -55,7 +43,7 @@ export default function Component() {
 				...prev,
 				name: session.user.name || "",
 				email: session.user.email || "",
-				role: (session.user as any).role || "student",
+				role: (session.user as any).role || "admin",
 				avatarUrl: session.user.image || "",
 			}));
 		}
@@ -91,7 +79,6 @@ export default function Component() {
 
 	const handleSubmit = async () => {
 		try {
-			// Update basic user profile (name, image)
 			const authRes = await authClient.updateUser({
 				name: formData.name,
 				image: formData.avatarUrl || undefined,
@@ -103,8 +90,7 @@ export default function Component() {
 
 			updateUser({ name: formData.name, image: formData.avatarUrl || null });
 
-			// Update user profile metadata (headline, bio, website)
-			await updateUserProfile({
+			await updateAdminProfile({
 				headline: formData.headline || null,
 				bio: formData.bio || null,
 				website: formData.website || null,
@@ -113,8 +99,6 @@ export default function Component() {
 			toast.error(error.message || "Failed to save profile changes");
 		}
 	};
-
-	const purchasedCount = enrolledCoursesQuery.data?.data?.total ?? 0;
 
 	return (
 		<div className="w-full pb-8 pt-4">
@@ -133,7 +117,7 @@ export default function Component() {
 											<Image src={formData.avatarUrl} alt="Profile" fill className="object-cover" />
 										) : (
 											<span className="text-3xl font-bold text-muted-foreground uppercase">
-												{formData.name ? formData.name.charAt(0) : "U"}
+												{formData.name ? formData.name.charAt(0) : "A"}
 											</span>
 										)}
 										<div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -142,14 +126,8 @@ export default function Component() {
 									</div>
 									<input type="file" ref={fileRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
 								</div>
-								<h2 className="mt-3 text-xl font-bold">{formData.name || "Your Name"}</h2>
+								<h2 className="mt-3 text-xl font-bold">{formData.name || "Admin Name"}</h2>
 								<Badge variant="secondary" className="mt-1 capitalize">{formData.role}</Badge>
-								<div className="w-full grid grid-cols-1 gap-4 mt-8 pt-6 border-t">
-									<div className="text-center">
-										<div className="text-xl font-bold">{purchasedCount}</div>
-										<div className="text-[10px] uppercase tracking-wider text-muted-foreground">Enrolled Courses</div>
-									</div>
-								</div>
 							</CardContent>
 						</Card>
 					</div>
@@ -157,7 +135,7 @@ export default function Component() {
 					<Card className="flex-1 border-none shadow-lg">
 						<CardHeader className="border-b bg-muted/20">
 							<CardTitle className="text-2xl font-bold">Edit Profile</CardTitle>
-							<CardDescription>Update your personal information and account settings</CardDescription>
+							<CardDescription>Update your admin profile information</CardDescription>
 						</CardHeader>
 						<CardContent className="pt-6">
 							<div className="space-y-8">
@@ -182,11 +160,11 @@ export default function Component() {
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 										<div className="space-y-2">
 											<Label htmlFor="headline">Headline</Label>
-											<Input id="headline" value={formData.headline} onChange={(e) => handleInputChange("headline", e.target.value)} placeholder="e.g., Web Developer / Student" className="bg-muted/30 focus-visible:ring-primary" />
+											<Input id="headline" value={formData.headline} onChange={(e) => handleInputChange("headline", e.target.value)} placeholder="e.g., Platform Administrator" className="bg-muted/30 focus-visible:ring-primary" />
 										</div>
 										<div className="space-y-2">
 											<Label htmlFor="website">Website / Portfolio</Label>
-											<Input id="website" value={formData.website} onChange={(e) => handleInputChange("website", e.target.value)} placeholder="e.g., https://johndoe.com" className="bg-muted/30 focus-visible:ring-primary" />
+											<Input id="website" value={formData.website} onChange={(e) => handleInputChange("website", e.target.value)} placeholder="e.g., https://example.com" className="bg-muted/30 focus-visible:ring-primary" />
 										</div>
 									</div>
 									<div className="space-y-2">

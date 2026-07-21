@@ -12,9 +12,3 @@ export function useEnrollmentsQuery(courseId: string) {
 		apiRequest({ url: `/api/v1/enrollments/${courseId}`, method: "GET" }, PaginatedResponseZod(ListEnrollmentResponseZod)),
 	);
 }
-
-export function useInspectEnrollmentsQuery(courseId: string) {
-	return useAppQuery(queryKeys.enrollmentsInspect(courseId), () =>
-		apiRequest({ url: `/api/v1/enrollments/${courseId}/inspect`, method: "GET" }, PaginatedResponseZod(ListEnrollmentResponseZod)),
-	);
-}

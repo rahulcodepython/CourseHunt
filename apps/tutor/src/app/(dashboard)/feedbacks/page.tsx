@@ -4,7 +4,7 @@ import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import { useInspectFeedbacksQuery, useUpdateFeedbackMutation, useDeleteFeedbackMutation } from "@package/query-hooks/feedbacks.api";
+import { useFeedbacksQuery, useUpdateFeedbackMutation, useDeleteFeedbackMutation } from "@package/query-hooks/feedbacks.api";
 import type { Feedback } from "@package/schema/feedbacks.types";
 import { useState } from "react";
 import { Badge } from "@package/ui/badge";
@@ -72,7 +72,7 @@ export default function TutorFeedbacksPage() {
     const [page, setPage] = useState(1);
     const limit = 10;
 
-    const { data: raw, isLoading } = useInspectFeedbacksQuery();
+    const { data: raw, isLoading } = useFeedbacksQuery();
     const updateFeedback = useUpdateFeedbackMutation();
     const deleteFeedback = useDeleteFeedbackMutation();
 

@@ -9,26 +9,20 @@ import { queryKeys } from "@/package/react-query/query-keys";
 import { PaginatedResponseZod } from "@/package/schema/common.types";
 import { TransactionZod, InitiateTransactionRequestZod, InitiateTransactionResponseZod, CheckoutCourseResponseZod, TransactionStatusResponseZod } from "@/package/schema/transactions.types";
 
-export function useTransactionsQuery() {
+export function useTransactionsQuery(params?: { page?: number; limit?: number }) {
+	const searchParams = new URLSearchParams();
+	if (params?.page) searchParams.set("page", params.page.toString());
+	if (params?.limit) searchParams.set("limit", params.limit.toString());
+	const qs = searchParams.toString();
+	const url = qs ? `/api/v1/transactions?${qs}` : "/api/v1/transactions";
 	return useAppQuery(queryKeys.transactions(), () =>
-		apiRequest({ url: "/api/v1/transactions", method: "GET" }, PaginatedResponseZod(TransactionZod)),
+		apiRequest({ url, method: "GET" }, PaginatedResponseZod(TransactionZod)),
 	);
 }
 
 export function useCheckoutCourseQuery(courseId: string) {
 	return useAppQuery(queryKeys.transactionsCheckout(courseId), () =>
 		apiRequest({ url: `/api/v1/transactions/checkout/course/${courseId}`, method: "GET" }, CheckoutCourseResponseZod),
-	);
-}
-
-export function useMyTransactionsQuery(params?: { page?: number; limit?: number }) {
-	const searchParams = new URLSearchParams();
-	if (params?.page) searchParams.set("page", params.page.toString());
-	if (params?.limit) searchParams.set("limit", params.limit.toString());
-	const qs = searchParams.toString();
-	const url = qs ? `/api/v1/transactions/me?${qs}` : "/api/v1/transactions/me";
-	return useAppQuery(queryKeys.transactionsMe(params), () =>
-		apiRequest({ url, method: "GET" }, PaginatedResponseZod(TransactionZod)),
 	);
 }
 

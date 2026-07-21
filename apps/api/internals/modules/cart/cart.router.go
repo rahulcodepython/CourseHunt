@@ -12,5 +12,5 @@ func (m *CartModule) Routes(v1, protected fiber.Router) {
 	cart.Get("", m.ListController)
 	cart.Post("", m.AddController)
 	cart.Delete("/:id", m.RemoveController)
-	cart.Delete("/clear", m.ClearController)
+	cart.Delete("", m.ClearController)
 }

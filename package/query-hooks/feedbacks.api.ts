@@ -9,7 +9,7 @@ import { queryKeys } from "@/package/react-query/query-keys";
 import { FeedbackZod, CreateFeedbackRequestZod, PinFeedbackRequestZod } from "@/package/schema/feedbacks.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/package/schema/common.types";
 
-const feedbackKeys = [queryKeys.feedbacks(), queryKeys.feedbacksPinned(), queryKeys.feedbacksInspect()];
+const feedbackKeys = [queryKeys.feedbacks(), queryKeys.feedbacksPinned()];
 
 export function useFeedbacksQuery() {
 	return useAppQuery(queryKeys.feedbacks(), () =>
@@ -46,15 +46,9 @@ export function useDeleteFeedbackMutation() {
 		mutationFn: (id: string) =>
 			apiRequest({ url: `/api/v1/feedbacks/${id}`, method: "DELETE" }, DeleteResponseZod),
 		queryKey: queryKeys.feedbacks(),
-		invalidateKeys: [queryKeys.feedbacksPinned(), queryKeys.feedbacksInspect()],
+		invalidateKeys: [queryKeys.feedbacksPinned()],
 		updater: (res) => removeFromPaginated(res.id),
 		optimistic: (id) => removeFromPaginated(id),
 		showToast: true,
 	});
-}
-
-export function useInspectFeedbacksQuery() {
-	return useAppQuery(queryKeys.feedbacksInspect(), () =>
-		apiRequest({ url: "/api/v1/feedbacks/inspect", method: "GET" }, PaginatedResponseZod(FeedbackZod)),
-	);
 }

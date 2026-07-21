@@ -8,45 +8,32 @@ import { Input } from "@package/ui/input";
 import { Label } from "@package/ui/label";
 import { Badge } from "@package/ui/badge";
 import { Textarea } from "@package/ui/textarea";
-import { useUserProfileQuery, useCreateUserProfileMutation } from "@package/query-hooks/users.api";
+import { useTutorProfileQuery, useCreateTutorProfileMutation } from "@package/query-hooks/users.api";
 import { useUploadMediaMutation } from "@package/query-hooks/upload.api";
 import { useSessionStore } from "@/stores/session-store";
 import { authClient } from "@package/auth/auth-client";
-import { useEnrolledCoursesQuery } from "@package/query-hooks/courses.api";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
 
-interface UserProfileType {
-	name: string;
-	email: string;
-	role: string;
-	avatarUrl: string;
-	headline: string;
-	bio: string;
-	website: string;
-}
-
-export default function Component() {
+export default function TutorProfilePage() {
 	const session = useSessionStore((s) => s.data);
 	const isSessionLoading = useSessionStore((s) => s.isPending);
 	const updateUser = useSessionStore((s) => s.updateUser);
-	const userProfileQuery = useUserProfileQuery();
-	const enrolledCoursesQuery = useEnrolledCoursesQuery();
-	const { isPending: isSaving, mutateAsync: updateUserProfile } = useCreateUserProfileMutation();
+	const tutorProfileQuery = useTutorProfileQuery();
+	const { isPending: isSaving, mutateAsync: updateTutorProfile } = useCreateTutorProfileMutation();
 	const { isPending: isUploading, uploadMedia } = useUploadMediaMutation();
 
-	const [formData, setFormData] = useState<UserProfileType>({
+	const [formData, setFormData] = useState({
 		name: "",
 		email: "",
-		role: "student",
 		avatarUrl: "",
 		headline: "",
 		bio: "",
 		website: "",
 	});
 
-	const isLoading = isSessionLoading || userProfileQuery.isLoading || isUploading || isSaving;
+	const isLoading = isSessionLoading || tutorProfileQuery.isLoading || isUploading || isSaving;
 	const fileRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
@@ -55,14 +42,13 @@ export default function Component() {
 				...prev,
 				name: session.user.name || "",
 				email: session.user.email || "",
-				role: (session.user as any).role || "student",
 				avatarUrl: session.user.image || "",
 			}));
 		}
 	}, [session]);
 
 	useEffect(() => {
-		const profile = userProfileQuery.data?.data;
+		const profile = tutorProfileQuery.data?.data;
 		if (profile) {
 			setFormData((prev) => ({
 				...prev,
@@ -71,7 +57,7 @@ export default function Component() {
 				website: profile.website || "",
 			}));
 		}
-	}, [userProfileQuery.data]);
+	}, [tutorProfileQuery.data]);
 
 	const handleInputChange = (field: string, value: string) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
@@ -91,7 +77,6 @@ export default function Component() {
 
 	const handleSubmit = async () => {
 		try {
-			// Update basic user profile (name, image)
 			const authRes = await authClient.updateUser({
 				name: formData.name,
 				image: formData.avatarUrl || undefined,
@@ -103,8 +88,7 @@ export default function Component() {
 
 			updateUser({ name: formData.name, image: formData.avatarUrl || null });
 
-			// Update user profile metadata (headline, bio, website)
-			await updateUserProfile({
+			await updateTutorProfile({
 				headline: formData.headline || null,
 				bio: formData.bio || null,
 				website: formData.website || null,
@@ -113,8 +97,6 @@ export default function Component() {
 			toast.error(error.message || "Failed to save profile changes");
 		}
 	};
-
-	const purchasedCount = enrolledCoursesQuery.data?.data?.total ?? 0;
 
 	return (
 		<div className="w-full pb-8 pt-4">
@@ -133,7 +115,7 @@ export default function Component() {
 											<Image src={formData.avatarUrl} alt="Profile" fill className="object-cover" />
 										) : (
 											<span className="text-3xl font-bold text-muted-foreground uppercase">
-												{formData.name ? formData.name.charAt(0) : "U"}
+												{formData.name ? formData.name.charAt(0) : "T"}
 											</span>
 										)}
 										<div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -142,22 +124,16 @@ export default function Component() {
 									</div>
 									<input type="file" ref={fileRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
 								</div>
-								<h2 className="mt-3 text-xl font-bold">{formData.name || "Your Name"}</h2>
-								<Badge variant="secondary" className="mt-1 capitalize">{formData.role}</Badge>
-								<div className="w-full grid grid-cols-1 gap-4 mt-8 pt-6 border-t">
-									<div className="text-center">
-										<div className="text-xl font-bold">{purchasedCount}</div>
-										<div className="text-[10px] uppercase tracking-wider text-muted-foreground">Enrolled Courses</div>
-									</div>
-								</div>
+								<h2 className="mt-3 text-xl font-bold">{formData.name || "Tutor Name"}</h2>
+								<Badge variant="secondary" className="mt-1">Tutor</Badge>
 							</CardContent>
 						</Card>
 					</div>
 
 					<Card className="flex-1 border-none shadow-lg">
 						<CardHeader className="border-b bg-muted/20">
-							<CardTitle className="text-2xl font-bold">Edit Profile</CardTitle>
-							<CardDescription>Update your personal information and account settings</CardDescription>
+							<CardTitle className="text-2xl font-bold">Edit Tutor Profile</CardTitle>
+							<CardDescription>Update your tutor profile information</CardDescription>
 						</CardHeader>
 						<CardContent className="pt-6">
 							<div className="space-y-8">
@@ -182,16 +158,16 @@ export default function Component() {
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 										<div className="space-y-2">
 											<Label htmlFor="headline">Headline</Label>
-											<Input id="headline" value={formData.headline} onChange={(e) => handleInputChange("headline", e.target.value)} placeholder="e.g., Web Developer / Student" className="bg-muted/30 focus-visible:ring-primary" />
+											<Input id="headline" value={formData.headline} onChange={(e) => handleInputChange("headline", e.target.value)} placeholder="e.g., Expert Web Developer" className="bg-muted/30 focus-visible:ring-primary" />
 										</div>
 										<div className="space-y-2">
 											<Label htmlFor="website">Website / Portfolio</Label>
-											<Input id="website" value={formData.website} onChange={(e) => handleInputChange("website", e.target.value)} placeholder="e.g., https://johndoe.com" className="bg-muted/30 focus-visible:ring-primary" />
+											<Input id="website" value={formData.website} onChange={(e) => handleInputChange("website", e.target.value)} placeholder="e.g., https://tutorportfolio.com" className="bg-muted/30 focus-visible:ring-primary" />
 										</div>
 									</div>
 									<div className="space-y-2">
 										<Label htmlFor="bio">Biography</Label>
-										<Textarea id="bio" value={formData.bio} onChange={(e) => handleInputChange("bio", e.target.value)} placeholder="Tell us about yourself..." className="bg-muted/30 min-h-[120px] focus-visible:ring-primary" />
+										<Textarea id="bio" value={formData.bio} onChange={(e) => handleInputChange("bio", e.target.value)} placeholder="Tell us about your teaching experience..." className="bg-muted/30 min-h-[120px] focus-visible:ring-primary" />
 									</div>
 								</div>
 

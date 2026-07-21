@@ -11,10 +11,7 @@ func (m *FeedbacksModule) Routes(v1, protected fiber.Router) {
 	v1.Get("/feedbacks/pinned", m.ListPinnedController)
 
 	protected.Post("/feedbacks", middlewares.PermissionGuard(generic.UserFeedbackCreate), m.CreateController)
-	protected.Get("/feedbacks/inspect", middlewares.PermissionGuard(generic.AdminFeedbackInspect), m.InspectController)
-
-	feedbacks := protected.Group("/feedbacks", middlewares.PermissionGuard(generic.TutorFeedbackManage))
-	feedbacks.Get("", m.ListController)
-	feedbacks.Delete("/:id", m.DeleteController)
-	feedbacks.Patch("/:id", m.UpdateController)
+	protected.Get("/feedbacks", middlewares.PermissionGuard(generic.AdminFeedbackInspect, generic.TutorFeedbackManage), m.ListController)
+	protected.Patch("/feedbacks/:id", middlewares.PermissionGuard(generic.AdminFeedbackInspect), m.UpdateController)
+	protected.Delete("/feedbacks/:id", middlewares.PermissionGuard(generic.AdminFeedbackInspect, generic.TutorFeedbackManage), m.DeleteController)
 }

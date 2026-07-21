@@ -6,10 +6,13 @@ import { Button } from "@package/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table";
 import { Progress } from "@package/ui/progress";
-import type { RecentCourseCard, UserDashboard } from "@package/schema/dashboard.types";
+import { useEnrolledCoursesQuery } from "@package/query-hooks/courses.api";
+import type { EnrolledCourseResponse } from "@package/schema/courses.types";
 import Link from "next/link";
 
-export default function DashboardCoursesSlot({ data }: { data: UserDashboard }) {
+export default function DashboardCoursesSlot() {
+	const { data: raw } = useEnrolledCoursesQuery();
+	const courses = raw?.data?.data ?? [];
 
 	return (
 		<Card className="shadow-sm border-none bg-muted/20 h-full">
@@ -30,7 +33,7 @@ export default function DashboardCoursesSlot({ data }: { data: UserDashboard }) 
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{data.recent_courses.map((course: RecentCourseCard) => {
+						{courses.map((course: EnrolledCourseResponse) => {
 								const progress = course.completion_percent;
 							return (
 								<TableRow key={course.id}>
@@ -80,7 +83,7 @@ export default function DashboardCoursesSlot({ data }: { data: UserDashboard }) 
 								</TableRow>
 							);
 						})}
-						{(data.recent_courses?.length || 0) === 0 && (
+						{courses.length === 0 && (
 					<div className="text-center py-12 border-2 border-dashed rounded-2xl bg-muted/10 mx-6 my-4">
 						<Icon name="IconBook" className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
 						<p className="text-muted-foreground font-medium">You haven't enrolled in any courses yet.</p>

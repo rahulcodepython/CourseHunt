@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useSimpleMutation, useArrayMutation, appendToArray, replaceInArray, removeFromArray } from "@/package/react-query/mutation";
 import { useAppQuery } from "@/package/react-query/query";
 import { queryKeys } from "@/package/react-query/query-keys";
-import { LessonZod, CreateLessonRequestZod, UpdateLessonRequestZod, AggregatedLessonContentResponseZod, SignedURLResponseZod, AddResourceRequestZod, UpsertVideoContentRequestZod, UpsertDocumentContentRequestZod, LessonCompleteResponseZod, LessonVideoContentZod, LessonDocumentContentZod, LessonResourceZod } from "@/package/schema/lessons.types";
+import { LessonZod, CreateLessonRequestZod, UpdateLessonRequestZod, AggregatedLessonContentResponseZod, AddResourceRequestZod, UpsertVideoContentRequestZod, UpsertDocumentContentRequestZod, LessonCompleteResponseZod, LessonVideoContentZod, LessonDocumentContentZod, LessonResourceZod } from "@/package/schema/lessons.types";
 import { DeleteResponseZod } from "@/package/schema/common.types";
 
 export function useLessonsQuery(chapterId: string) {
@@ -95,12 +95,6 @@ export function useDeleteResourceMutation(id: string) {
 		invalidateKeys: [queryKeys.lessonContent(id)],
 		showToast: true,
 	});
-}
-
-export function useSignedUrlQuery(id: string, fileName: string) {
-	return useAppQuery(queryKeys.lessonSignedUrl(id), () =>
-		apiRequest({ url: `/api/v1/lessons/${id}/signed-url?file_name=${encodeURIComponent(fileName)}`, method: "GET" }, SignedURLResponseZod),
-	);
 }
 
 export function useLessonResourcesQuery(id: string) {

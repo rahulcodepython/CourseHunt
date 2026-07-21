@@ -1,14 +1,5 @@
 import { z } from 'zod';
 
-export const RecentCourseCardZod = z.object({
-    id: z.string(),
-    slug: z.string(),
-    title: z.string(),
-    image_url: z.string().nullable().optional(),
-    completion_percent: z.number(),
-});
-export type RecentCourseCard = z.infer<typeof RecentCourseCardZod>;
-
 export const RecentCertificateZod = z.object({
     course_title: z.string(),
     issued_at: z.string(),
@@ -20,7 +11,6 @@ export const UserDashboardZod = z.object({
     completed_courses_count: z.number(),
     in_progress_courses_count: z.number(),
     certificates_count: z.number(),
-    recent_courses: z.array(RecentCourseCardZod),
     recent_certificates: z.array(RecentCertificateZod),
 });
 export type UserDashboard = z.infer<typeof UserDashboardZod>;

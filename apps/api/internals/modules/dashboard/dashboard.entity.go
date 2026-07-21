@@ -4,14 +4,6 @@ import "time"
 
 // ── User Dashboard ─────────────────────────────────────────────────────────────
 
-type RecentCourseCard struct {
-	ID                string  `json:"id"`
-	Slug              string  `json:"slug"`
-	Title             string  `json:"title"`
-	ImageURL          *string `json:"image_url"`
-	CompletionPercent float64 `json:"completion_percent"`
-}
-
 type RecentCertificate struct {
 	CourseTitle string    `json:"course_title"`
 	IssuedAt    time.Time `json:"issued_at"`
@@ -22,7 +14,6 @@ type UserDashboard struct {
 	CompletedCoursesCount  int                 `json:"completed_courses_count"`
 	InProgressCoursesCount int                 `json:"in_progress_courses_count"`
 	CertificatesCount      int                 `json:"certificates_count"`
-	RecentCourses          []RecentCourseCard  `json:"recent_courses"`
 	RecentCertificates     []RecentCertificate `json:"recent_certificates"`
 }
 

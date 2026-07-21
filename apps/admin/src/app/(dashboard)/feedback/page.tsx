@@ -5,14 +5,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar";
 import { Badge } from "@package/ui/badge";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
-import { useInspectFeedbacksQuery, useUpdateFeedbackMutation, useDeleteFeedbackMutation } from "@package/query-hooks/feedbacks.api";
+import { useFeedbacksQuery, useUpdateFeedbackMutation, useDeleteFeedbackMutation } from "@package/query-hooks/feedbacks.api";
 import Loading from "@package/components/loading";
 import { ConfirmDeleteDialog } from "@package/components/confirm-delete-dialog";
 import type { Feedback } from "@package/schema/feedbacks.types";
 import { useState } from "react";
 
 export default function FeedbackPage() {
-    const { data: raw, isLoading } = useInspectFeedbacksQuery();
+    const { data: raw, isLoading } = useFeedbacksQuery();
     const updateMutation = useUpdateFeedbackMutation();
     const deleteMutation = useDeleteFeedbackMutation();
     const feedbacks: Feedback[] = raw?.data?.data ?? [];

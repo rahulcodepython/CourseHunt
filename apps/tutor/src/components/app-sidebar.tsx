@@ -69,6 +69,7 @@ const defaultTutorNav: NavbarDataType = {
                 { title: "Feedbacks", url: "/feedbacks" },
                 { title: "Discussions", url: "/discussions" },
                 { title: "Enrolled Students", url: "/enrolled-students" },
+                { title: "Profile", url: "/profile" },
             ],
         },
     ],

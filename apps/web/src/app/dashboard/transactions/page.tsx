@@ -4,7 +4,7 @@ import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import { useMyTransactionsQuery } from "@package/query-hooks/transactions.api";
+import { useTransactionsQuery } from "@package/query-hooks/transactions.api";
 import type { Transaction } from "@package/schema/transactions.types";
 import { useState } from "react";
 
@@ -55,7 +55,7 @@ export default function Transaction() {
 	const [page, setPage] = useState(1);
 	const limit = 10;
 
-	const { data: raw, isLoading } = useMyTransactionsQuery({ page, limit });
+	const { data: raw, isLoading } = useTransactionsQuery({ page, limit });
 	const paginatedData = raw?.data;
 
 	const transactionList: Transaction[] = paginatedData?.data ?? [];

@@ -65,6 +65,7 @@ const defaultAdminNav: NavbarDataType = {
             title: "Main",
             children: [
                 { title: "Dashboard", url: "/" },
+                { title: "Profile", url: "/profile" },
             ],
         },
         {

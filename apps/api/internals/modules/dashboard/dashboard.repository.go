@@ -13,15 +13,6 @@ func (m *DashboardModule) UserDashboardRepository(userID string) (*UserDashboard
 			'enrolled_courses_count', (SELECT COUNT(*) FROM enrollments WHERE user_id = $1 AND revoked = false),
 			'completed_courses_count', (SELECT COUNT(*) FROM enrollments WHERE user_id = $1 AND revoked = false AND completed = true),
 			'certificates_count', (SELECT COUNT(*) FROM certificates WHERE user_id = $1),
-			'recent_courses', COALESCE((
-				SELECT json_agg(rc) FROM (
-					SELECT c.id, c.slug, c.title, c.image_url, e.completion_percent
-					FROM enrollments e
-					JOIN courses c ON c.id = e.course_id
-					WHERE e.user_id = $1 AND e.revoked = false
-					ORDER BY e.enrolled_at DESC LIMIT 5
-				) rc
-			), '[]'::json),
 			'recent_certificates', COALESCE((
 				SELECT json_agg(cert_rows) FROM (
 					SELECT c.title AS course_title, cert.issued_at

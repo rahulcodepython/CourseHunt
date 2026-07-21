@@ -15,6 +15,5 @@ func (m *TransactionsModule) Routes(v1, protected fiber.Router) {
 	transactions.Post("/initiate", middlewares.PermissionGuard(generic.UserTransactionsInitiate), m.CreateController)
 	transactions.Get("/checkout/course/:courseId", m.CheckoutController)
 	transactions.Get("/:id/status", m.StatusController)
-	transactions.Get("/me", middlewares.PermissionGuard(generic.UserTransactionsReadOwn), m.ListOwnController)
-	transactions.Get("", middlewares.PermissionGuard(generic.AdminTransactionsReadAll), m.ListController)
+	transactions.Get("", middlewares.PermissionGuard(generic.UserTransactionsReadOwn, generic.AdminTransactionsReadAll), m.ListController)
 }

@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"fmt"
+	"strings"
 
 	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
@@ -87,17 +88,18 @@ func (m *TransactionsModule) CheckoutController(c *fiber.Ctx) error {
 
 func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := m.ListRepository(c.Context(), page, limit, c.Query("user_id"), "", c.Query("status"), c.Query("course_id"), c.Query("date_from"), c.Query("date_to"))
-	if err != nil {
-		return utils.InternalError(c, "Failed to fetch transactions.", err)
-	}
-	return utils.OK(c, "Transactions fetched.", generic.PaginatedResponse[[]Transaction]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	})
-}
+	permission := c.Locals("permission").(string)
 
-func (m *TransactionsModule) ListOwnController(c *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(c)
+	if strings.HasPrefix(permission, "admin:") {
+		list, total, err := m.ListRepository(c.Context(), page, limit, c.Query("user_id"), "", c.Query("status"), c.Query("course_id"), c.Query("date_from"), c.Query("date_to"))
+		if err != nil {
+			return utils.InternalError(c, "Failed to fetch transactions.", err)
+		}
+		return utils.OK(c, "Transactions fetched.", generic.PaginatedResponse[[]Transaction]{
+			Data: list, Total: total, Page: page, Limit: limit,
+		})
+	}
+
 	list, total, err := m.ListRepository(c.Context(), page, limit, utils.GetUserID(c), "", "", "", "", "")
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch your transactions.", err)
