@@ -71,7 +71,7 @@ export default function Header() {
 									{userRole === "admin" && (
 										<>
 											<DropdownMenuSeparator />
-											<Link href="/adminpanel"><DropdownMenuItem>Admin Panel</DropdownMenuItem></Link>
+											<a href="http://localhost:3002"><DropdownMenuItem>Admin Panel</DropdownMenuItem></a>
 										</>
 									)}
 								</DropdownMenuGroup>
