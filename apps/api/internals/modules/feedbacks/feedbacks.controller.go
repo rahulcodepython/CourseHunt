@@ -2,7 +2,6 @@ package feedbacks
 
 import (
 	"errors"
-	"strings"
 
 	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
@@ -28,20 +27,9 @@ func (m *FeedbacksModule) CreateController(c *fiber.Ctx) error {
 
 func (m *FeedbacksModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	permission := c.Locals("permission").(string)
-
-	if strings.HasPrefix(permission, "admin:") {
-		list, total, err := m.ListRepository(page, limit, c.Query("is_pinned"), c.Query("user_name"), c.Query("user_email"), c.Query("course_id"))
-		if err != nil {
-			return utils.InternalError(c, "Failed to fetch feedbacks.", err)
-		}
-		return utils.OK(c, "Feedbacks fetched.", generic.PaginatedResponse[[]Feedback]{
-			Data: list, Total: total, Page: page, Limit: limit,
-		})
-	}
-
-	tutorID := utils.GetUserID(c)
-	list, total, err := m.InspectRepository(page, limit, tutorID)
+	scope := generic.ScopeFromPermission(c.Locals("permission").(string))
+	list, total, err := m.ListRepository(scope, utils.GetUserID(c), page, limit,
+		c.Query("is_pinned"), c.Query("user_name"), c.Query("user_email"), c.Query("course_id"))
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch feedbacks.", err)
 	}
@@ -52,7 +40,7 @@ func (m *FeedbacksModule) ListController(c *fiber.Ctx) error {
 
 func (m *FeedbacksModule) ListPinnedController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := m.ListPinRepository(page, limit)
+	list, total, err := m.ListRepository(generic.ScopeAdmin, "", page, limit, "true", "", "", "")
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch pinned feedbacks.", err)
 	}

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"coursehunt/api/internals/generic"
 )
 
 var (
@@ -64,7 +66,7 @@ func (m *FeedbacksModule) CreateRepository(userID, courseID string, req CreateFe
 	return &f, nil
 }
 
-func (m *FeedbacksModule) ListRepository(page, limit int, isPinned, userName, userEmail, courseID string) ([]Feedback, int, error) {
+func (m *FeedbacksModule) ListRepository(scope generic.AuthScope, userID string, page, limit int, isPinned, userName, userEmail, courseID string) ([]Feedback, int, error) {
 	offset := (page - 1) * limit
 
 	var where []string
@@ -89,6 +91,11 @@ func (m *FeedbacksModule) ListRepository(page, limit int, isPinned, userName, us
 	if courseID != "" {
 		where = append(where, fmt.Sprintf("f.course_id = $%d", idx))
 		args = append(args, courseID)
+		idx++
+	}
+	if scope == generic.ScopeTutor {
+		where = append(where, fmt.Sprintf("c.tutor_id = $%d", idx))
+		args = append(args, userID)
 		idx++
 	}
 
@@ -137,43 +144,6 @@ func (m *FeedbacksModule) ListRepository(page, limit int, isPinned, userName, us
 	return list, result.Total, nil
 }
 
-func (m *FeedbacksModule) ListPinRepository(page, limit int) ([]Feedback, int, error) {
-	offset := (page - 1) * limit
-
-	var result struct {
-		Total int             `db:"total_count"`
-		Data  json.RawMessage `db:"data_json"`
-	}
-	err := m.DB.Get(&result, `
-		WITH count_cte AS (
-			SELECT COUNT(*) AS total_count FROM feedbacks WHERE is_pinned = true
-		),
-		data_cte AS (
-			SELECT f.id, f.rating, f.content, f.is_pinned, f.created_at,
-				   json_build_object('id', c.id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url) AS course,
-				   json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS "user"
-			FROM feedbacks f
-			JOIN "user" u ON u.id = f.user_id
-			LEFT JOIN courses c ON c.id = f.course_id
-			WHERE f.is_pinned = true
-			ORDER BY f.created_at DESC
-			LIMIT $1 OFFSET $2
-		)
-		SELECT
-			COALESCE((SELECT total_count FROM count_cte), 0) AS total_count,
-			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data_json
-	`, limit, offset)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	var list []Feedback
-	if err := json.Unmarshal(result.Data, &list); err != nil {
-		return nil, 0, err
-	}
-	return list, result.Total, nil
-}
-
 func (m *FeedbacksModule) UpdateRepository(id string, pin bool) (*Feedback, error) {
 	var resultData json.RawMessage
 	err := m.DB.Get(&resultData, `
@@ -209,42 +179,4 @@ func (m *FeedbacksModule) DeleteRepository(id string) (string, error) {
 	return deletedID, err
 }
 
-func (m *FeedbacksModule) InspectRepository(page, limit int, tutorID string) ([]Feedback, int, error) {
-	offset := (page - 1) * limit
 
-	var result struct {
-		Total int             `db:"total"`
-		Data  json.RawMessage `db:"data"`
-	}
-	err := m.DB.Get(&result, `
-		WITH count_cte AS (
-			SELECT COUNT(*) AS total 
-			FROM feedbacks f
-			JOIN courses c ON c.id = f.course_id
-			WHERE c.tutor_id = $1
-		),
-		data_cte AS (
-			SELECT f.id, f.rating, f.content, f.is_pinned, f.created_at,
-				   json_build_object('id', c.id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url) AS course,
-				   json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS "user"
-			FROM feedbacks f
-			JOIN courses c ON c.id = f.course_id
-			JOIN "user" u ON u.id = f.user_id
-			WHERE c.tutor_id = $1
-			ORDER BY f.created_at DESC
-			LIMIT $2 OFFSET $3
-		)
-		SELECT 
-			COALESCE((SELECT total FROM count_cte), 0) AS total,
-			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
-	`, tutorID, limit, offset)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	var list []Feedback
-	if err := json.Unmarshal(result.Data, &list); err != nil {
-		return nil, 0, err
-	}
-	return list, result.Total, nil
-}
