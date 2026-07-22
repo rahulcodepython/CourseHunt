@@ -1,8 +1,9 @@
 package wishlist
 
 import (
-	"coursehunt/api/internals/generic"
 	"time"
+
+	"coursehunt/api/internals/generic"
 )
 
 type WishlistItem struct {

@@ -8,12 +8,16 @@ import (
 
 // json is the canonical response helper used throughout all handlers.
 // Signature: utils.json(c, statusCode, success, message, data, errors)
-func json[T any](c *fiber.Ctx, status int, success bool, message string, data T, error error) error {
+func json[T any](c *fiber.Ctx, status int, success bool, message string, data T, err error) error {
+	var errStr string
+	if err != nil {
+		errStr = err.Error()
+	}
 	body := generic.Response[T]{
 		Success: success,
 		Message: message,
 		Data:    data,
-		Error:   error,
+		Error:   errStr,
 	}
 	return c.Status(status).JSON(body)
 }

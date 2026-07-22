@@ -15,8 +15,7 @@ func (m *DiscussionsModule) ListController(c *fiber.Ctx) error {
 
 	list, total, err := m.ListRepository(lessonID, "", userID, scope, page, limit)
 	if err != nil {
-		status, msg := errorForScope(scope, err)
-		return c.Status(status).JSON(fiber.Map{"error": msg})
+		return errorForScope(c, scope, err)
 	}
 	return utils.OK(c, "Discussions fetched.", generic.PaginatedResponse[[]Discussion]{
 		Data: list, Total: total, Page: page, Limit: limit,
@@ -31,8 +30,7 @@ func (m *DiscussionsModule) ListRepliesController(c *fiber.Ctx) error {
 
 	list, total, err := m.ListRepository("", parentID, userID, scope, page, limit)
 	if err != nil {
-		status, msg := errorForScope(scope, err)
-		return c.Status(status).JSON(fiber.Map{"error": msg})
+		return errorForScope(c, scope, err)
 	}
 	return utils.OK(c, "Replies fetched.", generic.PaginatedResponse[[]Discussion]{
 		Data: list, Total: total, Page: page, Limit: limit,
@@ -48,8 +46,7 @@ func (m *DiscussionsModule) CreateController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
 	d, err := m.CreateRepository(userID, req, scope)
 	if err != nil {
-		status, msg := errorForScope(scope, err)
-		return c.Status(status).JSON(fiber.Map{"error": msg})
+		return errorForScope(c, scope, err)
 	}
 	return utils.Created(c, "Discussion posted.", d)
 }
@@ -63,8 +60,7 @@ func (m *DiscussionsModule) UpdateController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
 	d, err := m.UpdateRepository(c.Params("id"), userID, req.Content, scope)
 	if err != nil {
-		status, msg := errorForScope(scope, err)
-		return c.Status(status).JSON(fiber.Map{"error": msg})
+		return errorForScope(c, scope, err)
 	}
 	return utils.OK(c, "Discussion updated.", d)
 }
@@ -74,8 +70,7 @@ func (m *DiscussionsModule) DeleteController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
 	id, err := m.DeleteRepository(c.Params("id"), userID, scope)
 	if err != nil {
-		status, msg := errorForScope(scope, err)
-		return c.Status(status).JSON(fiber.Map{"error": msg})
+		return errorForScope(c, scope, err)
 	}
 	return utils.OK(c, "Discussion deleted.", generic.DeleteResponse{ID: id})
 }

@@ -31,7 +31,7 @@ func ScopeFromPermission(permission string) AuthScope {
 	}
 }
 
-func AuthErrorForScope(scope AuthScope, err error) *AuthError {
+func AuthErrorForScope(_ AuthScope, err error) *AuthError {
 	if err == nil {
 		return nil
 	}

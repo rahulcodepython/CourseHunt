@@ -140,7 +140,7 @@ func (m *LessonsModule) ReadContentController(c *fiber.Ctx) error {
 }
 
 func (m *LessonsModule) UpdateCompleteController(c *fiber.Ctx) error {
-	if err := m.MarkLessonComplete(utils.GetUserID(c), c.Params("id")); err != nil {
+	if err := m.MarkLessonCompleteRepository(utils.GetUserID(c), c.Params("id")); err != nil {
 		if errors.Is(err, ErrLessonNotFound) {
 			return utils.NotFound(c, "Lesson not found.", err)
 		}

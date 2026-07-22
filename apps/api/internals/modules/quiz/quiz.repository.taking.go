@@ -7,7 +7,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func (m *QuizModule) ReadNextQuestionUnified(quizID, userID string, fetchedIDs []string) (*QuizQuestion, []QuizOption, []QuizArrangeItem, int, error) {
+func (m *QuizModule) ReadNextQuestionUnifiedRepository(quizID, userID string, fetchedIDs []string) (*QuizQuestion, []QuizOption, []QuizArrangeItem, int, error) {
 	exclude := ""
 	if len(fetchedIDs) > 0 {
 		exclude = " AND qq.id != ALL($3)"
@@ -92,7 +92,7 @@ func (m *QuizModule) ReadNextQuestionUnified(quizID, userID string, fetchedIDs [
 }
 
 func (m *QuizModule) GetQuestionRepository(quizID, userID string, req NextQuestionRequest) (*NextQuestionResponse, error) {
-	q, opts, items, remaining, err := m.ReadNextQuestionUnified(quizID, userID, req.FetchedQuestionIDs)
+	q, opts, items, remaining, err := m.ReadNextQuestionUnifiedRepository(quizID, userID, req.FetchedQuestionIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +137,27 @@ func (m *QuizModule) GetQuizForEvaluationRepository(quizID, userID string) (*Qui
 				JOIN quiz_info qi ON e.course_id = qi.course_id
 				WHERE e.user_id = $2 AND e.revoked = false
 			) AS is_enrolled
+		),
+		q_options AS (
+			SELECT o.question_id, json_agg(o.id) AS correct_option_ids
+			FROM quiz_options o
+			JOIN quiz_questions qq ON qq.id = o.question_id
+			WHERE qq.quiz_id = $1 AND o.is_correct = true
+			GROUP BY o.question_id
+		),
+		q_arrange AS (
+			SELECT ai.question_id, json_agg(ai.correct_order ORDER BY ai.correct_order) AS correct_arrange_order
+			FROM quiz_arrange_items ai
+			JOIN quiz_questions qq ON qq.id = ai.question_id
+			WHERE qq.quiz_id = $1
+			GROUP BY ai.question_id
+		),
+		q_fill AS (
+			SELECT fba.question_id, json_agg(fba.answer) AS correct_fill_answers
+			FROM quiz_fill_blank_answers fba
+			JOIN quiz_questions qq ON qq.id = fba.question_id
+			WHERE qq.quiz_id = $1
+			GROUP BY fba.question_id
 		)
 		SELECT 
 			EXISTS(SELECT 1 FROM quiz_info) AS quiz_exists,
@@ -148,26 +169,17 @@ func (m *QuizModule) GetQuizForEvaluationRepository(quizID, userID string) (*Qui
 						'id', q.id,
 						'question_type', q.question_type,
 						'points', q.points,
-						'correct_option_ids', (
-							SELECT COALESCE(json_agg(o.id), '[]'::json)
-							FROM quiz_options o
-							WHERE o.question_id = q.id AND o.is_correct = true
-						),
-						'correct_arrange_order', (
-							SELECT COALESCE(json_agg(ai.correct_order ORDER BY ai.correct_order), '[]'::json)
-							FROM quiz_arrange_items ai
-							WHERE ai.question_id = q.id
-						),
-						'correct_fill_answers', (
-							SELECT COALESCE(json_agg(fba.answer), '[]'::json)
-							FROM quiz_fill_blank_answers fba
-							WHERE fba.question_id = q.id
-						)
+						'correct_option_ids', COALESCE(qo.correct_option_ids, '[]'::json),
+						'correct_arrange_order', COALESCE(qa.correct_arrange_order, '[]'::json),
+						'correct_fill_answers', COALESCE(qf.correct_fill_answers, '[]'::json)
 					)
 				) FILTER (WHERE q.id IS NOT NULL), '[]'::json
 			) AS questions
 		FROM quiz_metadata qm
 		LEFT JOIN quiz_questions q ON q.quiz_id = qm.id
+		LEFT JOIN q_options qo ON qo.question_id = q.id
+		LEFT JOIN q_arrange qa ON qa.question_id = q.id
+		LEFT JOIN q_fill qf ON qf.question_id = q.id
 		WHERE qm.id = $1
 		GROUP BY qm.id, qm.pass_score_percent
 	`

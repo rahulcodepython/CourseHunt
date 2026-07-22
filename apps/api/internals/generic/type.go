@@ -64,5 +64,5 @@ type Response[T any] struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Data    T      `json:"data,omitempty"`
-	Error   error  `json:"error,omitempty"`
+	Error   string `json:"error,omitempty"`
 }

@@ -21,7 +21,7 @@ func (m *EnrollmentsModule) RevokeRepository(userID, courseID string) error {
 func (m *EnrollmentsModule) ListRepository(scope generic.AuthScope, page, limit int, courseID, userID, tutorID, userName, userEmail, revoked string) ([]ListEnrollmentResponse, int, error) {
 	offset := (page - 1) * limit
 
-	if scope == generic.ScopeAdmin || scope == generic.ScopeTutor {
+	if scope == generic.ScopeTutor {
 		var where []string
 		args := []any{courseID, tutorID}
 		idx := 3

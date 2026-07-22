@@ -133,7 +133,8 @@ func BaseAuthMiddleware(cfg *config.Config) fiber.Handler {
 		}
 
 		// Step 4: Extract user context from the token and store it.
-		c.Locals("user", extractUserContext(token))
+		userCtx := extractUserContext(token)
+		c.Locals("user", &userCtx)
 
 		return c.Next()
 	}
@@ -162,7 +163,6 @@ func PermissionGuard(requiredPermissions ...string) fiber.Handler {
 			}
 		}
 
-		return c.Status(fiber.StatusForbidden).
-			JSON(fiber.Map{"error": "Permission denied"})
+		return utils.Forbidden(c, "Permission denied", nil)
 	}
 }

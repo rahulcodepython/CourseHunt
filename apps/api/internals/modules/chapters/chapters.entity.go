@@ -20,7 +20,7 @@ type Chapter struct {
 type CreateChapterRequest struct {
 	Title     string `json:"title" validate:"required,min=2,max=200"`
 	ChapterNo int    `json:"chapter_no" validate:"required,min=1"`
-	CourseID  string `json:"course_id"`
+	CourseID  string `json:"course_id" validate:"required"`
 }
 
 type UpdateChapterRequest struct {

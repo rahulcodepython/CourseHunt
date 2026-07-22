@@ -27,51 +27,53 @@ func (m *QuizModule) SubmitQuizService(quizID, userID string, req SubmitQuizRequ
 		}
 
 		q, exists := evalData.Questions[ans.QuestionID]
+		if !exists {
+			continue
+		}
 
 		if ans.IsSkipped {
 			resp.SkippedCount++
-			if exists {
-				totalPoints += q.Points
-			}
-		} else {
-			if !exists {
-				resp.IncorrectCount++
-				continue
-			}
-
 			totalPoints += q.Points
-			resultItem := QuizResultItem{QuestionID: ans.QuestionID}
+			answersToSave = append(answersToSave, AttemptAnswerToSave{
+				QuestionID: ans.QuestionID,
+				IsSkipped:  true,
+				IsCorrect:  false,
+			})
+			continue
+		}
 
-			switch q.QuestionType {
-			case "single_choice", "multi_choice":
-				resultItem.CorrectOptionIDs = q.CorrectOptionIDs
-				isCorrect = equalSets(q.CorrectOptionIDs, ans.SelectedOptionIDs)
-			case "arrange":
-				resultItem.CorrectArrangeOrder = q.CorrectArrangeOrder
-				isCorrect = equalIntSlices(q.CorrectArrangeOrder, ans.ArrangeOrder)
-			case "fill_blank":
-				resultItem.CorrectFillAnswers = q.CorrectFillAnswers
-				if ans.FillText != nil {
-					for _, a := range q.CorrectFillAnswers {
-						if strings.EqualFold(a, *ans.FillText) {
-							isCorrect = true
-							break
-						}
+		totalPoints += q.Points
+		resultItem := QuizResultItem{QuestionID: ans.QuestionID}
+
+		switch q.QuestionType {
+		case "single_choice", "multi_choice":
+			resultItem.CorrectOptionIDs = q.CorrectOptionIDs
+			isCorrect = equalSets(q.CorrectOptionIDs, ans.SelectedOptionIDs)
+		case "arrange":
+			resultItem.CorrectArrangeOrder = q.CorrectArrangeOrder
+			isCorrect = equalIntSlices(q.CorrectArrangeOrder, ans.ArrangeOrder)
+		case "fill_blank":
+			resultItem.CorrectFillAnswers = q.CorrectFillAnswers
+			if ans.FillText != nil {
+				trimmed := strings.TrimSpace(*ans.FillText)
+				for _, a := range q.CorrectFillAnswers {
+					if strings.EqualFold(strings.TrimSpace(a), trimmed) {
+						isCorrect = true
+						break
 					}
 				}
 			}
-
-			if isCorrect {
-				resp.CorrectCount++
-				earnedPoints += q.Points
-			} else {
-				resp.IncorrectCount++
-			}
-			resultItem.IsCorrect = isCorrect
-			resp.Results = append(resp.Results, resultItem)
 		}
 
-		// Prepare save payload
+		if isCorrect {
+			resp.CorrectCount++
+			earnedPoints += q.Points
+		} else {
+			resp.IncorrectCount++
+		}
+		resultItem.IsCorrect = isCorrect
+		resp.Results = append(resp.Results, resultItem)
+
 		answersToSave = append(answersToSave, AttemptAnswerToSave{
 			QuestionID:        ans.QuestionID,
 			SelectedOptionIDs: ans.SelectedOptionIDs,

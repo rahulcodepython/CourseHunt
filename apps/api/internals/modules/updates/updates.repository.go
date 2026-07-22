@@ -88,6 +88,8 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 			FROM update_seen us
 			JOIN course_updates cu ON cu.id = us.update_id
 			WHERE us.user_id = $1
+			ORDER BY cu.created_at DESC
+			LIMIT 1
 		),
 		latest_update AS (
 			SELECT cu.id
@@ -96,15 +98,11 @@ func (m *UpdatesModule) FeedRepository(userID string, page, limit int) (*UpdateF
 			ORDER BY cu.created_at DESC
 			LIMIT 1
 		),
-		delete_old_seen AS (
-			DELETE FROM update_seen
-			WHERE user_id = $1
-			RETURNING 1
-		),
-		insert_seen AS (
+		upsert_seen AS (
 			INSERT INTO update_seen (user_id, update_id)
 			SELECT $1, id FROM latest_update
-			WHERE EXISTS (SELECT 1 FROM (SELECT 1 FROM delete_old_seen UNION ALL SELECT 1 LIMIT 1) d)
+			ON CONFLICT (user_id, update_id) DO UPDATE SET seen_at = CURRENT_TIMESTAMP
+			RETURNING 1
 		),
 		eligible_updates AS (
 			SELECT cu.id, cu.message, cu.created_at,

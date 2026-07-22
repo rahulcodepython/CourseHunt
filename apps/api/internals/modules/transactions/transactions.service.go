@@ -36,22 +36,16 @@ func (m *TransactionsModule) InitiateService(ctx context.Context, userID string,
 
 	var couponID *string
 	if req.CouponCode != nil && *req.CouponCode != "" {
-		// NOTE: CheckCoupon and ReadByCodeRepository both hit the DB for the
-		// same coupon code. That duplicate lookup lives in the coupons
-		// module (not included here) - worth collapsing into a single
-		// "CheckAndFetchCoupon(code, courseID)" call over there so this
-		// call site only pays for one round trip instead of two.
-		check := m.Coupons.CheckCoupon(*req.CouponCode, req.CourseID)
+		check, coupon, err := m.Coupons.ValidateAndFetchCouponService(*req.CouponCode, req.CourseID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load coupon: %w", err)
+		}
 		if !check.Valid {
 			reason := "invalid coupon"
 			if check.Reason != nil {
 				reason = *check.Reason
 			}
 			return nil, errors.New(reason)
-		}
-		coupon, err := m.Coupons.ReadByCodeRepository(*req.CouponCode)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load coupon: %w", err)
 		}
 		if coupon != nil {
 			discount := amount * check.DiscountPercent / 100
@@ -168,9 +162,7 @@ func (m *TransactionsModule) HandleWebhookService(ctx context.Context, rawBody [
 		}
 
 	default:
-		// Event type we don't act on - nothing to change on the transaction,
-		// but still close out the webhook_events row so Razorpay stops
-		// retrying it.
+		log.Printf("transactions: unknown webhook event %s (id=%s) — acknowledged to stop retries", payload.Event, payload.EventID)
 		if err := m.MarkWebhookEventProcessedRepository(ctx, payload.EventID); err != nil {
 			log.Printf("transactions: failed to mark webhook event %s processed: %v", payload.EventID, err)
 		}

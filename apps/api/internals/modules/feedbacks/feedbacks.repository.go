@@ -173,10 +173,43 @@ func (m *FeedbacksModule) UpdateRepository(id string, pin bool) (*Feedback, erro
 	return &f, nil
 }
 
-func (m *FeedbacksModule) DeleteRepository(id string) (string, error) {
-	var deletedID string
-	err := m.DB.Get(&deletedID, `DELETE FROM feedbacks WHERE id = $1 RETURNING id`, id)
-	return deletedID, err
+func (m *FeedbacksModule) DeleteRepository(id, userID string, scope generic.AuthScope) (string, error) {
+	var result struct {
+		CourseFound bool   `db:"course_found"`
+		IsOwner     bool   `db:"is_owner"`
+		DeletedID   string `db:"deleted_id"`
+	}
+
+	err := m.DB.Get(&result, `
+		WITH feedback_course AS (
+			SELECT c.tutor_id
+			FROM feedbacks f
+			JOIN courses c ON c.id = f.course_id
+			WHERE f.id = $1
+		),
+		deleted AS (
+			DELETE FROM feedbacks f
+			USING feedback_course fc
+			WHERE f.id = $1 AND (fc.tutor_id = $2 OR $3 = 'admin')
+			RETURNING f.id
+		)
+		SELECT
+			EXISTS(SELECT 1 FROM feedback_course) AS course_found,
+			EXISTS(SELECT 1 FROM feedback_course WHERE tutor_id = $2) AS is_owner,
+			COALESCE((SELECT id FROM deleted), '') AS deleted_id
+	`, id, userID, string(scope))
+	if err != nil {
+		return "", err
+	}
+
+	switch {
+	case !result.CourseFound:
+		return "", ErrFeedbackNotFound
+	case result.DeletedID == "":
+		return "", errors.New("access denied: you are not the tutor of this course")
+	}
+
+	return result.DeletedID, nil
 }
 
 

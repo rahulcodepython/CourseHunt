@@ -50,29 +50,31 @@ func (m *UsersModule) ListRepository(page, limit int, name, email, role string) 
 	}
 
 	err := m.DB.Get(&result, fmt.Sprintf(`
-		WITH count_cte AS (
+		WITH user_roles_agg AS (
+			SELECT ur.user_id,
+				   json_agg(json_build_object('id', r.id, 'name', r.name) ORDER BY r.id) AS roles
+			FROM user_roles ur
+			JOIN roles r ON r.id = ur.role_id
+			GROUP BY ur.user_id
+		),
+		count_cte AS (
 			SELECT COUNT(*) AS total
 			FROM "user" u
 			%s
 		),
 		data_cte AS (
 			SELECT 
-				u.id, u.name, u.email, u.image, u.email_verified AS "emailVerified", u.banned, u.created_at AS "createdAt", u.updated_at AS "updatedAt",
-				COALESCE(
-					(SELECT json_agg(json_build_object('id', r.id, 'name', r.name) ORDER BY r.id)
-					 FROM user_roles ur
-					 JOIN roles r ON r.id = ur.role_id
-					 WHERE ur.user_id = u.id),
-					'[]'::json
-				) AS roles
+				u.id, u.name, u.email, u.image, u."emailVerified" AS email_verified, u.banned, u."createdAt" AS created_at, u."updatedAt" AS updated_at,
+				COALESCE(ura.roles, '[]'::json) AS roles
 			FROM "user" u
+			LEFT JOIN user_roles_agg ura ON ura.user_id = u.id
 			%s
-			ORDER BY u.created_at DESC
+			ORDER BY u."createdAt" DESC
 			LIMIT $1 OFFSET $2
 		)
 		SELECT 
 			COALESCE((SELECT total FROM count_cte), 0) AS total,
-			COALESCE((SELECT json_agg(row_to_json(data_cte.*)) FROM data_cte), '[]'::json) AS data
+			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
 	`, whereClause, whereClause), args...)
 
 	if err != nil {

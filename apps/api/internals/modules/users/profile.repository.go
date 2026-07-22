@@ -11,14 +11,18 @@ var (
 
 func (m *UsersModule) ReadUserProfileRepository(userID string) (*UserProfile, error) {
 	var p UserProfile
-	err := m.DB.Get(&p, `SELECT id, user_id, headline, bio, website, updated_at FROM user_profile WHERE user_id = $1`, userID)
-	return &p, err
+	if err := m.DB.Get(&p, `SELECT id, user_id, headline, bio, website, updated_at FROM user_profile WHERE user_id = $1`, userID); err != nil {
+		return nil, err
+	}
+	return &p, nil
 }
 
 func (m *UsersModule) ReadTutorProfileRepository(userID string) (*TutorProfile, error) {
 	var p TutorProfile
-	err := m.DB.Get(&p, `SELECT id, user_id, headline, bio, website, total_students, rating_avg, updated_at FROM tutor_profile WHERE user_id = $1`, userID)
-	return &p, err
+	if err := m.DB.Get(&p, `SELECT id, user_id, headline, bio, website, total_students, rating_avg, updated_at FROM tutor_profile WHERE user_id = $1`, userID); err != nil {
+		return nil, err
+	}
+	return &p, nil
 }
 
 func (m *UsersModule) UpsertUserProfileRepository(userID string, req UpdateProfileRequest) (*UserProfile, error) {

@@ -27,7 +27,8 @@ func (m *FeedbacksModule) CreateController(c *fiber.Ctx) error {
 
 func (m *FeedbacksModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	scope := generic.ScopeFromPermission(c.Locals("permission").(string))
+	perm, _ := c.Locals("permission").(string)
+	scope := generic.ScopeFromPermission(perm)
 	list, total, err := m.ListRepository(scope, utils.GetUserID(c), page, limit,
 		c.Query("is_pinned"), c.Query("user_name"), c.Query("user_email"), c.Query("course_id"))
 	if err != nil {
@@ -65,7 +66,9 @@ func (m *FeedbacksModule) UpdateController(c *fiber.Ctx) error {
 }
 
 func (m *FeedbacksModule) DeleteController(c *fiber.Ctx) error {
-	id, err := m.DeleteRepository(c.Params("id"))
+	perm, _ := c.Locals("permission").(string)
+	scope := generic.ScopeFromPermission(perm)
+	id, err := m.DeleteRepository(c.Params("id"), utils.GetUserID(c), scope)
 	if err != nil {
 		return utils.InternalError(c, "Failed to delete feedback.", err)
 	}

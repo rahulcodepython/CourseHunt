@@ -3,6 +3,7 @@ package notes
 import (
 	"errors"
 
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -88,5 +89,5 @@ func (m *NotesModule) DeleteController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to delete note.", err)
 		}
 	}
-	return utils.OK(c, "Note deleted.", map[string]string{"id": id})
+	return utils.OK(c, "Note deleted.", generic.DeleteResponse{ID: id})
 }

@@ -63,16 +63,23 @@ func (m *CoursesModule) ListRepository(page, limit int, userID string, scope gen
 	}
 
 	err := m.DB.Get(&result, fmt.Sprintf(`
-		WITH count_cte AS (
+		WITH enrollment_counts AS (
+			SELECT e.course_id, COUNT(*) AS student_count
+			FROM enrollments e
+			WHERE e.revoked = false
+			GROUP BY e.course_id
+		),
+		count_cte AS (
 			SELECT COUNT(*) AS total FROM courses c WHERE %s
 		),
 		data_cte AS (
 			SELECT c.id, c.tutor_id, c.slug, c.title, c.short_description, c.long_description, c.image_url, c.preview_video_url,
 			       c.language, c.level, c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits, COALESCE(c.requirements, '{}') AS requirements,
 			       c.category_id, c.subcategory_id, c.coupon_allowed, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
-			       (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id AND e.revoked = false) AS student_count,
+			       COALESCE(ec.student_count, 0) AS student_count,
 			       c.created_at, c.updated_at
 			FROM courses c
+			LEFT JOIN enrollment_counts ec ON ec.course_id = c.id
 			WHERE %s
 			ORDER BY c.created_at DESC
 			LIMIT $%d OFFSET $%d

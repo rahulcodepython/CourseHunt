@@ -9,7 +9,7 @@ import (
 func (m *CoursesModule) resolveScope(c *fiber.Ctx) generic.AuthScope {
 	perm := c.Locals("permission")
 	if perm == nil {
-		return generic.ScopeTutor
+		return generic.ScopeUser
 	}
 	return generic.ScopeFromPermission(perm.(string))
 }

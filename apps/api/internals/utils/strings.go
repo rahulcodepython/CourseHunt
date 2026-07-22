@@ -19,5 +19,5 @@ func Slugify(title string) string {
 	}
 	slug := strings.Trim(b.String(), "-")
 	// append timestamp suffix for uniqueness
-	return fmt.Sprintf("%s-%d", slug, time.Now().UnixNano()%100000)
+	return fmt.Sprintf("%s-%d", slug, time.Now().UnixNano())
 }

@@ -16,9 +16,9 @@ type UserListResponse struct {
 	Name          string    `json:"name" db:"name"`
 	Email         string    `json:"email" db:"email"`
 	Image         *string   `json:"image" db:"image"`
-	EmailVerified bool      `json:"emailVerified" db:"emailVerified"`
+	EmailVerified bool      `json:"email_verified" db:"email_verified"`
 	Banned        bool      `json:"banned" db:"banned"`
-	CreatedAt     time.Time `json:"createdAt" db:"createdAt"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
 	Roles         []Role    `json:"roles" db:"-"`
 }
 

@@ -1,8 +1,9 @@
 package courses
 
 import (
-	"coursehunt/api/internals/generic"
 	"time"
+
+	"coursehunt/api/internals/generic"
 )
 
 type Course struct {

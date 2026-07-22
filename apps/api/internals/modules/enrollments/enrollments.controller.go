@@ -17,7 +17,8 @@ func (m *EnrollmentsModule) ListController(c *fiber.Ctx) error {
 
 	page, limit := utils.PaginationParams(c)
 	userID := utils.GetUserID(c)
-	scope := generic.ScopeFromPermission(c.Locals("permission").(string))
+	perm, _ := c.Locals("permission").(string)
+	scope := generic.ScopeFromPermission(perm)
 
 	list, total, err := m.ListRepository(scope, page, limit, courseID, userID, userID,
 		c.Query("user_name"), c.Query("user_email"), c.Query("revoked"))

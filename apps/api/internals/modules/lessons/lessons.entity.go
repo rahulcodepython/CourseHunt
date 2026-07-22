@@ -1,8 +1,9 @@
 package lessons
 
 import (
-	"coursehunt/api/internals/modules/quiz"
 	"time"
+
+	"coursehunt/api/internals/modules/quiz"
 )
 
 type Lesson struct {

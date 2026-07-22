@@ -1,6 +1,6 @@
 package lessons
 
-func (m *LessonsModule) MarkLessonComplete(userID, lessonID string) error {
+func (m *LessonsModule) MarkLessonCompleteRepository(userID, lessonID string) error {
 	var result struct {
 		LessonExists bool `db:"lesson_exists"`
 		IsEnrolled   bool `db:"is_enrolled"`

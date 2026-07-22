@@ -3,6 +3,7 @@ package roles
 import (
 	"strconv"
 
+	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -74,10 +75,11 @@ func (m *RolesModule) DeleteRoleController(c *fiber.Ctx) error {
 		return utils.Forbidden(c, "Cannot delete system roles.", nil)
 	}
 
-	if err := m.DeleteRoleRepository(roleID); err != nil {
+	roleIDStr, err := m.DeleteRoleRepository(roleID)
+	if err != nil {
 		return utils.InternalError(c, "Failed to delete role.", err)
 	}
-	return utils.OK(c, "Role deleted.", fiber.Map{})
+	return utils.OK(c, "Role deleted.", generic.DeleteResponse{ID: roleIDStr})
 }
 
 func (m *RolesModule) GetRolePermissionsController(c *fiber.Ctx) error {

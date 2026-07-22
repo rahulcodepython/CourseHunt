@@ -70,13 +70,21 @@ func (m *RolesModule) UpdateRoleRepository(roleID int, req UpdateRoleRequest) (*
 	return &role, nil
 }
 
-func (m *RolesModule) DeleteRoleRepository(roleID int) error {
-	_, err := m.DB.Exec(`DELETE FROM role_permissions WHERE role_id = $1`, roleID)
+func (m *RolesModule) DeleteRoleRepository(roleID int) (string, error) {
+	var deletedID int
+	err := m.DB.Get(&deletedID, `
+		WITH del_perms AS (
+			DELETE FROM role_permissions WHERE role_id = $1 RETURNING 1
+		),
+		del_role AS (
+			DELETE FROM roles WHERE id = $1 RETURNING id
+		)
+		SELECT id FROM del_role
+	`, roleID)
 	if err != nil {
-		return err
+		return "", err
 	}
-	_, err = m.DB.Exec(`DELETE FROM roles WHERE id = $1`, roleID)
-	return err
+	return fmt.Sprintf("%d", deletedID), nil
 }
 
 func (m *RolesModule) GetRolePermissionsRepository(roleID int) ([]Permission, error) {

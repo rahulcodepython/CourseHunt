@@ -16,9 +16,9 @@ func GetUserID(c *fiber.Ctx) string {
 
 func GetUserFromCtx(c *fiber.Ctx) *generic.UserContext {
 	if v := c.Locals("user"); v != nil {
-		u, ok := v.(generic.UserContext)
+		u, ok := v.(*generic.UserContext)
 		if ok {
-			return &u
+			return u
 		}
 	}
 	return nil

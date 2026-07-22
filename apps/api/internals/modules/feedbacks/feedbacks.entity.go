@@ -1,8 +1,9 @@
 package feedbacks
 
 import (
-	"coursehunt/api/internals/generic"
 	"time"
+
+	"coursehunt/api/internals/generic"
 )
 
 type Feedback struct {

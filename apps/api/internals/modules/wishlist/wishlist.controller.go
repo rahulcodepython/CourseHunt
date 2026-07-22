@@ -8,11 +8,14 @@ import (
 )
 
 func (m *WishlistModule) ListController(c *fiber.Ctx) error {
-	list, err := m.ListRepository(utils.GetUserID(c))
+	page, limit := utils.PaginationParams(c)
+	list, total, err := m.ListRepository(utils.GetUserID(c), page, limit)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch wishlist.", err)
 	}
-	return utils.OK(c, "Wishlist fetched.", list)
+	return utils.OK(c, "Wishlist fetched.", generic.PaginatedResponse[[]WishlistItem]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	})
 }
 
 func (m *WishlistModule) CreateController(c *fiber.Ctx) error {

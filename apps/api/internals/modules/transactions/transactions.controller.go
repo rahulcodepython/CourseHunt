@@ -1,7 +1,7 @@
 package transactions
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
 	"coursehunt/api/internals/generic"
@@ -25,7 +25,7 @@ func (m *TransactionsModule) CreateController(c *fiber.Ctx) error {
 func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 	signature := c.Get("X-Razorpay-Signature")
 	if signature == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("missing signature")
+		return utils.BadRequest(c, "missing signature", nil)
 	}
 
 	body := c.Body()
@@ -45,7 +45,7 @@ func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("invalid body")
+		return utils.BadRequest(c, "invalid body", err)
 	}
 
 	eventID := c.Get("X-Razorpay-Event-Id")
@@ -60,13 +60,14 @@ func (m *TransactionsModule) WebhookController(c *fiber.Ctx) error {
 	}
 
 	if err := m.HandleWebhookService(c.Context(), body, signature, webhookPayload); err != nil {
-		fmt.Printf("Webhook error: %v\n", err)
+		log.Printf("Webhook error: %v", err)
 		if err.Error() == "invalid signature" {
-			return c.Status(fiber.StatusUnauthorized).SendString("invalid signature")
+			return utils.Unauthorized(c, "invalid signature", err)
 		}
+		return utils.InternalError(c, "Webhook processing failed", err)
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return utils.OK[any](c, "Webhook processed", nil)
 }
 
 func (m *TransactionsModule) StatusController(c *fiber.Ctx) error {
@@ -88,7 +89,7 @@ func (m *TransactionsModule) CheckoutController(c *fiber.Ctx) error {
 
 func (m *TransactionsModule) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	permission := c.Locals("permission").(string)
+	permission, _ := c.Locals("permission").(string)
 
 	if strings.HasPrefix(permission, "admin:") {
 		list, total, err := m.ListRepository(c.Context(), page, limit, c.Query("user_id"), "", c.Query("status"), c.Query("course_id"), c.Query("date_from"), c.Query("date_to"))
