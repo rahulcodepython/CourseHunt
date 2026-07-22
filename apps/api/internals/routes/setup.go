@@ -5,7 +5,6 @@ import (
 
 	"coursehunt/api/internals/config"
 
-	"coursehunt/api/internals/modules/cart"
 	"coursehunt/api/internals/modules/category"
 	"coursehunt/api/internals/modules/certificate"
 	"coursehunt/api/internals/modules/chapters"
@@ -43,7 +42,6 @@ type Router struct {
 	DB  *sql.DB
 	CFG *config.Config
 
-	Cart         *cart.CartModule
 	Wishlist     *wishlist.WishlistModule
 	Categories   *category.CategoryModule
 	Certificates *certificate.CertificateModule
@@ -69,7 +67,6 @@ func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 	enrollments := enrollments.NewEnrollmentsModule(sqlx.NewDb(db, "postgres"))
 	courses := courses.NewCoursesModule(sqlx.NewDb(db, "postgres"), enrollments)
 
-	cart := cart.NewCartModule(sqlx.NewDb(db, "postgres"))
 	wishlist := wishlist.NewWishlistModule(sqlx.NewDb(db, "postgres"))
 	categories := category.NewCategoryModule(sqlx.NewDb(db, "postgres"))
 	certificates := certificate.NewCertificateModule(sqlx.NewDb(db, "postgres"), enrollments)
@@ -93,7 +90,7 @@ func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 
 	return &Router{
 		App: app, API: app.Group("/api"), DB: db, CFG: cfg,
-		Cart: cart, Wishlist: wishlist, Categories: categories,
+		Wishlist: wishlist, Categories: categories,
 		Certificates: certificates, Notes: notes, Discussions: discussions,
 		Users: users, Dashboard: dashboard,
 		Updates: updates, Feedbacks: feedbacks, Coupons: coupons,
@@ -124,7 +121,6 @@ func (r *Router) SetUp() {
 	})
 
 	// Register Routes
-	r.Cart.Routes(v1, protected)
 	r.Wishlist.Routes(v1, protected)
 	r.Categories.Routes(v1, protected)
 	r.Certificates.Routes(v1, protected)

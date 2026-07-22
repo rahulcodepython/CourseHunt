@@ -12,4 +12,5 @@ func (m *WishlistModule) Routes(v1, protected fiber.Router) {
 	wishlist.Get("", m.ListController)
 	wishlist.Post("", m.CreateController)
 	wishlist.Delete("/:id", m.DeleteController)
+	wishlist.Delete("", m.ClearController)
 }

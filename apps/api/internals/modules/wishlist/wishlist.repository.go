@@ -17,18 +17,11 @@ func (m *WishlistModule) DeleteRepository(userID, id string) (string, error) {
 	return id, err
 }
 
-func (m *WishlistModule) ListRepository(userID string, page, limit int) ([]WishlistItem, int, error) {
-	offset := (page - 1) * limit
-
-	var result struct {
-		Total int             `db:"total_count"`
-		Data  json.RawMessage `db:"data_json"`
-	}
-	err := m.DB.Get(&result, `
-		WITH count_cte AS (
-			SELECT COUNT(*) AS total_count FROM wishlists WHERE user_id = $1
-		),
-		data_cte AS (
+func (m *WishlistModule) ListRepository(userID string) ([]WishlistItem, error) {
+	var data json.RawMessage
+	err := m.DB.Get(&data, `
+		SELECT json_agg(data_cte ORDER BY data_cte.added_at DESC)
+		FROM (
 			SELECT
 				w.id AS id,
 				w.user_id AS user_id,
@@ -39,20 +32,21 @@ func (m *WishlistModule) ListRepository(userID string, page, limit int) ([]Wishl
 			FROM wishlists w
 			LEFT JOIN courses c ON w.course_id = c.id
 			WHERE w.user_id = $1
-			ORDER BY w.added_at DESC
-			LIMIT $2 OFFSET $3
-		)
-		SELECT
-			COALESCE((SELECT total_count FROM count_cte), 0) AS total_count,
-			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data_json
-	`, userID, limit, offset)
+		) data_cte`, userID)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	var list []WishlistItem
-	if err := json.Unmarshal(result.Data, &list); err != nil {
-		return nil, 0, err
+	if data != nil {
+		if err := json.Unmarshal(data, &list); err != nil {
+			return nil, err
+		}
 	}
-	return list, result.Total, nil
+	return list, nil
+}
+
+func (m *WishlistModule) ClearRepository(userID string) error {
+	_, err := m.DB.Exec(`DELETE FROM wishlists WHERE user_id = $1`, userID)
+	return err
 }

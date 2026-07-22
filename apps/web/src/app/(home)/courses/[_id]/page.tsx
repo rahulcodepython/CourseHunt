@@ -2,17 +2,22 @@
 
 import { Icon } from "@package/components/icon";
 import { Badge } from "@package/ui/badge";
+import { Button } from "@package/ui/button";
 import { Card, CardContent } from "@package/ui/card";
 import { useCourseLandingQuery } from "@package/query-hooks/courses.api";
 import type { CourseLandingResponse, ChapterCardResponse, LessonCardResponse } from "@package/schema/courses.types";
 import { useParams } from "next/navigation";
 import Loading from "@package/components/loading";
 import EnrollButton from "@package/components/enroll-button";
+import { useAddCourseToWishlistMutation } from "@package/query-hooks/wishlist.api";
+import { useSession } from "@package/auth/auth-client";
 import Image from "next/image";
 
 export default function CourseDetail() {
 	const { _id } = useParams();
 	const { data: course, isLoading } = useCourseLandingQuery(_id as string);
+	const { data: session } = useSession();
+	const addToWishlist = useAddCourseToWishlistMutation();
 
 	if (isLoading) return <Loading />;
 	if (!course?.data) return <div className="text-center py-20">Course not found.</div>;
@@ -80,6 +85,17 @@ export default function CourseDetail() {
 										<span className="text-lg text-muted-foreground line-through">₹{c.actual_price}</span>
 									</div>
 									<EnrollButton _id={c.id} />
+									{session && (
+										<Button
+											variant="outline"
+											className="w-full"
+											onClick={() => addToWishlist.mutate(c.id)}
+											disabled={addToWishlist.isPending}
+										>
+											<Icon name="IconHeart" className="h-4 w-4 mr-2" />
+											{addToWishlist.isPending ? "Adding..." : "Add to Wishlist"}
+										</Button>
+									)}
 									<div className="space-y-2 text-sm">
 										<div className="flex items-center gap-2"><Icon name="IconVideo" className="h-4 w-4 text-muted-foreground" />{c.total_lectures} lectures</div>
 										<div className="flex items-center gap-2"><Icon name="IconClock" className="h-4 w-4 text-muted-foreground" />{Math.floor(c.total_duration_seconds / 3600)}h {Math.floor((c.total_duration_seconds % 3600) / 60)}m</div>

@@ -1,5 +1,4 @@
 export const queryKeys = {
-	cart: () => ["cart"] as const,
 	categories: () => ["categories"] as const,
 	certificates: () => ["certificates"] as const,
 	chapters: (courseId: string) => ["chapters", courseId] as const,

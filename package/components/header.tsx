@@ -47,7 +47,13 @@ export default function Header() {
 
 				<div className="flex items-center gap-4">
 					{!isPending && session ? (
-						<DropdownMenu>
+						<>
+							<Link href="/wishlist">
+								<Button variant="ghost" size="icon" className="relative">
+									<Icon name="IconHeart" className="h-5 w-5" />
+								</Button>
+							</Link>
+							<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button variant="ghost" size="icon" className="rounded-full">
 									<Avatar className="h-8 w-8">
@@ -81,6 +87,7 @@ export default function Header() {
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
+						</>
 					) : (
 						<Link href="/login">
 							<Button variant="outline">Sign In</Button>

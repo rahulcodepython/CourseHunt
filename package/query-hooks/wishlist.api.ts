@@ -3,11 +3,11 @@
 import { apiRequest } from "@/package/react-query/client";
 import { z } from "zod";
 
-import { useArrayMutation, appendToArray, removeFromArray } from "@/package/react-query/mutation";
+import { useSimpleMutation, useArrayMutation, appendToArray, removeFromArray } from "@/package/react-query/mutation";
 import { useAppQuery } from "@/package/react-query/query";
 import { queryKeys } from "@/package/react-query/query-keys";
 import { WishlistItemZod } from "@/package/schema/wishlist.types";
-import { DeleteResponseZod } from "@/package/schema/common.types";
+import { SuccessResponseZod, DeleteResponseZod } from "@/package/schema/common.types";
 
 export function useWishlistQuery() {
 	return useAppQuery(queryKeys.wishlist(), () =>
@@ -32,6 +32,15 @@ export function useRemoveCourseFromWishlistMutation() {
 		queryKey: queryKeys.wishlist(),
 		updater: (res) => removeFromArray(res.id),
 		optimistic: (id) => removeFromArray(id),
+		showToast: true,
+	});
+}
+
+export function useClearWishlistMutation() {
+	return useSimpleMutation({
+		mutationFn: () =>
+			apiRequest({ url: "/api/v1/wishlist", method: "DELETE" }, SuccessResponseZod),
+		invalidateKeys: [queryKeys.wishlist()],
 		showToast: true,
 	});
 }
