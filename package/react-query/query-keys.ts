@@ -32,5 +32,7 @@ export const queryKeys = {
 	updates: () => ["updates"] as const,
 	updateFeed: (params?: Record<string, string | number>) => params ? ["updates", "feed", params] as const : ["updates", "feed"] as const,
 	users: () => ["users"] as const,
+	roles: () => ["roles"] as const,
+	permissions: () => ["permissions"] as const,
 	wishlist: () => ["wishlist"] as const,
 };

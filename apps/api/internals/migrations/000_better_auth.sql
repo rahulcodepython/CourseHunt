@@ -1,15 +1,17 @@
 -- 000: Better-Auth tables (pre-existing from better-auth library)
 CREATE TABLE IF NOT EXISTS "user" (
-    "id"            text not null primary key,
-    "name"          text not null,
-    "email"         text not null unique,
-    "emailVerified" boolean not null default false,
-    "image"         text,
-    "createdAt"     timestamptz default CURRENT_TIMESTAMP not null,
-    "updatedAt"     timestamptz default CURRENT_TIMESTAMP not null,
-    "banned"        boolean default false,
-    "banReason"     text,
-    "banExpires"    timestamptz
+    "id"                text not null primary key,
+    "name"              text not null,
+    "email"             text not null unique,
+    "emailVerified"     boolean not null default false,
+    "image"             text,
+    "createdAt"         timestamptz default CURRENT_TIMESTAMP not null,
+    "updatedAt"         timestamptz default CURRENT_TIMESTAMP not null,
+    "banned"            boolean default false,
+    "banReason"         text,
+    "banExpires"        timestamptz,
+    "passwordChangedAt" timestamptz,
+    "createdBy"         text references "user"("id")
 );
 
 CREATE TABLE IF NOT EXISTS "session" (

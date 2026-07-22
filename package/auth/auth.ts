@@ -11,6 +11,10 @@ const pool = new Pool({
 export const auth = betterAuth({
 	database: pool,
 	baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+	emailAndPassword: {
+		enabled: true,
+		disableSignUp: true,
+	},
 	socialProviders: {
 		google: {
 			clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -51,12 +55,12 @@ export const auth = betterAuth({
 					);
 					const permissions = permsResult.rows.map((p) => p.name);
 
-					// Fetch user banned status directly from DB to get the most updated state when generating the token
-					const userResult = await pool.query<{ banned: boolean }>(
-						`SELECT banned FROM "user" WHERE id = $1`,
+					// Fetch user banned status and passwordChangedAt from DB to get the most updated state when generating the token
+					const userResult = await pool.query<{ banned: boolean; passwordChangedAt: string | null }>(
+						`SELECT banned, "passwordChangedAt" FROM "user" WHERE id = $1`,
 						[user.id]
 					);
-					const banned = userResult.rows[0]?.banned || false;
+					const { banned, passwordChangedAt } = userResult.rows[0] || { banned: false, passwordChangedAt: null };
 
 					return {
 						user_id: user.id,
@@ -64,6 +68,7 @@ export const auth = betterAuth({
 						roles,
 						permissions,
 						banned,
+						passwordChangedAt,
 					};
 				},
 			},

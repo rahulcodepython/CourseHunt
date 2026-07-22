@@ -72,6 +72,7 @@ const defaultAdminNav: NavbarDataType = {
             title: "User Management",
             children: [
                 { title: "Users", url: "/users" },
+                { title: "Admins", url: "/admins" },
                 { title: "Tutors", url: "/tutors" },
             ],
         },

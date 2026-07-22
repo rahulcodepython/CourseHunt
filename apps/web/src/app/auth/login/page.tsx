@@ -59,24 +59,6 @@ export default function LoginPage() {
                             </span>
                         }
                     </Button>
-
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t border-zinc-800" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-zinc-900/50 px-2 text-zinc-500 backdrop-blur-xl">
-                                Or continue with
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="text-center text-sm text-zinc-500">
-                        Don&apos;t have an account?{" "}
-                        <button className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-                            Sign up for free
-                        </button>
-                    </div>
                 </CardContent>
             </Card>
         </div>

@@ -3,18 +3,30 @@
 import { Icon } from "@package/components/icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar";
 import { Badge } from "@package/ui/badge";
+import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@package/ui/dialog";
 import { Input } from "@package/ui/input";
+import { Label } from "@package/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@package/ui/select";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import { useUsersQuery } from "@package/query-hooks/users.api";
+import { useUsersQuery, useCreateUserMutation } from "@package/query-hooks/users.api";
 import type { UserListResponse } from "@package/schema/users.types";
 import { useDebounce } from "@package/hooks/use-debounce";
+import { downloadCredentialsCSV } from "@package/lib/csv";
 import { useState } from "react";
 
 export default function UsersPage() {
 	const [search, setSearch] = useState("");
 	const debouncedSearch = useDebounce(search, 300);
 	const { data: raw, isLoading } = useUsersQuery();
+
+	const createUser = useCreateUserMutation();
+	const [createDialogOpen, setCreateDialogOpen] = useState(false);
+	const [newName, setNewName] = useState("");
+	const [newEmail, setNewEmail] = useState("");
+	const [newPassword, setNewPassword] = useState("");
+	const [newRole, setNewRole] = useState("");
 
 	const users: UserListResponse[] = raw?.data?.data ?? [];
 
@@ -24,6 +36,29 @@ export default function UsersPage() {
 			u.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
 		)
 		: users;
+
+	const handleCreateUser = async () => {
+		if (!newName || !newEmail || !newPassword || !newRole) return;
+		try {
+			const result = await createUser.mutateAsync({
+				name: newName,
+				email: newEmail,
+				password: newPassword,
+				role: newRole as "admin" | "tutor",
+			});
+			downloadCredentialsCSV(
+				{ name: newName, email: newEmail, password: newPassword, role: newRole },
+				window.location.origin,
+			);
+			setCreateDialogOpen(false);
+			setNewName("");
+			setNewEmail("");
+			setNewPassword("");
+			setNewRole("");
+		} catch {
+			// error handled by mutation toast
+		}
+	};
 
 	const columns: DataTableColumn<UserListResponse>[] = [
 		{
@@ -83,14 +118,57 @@ export default function UsersPage() {
 				<CardHeader>
 					<div className="flex items-center justify-between">
 						<CardTitle>All Users ({users.length})</CardTitle>
-						<div className="relative w-64">
-							<Icon name="IconSearch" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-							<Input
-								placeholder="Search by name or email..."
-								value={search}
-								onChange={(e) => setSearch(e.target.value)}
-								className="pl-10"
-							/>
+						<div className="flex items-center gap-2">
+							<div className="relative w-64">
+								<Icon name="IconSearch" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+								<Input
+									placeholder="Search by name or email..."
+									value={search}
+									onChange={(e) => setSearch(e.target.value)}
+									className="pl-10"
+								/>
+							</div>
+							<Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+								<DialogTrigger asChild>
+									<Button>
+										<Icon name="IconPlus" className="mr-1 h-4 w-4" /> Create User
+									</Button>
+								</DialogTrigger>
+								<DialogContent>
+									<DialogHeader>
+										<DialogTitle>Create Admin / Tutor User</DialogTitle>
+									</DialogHeader>
+									<div className="space-y-4">
+										<div className="space-y-2">
+											<Label>Name</Label>
+											<Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Full name" />
+										</div>
+										<div className="space-y-2">
+											<Label>Email</Label>
+											<Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email@example.com" type="email" />
+										</div>
+										<div className="space-y-2">
+											<Label>Password</Label>
+											<Input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} type="password" placeholder="Min 8 characters" />
+										</div>
+										<div className="space-y-2">
+											<Label>Role</Label>
+											<Select value={newRole} onValueChange={setNewRole}>
+												<SelectTrigger>
+													<SelectValue placeholder="Select role" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="admin">Admin</SelectItem>
+													<SelectItem value="tutor">Tutor</SelectItem>
+												</SelectContent>
+											</Select>
+										</div>
+										<Button className="w-full" onClick={handleCreateUser} disabled={createUser.isPending}>
+											{createUser.isPending ? "Creating..." : "Create User"}
+										</Button>
+									</div>
+								</DialogContent>
+							</Dialog>
 						</div>
 					</div>
 				</CardHeader>

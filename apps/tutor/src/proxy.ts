@@ -2,7 +2,7 @@ import { getSessionCookie } from "better-auth/cookies";
 import { NextRequest, NextResponse } from "next/server";
 
 const protectedRoutes = ["/courses", "/feedbacks", "/discussions", "/enrolled-students"];
-const authRoutes = ["/auth/login"];
+const authRoutes = ["/auth/login", "/auth/change-password"];
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
     try {
@@ -29,7 +29,7 @@ export default async function middleware(request: NextRequest) {
     const isRoot = pathname === "/";
     const isProtectedRoute = isRoot || protectedRoutes.some((route) => pathname === route || pathname.startsWith(route + "/"));
     const isAuthRoute = authRoutes.some((route) => pathname === route || pathname.startsWith(route + "/"));
-    const isPendingRoute = pathname.startsWith("/auth/waiting");
+    const isChangePasswordRoute = pathname.startsWith("/auth/change-password");
 
     if (!sessionCookie) {
         if (isProtectedRoute) {
@@ -41,21 +41,22 @@ export default async function middleware(request: NextRequest) {
     const payload = decodeJwtPayload(sessionCookie);
     const hasAccess = hasTutorAccess(payload);
     const isBanned = payload?.banned === true;
+    const pendingPasswordChange = payload?.passwordChangedAt == null;
 
     if (isBanned) {
         return NextResponse.redirect(new URL("/restricted", request.url));
     }
 
-    if (isAuthRoute) {
-        return NextResponse.redirect(new URL(hasAccess ? "/" : "/auth/waiting", request.url));
+    if (isAuthRoute && !pendingPasswordChange) {
+        return NextResponse.redirect(new URL(hasAccess ? "/" : "/auth/login", request.url));
     }
 
     if (isProtectedRoute && !hasAccess) {
-        return NextResponse.redirect(new URL("/auth/waiting", request.url));
+        return NextResponse.redirect(new URL("/auth/login", request.url));
     }
 
-    if (isPendingRoute && hasAccess) {
-        return NextResponse.redirect(new URL("/", request.url));
+    if (hasAccess && pendingPasswordChange && !isChangePasswordRoute) {
+        return NextResponse.redirect(new URL("/auth/change-password", request.url));
     }
 
     return NextResponse.next();

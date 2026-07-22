@@ -1,17 +1,24 @@
 "use client";
 
 import { Icon } from "@package/components/icon";
-import { authClient } from "@package/auth/auth-client";
+import { authClient, signInWithEmail } from "@package/auth/auth-client";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
+import { Input } from "@package/ui/input";
+import { Label } from "@package/ui/label";
 import React from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
-    const [isLoading, setIsLoading] = React.useState(false);
+    const router = useRouter();
+    const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
+    const [isEmailLoading, setIsEmailLoading] = React.useState(false);
+    const [email, setEmail] = React.useState("");
+    const [password, setPassword] = React.useState("");
 
     const handleGoogleLogin = async () => {
-        setIsLoading(true);
+        setIsGoogleLoading(true);
         try {
             await authClient.signIn.social({
                 provider: "google",
@@ -21,7 +28,27 @@ export default function AdminLoginPage() {
             console.error("Login failed:", error);
             toast.error("Failed to sign in with Google. Please try again.");
         } finally {
-            setIsLoading(false);
+            setIsGoogleLoading(false);
+        }
+    };
+
+    const handleEmailLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email || !password) {
+            toast.error("Please enter email and password");
+            return;
+        }
+        setIsEmailLoading(true);
+        try {
+            const result = await signInWithEmail(email, password, "/");
+            if (result.error) {
+                toast.error(result.error.message || "Invalid credentials");
+            }
+        } catch (error) {
+            console.error("Login failed:", error);
+            toast.error("Failed to sign in. Please try again.");
+        } finally {
+            setIsEmailLoading(false);
         }
     };
 
@@ -38,14 +65,51 @@ export default function AdminLoginPage() {
                     <CardDescription className="text-zinc-400">Sign in to manage the platform</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 py-6">
-                    <Button variant="outline" type="button" disabled={isLoading} onClick={handleGoogleLogin}
+                    <form onSubmit={handleEmailLogin} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="admin@example.com"
+                                required
+                                className="bg-zinc-800 border-zinc-700"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="bg-zinc-800 border-zinc-700"
+                            />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={isEmailLoading}>
+                            {isEmailLoading ? <Icon name="IconLoader" className="h-5 w-5 animate-spin" /> : "Sign in with Email"}
+                        </Button>
+                    </form>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-zinc-800" /></div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-zinc-900/50 px-2 text-zinc-500 backdrop-blur-xl">Or continue with</span>
+                        </div>
+                    </div>
+
+                    <Button variant="outline" type="button" disabled={isGoogleLoading} onClick={handleGoogleLogin}
                         className="w-full h-10 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
-                        {isLoading ? <Icon name="IconLoader" className="h-5 w-5 animate-spin" /> : (
+                        {isGoogleLoading ? <Icon name="IconLoader" className="h-5 w-5 animate-spin" /> : (
                             <span className="flex items-center justify-center gap-4">
                                 <Icon name="IconBrandGoogle" /> Sign in with Google
                             </span>
                         )}
                     </Button>
+
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-zinc-800" /></div>
                         <div className="relative flex justify-center text-xs uppercase">

@@ -15,6 +15,13 @@ const (
 	AdminUsersList           = "admin:users:list"
 	AdminUsersRoleAssign     = "admin:users:role:assign"
 	AdminUsersRoleRevoke     = "admin:users:role:revoke"
+	AdminUsersCreate         = "admin:users:create"
+	AdminUsersRead           = "admin:users:read"
+	AdminRolesCreate         = "admin:roles:create"
+	AdminRolesRead           = "admin:roles:read"
+	AdminRolesUpdate         = "admin:roles:update"
+	AdminRolesDelete         = "admin:roles:delete"
+	AdminRolesAssign         = "admin:roles:assign"
 	AdminProfile             = "admin:profile"
 
 	// Tutor permissions

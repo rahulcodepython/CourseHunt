@@ -93,5 +93,13 @@ INSERT INTO permissions (name, description) VALUES
     -- Certificates
     ('certificates:read',            'View certificates'),
     -- Storage
-    ('storage:upload-media',         'Upload media files')
+    ('storage:upload-media',         'Upload media files'),
+    -- Admin Role Management
+    ('admin:roles:create',           'Create custom roles'),
+    ('admin:roles:read',             'List and view roles and permissions'),
+    ('admin:roles:update',           'Update custom roles'),
+    ('admin:roles:delete',           'Delete custom roles'),
+    ('admin:roles:assign',           'Assign custom roles to users'),
+    ('admin:users:create',           'Create admin and tutor users'),
+    ('admin:users:read',             'View admin users list')
 ON CONFLICT (name) DO NOTHING;

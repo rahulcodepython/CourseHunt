@@ -35,12 +35,12 @@ services:
   #   volumes:
   #     - miniodata:/data
 
-  adminer:
-    image: adminer:latest
-    container_name: coursehunt_adminer
-    restart: unless-stopped
+  whodb:
+    image: clidey/whodb:latest
+    profiles: ["tools"]
+    restart: always
     ports:
-      - "8088:8080"
+      - "8080:8080"
   # backend:
   #   build:
   #     context: ./apps/api

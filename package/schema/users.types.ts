@@ -72,3 +72,19 @@ export const AdminProfileItemZod = z.object({
     updated_at: z.string(),
 });
 export type AdminProfileItem = z.infer<typeof AdminProfileItemZod>;
+
+export const CreateUserRequestZod = z.object({
+    name: z.string().min(1),
+    email: z.string().email(),
+    password: z.string().min(8),
+    role: z.enum(["admin", "tutor"]),
+});
+export type CreateUserRequest = z.infer<typeof CreateUserRequestZod>;
+
+export const CreateUserResponseZod = z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    role: z.string(),
+});
+export type CreateUserResponse = z.infer<typeof CreateUserResponseZod>;
