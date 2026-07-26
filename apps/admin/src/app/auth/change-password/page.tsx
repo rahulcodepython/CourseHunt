@@ -1,6 +1,6 @@
 "use client";
 
-import { authClient } from "@package/auth/auth-client";
+import { useChangePasswordMutation } from "@package/query-hooks/auth.api";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 export default function ChangePasswordPage() {
     const router = useRouter();
+    const changePasswordMutation = useChangePasswordMutation();
     const [currentPassword, setCurrentPassword] = React.useState("");
     const [newPassword, setNewPassword] = React.useState("");
     const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -29,21 +30,13 @@ export default function ChangePasswordPage() {
 
         setIsLoading(true);
         try {
-            const result = await authClient.changePassword({ currentPassword, newPassword });
-            if (result.error) {
-                toast.error(result.error.message || "Failed to change password");
+            const result = await changePasswordMutation.mutateAsync({ currentPassword, newPassword });
+            if (result?.error) {
+                toast.error("Failed to change password");
                 return;
             }
-
-            const res = await fetch("/api/v1/auth/clear-password-changed-at", { method: "POST" });
-            if (!res.ok) {
-                toast.error("Failed to complete password change");
-                return;
-            }
-
-            await authClient.signOut();
-            toast.success("Password changed successfully. Please sign in again.");
-            router.push("/auth/login");
+            toast.success("Password changed successfully.");
+            router.push("/");
         } catch {
             toast.error("Failed to change password");
         } finally {

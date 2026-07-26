@@ -6,9 +6,19 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "jsx": "react-jsx",
     "paths": {
-      "@/package/*": ["./*"]
+      "@/package/*": ["./*"],
+      "@package/components/*": ["./components/*"],
+      "@package/ui/*": ["./ui/*"],
+      "@package/query-hooks/*": ["./query-hooks/*"],
+      "@package/schema/*": ["./schema/*"],
+      "@package/store/*": ["./store/*"],
+      "@package/lib/*": ["./lib/*"],
+      "@package/hooks/*": ["./hooks/*"],
+      "@package/react-query/*": ["./react-query/*"],
+      "@package/styles/*": ["./styles/*"]
     }
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "**/*.tsx"]
 }

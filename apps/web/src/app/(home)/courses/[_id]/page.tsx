@@ -10,13 +10,13 @@ import { useParams } from "next/navigation";
 import Loading from "@package/components/loading";
 import EnrollButton from "@package/components/enroll-button";
 import { useAddCourseToWishlistMutation } from "@package/query-hooks/wishlist.api";
-import { useSession } from "@package/auth/auth-client";
+import { useSessionStore } from "@package/store/session.store";
 import Image from "next/image";
 
 export default function CourseDetail() {
 	const { _id } = useParams();
 	const { data: course, isLoading } = useCourseLandingQuery(_id as string);
-	const { data: session } = useSession();
+	const session = useSessionStore((s) => s.data);
 	const addToWishlist = useAddCourseToWishlistMutation();
 
 	if (isLoading) return <Loading />;

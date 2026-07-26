@@ -4,7 +4,7 @@ import { Icon } from "@package/components/icon";
 import { Separator } from "@package/ui/separator";
 import Loading from "@package/components/loading";
 import { Button } from "@package/ui/button";
-import { useSessionStore } from "@/stores/session-store";
+import { useSessionStore } from "@package/store/session.store";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 

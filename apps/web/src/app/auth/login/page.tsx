@@ -3,7 +3,7 @@
 import { Icon } from "@package/components/icon";
 
 
-import { authClient } from "@package/auth/auth-client";
+import { useLoginWithGoogleMutation } from "@package/query-hooks/auth.api";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 
@@ -11,15 +11,14 @@ import React from "react";
 import { toast } from "sonner";
 
 export default function LoginPage() {
+    const loginGoogleMutation = useLoginWithGoogleMutation();
     const [isLoading, setIsLoading] = React.useState(false);
 
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
-            await authClient.signIn.social({
-                provider: "google",
-                callbackURL: "/",
-            });
+            // await loginGoogleMutation.mutateAsync({ idToken });
+            toast.error("Google SSO client logic needs ID token to proceed");
         } catch (error) {
             console.error("Login failed:", error);
             toast.error("Failed to sign in with Google. Please try again.");

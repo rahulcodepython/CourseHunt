@@ -10,8 +10,8 @@ import { Badge } from "@package/ui/badge";
 import { Textarea } from "@package/ui/textarea";
 import { useUserProfileQuery, useCreateUserProfileMutation } from "@package/query-hooks/users.api";
 import { useUploadMediaMutation } from "@package/query-hooks/upload.api";
-import { useSessionStore } from "@/stores/session-store";
-import { authClient } from "@package/auth/auth-client";
+import { useSessionStore } from "@package/store/session.store";
+import { useUpdateUserMutation } from "@package/query-hooks/auth.api";
 import { useEnrolledCoursesQuery } from "@package/query-hooks/courses.api";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ export default function Component() {
 	const updateUser = useSessionStore((s) => s.updateUser);
 	const userProfileQuery = useUserProfileQuery();
 	const enrolledCoursesQuery = useEnrolledCoursesQuery();
+	const updateUserMutation = useUpdateUserMutation();
 	const { isPending: isSaving, mutateAsync: updateUserProfile } = useCreateUserProfileMutation();
 	const { isPending: isUploading, uploadMedia } = useUploadMediaMutation();
 
@@ -91,19 +92,17 @@ export default function Component() {
 
 	const handleSubmit = async () => {
 		try {
-			// Update basic user profile (name, image)
-			const authRes = await authClient.updateUser({
+			const authRes = await updateUserMutation.mutateAsync({
 				name: formData.name,
-				image: formData.avatarUrl || undefined,
+				image: formData.avatarUrl || null,
 			});
-			if (authRes.error) {
-				toast.error(authRes.error.message || "Failed to update profile name/avatar");
+			if (!authRes?.success) {
+				toast.error("Failed to update profile name/avatar");
 				return;
 			}
 
 			updateUser({ name: formData.name, image: formData.avatarUrl || null });
 
-			// Update user profile metadata (headline, bio, website)
 			await updateUserProfile({
 				headline: formData.headline || null,
 				bio: formData.bio || null,

@@ -32,8 +32,8 @@
       "@package/schema/*": [
         "../../package/schema/*"
       ],
-      "@package/auth/*": [
-        "../../package/auth/*"
+      "@package/store/*": [
+        "../../package/store/*"
       ],
       "@package/react-query/*": [
         "../../package/react-query/*"

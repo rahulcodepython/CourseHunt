@@ -20,7 +20,4 @@ func (m *UsersModule) Routes(v1, protected fiber.Router) {
 	profile.Post("/tutor", middlewares.PermissionGuard(generic.TutorProfile), m.UpsertTutorProfileController)
 	profile.Get("/admin", middlewares.PermissionGuard(generic.AdminProfile), m.AdminListProfilesController)
 
-	auth := protected.Group("/auth")
-	auth.Post("/create-user", middlewares.PermissionGuard(generic.AdminUsersCreate), m.CreateUserController)
-	auth.Post("/clear-password-changed-at", m.ClearPasswordChangedAtController)
 }

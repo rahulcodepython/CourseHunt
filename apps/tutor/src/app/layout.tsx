@@ -1,4 +1,4 @@
-import { SessionProvider } from "@/components/session-provider";
+import { SessionProvider } from "@package/components/session-provider";
 import { ThemeProvider } from "@package/components/theme-provider";
 import { QueryProvider } from "@package/components/query-provider";
 import type { Metadata } from "next";

@@ -1,168 +1,72 @@
 package middlewares
 
 import (
-	"context"
+	"errors"
 	"fmt"
-	"slices"
-	"time"
 
 	"coursehunt/api/internals/config"
 	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-// =============================================================================
-// JWKS Cache
-// =============================================================================
-
-// jwksCache is the package-level, auto-refreshing JWKS key cache.
-// It is initialized once via InitJWKSCache and reused across all requests.
-var jwksCache *jwk.Cache
-
-// InitJWKSCache initializes a background-refreshing JWKS cache for the given URL.
-// This must be called once at application startup before any auth middleware is used.
-func InitJWKSCache(jwksURL string) {
-	jwksCache = jwk.NewCache(context.Background())
-	err := jwksCache.Register(jwksURL, jwk.WithMinRefreshInterval(15*time.Minute))
-	if err != nil {
-		panic("Failed to register JWKS cache: " + err.Error())
-	}
-}
-
-// fetchKeySet retrieves the current JWK key set from the cache.
-// Returns an error if the cache has not been initialized or the fetch fails.
-func fetchKeySet(ctx context.Context, jwksURL string) (jwk.Set, error) {
-	if jwksCache == nil {
-		return nil, fmt.Errorf("JWKS cache is not initialized; call InitJWKSCache first")
-	}
-	return jwksCache.Get(ctx, jwksURL)
-}
-
-// =============================================================================
-// Token Parsing
-// =============================================================================
-
-// parseToken validates the raw JWT string against the given key set.
-// Returns the parsed token or an error if validation fails.
-func parseToken(tokenBytes []byte, keySet jwk.Set) (jwt.Token, error) {
-	return jwt.Parse(tokenBytes,
-		jwt.WithKeySet(keySet),
-		jwt.WithValidate(true), // enforces expiry, nbf, and other standard claims
-		jwt.WithAcceptableSkew(time.Minute),
-	)
-}
-
-// =============================================================================
-// Claim Extraction
-// =============================================================================
-
-// extractStringSlice safely reads a []string from a JWT private claim.
-// Returns an empty slice when the claim is absent or of an unexpected type.
-func extractStringSlice(token jwt.Token, key string) []string {
-	raw, ok := token.Get(key)
-	if !ok {
-		return []string{}
-	}
-
-	// Better-Auth encodes arrays as []interface{}
-	rawSlice, ok := raw.([]interface{})
-	if !ok {
-		return []string{}
-	}
-
-	result := make([]string, 0, len(rawSlice))
-	for _, v := range rawSlice {
-		if s, ok := v.(string); ok {
-			result = append(result, s)
-		}
-	}
-	return result
-}
-
-// extractUserContext builds a UserContext from a validated JWT token.
-func extractUserContext(token jwt.Token) generic.UserContext {
-	var email string
-	if raw, ok := token.Get("email"); ok {
-		email = fmt.Sprintf("%v", raw)
-	}
-
-	return generic.UserContext{
-		UserID:      token.Subject(),
-		Email:       email,
-		Roles:       extractStringSlice(token, "roles"),
-		Permissions: extractStringSlice(token, "permissions"),
-	}
-}
-
-// =============================================================================
-// Core Auth Middleware
-// =============================================================================
-
-// BaseAuthMiddleware validates the JWT found in the Authorization header and
-// populates c.Locals("user") with a UserContext on success.
-//
-// This middleware must be mounted before any guard.
-// It does NOT enforce a specific permission — use PermissionGuard for that.
 func BaseAuthMiddleware(cfg *config.Config) fiber.Handler {
-	// Initialize cache if it hasn't been initialized yet
-	if jwksCache == nil {
-		InitJWKSCache(cfg.JWKSURL)
-	}
-
 	return func(c *fiber.Ctx) error {
-		// Step 1: Extract raw token from the cookie.
-		tokenString := c.Cookies(cfg.JWTCookieName)
+		tokenString := c.Cookies(cfg.AuthCookieName)
 		if tokenString == "" {
-			return utils.Unauthorized(c, "Authorization cookie missing.", fmt.Errorf("cookie %s is missing", cfg.JWTCookieName))
+			return utils.Unauthorized(c, "Authorization token missing.", errors.New("token missing in cookies"))
 		}
 
-		// Step 2: Fetch the current JWKS key set from the in-memory cache.
-		keySet, err := fetchKeySet(c.Context(), cfg.JWKSURL)
-		if err != nil {
-			return utils.InternalError(c, "Failed to fetch signing keys.", err)
-		}
-
-		// Step 3: Parse and validate the JWT signature, expiry, and claims.
-		token, err := parseToken([]byte(tokenString), keySet)
-		if err != nil {
+		token, err := jwt.ParseWithClaims(tokenString, &generic.UserClaims{}, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(cfg.JWTSecret), nil
+		})
+		if err != nil || !token.Valid {
 			return utils.Unauthorized(c, "Invalid or expired token.", err)
 		}
 
-		// Step 4: Extract user context from the token and store it.
-		userCtx := extractUserContext(token)
-		c.Locals("user", &userCtx)
+		claims, ok := token.Claims.(*generic.UserClaims)
+		if !ok {
+			return utils.Unauthorized(c, "Invalid token claims.", nil)
+		}
 
+		if claims.Banned {
+			return utils.Forbidden(c, "Account is banned.", nil)
+		}
+
+		permissionSet := make(map[string]struct{}, len(claims.Permissions))
+		for _, p := range claims.Permissions {
+			permissionSet[p] = struct{}{}
+		}
+
+		c.Locals("user", &generic.UserContext{
+			UserID:      claims.Subject,
+			Email:       claims.Email,
+			Roles:       claims.Roles,
+			Permissions: permissionSet,
+		})
 		return c.Next()
 	}
 }
 
-// PermissionGuard restricts access to users who have at least one of the
-// specified permissions. The first matched permission is stored in
-// c.Locals("permission") for downstream scope resolution.
-//
-// Example:
-//
-//	routes.Get("/discussions",
-//	    middlewares.PermissionGuard("admin:discussion:read", "tutor:discussion:read"),
-//	    handler)
 func PermissionGuard(requiredPermissions ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user, ok := c.Locals("user").(generic.UserContext)
-		if !ok {
-			return utils.Unauthorized(c, "Unauthorized.", fmt.Errorf("user context not found in locals"))
+		user, ok := c.Locals("user").(*generic.UserContext)
+		if !ok || user == nil {
+			return utils.Unauthorized(c, "Unauthorized.", errors.New("user context not found"))
 		}
 
-		for _, perm := range requiredPermissions {
-			if slices.Contains(user.Permissions, perm) {
-				c.Locals("permission", perm)
+		for _, reqPerm := range requiredPermissions {
+			if _, hasPerm := user.Permissions[reqPerm]; hasPerm {
+				c.Locals("permission", reqPerm)
 				return c.Next()
 			}
 		}
 
-		return utils.Forbidden(c, "Permission denied", nil)
+		return utils.Forbidden(c, "Permission denied.", nil)
 	}
 }

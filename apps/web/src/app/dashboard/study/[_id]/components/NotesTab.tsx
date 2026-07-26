@@ -7,7 +7,7 @@ import { Icon } from "@package/components/icon";
 import { useNotesQuery, useCreateNoteMutation } from "@package/query-hooks/notes.api";
 import { toast } from "sonner";
 import { NoteModeToggle } from "./NoteModeToggle";
-import { parseMarkdown } from "./utils/markdown";
+import { parseMarkdown } from "./markdown";
 
 interface NotesTabProps {
 	lessonId: string;

@@ -5,7 +5,7 @@ import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
 import { useDiscussionsQuery, useCreateDiscussionMutation, useUpdateDiscussionMutation, useDeleteDiscussionMutation } from "@package/query-hooks/discussions.api";
-import { useSessionStore } from "@/stores/session-store";
+import { useSessionStore } from "@package/store/session.store";
 import type { Discussion } from "@package/schema/discussions.types";
 import { useState } from "react";
 import { Input } from "@package/ui/input";

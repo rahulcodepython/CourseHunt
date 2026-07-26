@@ -10,8 +10,8 @@ import { Badge } from "@package/ui/badge";
 import { Textarea } from "@package/ui/textarea";
 import { useTutorProfileQuery, useCreateTutorProfileMutation } from "@package/query-hooks/users.api";
 import { useUploadMediaMutation } from "@package/query-hooks/upload.api";
-import { useSessionStore } from "@/stores/session-store";
-import { authClient } from "@package/auth/auth-client";
+import { useSessionStore } from "@package/store/session.store";
+import { useUpdateUserMutation } from "@package/query-hooks/auth.api";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -21,6 +21,7 @@ export default function TutorProfilePage() {
 	const isSessionLoading = useSessionStore((s) => s.isPending);
 	const updateUser = useSessionStore((s) => s.updateUser);
 	const tutorProfileQuery = useTutorProfileQuery();
+	const updateUserMutation = useUpdateUserMutation();
 	const { isPending: isSaving, mutateAsync: updateTutorProfile } = useCreateTutorProfileMutation();
 	const { isPending: isUploading, uploadMedia } = useUploadMediaMutation();
 
@@ -77,12 +78,12 @@ export default function TutorProfilePage() {
 
 	const handleSubmit = async () => {
 		try {
-			const authRes = await authClient.updateUser({
+			const authRes = await updateUserMutation.mutateAsync({
 				name: formData.name,
-				image: formData.avatarUrl || undefined,
+				image: formData.avatarUrl || null,
 			});
-			if (authRes.error) {
-				toast.error(authRes.error.message || "Failed to update profile name/avatar");
+			if (!authRes?.success) {
+				toast.error("Failed to update profile name/avatar");
 				return;
 			}
 

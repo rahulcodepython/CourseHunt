@@ -1,10 +1,10 @@
 package routes
 
 import (
-	"database/sql"
-
 	"coursehunt/api/internals/config"
+	"coursehunt/api/internals/middlewares"
 
+	"coursehunt/api/internals/modules/auth"
 	"coursehunt/api/internals/modules/category"
 	"coursehunt/api/internals/modules/certificate"
 	"coursehunt/api/internals/modules/chapters"
@@ -24,24 +24,23 @@ import (
 	"coursehunt/api/internals/modules/users"
 	"coursehunt/api/internals/modules/wishlist"
 
-	"github.com/jmoiron/sqlx"
-
 	razorpaypkg "coursehunt/api/internals/pkg/razorpay"
 
-	"coursehunt/api/internals/middlewares"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/jmoiron/sqlx"
 )
 
 type Router struct {
 	App *fiber.App
 	API fiber.Router
-	DB  *sql.DB
+	DB  *sqlx.DB
 	CFG *config.Config
 
+	Auth         *auth.AuthModule
 	Wishlist     *wishlist.WishlistModule
 	Categories   *category.CategoryModule
 	Certificates *certificate.CertificateModule
@@ -62,35 +61,33 @@ type Router struct {
 	Roles        *roles.RolesModule
 }
 
-func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
-	// Independent modules (no cross-deps)
-	enrollments := enrollments.NewEnrollmentsModule(sqlx.NewDb(db, "postgres"))
-	courses := courses.NewCoursesModule(sqlx.NewDb(db, "postgres"), enrollments)
+func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) *Router {
+	enrollments := enrollments.NewEnrollmentsModule(db)
+	courses := courses.NewCoursesModule(db, enrollments)
 
-	wishlist := wishlist.NewWishlistModule(sqlx.NewDb(db, "postgres"))
-	categories := category.NewCategoryModule(sqlx.NewDb(db, "postgres"))
-	certificates := certificate.NewCertificateModule(sqlx.NewDb(db, "postgres"), enrollments)
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	dashboard := dashboard.NewDashboardModule(sqlxDB)
-	notes := notes.NewNotesModule(sqlxDB, enrollments)
-	discussions := discussions.NewDiscussionsModule(sqlxDB, enrollments, courses)
-	users := users.NewUsersModule(sqlxDB)
-	updates := updates.NewUpdatesModule(sqlxDB)
-	feedbacks := feedbacks.NewFeedbacksModule(sqlxDB, enrollments, courses)
-	coupons := coupons.NewCouponsModule(sqlx.NewDb(db, "postgres"), courses)
-	quiz := quiz.NewQuizModule(sqlxDB, enrollments, courses)
-	chapters := chapters.NewChaptersModule(sqlx.NewDb(db, "postgres"), courses)
-	lessons := lessons.NewLessonsModule(sqlxDB, courses)
-	uploadMod := upload.NewUploadModule(sqlxDB)
-	rolesMod := roles.NewRolesModule(sqlxDB)
+	authMod := auth.NewAuthModule(db, cfg)
+	wishlist := wishlist.NewWishlistModule(db)
+	categories := category.NewCategoryModule(db)
+	certificates := certificate.NewCertificateModule(db, enrollments)
+	dashboard := dashboard.NewDashboardModule(db)
+	notes := notes.NewNotesModule(db, enrollments)
+	discussions := discussions.NewDiscussionsModule(db, enrollments, courses)
+	users := users.NewUsersModule(db)
+	updates := updates.NewUpdatesModule(db)
+	feedbacks := feedbacks.NewFeedbacksModule(db, enrollments, courses)
+	coupons := coupons.NewCouponsModule(db, courses)
+	quiz := quiz.NewQuizModule(db, enrollments, courses)
+	chapters := chapters.NewChaptersModule(db, courses)
+	lessons := lessons.NewLessonsModule(db, courses)
+	uploadMod := upload.NewUploadModule(db)
+	rolesMod := roles.NewRolesModule(db)
 
-	// Modules with cross-deps — order matters, clearly visible
 	rzp := razorpaypkg.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
-	transactions := transactions.NewTransactionsModule(sqlxDB, coupons, courses, enrollments, rzp, cfg)
+	transactions := transactions.NewTransactionsModule(db, coupons, courses, enrollments, rzp, cfg)
 
 	return &Router{
 		App: app, API: app.Group("/api"), DB: db, CFG: cfg,
-		Wishlist: wishlist, Categories: categories,
+		Auth: authMod, Wishlist: wishlist, Categories: categories,
 		Certificates: certificates, Notes: notes, Discussions: discussions,
 		Users: users, Dashboard: dashboard,
 		Updates: updates, Feedbacks: feedbacks, Coupons: coupons,
@@ -102,7 +99,6 @@ func NewRouter(app *fiber.App, db *sql.DB, cfg *config.Config) *Router {
 }
 
 func (r *Router) SetUp() {
-	// Global Middlewares
 	r.App.Use(middlewares.LoggerMiddleware())
 	r.App.Use(middlewares.RateLimiterMiddleware())
 	r.App.Use(recover.New())
@@ -120,7 +116,7 @@ func (r *Router) SetUp() {
 		return utils.OK(c, "Health check passed.", fiber.Map{"status": "ok", "version": "1.0.0", "database": r.DB.Ping()})
 	})
 
-	// Register Routes
+	r.Auth.Routes(v1, protected)
 	r.Wishlist.Routes(v1, protected)
 	r.Categories.Routes(v1, protected)
 	r.Certificates.Routes(v1, protected)

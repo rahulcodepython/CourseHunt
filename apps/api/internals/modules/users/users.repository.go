@@ -88,8 +88,3 @@ func (m *UsersModule) ListRepository(page, limit int, name, email, role string) 
 
 	return list, result.Total, nil
 }
-
-func (m *UsersModule) ClearPasswordChangedAtRepository(userID string) error {
-	_, err := m.DB.Exec(`UPDATE "user" SET "passwordChangedAt" = NOW() WHERE id = $1`, userID)
-	return err
-}

@@ -1,5 +1,7 @@
 package generic
 
+import "github.com/golang-jwt/jwt/v5"
+
 // PaginatedResponse is a generic paginated list wrapper.
 type PaginatedResponse[T any] struct {
 	Data  T   `json:"data"`
@@ -48,7 +50,15 @@ type UserContext struct {
 	UserID      string   `json:"user_id"`
 	Email       string   `json:"email"`
 	Roles       []string `json:"roles"`
+	Permissions map[string]struct{}
+}
+
+type UserClaims struct {
+	jwt.RegisteredClaims
+	Email       string   `json:"email"`
+	Roles       []string `json:"roles"`
 	Permissions []string `json:"permissions"`
+	Banned      bool     `json:"banned"`
 }
 
 // DeleteResponse represents the generic response envelope returned when a resource is deleted.

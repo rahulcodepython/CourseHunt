@@ -5,7 +5,7 @@ import { Button } from "@package/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
 import { Separator } from "@package/ui/separator";
-import { useSessionStore } from "@/stores/session-store";
+import { useSessionStore } from "@package/store/session.store";
 import { useCheckoutCourseQuery, useInitiateTransactionMutation } from "@package/query-hooks/transactions.api";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";

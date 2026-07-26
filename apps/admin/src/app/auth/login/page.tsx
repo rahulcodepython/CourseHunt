@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@package/components/icon";
-import { authClient, signInWithEmail } from "@package/auth/auth-client";
+import { useLoginWithEmailMutation, useLoginWithGoogleMutation } from "@package/query-hooks/auth.api";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
+    const loginEmailMutation = useLoginWithEmailMutation();
+    const loginGoogleMutation = useLoginWithGoogleMutation();
     const router = useRouter();
     const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
     const [isEmailLoading, setIsEmailLoading] = React.useState(false);
@@ -20,10 +22,7 @@ export default function AdminLoginPage() {
     const handleGoogleLogin = async () => {
         setIsGoogleLoading(true);
         try {
-            await authClient.signIn.social({
-                provider: "google",
-                callbackURL: "/",
-            });
+            toast.error("Google SSO client logic needs ID token to proceed");
         } catch (error) {
             console.error("Login failed:", error);
             toast.error("Failed to sign in with Google. Please try again.");
@@ -40,10 +39,8 @@ export default function AdminLoginPage() {
         }
         setIsEmailLoading(true);
         try {
-            const result = await signInWithEmail(email, password, "/");
-            if (result.error) {
-                toast.error(result.error.message || "Invalid credentials");
-            }
+            await loginEmailMutation.mutateAsync({ email, password });
+            router.push("/");
         } catch (error) {
             console.error("Login failed:", error);
             toast.error("Failed to sign in. Please try again.");

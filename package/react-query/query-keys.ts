@@ -1,4 +1,5 @@
 export const queryKeys = {
+	authSession: () => ["auth", "session"] as const,
 	categories: () => ["categories"] as const,
 	certificates: () => ["certificates"] as const,
 	chapters: (courseId: string) => ["chapters", courseId] as const,
@@ -12,7 +13,6 @@ export const queryKeys = {
 	dashboardTutor: () => ["dashboard", "tutor"] as const,
 	dashboardUser: () => ["dashboard", "user"] as const,
 	discussions: (lessonId: string) => ["discussions", lessonId] as const,
-
 	discussionReplies: (id: string) => ["discussions", "replies", id] as const,
 	enrollments: (courseId: string) => ["enrollments", courseId] as const,
 	feedbacks: () => ["feedbacks"] as const,

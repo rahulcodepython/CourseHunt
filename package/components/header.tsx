@@ -3,7 +3,7 @@
 import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@package/ui/dropdown-menu";
-import { signOut, useSession } from "@package/auth/auth-client";
+import { useAuthSessionQuery, useLogoutMutation } from "@package/query-hooks/auth.api";
 import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,16 +19,19 @@ interface SessionUser {
 }
 
 export default function Header() {
-	const { data: session, isPending } = useSession();
+	const { data, isPending } = useAuthSessionQuery();
+	const logoutMutation = useLogoutMutation();
+	const user = data?.success && data?.data ? data.data.user : null;
 	const router = useRouter();
-	const [isLoggingOut, setIsLoggingOut] = useState(false);
-	const userRole = (session?.user as SessionUser)?.role;
 
 	const handleLogout = async () => {
-		setIsLoggingOut(true);
-		await signOut();
-		toast.success("Logged out successfully");
-		router.push("/");
+		try {
+			await logoutMutation.mutateAsync(undefined as any);
+			toast.success("Logged out successfully");
+			router.push("/");
+		} catch {
+			// handled by mutation toast
+		}
 	};
 
 	return (
@@ -46,7 +49,7 @@ export default function Header() {
 				</div>
 
 				<div className="flex items-center gap-4">
-					{!isPending && session ? (
+					{!isPending && user ? (
 						<>
 							<Link href="/wishlist">
 								<Button variant="ghost" size="icon" className="relative">
@@ -54,39 +57,33 @@ export default function Header() {
 								</Button>
 							</Link>
 							<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" size="icon" className="rounded-full">
-									<Avatar className="h-8 w-8">
-										<AvatarImage src={session.user.image || ""} alt={session.user.name} />
-										<AvatarFallback>{session.user.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
-									</Avatar>
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-56">
-								<DropdownMenuLabel>
-									<div className="flex flex-col">
-										<span>{session.user.name}</span>
-										<span className="text-xs text-muted-foreground font-normal">{session.user.email}</span>
-									</div>
-								</DropdownMenuLabel>
-								<DropdownMenuSeparator />
-								<DropdownMenuGroup>
-									<DropdownMenuLabel>My Account</DropdownMenuLabel>
-									<Link href="/dashboard"><DropdownMenuItem>Dashboard</DropdownMenuItem></Link>
-									<Link href="/dashboard/profile"><DropdownMenuItem>Profile</DropdownMenuItem></Link>
-									{userRole === "admin" && (
-										<>
-											<DropdownMenuSeparator />
-											<a href="http://localhost:3002"><DropdownMenuItem>Admin Panel</DropdownMenuItem></a>
-										</>
-									)}
-								</DropdownMenuGroup>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem disabled={isLoggingOut} onClick={handleLogout}>
-									Log out
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant="ghost" size="icon" className="rounded-full">
+										<Avatar className="h-8 w-8">
+											<AvatarImage src={user.image || ""} alt={user.name} />
+											<AvatarFallback>{user.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+										</Avatar>
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end" className="w-56">
+									<DropdownMenuLabel>
+										<div className="flex flex-col">
+											<span>{user.name}</span>
+											<span className="text-xs text-muted-foreground font-normal">{user.email}</span>
+										</div>
+									</DropdownMenuLabel>
+									<DropdownMenuSeparator />
+									<DropdownMenuGroup>
+										<DropdownMenuLabel>My Account</DropdownMenuLabel>
+										<Link href="/dashboard"><DropdownMenuItem>Dashboard</DropdownMenuItem></Link>
+										<Link href="/dashboard/profile"><DropdownMenuItem>Profile</DropdownMenuItem></Link>
+									</DropdownMenuGroup>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem onClick={handleLogout}>
+										Log out
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</>
 					) : (
 						<Link href="/login">

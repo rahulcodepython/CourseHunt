@@ -1,26 +1,6 @@
 package database
 
-// ── Migration Convention ──────────────────────────────────────────────────
-//
-// Files 000–009 define the initial schema (split per table for readability).
-// Once applied, these files must NEVER be edited — the tracking table
-// `schema_migrations` will skip them on subsequent starts.
-//
-// ── Adding an alteration ──────────────────────────────────────────────────
-//
-// To alter the schema after initial deployment, create a NEW file with the
-// next available flat number (010, 011, …) and a descriptive name:
-//
-//	010_add_discount_to_courses.sql
-//	011_add_unique_index_on_slug.sql
-//
-// Only new (unapplied) files execute.  Old files are immutable.
-// ──────────────────────────────────────────────────────────────────────────
-
 import (
-	"context"
-	"database/sql"
-	"io/fs"
 	"log"
 	"sort"
 	"strings"
@@ -29,11 +9,12 @@ import (
 	"coursehunt/api/internals/config"
 	"coursehunt/api/internals/migrations"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-func Connect(cfg *config.Config) *sql.DB {
-	db, err := sql.Open("postgres", cfg.DatabaseURL)
+func Connect(cfg *config.Config) *sqlx.DB {
+	db, err := sqlx.Open("postgres", cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}
@@ -54,10 +35,8 @@ func Connect(cfg *config.Config) *sql.DB {
 	return db
 }
 
-func runMigrations(db *sql.DB) {
-	ensureMigrationTable(db)
-
-	entries, err := fs.ReadDir(migrations.FS, ".")
+func runMigrations(db *sqlx.DB) {
+	entries, err := migrations.FS.ReadDir(".")
 	if err != nil {
 		log.Fatalf("Failed to read migrations: %v", err)
 	}
@@ -66,15 +45,8 @@ func runMigrations(db *sql.DB) {
 		return entries[i].Name() < entries[j].Name()
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".sql") {
-			continue
-		}
-
-		if alreadyApplied(ctx, db, e.Name()) {
 			continue
 		}
 
@@ -83,23 +55,8 @@ func runMigrations(db *sql.DB) {
 			log.Fatalf("Failed to read migration %s: %v", e.Name(), err)
 		}
 
-		tx, err := db.BeginTx(ctx, nil)
-		if err != nil {
-			log.Fatalf("Failed to begin transaction for %s: %v", e.Name(), err)
-		}
-
-		if _, err = tx.Exec(string(content)); err != nil {
-			tx.Rollback()
+		if _, err = db.Exec(string(content)); err != nil {
 			log.Fatalf("Failed to execute migration %s: %v", e.Name(), err)
-		}
-
-		if _, err = tx.Exec(`INSERT INTO schema_migrations (filename) VALUES ($1)`, e.Name()); err != nil {
-			tx.Rollback()
-			log.Fatalf("Failed to record migration %s: %v", e.Name(), err)
-		}
-
-		if err = tx.Commit(); err != nil {
-			log.Fatalf("Failed to commit migration %s: %v", e.Name(), err)
 		}
 
 		log.Printf("[db] Migration applied: %s", e.Name())
@@ -108,29 +65,7 @@ func runMigrations(db *sql.DB) {
 	log.Println("[db] All migrations complete")
 }
 
-func ensureMigrationTable(db *sql.DB) {
-	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS schema_migrations (
-			filename  text PRIMARY KEY,
-			applied_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
-	if err != nil {
-		log.Fatalf("Failed to create schema_migrations table: %v", err)
-	}
-}
-
-func alreadyApplied(ctx context.Context, db *sql.DB, filename string) bool {
-	var count int
-	err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM schema_migrations WHERE filename = $1`, filename).Scan(&count)
-	if err != nil {
-		log.Printf("[db] Warning: could not check migration status for %s: %v", filename, err)
-		return false
-	}
-	return count > 0
-}
-
-func Close(db *sql.DB) {
+func Close(db *sqlx.DB) {
 	if err := db.Close(); err != nil {
 		log.Printf("[db] close error: %v", err)
 	}

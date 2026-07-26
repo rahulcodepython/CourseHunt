@@ -6,12 +6,20 @@ import { z } from "zod";
 import { useSimpleMutation, useObjectMutation } from "@/package/react-query/mutation";
 import { useAppQuery } from "@/package/react-query/query";
 import { queryKeys } from "@/package/react-query/query-keys";
-import { AssignRoleRequestZod, UserListResponseZod, RoleAssignmentResponseZod, UserProfileZod, TutorProfileZod, UpdateProfileRequestZod, AdminProfileItemZod, CreateUserRequestZod, CreateUserResponseZod } from "@/package/schema/users.types";
+import {
+	AssignRoleRequestZod,
+	UserListResponseZod,
+	RoleAssignmentResponseZod,
+	UserProfileZod,
+	TutorProfileZod,
+	UpdateProfileRequestZod,
+	AdminProfileItemZod,
+} from "@/package/schema/users.types";
 import { PaginatedResponseZod } from "@/package/schema/common.types";
 
-export function useUsersQuery() {
+export function useUsersQuery(params?: Record<string, string | number>) {
 	return useAppQuery(queryKeys.users(), () =>
-		apiRequest({ url: "/api/v1/users", method: "GET" }, PaginatedResponseZod(UserListResponseZod)),
+		apiRequest({ url: "/api/v1/users", method: "GET", params }, PaginatedResponseZod(UserListResponseZod)),
 	);
 }
 
@@ -63,18 +71,8 @@ export function useCreateUserProfileMutation() {
 	});
 }
 
-export function useAdminProfilesQuery() {
+export function useAdminProfilesQuery(params?: Record<string, string | number>) {
 	return useAppQuery(queryKeys.profilesAdmin(), () =>
-		apiRequest({ url: "/api/v1/profile/admin", method: "GET" }, PaginatedResponseZod(AdminProfileItemZod)),
+		apiRequest({ url: "/api/v1/profile/admin", method: "GET", params }, PaginatedResponseZod(AdminProfileItemZod)),
 	);
 }
-
-export function useCreateUserMutation() {
-	return useSimpleMutation({
-		mutationFn: (data: z.infer<typeof CreateUserRequestZod>) =>
-			apiRequest({ url: "/api/v1/auth/create-user", method: "POST", data }, CreateUserResponseZod),
-		invalidateKeys: [queryKeys.users()],
-		showToast: true,
-	});
-}
-

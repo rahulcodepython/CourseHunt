@@ -1,67 +1,49 @@
-import { getSessionCookie } from "better-auth/cookies";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  decodeJwtPayload,
+  getSessionCookie,
+  isPathMatch,
+  hasAnyRole,
+  isBanned,
+  needsPasswordChange,
+  redirectTo,
+  middlewareMatcher,
+} from "@package/lib/middleware";
 
-const protectedRoutes = ["/courses", "/feedbacks", "/discussions", "/enrolled-students"];
 const authRoutes = ["/auth/login", "/auth/change-password"];
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-    try {
-        const parts = token.split(".");
-        if (parts.length !== 3) return null;
-        const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-        const json = atob(base64);
-        return JSON.parse(json);
-    } catch {
-        return null;
-    }
-}
-
-function hasTutorAccess(payload: Record<string, unknown> | null): boolean {
-    if (!payload) return false;
-    const roles = payload.roles as string[] | undefined;
-    return Array.isArray(roles) && (roles.includes("tutor") || roles.includes("admin"));
-}
-
 export default async function middleware(request: NextRequest) {
-    const sessionCookie = getSessionCookie(request);
-    const { pathname } = request.nextUrl;
+  const sessionCookie = getSessionCookie(request);
+  const { pathname } = request.nextUrl;
 
-    const isRoot = pathname === "/";
-    const isProtectedRoute = isRoot || protectedRoutes.some((route) => pathname === route || pathname.startsWith(route + "/"));
-    const isAuthRoute = authRoutes.some((route) => pathname === route || pathname.startsWith(route + "/"));
-    const isChangePasswordRoute = pathname.startsWith("/auth/change-password");
+  if (!sessionCookie) {
+    return redirectTo("/auth/login", request);
+  }
 
-    if (!sessionCookie) {
-        if (isProtectedRoute) {
-            return NextResponse.redirect(new URL("/auth/login", request.url));
-        }
-        return NextResponse.next();
-    }
+  const payload = decodeJwtPayload(sessionCookie);
+  const hasAccess = hasAnyRole(payload, ["tutor", "admin"]);
+  const banned = isBanned(payload);
+  const pendingPassword = needsPasswordChange(payload);
+  const isChangePassword = pathname.startsWith("/auth/change-password");
+  const isAuthRoute = isPathMatch(pathname, authRoutes);
 
-    const payload = decodeJwtPayload(sessionCookie);
-    const hasAccess = hasTutorAccess(payload);
-    const isBanned = payload?.banned === true;
-    const pendingPasswordChange = payload?.passwordChangedAt == null;
+  if (banned) {
+    return redirectTo("/restricted", request);
+  }
 
-    if (isBanned) {
-        return NextResponse.redirect(new URL("/restricted", request.url));
-    }
+  if (!hasAccess) {
+    return redirectTo("/auth/login", request);
+  }
 
-    if (isAuthRoute && !pendingPasswordChange) {
-        return NextResponse.redirect(new URL(hasAccess ? "/" : "/auth/login", request.url));
-    }
+  if (pendingPassword && !isChangePassword) {
+    return redirectTo("/auth/change-password", request);
+  }
 
-    if (isProtectedRoute && !hasAccess) {
-        return NextResponse.redirect(new URL("/auth/login", request.url));
-    }
+  if (isAuthRoute && !pendingPassword) {
+    return redirectTo("/", request);
+  }
 
-    if (hasAccess && pendingPasswordChange && !isChangePasswordRoute) {
-        return NextResponse.redirect(new URL("/auth/change-password", request.url));
-    }
-
-    return NextResponse.next();
+  return NextResponse.next();
 }
 
-export const config = {
-    matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-};
+export const config = { matcher: middlewareMatcher };
