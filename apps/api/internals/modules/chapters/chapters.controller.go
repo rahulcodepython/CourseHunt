@@ -1,6 +1,9 @@
 package chapters
 
 import (
+	"fmt"
+	"time"
+
 	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
 
@@ -14,7 +17,15 @@ func (m *ChaptersModule) ListController(c *fiber.Ctx) error {
 		return utils.BadRequest(c, "Course ID query param required.", nil)
 	}
 
-	chapters, err := m.ListRepository(courseID, utils.GetUserID(c), scope)
+	userID := utils.GetUserID(c)
+	cacheKey := fmt.Sprintf("chapters:list:course:%s:u:%s:s:%v", courseID, userID, scope)
+
+	var cached []Chapter
+	if hit, _ := m.Cache.Get(c.Context(), cacheKey, &cached); hit {
+		return utils.OK(c, "Chapters fetched successfully.", cached)
+	}
+
+	chapters, err := m.ListRepository(courseID, userID, scope)
 	if err != nil {
 		if err == ErrCourseNotFound {
 			return utils.NotFound(c, "Course not found.", err)
@@ -24,6 +35,9 @@ func (m *ChaptersModule) ListController(c *fiber.Ctx) error {
 		}
 		return utils.InternalError(c, "Failed to fetch chapters.", err)
 	}
+
+	_ = m.Cache.Set(c.Context(), cacheKey, chapters, 10*time.Minute)
+
 	return utils.OK(c, "Chapters fetched successfully.", chapters)
 }
 
@@ -36,6 +50,9 @@ func (m *ChaptersModule) CreateController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to create chapter.", err)
 	}
+
+	m.Cache.InvalidateChapters(c.Context())
+
 	return utils.Created(c, "Chapter created successfully.", ch)
 }
 
@@ -48,6 +65,9 @@ func (m *ChaptersModule) UpdateController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to update chapter.", err)
 	}
+
+	m.Cache.InvalidateChapters(c.Context())
+
 	return utils.OK(c, "Chapter updated successfully.", ch)
 }
 
@@ -56,5 +76,8 @@ func (m *ChaptersModule) DeleteController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to delete chapter.", err)
 	}
+
+	m.Cache.InvalidateChapters(c.Context())
+
 	return utils.OK(c, "Chapter deleted successfully.", generic.DeleteResponse{ID: id})
 }

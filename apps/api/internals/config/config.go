@@ -27,6 +27,10 @@ type Config struct {
 	RazorpaySecret        string `env:"RAZORPAY_SECRET"`
 	RazorpayWebhookSecret string `env:"RAZORPAY_WEBHOOK_SECRET"`
 	RazorpayBaseURL       string `env:"RAZORPAY_BASE_URL" envDefault:"https://api.razorpay.com/v1"`
+	RedisHost             string `env:"REDIS_HOST" envDefault:"localhost"`
+	RedisPort             string `env:"REDIS_PORT" envDefault:"6379"`
+	RedisPassword         string `env:"REDIS_PASSWORD" envDefault:""`
+	RedisDB               int    `env:"REDIS_DB" envDefault:"0"`
 	DBMaxOpenConns        int    `env:"DB_MAX_OPEN_CONNS" envDefault:"25"`
 	DBMaxIdleConns        int    `env:"DB_MAX_IDLE_CONNS" envDefault:"10"`
 	DBConnMaxLifetime     int    `env:"DB_CONN_MAX_LIFETIME" envDefault:"5"`

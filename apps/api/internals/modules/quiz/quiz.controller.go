@@ -2,6 +2,8 @@ package quiz
 
 import (
 	"errors"
+	"fmt"
+	"time"
 
 	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
@@ -30,6 +32,9 @@ func (m *QuizModule) CreateMetadataController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to save quiz metadata.", err)
 		}
 	}
+
+	m.Cache.InvalidateQuiz(c.Context())
+
 	return utils.OK(c, "Quiz saved successfully.", qm)
 }
 
@@ -54,6 +59,9 @@ func (m *QuizModule) CreateQuestionController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to add question.", err)
 		}
 	}
+
+	m.Cache.InvalidateQuiz(c.Context())
+
 	return utils.Created(c, "Question added successfully.", q)
 }
 
@@ -70,6 +78,9 @@ func (m *QuizModule) DeleteQuestionController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to delete question.", err)
 		}
 	}
+
+	m.Cache.InvalidateQuiz(c.Context())
+
 	return utils.OK(c, "Question deleted successfully.", generic.DeleteResponse{ID: id})
 }
 
@@ -83,6 +94,13 @@ func (m *QuizModule) GetQuestionController(c *fiber.Ctx) error {
 		return utils.BadRequest(c, "Quiz ID query param required.", nil)
 	}
 	userID := utils.GetUserID(c)
+	cacheKey := fmt.Sprintf("quiz:question:q:%s:u:%s:fq:%v", quizID, userID, req.FetchedQuestionIDs)
+
+	var cached NextQuestionResponse
+	if hit, _ := m.Cache.Get(c.Context(), cacheKey, &cached); hit {
+		return utils.OK(c, "Question fetched.", cached)
+	}
+
 	resp, err := m.GetQuestionRepository(quizID, userID, req)
 	if err != nil {
 		switch {
@@ -94,6 +112,9 @@ func (m *QuizModule) GetQuestionController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to get question.", err)
 		}
 	}
+
+	_ = m.Cache.Set(c.Context(), cacheKey, resp, 5*time.Minute)
+
 	return utils.OK(c, "Question fetched.", resp)
 }
 
@@ -118,5 +139,8 @@ func (m *QuizModule) CreateSubmitController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to submit quiz.", err)
 		}
 	}
+
+	m.Cache.InvalidateQuiz(c.Context())
+
 	return utils.OK(c, "Quiz submitted successfully.", resp)
 }

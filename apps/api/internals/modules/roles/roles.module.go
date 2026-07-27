@@ -1,11 +1,16 @@
 package roles
 
-import "github.com/jmoiron/sqlx"
+import (
+	"coursehunt/api/internals/pkg/cache"
+
+	"github.com/jmoiron/sqlx"
+)
 
 type RolesModule struct {
-	DB *sqlx.DB
+	DB    *sqlx.DB
+	Cache *cache.Cache
 }
 
-func NewRolesModule(db *sqlx.DB) *RolesModule {
-	return &RolesModule{DB: db}
+func NewRolesModule(db *sqlx.DB, cache *cache.Cache) *RolesModule {
+	return &RolesModule{DB: db, Cache: cache}
 }

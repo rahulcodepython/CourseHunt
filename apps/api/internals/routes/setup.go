@@ -4,6 +4,8 @@ import (
 	"coursehunt/api/internals/config"
 	"coursehunt/api/internals/middlewares"
 
+	"coursehunt/api/internals/pkg/cache"
+
 	"coursehunt/api/internals/modules/auth"
 	"coursehunt/api/internals/modules/category"
 	"coursehunt/api/internals/modules/certificate"
@@ -32,13 +34,15 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 )
 
 type Router struct {
-	App *fiber.App
-	API fiber.Router
-	DB  *sqlx.DB
-	CFG *config.Config
+	App   *fiber.App
+	API   fiber.Router
+	DB    *sqlx.DB
+	CFG   *config.Config
+	Cache *cache.Cache
 
 	Auth         *auth.AuthModule
 	Wishlist     *wishlist.WishlistModule
@@ -61,32 +65,34 @@ type Router struct {
 	Roles        *roles.RolesModule
 }
 
-func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) *Router {
+func NewRouter(app *fiber.App, db *sqlx.DB, rdb *redis.Client, cfg *config.Config) *Router {
+	cache := cache.NewCache(rdb)
+
 	enrollments := enrollments.NewEnrollmentsModule(db)
-	courses := courses.NewCoursesModule(db, enrollments)
+	courses := courses.NewCoursesModule(db, enrollments, cache)
 
 	authMod := auth.NewAuthModule(db, cfg)
-	wishlist := wishlist.NewWishlistModule(db)
-	categories := category.NewCategoryModule(db)
+	wishlist := wishlist.NewWishlistModule(db, cache)
+	categories := category.NewCategoryModule(db, cache)
 	certificates := certificate.NewCertificateModule(db, enrollments)
 	dashboard := dashboard.NewDashboardModule(db)
-	notes := notes.NewNotesModule(db, enrollments)
+	notes := notes.NewNotesModule(db, enrollments, cache)
 	discussions := discussions.NewDiscussionsModule(db, enrollments, courses)
 	users := users.NewUsersModule(db)
-	updates := updates.NewUpdatesModule(db)
-	feedbacks := feedbacks.NewFeedbacksModule(db, enrollments, courses)
-	coupons := coupons.NewCouponsModule(db, courses)
-	quiz := quiz.NewQuizModule(db, enrollments, courses)
-	chapters := chapters.NewChaptersModule(db, courses)
-	lessons := lessons.NewLessonsModule(db, courses)
+	updates := updates.NewUpdatesModule(db, cache)
+	feedbacks := feedbacks.NewFeedbacksModule(db, enrollments, courses, cache)
+	coupons := coupons.NewCouponsModule(db, courses, cache)
+	quiz := quiz.NewQuizModule(db, enrollments, courses, cache)
+	chapters := chapters.NewChaptersModule(db, courses, cache)
+	lessons := lessons.NewLessonsModule(db, courses, cache)
 	uploadMod := upload.NewUploadModule(db)
-	rolesMod := roles.NewRolesModule(db)
+	rolesMod := roles.NewRolesModule(db, cache)
 
 	rzp := razorpaypkg.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
 	transactions := transactions.NewTransactionsModule(db, coupons, courses, enrollments, rzp, cfg)
 
 	return &Router{
-		App: app, API: app.Group("/api"), DB: db, CFG: cfg,
+		App: app, API: app.Group("/api"), DB: db, CFG: cfg, Cache: cache,
 		Auth: authMod, Wishlist: wishlist, Categories: categories,
 		Certificates: certificates, Notes: notes, Discussions: discussions,
 		Users: users, Dashboard: dashboard,
@@ -94,7 +100,7 @@ func NewRouter(app *fiber.App, db *sqlx.DB, cfg *config.Config) *Router {
 		Quiz: quiz, Enrollments: enrollments, Chapters: chapters,
 		Lessons: lessons, Courses: courses, Transactions: transactions,
 		Upload: uploadMod,
-		Roles: rolesMod,
+		Roles:  rolesMod,
 	}
 }
 

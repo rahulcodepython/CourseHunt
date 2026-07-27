@@ -2,6 +2,8 @@ package notes
 
 import (
 	"errors"
+	"fmt"
+	"time"
 
 	"coursehunt/api/internals/generic"
 	"coursehunt/api/internals/utils"
@@ -30,6 +32,9 @@ func (m *NotesModule) UpsertController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to save note.", err)
 		}
 	}
+
+	m.Cache.InvalidateNotes(c.Context())
+
 	return utils.OK(c, "Note saved.", n)
 }
 
@@ -38,7 +43,15 @@ func (m *NotesModule) ReadController(c *fiber.Ctx) error {
 	if lessonID == "" {
 		return utils.BadRequest(c, "Lesson ID query param required.", nil)
 	}
-	n, err := m.ReadRepository(utils.GetUserID(c), lessonID)
+	userID := utils.GetUserID(c)
+	cacheKey := fmt.Sprintf("notes:read:u:%s:l:%s", userID, lessonID)
+
+	var cached NoteResponse
+	if hit, _ := m.Cache.Get(c.Context(), cacheKey, &cached); hit {
+		return utils.OK(c, "Note fetched.", cached)
+	}
+
+	n, err := m.ReadRepository(userID, lessonID)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrLessonNotFound):
@@ -51,6 +64,9 @@ func (m *NotesModule) ReadController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to fetch note.", err)
 		}
 	}
+
+	_ = m.Cache.Set(c.Context(), cacheKey, n, 10*time.Minute)
+
 	return utils.OK(c, "Note fetched.", n)
 }
 
@@ -72,6 +88,9 @@ func (m *NotesModule) UpdateController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to update note.", err)
 		}
 	}
+
+	m.Cache.InvalidateNotes(c.Context())
+
 	return utils.OK(c, "Note updated.", n)
 }
 
@@ -89,5 +108,8 @@ func (m *NotesModule) DeleteController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to delete note.", err)
 		}
 	}
+
+	m.Cache.InvalidateNotes(c.Context())
+
 	return utils.OK(c, "Note deleted.", generic.DeleteResponse{ID: id})
 }
