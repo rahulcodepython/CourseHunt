@@ -21,6 +21,7 @@ func Connect(cfg *config.Config) *redis.Client {
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+
 	defer cancel()
 
 	if err := client.Ping(ctx).Err(); err != nil {

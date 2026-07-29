@@ -5,7 +5,6 @@ import {
   isPathMatch,
   isBanned,
   redirectTo,
-  middlewareMatcher,
 } from "@package/lib/middleware";
 
 const protectedRoutes = ["/dashboard", "/checkout"];
@@ -35,4 +34,6 @@ export default async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: middlewareMatcher };
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};

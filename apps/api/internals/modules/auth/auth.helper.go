@@ -44,7 +44,7 @@ func (m *AuthModule) setCookies(c *fiber.Ctx, accessToken, refreshToken string) 
 		Path:     "/",
 		Domain:   m.Cfg.CookieDomain,
 		MaxAge:   15 * 60,
-		Secure:   true,
+		Secure:   m.Cfg.CookieSecure,
 		HTTPOnly: false,
 		SameSite: "Lax",
 	})
@@ -55,7 +55,7 @@ func (m *AuthModule) setCookies(c *fiber.Ctx, accessToken, refreshToken string) 
 		Path:     "/api/v1/auth",
 		Domain:   m.Cfg.CookieDomain,
 		MaxAge:   7 * 24 * 60 * 60,
-		Secure:   true,
+		Secure:   m.Cfg.CookieSecure,
 		HTTPOnly: true,
 		SameSite: "Lax",
 	})
@@ -68,7 +68,7 @@ func (m *AuthModule) clearCookies(c *fiber.Ctx) {
 		Path:     "/",
 		Domain:   m.Cfg.CookieDomain,
 		Expires:  time.Now().Add(-1 * time.Hour),
-		Secure:   true,
+		Secure:   m.Cfg.CookieSecure,
 		HTTPOnly: false,
 		SameSite: "Lax",
 	})
@@ -78,7 +78,7 @@ func (m *AuthModule) clearCookies(c *fiber.Ctx) {
 		Path:     "/api/v1/auth",
 		Domain:   m.Cfg.CookieDomain,
 		Expires:  time.Now().Add(-1 * time.Hour),
-		Secure:   true,
+		Secure:   m.Cfg.CookieSecure,
 		HTTPOnly: true,
 		SameSite: "Lax",
 	})

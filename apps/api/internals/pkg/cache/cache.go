@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -15,6 +16,14 @@ type Cache struct {
 
 func NewCache(client *redis.Client) *Cache {
 	return &Cache{client: client}
+}
+
+// Ping checks health status of Redis connection
+func (c *Cache) Ping(ctx context.Context) error {
+	if c == nil || c.client == nil {
+		return fmt.Errorf("redis cache client not initialized")
+	}
+	return c.client.Ping(ctx).Err()
 }
 
 // Get fetches data from Redis and unmarshals it into dest.

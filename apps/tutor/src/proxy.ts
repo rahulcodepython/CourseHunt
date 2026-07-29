@@ -7,7 +7,6 @@ import {
   isBanned,
   needsPasswordChange,
   redirectTo,
-  middlewareMatcher,
 } from "@package/lib/middleware";
 
 const authRoutes = ["/auth/login", "/auth/change-password"];
@@ -15,8 +14,13 @@ const authRoutes = ["/auth/login", "/auth/change-password"];
 export default async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
   const { pathname } = request.nextUrl;
+  const isAuthRoute = isPathMatch(pathname, authRoutes);
+  const isChangePassword = pathname.startsWith("/auth/change-password");
 
   if (!sessionCookie) {
+    if (isAuthRoute) {
+      return NextResponse.next();
+    }
     return redirectTo("/auth/login", request);
   }
 
@@ -24,8 +28,6 @@ export default async function middleware(request: NextRequest) {
   const hasAccess = hasAnyRole(payload, ["tutor", "admin"]);
   const banned = isBanned(payload);
   const pendingPassword = needsPasswordChange(payload);
-  const isChangePassword = pathname.startsWith("/auth/change-password");
-  const isAuthRoute = isPathMatch(pathname, authRoutes);
 
   if (banned) {
     return redirectTo("/restricted", request);
@@ -46,4 +48,6 @@ export default async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: middlewareMatcher };
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};

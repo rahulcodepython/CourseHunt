@@ -3,15 +3,15 @@
   "private": true,
   "scripts": {
     "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
-    "format": "turbo format",
-    "typecheck": "turbo typecheck",
-    "start": "turbo start",
-    "clean": "turbo clean",
-    "create-admin": "docker compose exec -T postgres psql -U postgres -d coursehunt -c \"CREATE EXTENSION IF NOT EXISTS pgcrypto; WITH nu AS (INSERT INTO \\\"user\\\" (id, name, email, \\\"emailVerified\\\") VALUES (gen_random_uuid()::text, 'Admin User', 'admin@example.com', true) ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id), nc AS (INSERT INTO credentials (user_id, password_hash) SELECT id, crypt('admin123456', gen_salt('bf')) FROM nu ON CONFLICT (user_id) DO UPDATE SET password_hash = EXCLUDED.password_hash) INSERT INTO user_roles (user_id, role_id) SELECT nu.id, r.id FROM nu, roles r WHERE r.name = 'admin' ON CONFLICT DO NOTHING;\"",
-    "postinstall": "rm -rf apps/*/node_modules"
+    "dev:api": "pnpm --filter @coursehunt/api dev",
+    "dev:web": "pnpm --filter @coursehunt/web dev",
+    "dev:tutor": "pnpm --filter @coursehunt/tutor dev",
+    "dev:admin": "pnpm --filter @coursehunt/admin dev",
+    "seed": "pnpm --filter @coursehunt/seeder seed"
   },
+  "onlyBuiltDependencies": [
+    "sharp"
+  ],
   "devDependencies": {
     "@types/node": "^26.1.1",
     "turbo": "^2.5.0"

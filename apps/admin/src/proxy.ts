@@ -7,33 +7,27 @@ import {
   isBanned,
   needsPasswordChange,
   redirectTo,
-  middlewareMatcher,
 } from "@package/lib/middleware";
 
 const authRoutes = ["/auth/login", "/auth/change-password"];
 
-export default async function middleware(request: NextRequest) {
+export default function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
   const { pathname } = request.nextUrl;
+  const isAuthRoute = isPathMatch(pathname, authRoutes);
 
   if (!sessionCookie) {
-    return redirectTo("/auth/login", request);
+    return isAuthRoute ? NextResponse.next() : redirectTo("/auth/login", request);
   }
 
   const payload = decodeJwtPayload(sessionCookie);
-  const isAdmin = hasRole(payload, "admin");
-  const banned = isBanned(payload);
+
+  if (isBanned(payload) || !hasRole(payload, "admin")) {
+    return redirectTo("/auth/login", request);
+  }
+
   const pendingPassword = needsPasswordChange(payload);
   const isChangePassword = pathname.startsWith("/auth/change-password");
-  const isAuthRoute = isPathMatch(pathname, authRoutes);
-
-  if (banned) {
-    return redirectTo("/auth/login", request);
-  }
-
-  if (!isAdmin) {
-    return redirectTo("/auth/login", request);
-  }
 
   if (pendingPassword && !isChangePassword) {
     return redirectTo("/auth/change-password", request);
@@ -46,4 +40,6 @@ export default async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: middlewareMatcher };
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};

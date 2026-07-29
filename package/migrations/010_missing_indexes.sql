@@ -67,7 +67,6 @@ CREATE INDEX IF NOT EXISTS idx_quiz_attempts_quiz_user ON quiz_attempts(quiz_id,
 
 -- feedbacks
 CREATE UNIQUE INDEX IF NOT EXISTS idx_feedbacks_course_user ON feedbacks(course_id, user_id);
-CREATE INDEX IF NOT EXISTS idx_feedbacks_pinned_created ON feedbacks(is_pinned, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_feedbacks_course_created ON feedbacks(course_id, created_at DESC);
 
 -- course_updates
@@ -82,7 +81,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_chapter_progress_user ON chapter_progress(
 CREATE UNIQUE INDEX IF NOT EXISTS idx_lesson_progress_user ON lesson_progress(lesson_id, user_id);
 
 -- users
-CREATE INDEX IF NOT EXISTS idx_user_created_at ON "user"(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_created_at ON "user"("createdAt" DESC);
 CREATE INDEX IF NOT EXISTS idx_user_email ON "user"(email);
 
 -- webhook_events

@@ -1,22 +1,32 @@
 # Stage 1: Build
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+# Copy Go module files and download dependencies
+COPY apps/api/go.mod apps/api/go.sum ./apps/api/
+WORKDIR /app/apps/api
 RUN go mod download
 
-COPY . .
-RUN CGO_ENABLED=0 go build -o cmd/bin/server ./cmd/server
+# Copy source code
+WORKDIR /app
+COPY apps/api ./apps/api
+COPY package/migrations ./package/migrations
 
-# Stage 2: Runtime
-FROM alpine:3.19
+# Build static Linux binary
+WORKDIR /app/apps/api
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd/server
 
+# Stage 2: Minimal Runtime
+FROM alpine:3.20
+
+RUN apk --no-cache add ca-certificates tzdata
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
-COPY --from=builder /app/cmd/bin/server .
+# Copy binary from builder
+COPY --from=builder /app/server .
 
 EXPOSE 8080
 

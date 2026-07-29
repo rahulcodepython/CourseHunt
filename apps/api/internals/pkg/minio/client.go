@@ -57,6 +57,18 @@ func SetupMinio(cfg *config.Config) error {
 	return nil
 }
 
+// Ping checks health status of MinIO connection
+func Ping(ctx context.Context) error {
+	if MINIO == nil || MINIO.client == nil {
+		return fmt.Errorf("minio storage is not initialized")
+	}
+	_, err := MINIO.client.BucketExists(ctx, MINIO.bucket)
+	if err != nil {
+		return fmt.Errorf("minio bucket check failed: %w", err)
+	}
+	return nil
+}
+
 // GetSignedURL generates a signed URL for uploading an object, valid for 1 hour
 func (s *MinioStorage) GetSignedURL(ctx context.Context, objectName string) (string, error) {
 	if objectName == "" {

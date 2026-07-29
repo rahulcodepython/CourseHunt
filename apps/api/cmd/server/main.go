@@ -11,7 +11,7 @@ import (
 	"coursehunt/api/internals/routes"
 
 	"coursehunt/api/internals/pkg/minio"
-	redisclient "coursehunt/api/internals/pkg/redis"
+	"coursehunt/api/internals/pkg/redis"
 	"coursehunt/api/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -23,17 +23,11 @@ func main() {
 
 	// Connect to the database
 	db := database.Connect(cfg)
-
-	// Ensure it closes on application exit
 	defer database.Close(db)
 
 	// Connect to Redis
-	rdb := redisclient.Connect(cfg)
-	defer func() {
-		if rdb != nil {
-			_ = rdb.Close()
-		}
-	}()
+	rdb := redis.Connect(cfg)
+	defer rdb.Close()
 
 	// Initialize MinIO storage, continuing without file storage if initialization fails.
 	err := minio.SetupMinio(cfg)

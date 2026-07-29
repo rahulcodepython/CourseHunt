@@ -19,6 +19,7 @@ type Config struct {
 	AllowedOrigins        string `env:"ALLOWED_ORIGINS" envDefault:"http://localhost:3000,http://localhost:3001,http://localhost:3002,https://coursehunt.com,https://tutor.coursehunt.com,https://admin.coursehunt.com"`
 	JWTSecret             string `env:"JWT_SECRET" envDefault:"supersecret_jwt_key_for_dev_only"`
 	CookieDomain          string `env:"COOKIE_DOMAIN" envDefault:".coursehunt.com"`
+	CookieSecure          bool   `env:"COOKIE_SECURE" envDefault:"false"`
 	AuthCookieName        string `env:"AUTH_COOKIE_NAME" envDefault:"access_token"`
 	RefreshCookieName     string `env:"REFRESH_COOKIE_NAME" envDefault:"refresh_token"`
 	GoogleClientID        string `env:"GOOGLE_CLIENT_ID"`

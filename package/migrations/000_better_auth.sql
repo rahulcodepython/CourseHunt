@@ -46,4 +46,3 @@ CREATE TABLE IF NOT EXISTS "credentials" (
 
 CREATE INDEX IF NOT EXISTS idx_user_name ON "user"(name);
 CREATE INDEX IF NOT EXISTS idx_user_email ON "user"(email);
-CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name);

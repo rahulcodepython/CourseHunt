@@ -43,5 +43,3 @@ export function getSessionCookie(request: NextRequest): string | undefined {
 export function redirectTo(url: string, request: NextRequest): NextResponse {
   return NextResponse.redirect(new URL(url, request.url));
 }
-
-export const middlewareMatcher = ["/((?!api|_next/static|_next/image|favicon.ico).*)"];

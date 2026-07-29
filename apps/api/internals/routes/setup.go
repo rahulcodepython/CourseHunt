@@ -5,6 +5,7 @@ import (
 	"coursehunt/api/internals/middlewares"
 
 	"coursehunt/api/internals/pkg/cache"
+	"coursehunt/api/internals/pkg/minio"
 
 	"coursehunt/api/internals/modules/auth"
 	"coursehunt/api/internals/modules/category"
@@ -115,30 +116,53 @@ func (r *Router) SetUp() {
 		AllowCredentials: true,
 	}))
 
-	v1 := r.API.Group("/v1")
-	protected := v1.Group("", middlewares.BaseAuthMiddleware(r.CFG))
+	healthHandler := func(c *fiber.Ctx) error {
+		if err := r.DB.Ping(); err != nil {
+			return utils.InternalError(c, "PostgreSQL database service is down or unreachable.", err)
+		}
 
-	v1.Get("/health", func(c *fiber.Ctx) error {
-		return utils.OK(c, "Health check passed.", fiber.Map{"status": "ok", "version": "1.0.0", "database": r.DB.Ping()})
-	})
+		if err := r.Cache.Ping(c.Context()); err != nil {
+			return utils.InternalError(c, "Redis cache service is down or unreachable.", err)
+		}
 
-	r.Auth.Routes(v1, protected)
-	r.Wishlist.Routes(v1, protected)
-	r.Categories.Routes(v1, protected)
-	r.Certificates.Routes(v1, protected)
-	r.Notes.Routes(v1, protected)
-	r.Discussions.Routes(v1, protected)
-	r.Users.Routes(v1, protected)
-	r.Dashboard.Routes(v1, protected)
-	r.Updates.Routes(v1, protected)
-	r.Feedbacks.Routes(v1, protected)
-	r.Coupons.Routes(v1, protected)
-	r.Quiz.Routes(v1, protected)
-	r.Enrollments.Routes(v1, protected)
-	r.Chapters.Routes(v1, protected)
-	r.Lessons.Routes(v1, protected)
-	r.Courses.Routes(v1, protected)
-	r.Transactions.Routes(v1, protected)
-	r.Upload.Routes(v1, protected)
-	r.Roles.Routes(v1, protected)
+		if err := minio.Ping(c.Context()); err != nil {
+			return utils.InternalError(c, "MinIO object storage service is down or unreachable.", err)
+		}
+
+		return utils.OK(c, "All service health checks passed successfully.", fiber.Map{
+			"status":  "ok",
+			"version": "1.0.0",
+			"services": fiber.Map{
+				"postgres": "connected",
+				"redis":    "connected",
+				"minio":    "connected",
+			},
+		})
+	}
+
+	public := r.API.Group("/api/v1")
+
+	public.Get("/api/v1/health", healthHandler)
+
+	protected := r.API.Group("/api/v1", middlewares.BaseAuthMiddleware(r.CFG))
+
+	r.Auth.Routes(public, protected)
+	r.Wishlist.Routes(public, protected)
+	r.Categories.Routes(public, protected)
+	r.Certificates.Routes(public, protected)
+	r.Notes.Routes(public, protected)
+	r.Discussions.Routes(public, protected)
+	r.Users.Routes(public, protected)
+	r.Dashboard.Routes(public, protected)
+	r.Updates.Routes(public, protected)
+	r.Feedbacks.Routes(public, protected)
+	r.Coupons.Routes(public, protected)
+	r.Quiz.Routes(public, protected)
+	r.Enrollments.Routes(public, protected)
+	r.Chapters.Routes(public, protected)
+	r.Lessons.Routes(public, protected)
+	r.Courses.Routes(public, protected)
+	r.Transactions.Routes(public, protected)
+	r.Upload.Routes(public, protected)
+	r.Roles.Routes(public, protected)
 }

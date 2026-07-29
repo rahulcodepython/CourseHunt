@@ -1,5 +1,7 @@
 -- 004: Courses, Chapters, Lessons, and Lesson Content tables
 
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
 CREATE TABLE IF NOT EXISTS courses (
     id                    text PRIMARY KEY DEFAULT gen_random_uuid(),
     tutor_id              text REFERENCES "user"(id) ON DELETE SET NULL,
