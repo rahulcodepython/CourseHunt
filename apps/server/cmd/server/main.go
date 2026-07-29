@@ -6,13 +6,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"coursehunt/api/internals/config"
-	"coursehunt/api/internals/database"
-	"coursehunt/api/internals/routes"
+	"coursehunt/server/internals/config"
+	"coursehunt/server/internals/database"
+	"coursehunt/server/internals/routes"
 
-	"coursehunt/api/internals/pkg/minio"
-	"coursehunt/api/internals/pkg/redis"
-	"coursehunt/api/internals/utils"
+	"coursehunt/server/internals/pkg/minio"
+	"coursehunt/server/internals/pkg/redis"
+	"coursehunt/server/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 )

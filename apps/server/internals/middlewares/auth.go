@@ -3,40 +3,17 @@ package middlewares
 import (
 	"errors"
 	"fmt"
-	"strings"
 
-	"coursehunt/api/internals/config"
-	"coursehunt/api/internals/generic"
-	"coursehunt/api/internals/utils"
+	"coursehunt/server/internals/config"
+	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func isPublicPath(method, path string) bool {
-	if path == "/health" || path == "/api/v1/health" || path == "/v1/health" {
-		return true
-	}
-	if method == "POST" && (path == "/api/v1/auth/login" || path == "/api/v1/auth/google" || path == "/api/v1/auth/refresh" || path == "/api/v1/auth/logout") {
-		return true
-	}
-	if method == "GET" {
-		if path == "/api/v1/categories" || path == "/api/v1/courses" {
-			return true
-		}
-		if strings.HasPrefix(path, "/api/v1/courses/") && !strings.HasPrefix(path, "/api/v1/courses/enrolled") && !strings.HasPrefix(path, "/api/v1/courses/manage") && !strings.HasSuffix(path, "/study") {
-			return true
-		}
-	}
-	return false
-}
-
 func BaseAuthMiddleware(cfg *config.Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if isPublicPath(c.Method(), c.Path()) {
-			return c.Next()
-		}
-
 		tokenString := c.Cookies(cfg.AuthCookieName)
 		if tokenString == "" {
 			return utils.Unauthorized(c, "Authorization token missing.", errors.New("token missing in cookies"))

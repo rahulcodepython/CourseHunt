@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"coursehunt/api/internals/config"
+	"coursehunt/server/internals/config"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"

@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"coursehunt/api/internals/config"
+	"coursehunt/server/internals/config"
 
 	"github.com/redis/go-redis/v9"
 )

@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"coursehunt/api/internals/generic"
+	"coursehunt/server/internals/generic"
 
 	"github.com/gofiber/fiber/v2"
 )
