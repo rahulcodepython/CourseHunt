@@ -36,18 +36,38 @@ func GenerateJWT(cfg *config.Config, user *entities.User) (string, error) {
 		"roles":       user.Roles,
 		"permissions": user.Permissions,
 		"banned":      user.Banned,
+		"type":        "access",
 		"iat":         time.Now().Unix(),
 		"exp":         time.Now().Add(ttl).Unix(),
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+	return token.SignedString([]byte(cfg.JWTSecret))
+}
+
+func GenerateRefreshJWT(cfg *config.Config, user *entities.User) (string, error) {
+	days := cfg.RefreshTokenTTLDays
+	if days <= 0 {
+		days = 7
+	}
+	ttl := time.Duration(days) * 24 * time.Hour
+
+	claims := jwt.MapClaims{
+		"sub":  user.ID,
+		"type": "refresh",
+		"jti":  GenerateRandomToken(),
+		"iat":  time.Now().Unix(),
+		"exp":  time.Now().Add(ttl).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	return token.SignedString([]byte(cfg.JWTSecret))
 }
 
 func SetCookies(cfg *config.Config, c *fiber.Ctx, accessToken, refreshToken string) {
 	jwtMaxAge := cfg.JWTTTLMinutes * 60
 	if jwtMaxAge <= 0 {
-		jwtMaxAge = 15 * 60
+		jwtMaxAge = 60 * 60
 	}
 
 	refreshMaxAge := cfg.RefreshTokenTTLDays * 24 * 60 * 60

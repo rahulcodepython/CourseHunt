@@ -67,6 +67,7 @@ func main() {
 	log.Println("==================================================")
 	printTableCount(db, "user", `"user"`)
 	printTableCount(db, "roles", "roles")
+	printTableCount(db, "role_permissions", "role_permissions")
 	printTableCount(db, "categories", "categories")
 	printTableCount(db, "courses", "courses")
 	printTableCount(db, "chapters", "chapters")

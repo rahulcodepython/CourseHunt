@@ -18,7 +18,7 @@ import (
 
 func parseAndValidateJWT(cfg *config.Config, tokenString string) (*generic.UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &generic.UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		if token.Method != jwt.SigningMethodHS512 {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(cfg.JWTSecret), nil
@@ -37,6 +37,23 @@ func parseAndValidateJWT(cfg *config.Config, tokenString string) (*generic.UserC
 	}
 
 	return claims, nil
+}
+
+func parseAndValidateRefreshJWT(cfg *config.Config, tokenString string) error {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if token.Method != jwt.SigningMethodHS512 {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(cfg.JWTSecret), nil
+	})
+	if err != nil || !token.Valid {
+		return errors.New("invalid or expired refresh token")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || claims["type"] != "refresh" {
+		return errors.New("invalid refresh token type")
+	}
+	return nil
 }
 
 func setUserContext(c *fiber.Ctx, claims *generic.UserClaims) {

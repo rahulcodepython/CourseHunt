@@ -4,17 +4,17 @@ FROM golang:1.25-alpine AS builder
 WORKDIR /app
 
 # Copy Go module files and download dependencies
-COPY apps/api/go.mod apps/api/go.sum ./apps/api/
-WORKDIR /app/apps/api
+COPY apps/server/go.mod apps/server/go.sum ./apps/server/
+WORKDIR /app/apps/server
 RUN go mod download
 
 # Copy source code
 WORKDIR /app
-COPY apps/api ./apps/api
+COPY apps/server ./apps/server
 COPY package/migrations ./package/migrations
 
 # Build static Linux binary
-WORKDIR /app/apps/api
+WORKDIR /app/apps/server
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd/server
 
 # Stage 2: Minimal Runtime

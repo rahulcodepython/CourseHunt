@@ -6,31 +6,28 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const { data, isPending } = useAuthMeQuery();
-  const setSession = useSessionStore((s) => s.setSession);
-  const setPending = useSessionStore((s) => s.setPending);
-  const pathname = usePathname();
-  const router = useRouter();
+    const pathname = usePathname();
+    const router = useRouter();
+    
+    // Restrict useAuthMeQuery when user is on /auth/login
+    const isAuthLogin = pathname.startsWith("/auth/login");
+    const { data, isPending } = useAuthMeQuery({ enabled: !isAuthLogin });
 
-  useEffect(() => {
-    const user = data?.success && data?.data ? data.data : null;
-    setSession(user ? { user, session: null } : null);
-  }, [data, setSession]);
+    const setSession = useSessionStore((s) => s.setSession);
+    const setPending = useSessionStore((s) => s.setPending);
 
-  useEffect(() => {
-    setPending(isPending);
-  }, [isPending, setPending]);
+    useEffect(() => {
+        setPending(isPending);
 
-  useEffect(() => {
-    if (isPending) return;
+        const user = data?.success && data?.data ? data.data : null;
+        setSession(user ? { user, session: null } : null);
 
-    const user = data?.success && data?.data ? (data.data as any) : null;
-    if (user && (user.passwordChangedAt === null || user.passwordChangedAt === undefined)) {
-      if (!pathname.startsWith("/auth/change-password")) {
-        router.push("/auth/change-password");
-      }
-    }
-  }, [data, isPending, pathname, router]);
+        if (!isPending && user && (user.passwordChangedAt === null || user.passwordChangedAt === undefined)) {
+            if (!pathname.startsWith("/auth/change-password")) {
+                router.push("/auth/change-password");
+            }
+        }
+    }, [data, isPending, pathname, router, setPending, setSession]);
 
-  return <>{children}</>;
+    return children;
 }

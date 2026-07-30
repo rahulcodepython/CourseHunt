@@ -10,7 +10,8 @@ import { Input } from "@package/ui/input";
 import { Label } from "@package/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@package/ui/select";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
-import { useUsersQuery, useCreateUserMutation } from "@package/query-hooks/users.api";
+import { useUsersQuery } from "@package/query-hooks/users.api";
+import { useCreateUserMutation } from "@package/query-hooks/auth.api";
 import type { UserListResponse } from "@package/schema/users.types";
 import { useDebounce } from "@package/hooks/use-debounce";
 import { downloadCredentialsCSV } from "@package/lib/csv";
@@ -153,7 +154,7 @@ export default function UsersPage() {
 										</div>
 										<div className="space-y-2">
 											<Label>Role</Label>
-											<Select value={newRole} onValueChange={setNewRole}>
+											<Select value={newRole} onValueChange={(v) => setNewRole(v || "")}>
 												<SelectTrigger>
 													<SelectValue placeholder="Select role" />
 												</SelectTrigger>

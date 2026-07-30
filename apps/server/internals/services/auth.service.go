@@ -33,20 +33,28 @@ func (s *AuthService) getRefreshTokenExpiry() time.Time {
 }
 
 func (s *AuthService) LoginWithEmailService(req entities.LoginRequest) (*entities.TokenResponse, string, error) {
-	rawRefreshToken := helpers.GenerateRandomToken()
-	refreshTokenHash := helpers.HashToken(rawRefreshToken)
-	expiresAt := s.getRefreshTokenExpiry()
-
-	user, hash, err := s.Repo.LoginWithEmailRepository(req.Email, refreshTokenHash, expiresAt)
+	tempUser, hash, err := s.Repo.LoginWithEmailRepository(req.Email, "", time.Now())
 	if err != nil {
 		return nil, "", generic.ErrAuthInvalidCredentials
 	}
 
-	if user.Banned {
+	if tempUser.Banned {
 		return nil, "", generic.ErrAuthUserBanned
 	}
 
 	if hash == "" || bcrypt.CompareHashAndPassword([]byte(hash), []byte(req.Password)) != nil {
+		return nil, "", generic.ErrAuthInvalidCredentials
+	}
+
+	rawRefreshToken, err := helpers.GenerateRefreshJWT(s.Cfg, tempUser)
+	if err != nil {
+		return nil, "", err
+	}
+	refreshTokenHash := helpers.HashToken(rawRefreshToken)
+	expiresAt := s.getRefreshTokenExpiry()
+
+	user, _, err := s.Repo.LoginWithEmailRepository(req.Email, refreshTokenHash, expiresAt)
+	if err != nil {
 		return nil, "", generic.ErrAuthInvalidCredentials
 	}
 
@@ -72,7 +80,15 @@ func (s *AuthService) LoginWithGoogleService(ctx context.Context, req entities.G
 		return nil, "", generic.ErrAuthNoEmailInToken
 	}
 
-	rawRefreshToken := helpers.GenerateRandomToken()
+	// Fetch user first to generate JWT refresh token
+	userTemp, err := s.Repo.GetUserByIDRepository(email)
+	rawRefreshToken := ""
+	if err == nil && userTemp != nil {
+		rawRefreshToken, _ = helpers.GenerateRefreshJWT(s.Cfg, userTemp)
+	} else {
+		rawRefreshToken = helpers.GenerateRandomToken()
+	}
+
 	refreshTokenHash := helpers.HashToken(rawRefreshToken)
 	expiresAt := s.getRefreshTokenExpiry()
 
@@ -83,6 +99,14 @@ func (s *AuthService) LoginWithGoogleService(ctx context.Context, req entities.G
 
 	if user.Banned {
 		return nil, "", generic.ErrAuthUserBanned
+	}
+
+	// Re-generate refresh JWT with full user payload if initial was dummy
+	if rawRefreshToken == "" || userTemp == nil {
+		rawRefreshToken, err = helpers.GenerateRefreshJWT(s.Cfg, user)
+		if err != nil {
+			return nil, "", err
+		}
 	}
 
 	accessToken, err := helpers.GenerateJWT(s.Cfg, user)
@@ -99,7 +123,12 @@ func (s *AuthService) LoginWithGoogleService(ctx context.Context, req entities.G
 func (s *AuthService) RefreshTokenService(refreshToken string) (*entities.TokenResponse, string, error) {
 	oldHash := helpers.HashToken(refreshToken)
 
-	newRawRefreshToken := helpers.GenerateRandomToken()
+	// Verify old session and retrieve user
+	userDummy := &entities.User{}
+	newRawRefreshToken, err := helpers.GenerateRefreshJWT(s.Cfg, userDummy)
+	if err != nil {
+		newRawRefreshToken = helpers.GenerateRandomToken()
+	}
 	newRefreshTokenHash := helpers.HashToken(newRawRefreshToken)
 	newExpiresAt := s.getRefreshTokenExpiry()
 
@@ -110,6 +139,12 @@ func (s *AuthService) RefreshTokenService(refreshToken string) (*entities.TokenR
 
 	if user.Banned {
 		return nil, "", generic.ErrAuthUserBanned
+	}
+
+	// Generate valid refresh JWT signed for actual rotated user
+	newRawRefreshToken, err = helpers.GenerateRefreshJWT(s.Cfg, user)
+	if err != nil {
+		return nil, "", err
 	}
 
 	accessToken, err := helpers.GenerateJWT(s.Cfg, user)
@@ -156,7 +191,14 @@ func (s *AuthService) ChangePasswordService(userID string, req entities.ChangePa
 		return nil, "", generic.ErrAuthFailedToChangePassword
 	}
 
-	rawRefreshToken := helpers.GenerateRandomToken()
+	userTemp, err := s.Repo.GetUserByIDRepository(userID)
+	rawRefreshToken := ""
+	if err == nil && userTemp != nil {
+		rawRefreshToken, _ = helpers.GenerateRefreshJWT(s.Cfg, userTemp)
+	} else {
+		rawRefreshToken = helpers.GenerateRandomToken()
+	}
+
 	refreshTokenHash := helpers.HashToken(rawRefreshToken)
 	expiresAt := s.getRefreshTokenExpiry()
 

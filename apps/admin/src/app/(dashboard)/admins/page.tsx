@@ -76,12 +76,12 @@ export default function AdminsPage() {
                             </DialogHeader>
                             <div className="space-y-4">
                                 <div className="flex gap-2">
-                                    <Select value={selectedRoleId} onValueChange={setSelectedRoleId}>
+                                    <Select value={selectedRoleId} onValueChange={(val) => setSelectedRoleId(val || "")}>
                                         <SelectTrigger className="flex-1">
                                             <SelectValue placeholder="Select a role" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {(roles || [])
+                                            {(roles?.data || [])
                                                 .filter((r) => !r.is_system)
                                                 .map((r) => (
                                                     <SelectItem key={r.id} value={String(r.id)}>

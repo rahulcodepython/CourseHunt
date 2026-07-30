@@ -131,7 +131,7 @@ export default function RolesPage() {
                                         <Icon name="IconLoader" className="h-5 w-5 animate-spin mx-auto" />
                                     </TableCell>
                                 </TableRow>
-                            ) : (roles || []).map((role) => (
+                            ) : (roles?.data || []).map((role: Role) => (
                                 <>
                                     <TableRow key={role.id}>
                                         <TableCell>
@@ -178,7 +178,7 @@ export default function RolesPage() {
                                                 <div className="p-4 space-y-3">
                                                     <h4 className="font-medium text-sm">Permissions</h4>
                                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                                        {(allPermissions || []).map((perm) => (
+                                                        {(allPermissions?.data || []).map((perm: Permission) => (
                                                             <button
                                                             key={perm.id}
                                                             type="button"

@@ -2,14 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
     reactStrictMode: false,
-    async rewrites() {
-        return [
-            {
-                source: "/api/v1/:path*",
-                destination: "http://localhost:8080/api/v1/:path*",
-            },
-        ];
-    },
+    allowedDevOrigins: ['admin.coursehunt.localhost'],
     images: {
         remotePatterns: [
             { protocol: "https", hostname: "ik.imagekit.io", port: "", pathname: "/egg4kxv60/**" },

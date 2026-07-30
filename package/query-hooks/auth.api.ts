@@ -15,13 +15,14 @@ import {
 	UserZod,
 } from "@/package/schema/auth.types";
 
-export function useAuthMeQuery() {
+export function useAuthMeQuery(options?: { enabled?: boolean }) {
 	return useAppQuery(
 		queryKeys.me(),
 		() => apiRequest({ url: "/api/v1/auth/me", method: "GET" }, UserZod),
 		{
 			retry: false,
 			refetchOnWindowFocus: false,
+			...options,
 		}
 	);
 }
