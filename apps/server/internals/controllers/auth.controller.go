@@ -70,27 +70,6 @@ func (ctrl *AuthController) LoginWithGoogleController(c *fiber.Ctx) error {
 	return utils.OK(c, "Login successful", resp)
 }
 
-func (ctrl *AuthController) RefreshTokenController(c *fiber.Ctx) error {
-	refreshToken := c.Cookies(ctrl.Cfg.RefreshCookieName)
-	if refreshToken == "" {
-		return utils.Unauthorized(c, "No refresh token provided", nil)
-	}
-
-	resp, newRefreshToken, err := ctrl.Svc.RefreshTokenService(refreshToken)
-	if err != nil {
-		helpers.ClearCookies(ctrl.Cfg, c)
-		switch {
-		case errors.Is(err, generic.ErrAuthSessionExpired), errors.Is(err, generic.ErrAuthUserBanned):
-			return utils.Unauthorized(c, err.Error(), nil)
-		default:
-			return utils.InternalError(c, "Failed to refresh token", err)
-		}
-	}
-
-	helpers.SetCookies(ctrl.Cfg, c, resp.AccessToken, newRefreshToken)
-	return utils.OK(c, "Token refreshed", resp)
-}
-
 func (ctrl *AuthController) LogoutController(c *fiber.Ctx) error {
 	refreshToken := c.Cookies(ctrl.Cfg.RefreshCookieName)
 	if refreshToken != "" {
@@ -144,4 +123,15 @@ func (ctrl *AuthController) ChangePasswordController(c *fiber.Ctx) error {
 
 	helpers.SetCookies(ctrl.Cfg, c, resp.AccessToken, refreshToken)
 	return utils.OK(c, "Password changed.", resp)
+}
+
+func (ctrl *AuthController) GetMeController(c *fiber.Ctx) error {
+	userCtx, _ := c.Locals("user").(*generic.UserContext)
+
+	user, err := ctrl.Svc.Repo.GetUserByIDRepository(userCtx.UserID)
+	if err != nil {
+		return utils.InternalError(c, "Failed to fetch user details.", err)
+	}
+
+	return utils.OK(c, "User details retrieved successfully.", user)
 }

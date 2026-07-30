@@ -167,16 +167,16 @@ func (r *Router) SetUp() {
 
 	public.Post("/auth/login", r.Auth.LoginWithEmailController)
 	public.Post("/auth/google", r.Auth.LoginWithGoogleController)
-	public.Post("/auth/refresh", r.Auth.RefreshTokenController)
 
 	// ============================================================
 	// BLOCK 2 — AUTH MIDDLEWARE CREATED HERE. NOTHING PUBLIC BELOW THIS LINE.
 	// ============================================================
-	protected := r.API.Group("/v1", middlewares.BaseAuthMiddleware(r.CFG))
+	protected := r.API.Group("/v1", middlewares.BaseAuthMiddleware(r.CFG, r.Auth.Svc, r.Cache))
 
 	// ============================================================
 	// BLOCK 3 — ALL PROTECTED ROUTES.
 	// ============================================================
+	protected.Get("/auth/me", r.Auth.GetMeController)
 	protected.Post("/auth/logout", r.Auth.LogoutController)
 	protected.Post("/auth/user", middlewares.PermissionGuard(generic.AdminUsersCreate), r.Auth.CreateUserController)
 	protected.Post("/auth/change-password", r.Auth.ChangePasswordController)

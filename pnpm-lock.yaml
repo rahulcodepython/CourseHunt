@@ -107,9 +107,9 @@ importers:
         specifier: ^6
         version: 6.0.3
 
-  apps/api: {}
-
   apps/seeder: {}
+
+  apps/server: {}
 
   apps/tutor:
     dependencies:

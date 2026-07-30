@@ -3,7 +3,8 @@
 import { Icon } from "@package/components/icon";
 import { Button } from "@package/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@package/ui/dropdown-menu";
-import { useAuthSessionQuery, useLogoutMutation } from "@package/query-hooks/auth.api";
+import { useLogoutMutation } from "@package/query-hooks/auth.api";
+import { useSessionStore } from "@package/store/session.store";
 import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,9 +20,9 @@ interface SessionUser {
 }
 
 export default function Header() {
-	const { data, isPending } = useAuthSessionQuery();
+	const user = useSessionStore((s) => s.data?.user);
+	const isPending = useSessionStore((s) => s.isPending);
 	const logoutMutation = useLogoutMutation();
-	const user = data?.success && data?.data ? data.data.user : null;
 	const router = useRouter();
 
 	const handleLogout = async () => {

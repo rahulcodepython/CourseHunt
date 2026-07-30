@@ -1,45 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  decodeJwtPayload,
-  getSessionCookie,
-  isPathMatch,
-  hasRole,
-  isBanned,
-  needsPasswordChange,
-  redirectTo,
-} from "@package/lib/middleware";
-
-const authRoutes = ["/auth/login", "/auth/change-password"];
+import { decodeJwtPayload } from "@package/lib/jwt-decoder";
 
 export default function middleware(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
-  const { pathname } = request.nextUrl;
-  const isAuthRoute = isPathMatch(pathname, authRoutes);
+    const sessionCookie = request.cookies.get("access_token")?.value;
+    const authRoute = "/auth/login";
+    const { pathname } = request.nextUrl;
 
-  if (!sessionCookie) {
-    return isAuthRoute ? NextResponse.next() : redirectTo("/auth/login", request);
-  }
+    if (!sessionCookie) {
+        return pathname === authRoute ? NextResponse.next() : NextResponse.redirect(new URL(authRoute, request.url));
+    }
 
-  const payload = decodeJwtPayload(sessionCookie);
+    const payload = decodeJwtPayload(sessionCookie);
 
-  if (isBanned(payload) || !hasRole(payload, "admin")) {
-    return redirectTo("/auth/login", request);
-  }
+    if (!payload || payload.banned || !payload.roles.includes("admin")) {
+        return NextResponse.redirect(new URL(authRoute, request.url));
+    }
 
-  const pendingPassword = needsPasswordChange(payload);
-  const isChangePassword = pathname.startsWith("/auth/change-password");
+    if (pathname === authRoute) {
+        return NextResponse.redirect(new URL("/", request.url));
+    }
 
-  if (pendingPassword && !isChangePassword) {
-    return redirectTo("/auth/change-password", request);
-  }
-
-  if (isAuthRoute && !pendingPassword) {
-    return redirectTo("/", request);
-  }
-
-  return NextResponse.next();
+    return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+    matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

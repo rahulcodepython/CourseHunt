@@ -24,10 +24,18 @@ func NewAuthService(repo *repositories.AuthRepository, cfg *config.Config) *Auth
 	return &AuthService{Repo: repo, Cfg: cfg}
 }
 
+func (s *AuthService) getRefreshTokenExpiry() time.Time {
+	days := s.Cfg.RefreshTokenTTLDays
+	if days <= 0 {
+		days = 7
+	}
+	return time.Now().Add(time.Duration(days) * 24 * time.Hour)
+}
+
 func (s *AuthService) LoginWithEmailService(req entities.LoginRequest) (*entities.TokenResponse, string, error) {
 	rawRefreshToken := helpers.GenerateRandomToken()
 	refreshTokenHash := helpers.HashToken(rawRefreshToken)
-	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	expiresAt := s.getRefreshTokenExpiry()
 
 	user, hash, err := s.Repo.LoginWithEmailRepository(req.Email, refreshTokenHash, expiresAt)
 	if err != nil {
@@ -66,7 +74,7 @@ func (s *AuthService) LoginWithGoogleService(ctx context.Context, req entities.G
 
 	rawRefreshToken := helpers.GenerateRandomToken()
 	refreshTokenHash := helpers.HashToken(rawRefreshToken)
-	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	expiresAt := s.getRefreshTokenExpiry()
 
 	user, err := s.Repo.LoginWithGoogleRepository(email, refreshTokenHash, expiresAt)
 	if err != nil {
@@ -93,7 +101,7 @@ func (s *AuthService) RefreshTokenService(refreshToken string) (*entities.TokenR
 
 	newRawRefreshToken := helpers.GenerateRandomToken()
 	newRefreshTokenHash := helpers.HashToken(newRawRefreshToken)
-	newExpiresAt := time.Now().Add(7 * 24 * time.Hour)
+	newExpiresAt := s.getRefreshTokenExpiry()
 
 	user, err := s.Repo.RotateSessionRepository(oldHash, newRefreshTokenHash, newExpiresAt)
 	if err != nil {
@@ -150,7 +158,7 @@ func (s *AuthService) ChangePasswordService(userID string, req entities.ChangePa
 
 	rawRefreshToken := helpers.GenerateRandomToken()
 	refreshTokenHash := helpers.HashToken(rawRefreshToken)
-	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	expiresAt := s.getRefreshTokenExpiry()
 
 	user, oldHash, err := s.Repo.ChangePasswordRepository(userID, string(newHash), refreshTokenHash, expiresAt)
 	if err != nil {

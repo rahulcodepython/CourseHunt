@@ -25,15 +25,19 @@ func HashToken(token string) string {
 }
 
 func GenerateJWT(cfg *config.Config, user *entities.User) (string, error) {
+	jwtTTLMinutes := cfg.JWTTTLMinutes
+	if jwtTTLMinutes <= 0 {
+		jwtTTLMinutes = 15
+	}
+	ttl := time.Duration(jwtTTLMinutes) * time.Minute
+
 	claims := jwt.MapClaims{
-		"sub":               user.ID,
-		"email":             user.Email,
-		"roles":             user.Roles,
-		"permissions":       user.Permissions,
-		"banned":            user.Banned,
-		"passwordChangedAt": user.PasswordChangedAt,
-		"iat":               time.Now().Unix(),
-		"exp":               time.Now().Add(15 * time.Minute).Unix(),
+		"sub":         user.ID,
+		"roles":       user.Roles,
+		"permissions": user.Permissions,
+		"banned":      user.Banned,
+		"iat":         time.Now().Unix(),
+		"exp":         time.Now().Add(ttl).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -41,12 +45,27 @@ func GenerateJWT(cfg *config.Config, user *entities.User) (string, error) {
 }
 
 func SetCookies(cfg *config.Config, c *fiber.Ctx, accessToken, refreshToken string) {
+	jwtMaxAge := cfg.JWTTTLMinutes * 60
+	if jwtMaxAge <= 0 {
+		jwtMaxAge = 15 * 60
+	}
+
+	refreshMaxAge := cfg.RefreshTokenTTLDays * 24 * 60 * 60
+	if refreshMaxAge <= 0 {
+		refreshMaxAge = 7 * 24 * 60 * 60
+	}
+
+	refreshPath := cfg.RefreshCookiePath
+	if refreshPath == "" {
+		refreshPath = "/"
+	}
+
 	c.Cookie(&fiber.Cookie{
 		Name:     cfg.AuthCookieName,
 		Value:    accessToken,
 		Path:     "/",
 		Domain:   cfg.CookieDomain,
-		MaxAge:   15 * 60,
+		MaxAge:   jwtMaxAge,
 		Secure:   cfg.CookieSecure,
 		HTTPOnly: false,
 		SameSite: "Lax",
@@ -55,9 +74,9 @@ func SetCookies(cfg *config.Config, c *fiber.Ctx, accessToken, refreshToken stri
 	c.Cookie(&fiber.Cookie{
 		Name:     cfg.RefreshCookieName,
 		Value:    refreshToken,
-		Path:     "/api/v1/auth",
+		Path:     refreshPath,
 		Domain:   cfg.CookieDomain,
-		MaxAge:   7 * 24 * 60 * 60,
+		MaxAge:   refreshMaxAge,
 		Secure:   cfg.CookieSecure,
 		HTTPOnly: true,
 		SameSite: "Lax",
@@ -65,6 +84,11 @@ func SetCookies(cfg *config.Config, c *fiber.Ctx, accessToken, refreshToken stri
 }
 
 func ClearCookies(cfg *config.Config, c *fiber.Ctx) {
+	refreshPath := cfg.RefreshCookiePath
+	if refreshPath == "" {
+		refreshPath = "/"
+	}
+
 	c.Cookie(&fiber.Cookie{
 		Name:     cfg.AuthCookieName,
 		Value:    "",
@@ -78,7 +102,7 @@ func ClearCookies(cfg *config.Config, c *fiber.Ctx) {
 	c.Cookie(&fiber.Cookie{
 		Name:     cfg.RefreshCookieName,
 		Value:    "",
-		Path:     "/api/v1/auth",
+		Path:     refreshPath,
 		Domain:   cfg.CookieDomain,
 		Expires:  time.Now().Add(-1 * time.Hour),
 		Secure:   cfg.CookieSecure,

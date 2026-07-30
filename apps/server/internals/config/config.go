@@ -18,10 +18,13 @@ type Config struct {
 	MinioSecure           bool   `env:"MINIO_SECURE" envDefault:"false"`
 	AllowedOrigins        string `env:"ALLOWED_ORIGINS" envDefault:"http://localhost:3000,http://localhost:3001,http://localhost:3002,https://coursehunt.com,https://tutor.coursehunt.com,https://admin.coursehunt.com"`
 	JWTSecret             string `env:"JWT_SECRET" envDefault:"supersecret_jwt_key_for_dev_only"`
+	JWTTTLMinutes         int    `env:"JWT_TTL_MINUTES" envDefault:"15"`
+	RefreshTokenTTLDays   int    `env:"REFRESH_TTL_DAYS" envDefault:"7"`
 	CookieDomain          string `env:"COOKIE_DOMAIN" envDefault:".coursehunt.com"`
 	CookieSecure          bool   `env:"COOKIE_SECURE" envDefault:"false"`
 	AuthCookieName        string `env:"AUTH_COOKIE_NAME" envDefault:"access_token"`
 	RefreshCookieName     string `env:"REFRESH_COOKIE_NAME" envDefault:"refresh_token"`
+	RefreshCookiePath     string `env:"REFRESH_COOKIE_PATH" envDefault:"/"`
 	GoogleClientID        string `env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret    string `env:"GOOGLE_CLIENT_SECRET"`
 	RazorpayKeyID         string `env:"RAZORPAY_KEY_ID"`

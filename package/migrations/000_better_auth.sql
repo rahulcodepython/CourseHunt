@@ -16,12 +16,15 @@ CREATE TABLE IF NOT EXISTS "user" (
 CREATE TABLE IF NOT EXISTS "sessions" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "user_id" TEXT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE,
-    "refresh_token_hash" VARCHAR(255) NOT NULL,
+    "refresh_token_hash" VARCHAR(255) NOT NULL UNIQUE,
+    "family_id" UUID DEFAULT gen_random_uuid() NOT NULL,
+    "rotated_at" TIMESTAMPTZ NULL,
     "expires_at" TIMESTAMPTZ NOT NULL,
     "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS "idx_sessions_user_id" ON "sessions" ("user_id");
+CREATE INDEX IF NOT EXISTS "idx_sessions_refresh_hash" ON "sessions" ("refresh_token_hash");
 
 -- OAuth provider linkages (e.g. Google)
 CREATE TABLE IF NOT EXISTS "providers" (

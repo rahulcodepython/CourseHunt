@@ -77,7 +77,7 @@ func (r *AuthRepository) LoginWithGoogleRepository(email, sessionHash string, ex
 		WITH user_cte AS (
 			SELECT u.id, u.name, u.email, u."emailVerified", u.image,
 			       u."createdAt", u."updatedAt", u.banned,
-			       c.password_changed_at AS "passwordChangedAt"
+			       COALESCE(c.password_changed_at, NOW()) AS "passwordChangedAt"
 			FROM "user" u
 			LEFT JOIN credentials c ON c.user_id = u.id
 			WHERE u.email = $1
@@ -123,9 +123,36 @@ func (r *AuthRepository) LoginWithGoogleRepository(email, sessionHash string, ex
 
 func (r *AuthRepository) RotateSessionRepository(oldHash, newHash string, expiresAt time.Time) (*entities.User, error) {
 	query := `
-		WITH deleted_session AS (
-			DELETE FROM sessions WHERE refresh_token_hash = $1 AND expires_at > NOW()
+		WITH target_session AS (
+			SELECT id, user_id, family_id, rotated_at, expires_at
+			FROM sessions
+			WHERE refresh_token_hash = $1 AND expires_at > NOW()
+		),
+		grace_check AS (
+			SELECT user_id FROM target_session
+			WHERE rotated_at IS NOT NULL AND rotated_at > (NOW() - INTERVAL '30 seconds')
+		),
+		theft_cleanup AS (
+			DELETE FROM sessions
+			WHERE family_id = (SELECT family_id FROM target_session WHERE rotated_at IS NOT NULL AND rotated_at <= (NOW() - INTERVAL '30 seconds'))
+		),
+		mark_rotated AS (
+			UPDATE sessions
+			SET rotated_at = NOW()
+			WHERE id = (SELECT id FROM target_session WHERE rotated_at IS NULL)
+		),
+		inserted_session AS (
+			INSERT INTO sessions (user_id, refresh_token_hash, family_id, expires_at)
+			SELECT ts.user_id, $2, ts.family_id, $3
+			FROM target_session ts
+			WHERE ts.rotated_at IS NULL
 			RETURNING user_id
+		),
+		active_user_id AS (
+			SELECT COALESCE(
+				(SELECT user_id FROM inserted_session),
+				(SELECT user_id FROM grace_check)
+			) AS user_id
 		),
 		user_cte AS (
 			SELECT u.id, u.name, u.email, u."emailVerified", u.image,
@@ -133,11 +160,7 @@ func (r *AuthRepository) RotateSessionRepository(oldHash, newHash string, expire
 			       c.password_changed_at AS "passwordChangedAt"
 			FROM "user" u
 			LEFT JOIN credentials c ON c.user_id = u.id
-			WHERE u.id = (SELECT user_id FROM deleted_session)
-		),
-		inserted_session AS (
-			INSERT INTO sessions (user_id, refresh_token_hash, expires_at)
-			SELECT id, $2, $3 FROM user_cte WHERE banned = false
+			WHERE u.id = (SELECT user_id FROM active_user_id)
 		),
 		roles_cte AS (
 			SELECT COALESCE(json_agg(r.name ORDER BY r.name), '[]'::json) AS roles
@@ -191,8 +214,8 @@ func (r *AuthRepository) CreateUserRepository(hashedPassword, name, email, creat
 			RETURNING id
 		),
 		inserted_credentials AS (
-			INSERT INTO credentials (user_id, password_hash, created_at, updated_at)
-			SELECT id, $4, NOW(), NOW() FROM inserted_user
+			INSERT INTO credentials (user_id, password_hash, password_changed_at, created_at, updated_at)
+			SELECT id, $4, CASE WHEN $5 = 'user' THEN NOW() ELSE NULL END, NOW(), NOW() FROM inserted_user
 		),
 		inserted_role AS (
 			INSERT INTO user_roles (user_id, role_id)
@@ -278,4 +301,49 @@ func (r *AuthRepository) ChangePasswordRepository(userID, newHashedPassword, new
 	}
 
 	return &user, oldHash, nil
+}
+
+func (r *AuthRepository) GetUserByIDRepository(userID string) (*entities.User, error) {
+	query := `
+		WITH user_cte AS (
+			SELECT u.id, u.name, u.email, u."emailVerified", u.image,
+			       u."createdAt", u."updatedAt", u.banned,
+			       c.password_changed_at AS "passwordChangedAt"
+			FROM "user" u
+			LEFT JOIN credentials c ON c.user_id = u.id
+			WHERE u.id = $1
+		),
+		roles_cte AS (
+			SELECT COALESCE(json_agg(r.name ORDER BY r.name), '[]'::json) AS roles
+			FROM user_roles ur
+			JOIN roles r ON r.id = ur.role_id
+			WHERE ur.user_id = (SELECT id FROM user_cte)
+		),
+		permissions_cte AS (
+			SELECT COALESCE(json_agg(DISTINCT p.name ORDER BY p.name), '[]'::json) AS permissions
+			FROM user_roles ur
+			JOIN role_permissions rp ON rp.role_id = ur.role_id
+			JOIN permissions p ON p.id = rp.permission_id
+			WHERE ur.user_id = (SELECT id FROM user_cte)
+		)
+		SELECT row_to_json(t) FROM (
+			SELECT
+				uc.id, uc.name, uc.email, uc."emailVerified", uc.image,
+				uc."createdAt", uc."updatedAt", uc.banned, uc."passwordChangedAt",
+				COALESCE((SELECT roles FROM roles_cte), '[]'::json) AS roles,
+				COALESCE((SELECT permissions FROM permissions_cte), '[]'::json) AS permissions
+			FROM user_cte uc
+		) t
+	`
+
+	var jsonBytes []byte
+	row := r.DB.QueryRowx(query, userID)
+	if err := row.Scan(&jsonBytes); err != nil {
+		return nil, err
+	}
+	var u entities.User
+	if err := json.Unmarshal(jsonBytes, &u); err != nil {
+		return nil, err
+	}
+	return &u, nil
 }

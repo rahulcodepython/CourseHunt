@@ -12,12 +12,13 @@ import {
 	TokenResponseZod,
 	CreateUserRequestZod,
 	CreateUserResponseZod,
+	UserZod,
 } from "@/package/schema/auth.types";
 
-export function useAuthSessionQuery() {
+export function useAuthMeQuery() {
 	return useAppQuery(
-		queryKeys.authSession(),
-		() => apiRequest({ url: "/api/v1/auth/refresh", method: "POST" }, TokenResponseZod),
+		queryKeys.me(),
+		() => apiRequest({ url: "/api/v1/auth/me", method: "GET" }, UserZod),
 		{
 			retry: false,
 			refetchOnWindowFocus: false,

@@ -25,6 +25,16 @@ export const SuccessResponseZod = z.object({
 });
 export type SuccessResponse = z.infer<typeof SuccessResponseZod>;
 
+export const JwtPayloadZod = z.object({
+    sub: z.string(),
+    roles: z.array(z.string()).default([]),
+    permissions: z.array(z.string()).default([]),
+    banned: z.boolean().default(false),
+    iat: z.number().optional(),
+    exp: z.number().optional(),
+});
+export type JwtPayload = z.infer<typeof JwtPayloadZod>;
+
 export const UserInfoZod = z.object({
     id: z.string(),
     name: z.string(),
