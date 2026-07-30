@@ -1,13 +1,19 @@
--- 002: User profile tables
+-- 002: Unified Profile Table
 
-CREATE TABLE IF NOT EXISTS user_profile (
-    id         text PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id    text NOT NULL UNIQUE REFERENCES "user"(id) ON DELETE CASCADE,
-    headline   text,
-    bio        text,
-    website    text,
-    created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS profiles (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL UNIQUE REFERENCES "users"(id) ON DELETE CASCADE,
+    headline        TEXT,
+    bio             TEXT,
+    website         TEXT,
+    total_students  INTEGER DEFAULT 0,
+    rating_avg      DECIMAL(3,2) DEFAULT 0,
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_profile_user_id  ON user_profile(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
+
+COMMIT;

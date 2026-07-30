@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const RoleZod = z.object({
-    id: z.number(),
+    id: z.string(),
     name: z.string(),
     description: z.string().nullable().optional(),
     is_system: z.boolean().optional(),
@@ -9,7 +9,7 @@ export const RoleZod = z.object({
 export type Role = z.infer<typeof RoleZod>;
 
 export const PermissionZod = z.object({
-    id: z.number(),
+    id: z.string(),
     name: z.string(),
     description: z.string().nullable().optional(),
 });
@@ -28,6 +28,6 @@ export const UpdateRoleRequestZod = z.object({
 export type UpdateRoleRequest = z.infer<typeof UpdateRoleRequestZod>;
 
 export const RolePermissionUpdateZod = z.object({
-    permission_ids: z.array(z.number()),
+    permission_ids: z.array(z.string()),
 });
 export type RolePermissionUpdate = z.infer<typeof RolePermissionUpdateZod>;

@@ -1,10 +1,12 @@
+BEGIN;
+
 CREATE TABLE IF NOT EXISTS chapter_progress (
-    id                text PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id           text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-    chapter_id        text NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
-    course_id         text NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id           UUID NOT NULL REFERENCES "users"(id) ON DELETE CASCADE,
+    chapter_id        UUID NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+    course_id         UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
     lessons_completed INTEGER DEFAULT 0,
-    completed         boolean DEFAULT false,
+    completed         BOOLEAN DEFAULT false,
     UNIQUE(user_id, chapter_id)
 );
 
@@ -40,3 +42,5 @@ DROP TRIGGER IF EXISTS trg_enrollment_completion ON chapter_progress;
 CREATE TRIGGER trg_enrollment_completion
     AFTER UPDATE ON chapter_progress
     FOR EACH ROW EXECUTE FUNCTION update_enrollment_completion();
+
+COMMIT;

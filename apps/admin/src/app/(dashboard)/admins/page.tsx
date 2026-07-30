@@ -84,7 +84,7 @@ export default function AdminsPage() {
                                             {(roles?.data || [])
                                                 .filter((r) => !r.is_system)
                                                 .map((r) => (
-                                                    <SelectItem key={r.id} value={String(r.id)}>
+                                                    <SelectItem key={r.id} value={r.id}>
                                                         {r.name}
                                                     </SelectItem>
                                                 ))}
@@ -94,7 +94,7 @@ export default function AdminsPage() {
                                         size="sm"
                                         disabled={!selectedRoleId || assignRole.isPending}
                                         onClick={() => {
-                                            assignRole.mutate({ id: user.id, data: { role_id: Number(selectedRoleId) } });
+                                            assignRole.mutate({ id: user.id, data: { role_id: selectedRoleId } });
                                             setAssignDialogUserId(null);
                                             setSelectedRoleId("");
                                         }}
@@ -132,9 +132,11 @@ export default function AdminsPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold">Admins</h1>
-                <p className="text-muted-foreground text-sm">Manage admin users and their custom roles</p>
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold">Admins</h1>
+                    <p className="text-muted-foreground text-sm">Manage admin users and their custom roles</p>
+                </div>
             </div>
 
             <Card>

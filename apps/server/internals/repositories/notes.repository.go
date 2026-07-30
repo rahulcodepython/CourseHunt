@@ -42,7 +42,7 @@ func (r *NotesRepository) UpsertRepository(userID, lessonID, content string) (*e
 			) AS is_enrolled
 		),
 		inserted AS (
-			INSERT INTO user_notes (user_id, lesson_id, course_id, content, updated_at)
+			INSERT INTO notes (user_id, lesson_id, course_id, content, updated_at)
 			SELECT $1, $2, li.course_id, $3, CURRENT_TIMESTAMP
 			FROM lesson_info li
 			CROSS JOIN enrollment_auth ea
@@ -99,7 +99,7 @@ func (r *NotesRepository) ReadRepository(userID, lessonID string) (*entities.Use
 		),
 		note_data AS (
 			SELECT id, user_id, lesson_id, course_id, content, updated_at
-			FROM user_notes
+			FROM notes
 			WHERE user_id = $1 AND lesson_id = $2
 		)
 		SELECT 
@@ -138,7 +138,7 @@ func (r *NotesRepository) UpdateRepository(id, userID, content string) (*entitie
 
 	query := `
 		WITH note_info AS (
-			SELECT id, user_id, lesson_id, course_id FROM user_notes WHERE id = $1
+			SELECT id, user_id, lesson_id, course_id FROM notes WHERE id = $1
 		),
 		enrollment_auth AS (
 			SELECT EXISTS (
@@ -148,11 +148,11 @@ func (r *NotesRepository) UpdateRepository(id, userID, content string) (*entitie
 			) AS is_enrolled
 		),
 		updated AS (
-			UPDATE user_notes SET content = $3, updated_at = CURRENT_TIMESTAMP
+			UPDATE notes SET content = $3, updated_at = CURRENT_TIMESTAMP
 			FROM note_info ni
 			CROSS JOIN enrollment_auth ea
-			WHERE user_notes.id = $1 AND user_notes.user_id = $2 AND ea.is_enrolled = true
-			RETURNING user_notes.id, user_notes.content, user_notes.updated_at
+			WHERE notes.id = $1 AND notes.user_id = $2 AND ea.is_enrolled = true
+			RETURNING notes.id, notes.content, notes.updated_at
 		)
 		SELECT 
 			EXISTS(SELECT 1 FROM note_info) AS note_exists,
@@ -193,7 +193,7 @@ func (r *NotesRepository) DeleteRepository(id, userID string) (string, error) {
 
 	query := `
 		WITH note_info AS (
-			SELECT id, user_id, lesson_id, course_id FROM user_notes WHERE id = $1
+			SELECT id, user_id, lesson_id, course_id FROM notes WHERE id = $1
 		),
 		enrollment_auth AS (
 			SELECT EXISTS (
@@ -203,10 +203,10 @@ func (r *NotesRepository) DeleteRepository(id, userID string) (string, error) {
 			) AS is_enrolled
 		),
 		deleted AS (
-			DELETE FROM user_notes
+			DELETE FROM notes
 			USING note_info ni, enrollment_auth ea
-			WHERE user_notes.id = $1 AND user_notes.user_id = $2 AND ea.is_enrolled = true
-			RETURNING user_notes.id
+			WHERE notes.id = $1 AND notes.user_id = $2 AND ea.is_enrolled = true
+			RETURNING notes.id
 		)
 		SELECT 
 			EXISTS(SELECT 1 FROM note_info) AS note_exists,

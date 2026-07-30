@@ -12,7 +12,7 @@ import type { CoursePublicResponse } from "@package/schema/courses.types";
 import { useDebounce } from "@package/hooks/use-debounce";
 import Loading from "@package/components/loading";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 const PAGE_SIZE = 10;
 
@@ -96,7 +96,6 @@ const Courses = () => {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
     const [categoryId, setCategoryId] = useState("");
-    const [subcategoryId, setSubcategoryId] = useState("");
     const [level, setLevel] = useState("");
 
     const debouncedSearch = useDebounce(search, 300);
@@ -109,7 +108,6 @@ const Courses = () => {
         limit: PAGE_SIZE,
         search: debouncedSearch || undefined,
         category_id: categoryId || undefined,
-        subcategory_id: subcategoryId || undefined,
         level: level || undefined,
     });
 
@@ -117,13 +115,6 @@ const Courses = () => {
     const courseList: CoursePublicResponse[] = paginatedData ? (paginatedData.data as unknown as CoursePublicResponse[]) : [];
     const total = paginatedData?.total ?? 0;
     const totalPages = Math.ceil(total / PAGE_SIZE);
-
-    const selectedCategory = useMemo(() => categories.find(c => c.id === categoryId), [categories, categoryId]);
-    const subcategories = selectedCategory?.subcategories ?? [];
-
-    useEffect(() => {
-        setSubcategoryId("");
-    }, [categoryId]);
 
     const handleFilterChange = (setter: (v: string) => void) => (value: string | null) => {
         setter(value ?? "");
@@ -152,21 +143,6 @@ const Courses = () => {
                         <SelectItem value="">All Categories</SelectItem>
                         {categories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Select
-                    value={subcategoryId}
-                    onValueChange={handleFilterChange(setSubcategoryId)}
-                    disabled={!categoryId || subcategories.length === 0}
-                >
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder={categoryId && subcategories.length > 0 ? "All Subcategories" : "No subcategories"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="">All Subcategories</SelectItem>
-                        {subcategories.map((sub) => (
-                            <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>

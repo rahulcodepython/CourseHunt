@@ -25,6 +25,7 @@ export const QuizOptionZod = z.object({
     question_id: z.string(),
     option_text: z.string(),
     is_correct: z.boolean().optional(),
+    sort_order: z.number().optional(),
 });
 export type QuizOption = z.infer<typeof QuizOptionZod>;
 
@@ -56,6 +57,7 @@ export type CreateQuizRequest = z.infer<typeof CreateQuizRequestZod>;
 export const QuestionOptionInputZod = z.object({
     option_text: z.string(),
     is_correct: z.boolean(),
+    sort_order: z.number().optional(),
 });
 export type QuestionOptionInput = z.infer<typeof QuestionOptionInputZod>;
 
@@ -81,17 +83,45 @@ export const NextQuestionRequestZod = z.object({
 });
 export type NextQuestionRequest = z.infer<typeof NextQuestionRequestZod>;
 
-export const SubmitQuizAnswerInputZod = z.object({
+export const SubmitSingleAnswerInputZod = z.object({
     question_id: z.string(),
-    selected_option_ids: z.array(z.string()).nullable().optional(),
-    arrange_order: z.array(z.number()).nullable().optional(),
-    fill_text: z.string().nullable().optional(),
-    is_skipped: z.boolean(),
+    selected_option_id: z.string(),
+    is_skipped: z.boolean().optional(),
 });
-export type SubmitQuizAnswerInput = z.infer<typeof SubmitQuizAnswerInputZod>;
+export type SubmitSingleAnswerInput = z.infer<typeof SubmitSingleAnswerInputZod>;
+
+export const SubmitMultiAnswerInputZod = z.object({
+    question_id: z.string(),
+    selected_option_ids: z.array(z.string()),
+    is_skipped: z.boolean().optional(),
+});
+export type SubmitMultiAnswerInput = z.infer<typeof SubmitMultiAnswerInputZod>;
+
+export const ArrangeSubmittedItemZod = z.object({
+    item_id: z.string(),
+    order: z.number(),
+});
+export type ArrangeSubmittedItem = z.infer<typeof ArrangeSubmittedItemZod>;
+
+export const SubmitArrangeAnswerInputZod = z.object({
+    question_id: z.string(),
+    items: z.array(ArrangeSubmittedItemZod),
+    is_skipped: z.boolean().optional(),
+});
+export type SubmitArrangeAnswerInput = z.infer<typeof SubmitArrangeAnswerInputZod>;
+
+export const SubmitFillAnswerInputZod = z.object({
+    question_id: z.string(),
+    fill_text: z.string(),
+    is_skipped: z.boolean().optional(),
+});
+export type SubmitFillAnswerInput = z.infer<typeof SubmitFillAnswerInputZod>;
 
 export const SubmitQuizRequestZod = z.object({
-    answers: z.array(SubmitQuizAnswerInputZod),
+    single_answers: z.array(SubmitSingleAnswerInputZod).optional(),
+    multi_answers: z.array(SubmitMultiAnswerInputZod).optional(),
+    arrange_answers: z.array(SubmitArrangeAnswerInputZod).optional(),
+    fill_answers: z.array(SubmitFillAnswerInputZod).optional(),
 });
 export type SubmitQuizRequest = z.infer<typeof SubmitQuizRequestZod>;
 
@@ -127,9 +157,9 @@ export type NextQuestionResponse = z.infer<typeof NextQuestionResponseZod>;
 export const QuizResultItemZod = z.object({
     question_id: z.string(),
     is_correct: z.boolean(),
-    correct_option_ids: z.array(z.string()),
-    correct_arrange_order: z.array(z.number()),
-    correct_fill_answers: z.array(z.string()),
+    correct_option_ids: z.array(z.string()).optional(),
+    correct_arrange_order: z.array(z.number()).optional(),
+    correct_fill_answers: z.array(z.string()).optional(),
 });
 export type QuizResultItem = z.infer<typeof QuizResultItemZod>;
 

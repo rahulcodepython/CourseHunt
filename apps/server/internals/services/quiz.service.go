@@ -10,8 +10,8 @@ import (
 )
 
 type QuizService struct {
-	DB    *sqlx.DB
-	Repo  *repositories.QuizRepository
+	DB              *sqlx.DB
+	Repo            *repositories.QuizRepository
 	EnrollmentsRepo *repositories.EnrollmentsRepository
 	CoursesRepo     *repositories.CoursesRepository
 }
@@ -26,32 +26,136 @@ func (s *QuizService) SubmitQuizService(quizID, userID string, req entities.Subm
 		return nil, generic.ErrQuizNotFound
 	}
 
-	answers := make([]entities.AttemptAnswerToSave, 0, len(req.Answers))
+	var answersToSave repositories.QuizAnswersToSave
 	var correctCount, incorrectCount, skippedCount int
+	results := make([]entities.QuizResultItem, 0)
 
-	for _, ans := range req.Answers {
+	// 1. Single answers
+	for _, ans := range req.SingleAnswers {
+		q, ok := quiz.Questions[ans.QuestionID]
+		if !ok {
+			continue
+		}
+		isCorrect := false
+		if !ans.IsSkipped && len(q.CorrectOptionIDs) > 0 {
+			isCorrect = ans.SelectedOptionID == q.CorrectOptionIDs[0]
+		}
+
+		if ans.IsSkipped {
+			skippedCount++
+		} else if isCorrect {
+			correctCount++
+		} else {
+			incorrectCount++
+		}
+
+		answersToSave.SingleAnswers = append(answersToSave.SingleAnswers, entities.QuizAttemptSingleAnswer{
+			QuestionID:       ans.QuestionID,
+			SelectedOptionID: ans.SelectedOptionID,
+			IsCorrect:        isCorrect,
+			IsSkipped:        ans.IsSkipped,
+		})
+
+		results = append(results, entities.QuizResultItem{
+			QuestionID:       ans.QuestionID,
+			IsCorrect:        !ans.IsSkipped && isCorrect,
+			CorrectOptionIDs: q.CorrectOptionIDs,
+		})
+	}
+
+	// 2. Multi answers
+	for _, ans := range req.MultiAnswers {
+		q, ok := quiz.Questions[ans.QuestionID]
+		if !ok {
+			continue
+		}
+		isCorrect := false
+		if !ans.IsSkipped {
+			isCorrect = helpers.EqualSets(ans.SelectedOptionIDs, q.CorrectOptionIDs)
+		}
+
+		if ans.IsSkipped {
+			skippedCount++
+		} else if isCorrect {
+			correctCount++
+		} else {
+			incorrectCount++
+		}
+
+		answersToSave.MultiAnswers = append(answersToSave.MultiAnswers, struct {
+			Answer            entities.QuizAttemptMultiAnswer
+			SelectedOptionIDs []string
+		}{
+			Answer: entities.QuizAttemptMultiAnswer{
+				QuestionID: ans.QuestionID,
+				IsCorrect:  isCorrect,
+				IsSkipped:  ans.IsSkipped,
+			},
+			SelectedOptionIDs: ans.SelectedOptionIDs,
+		})
+
+		results = append(results, entities.QuizResultItem{
+			QuestionID:       ans.QuestionID,
+			IsCorrect:        !ans.IsSkipped && isCorrect,
+			CorrectOptionIDs: q.CorrectOptionIDs,
+		})
+	}
+
+	// 3. Arrange answers
+	for _, ans := range req.ArrangeAnswers {
+		q, ok := quiz.Questions[ans.QuestionID]
+		if !ok {
+			continue
+		}
+
+		submittedOrders := make([]int, len(ans.Items))
+		for i, item := range ans.Items {
+			submittedOrders[i] = item.Order
+		}
+
+		isCorrect := false
+		if !ans.IsSkipped {
+			isCorrect = helpers.EqualIntSlices(submittedOrders, q.CorrectArrangeOrder)
+		}
+
+		if ans.IsSkipped {
+			skippedCount++
+		} else if isCorrect {
+			correctCount++
+		} else {
+			incorrectCount++
+		}
+
+		for _, item := range ans.Items {
+			answersToSave.ArrangeAnswers = append(answersToSave.ArrangeAnswers, entities.QuizAttemptArrangeAnswer{
+				QuestionID:     ans.QuestionID,
+				ArrangeItemID:  item.ItemID,
+				SubmittedOrder: item.Order,
+				IsCorrect:      isCorrect,
+				IsSkipped:      ans.IsSkipped,
+			})
+		}
+
+		results = append(results, entities.QuizResultItem{
+			QuestionID:          ans.QuestionID,
+			IsCorrect:           !ans.IsSkipped && isCorrect,
+			CorrectArrangeOrder: q.CorrectArrangeOrder,
+		})
+	}
+
+	// 4. Fill answers
+	for _, ans := range req.FillAnswers {
 		q, ok := quiz.Questions[ans.QuestionID]
 		if !ok {
 			continue
 		}
 
 		isCorrect := false
-		switch q.QuestionType {
-		case "single_choice":
-			if len(ans.SelectedOptionIDs) == 1 {
-				isCorrect = helpers.EqualSets(ans.SelectedOptionIDs, q.CorrectOptionIDs)
-			}
-		case "multi_choice":
-			isCorrect = helpers.EqualSets(ans.SelectedOptionIDs, q.CorrectOptionIDs)
-		case "arrange":
-			isCorrect = helpers.EqualIntSlices(ans.ArrangeOrder, q.CorrectArrangeOrder)
-		case "fill_blank":
-			if ans.FillText != nil {
-				for _, correct := range q.CorrectFillAnswers {
-					if *ans.FillText == correct {
-						isCorrect = true
-						break
-					}
+		if !ans.IsSkipped {
+			for _, correct := range q.CorrectFillAnswers {
+				if ans.FillText == correct {
+					isCorrect = true
+					break
 				}
 			}
 		}
@@ -64,13 +168,17 @@ func (s *QuizService) SubmitQuizService(quizID, userID string, req entities.Subm
 			incorrectCount++
 		}
 
-		answers = append(answers, entities.AttemptAnswerToSave{
-			QuestionID:        ans.QuestionID,
-			SelectedOptionIDs: ans.SelectedOptionIDs,
-			ArrangeOrder:      ans.ArrangeOrder,
-			FillText:          ans.FillText,
-			IsSkipped:         ans.IsSkipped,
-			IsCorrect:         isCorrect,
+		answersToSave.FillAnswers = append(answersToSave.FillAnswers, entities.QuizAttemptFillAnswer{
+			QuestionID: ans.QuestionID,
+			FillText:   ans.FillText,
+			IsCorrect:  isCorrect,
+			IsSkipped:  ans.IsSkipped,
+		})
+
+		results = append(results, entities.QuizResultItem{
+			QuestionID:         ans.QuestionID,
+			IsCorrect:          !ans.IsSkipped && isCorrect,
+			CorrectFillAnswers: q.CorrectFillAnswers,
 		})
 	}
 
@@ -81,40 +189,9 @@ func (s *QuizService) SubmitQuizService(quizID, userID string, req entities.Subm
 	}
 	passed := totalScore >= float64(quiz.PassScorePercent)
 
-	attemptID, err := s.Repo.SaveQuizAttemptRepository(quizID, userID, totalScore, passed, correctCount, incorrectCount, skippedCount, answers)
+	attemptID, err := s.Repo.SaveQuizAttemptRepository(quizID, userID, totalScore, passed, correctCount, incorrectCount, skippedCount, answersToSave)
 	if err != nil {
 		return nil, err
-	}
-
-	results := make([]entities.QuizResultItem, 0, len(req.Answers))
-	for _, ans := range req.Answers {
-		if q, ok := quiz.Questions[ans.QuestionID]; ok {
-			isCorrect := false
-			switch q.QuestionType {
-			case "single_choice":
-				isCorrect = len(ans.SelectedOptionIDs) == 1 && ans.SelectedOptionIDs[0] == q.CorrectOptionIDs[0]
-			case "multi_choice":
-				isCorrect = helpers.EqualSets(ans.SelectedOptionIDs, q.CorrectOptionIDs)
-			case "arrange":
-				isCorrect = helpers.EqualIntSlices(ans.ArrangeOrder, q.CorrectArrangeOrder)
-			case "fill_blank":
-				if ans.FillText != nil {
-					for _, correct := range q.CorrectFillAnswers {
-						if *ans.FillText == correct {
-							isCorrect = true
-							break
-						}
-					}
-				}
-			}
-			results = append(results, entities.QuizResultItem{
-				QuestionID:          ans.QuestionID,
-				IsCorrect:           !ans.IsSkipped && isCorrect,
-				CorrectOptionIDs:    q.CorrectOptionIDs,
-				CorrectArrangeOrder: q.CorrectArrangeOrder,
-				CorrectFillAnswers:  q.CorrectFillAnswers,
-			})
-		}
 	}
 
 	return &entities.SubmitQuizResponse{

@@ -1,14 +1,14 @@
 package entities
 
 type Role struct {
-	ID          int     `json:"id" db:"id"`
+	ID          string  `json:"id" db:"id"`
 	Name        string  `json:"name" db:"name"`
 	Description *string `json:"description,omitempty" db:"description"`
 	IsSystem    bool    `json:"is_system" db:"is_system"`
 }
 
 type Permission struct {
-	ID          int     `json:"id" db:"id"`
+	ID          string  `json:"id" db:"id"`
 	Name        string  `json:"name" db:"name"`
 	Description *string `json:"description,omitempty" db:"description"`
 }
@@ -24,5 +24,5 @@ type UpdateRoleRequest struct {
 }
 
 type UpdateRolePermissionsRequest struct {
-	PermissionIDs []int `json:"permission_ids" validate:"required"`
+	PermissionIDs []string `json:"permission_ids" validate:"required"`
 }

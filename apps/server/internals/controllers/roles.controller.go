@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"coursehunt/server/internals/config"
@@ -62,9 +61,9 @@ func (ctrl *RolesController) CreateRoleController(c *fiber.Ctx) error {
 }
 
 func (ctrl *RolesController) UpdateRoleController(c *fiber.Ctx) error {
-	roleID, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		return utils.BadRequest(c, "Invalid role ID.", err)
+	roleID := c.Params("id")
+	if roleID == "" {
+		return utils.BadRequest(c, "Invalid role ID.", nil)
 	}
 
 	existing, err := ctrl.Repo.GetRoleRepository(roleID)
@@ -91,9 +90,9 @@ func (ctrl *RolesController) UpdateRoleController(c *fiber.Ctx) error {
 }
 
 func (ctrl *RolesController) DeleteRoleController(c *fiber.Ctx) error {
-	roleID, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		return utils.BadRequest(c, "Invalid role ID.", err)
+	roleID := c.Params("id")
+	if roleID == "" {
+		return utils.BadRequest(c, "Invalid role ID.", nil)
 	}
 
 	existing, err := ctrl.Repo.GetRoleRepository(roleID)
@@ -115,12 +114,12 @@ func (ctrl *RolesController) DeleteRoleController(c *fiber.Ctx) error {
 }
 
 func (ctrl *RolesController) GetRolePermissionsController(c *fiber.Ctx) error {
-	roleID, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		return utils.BadRequest(c, "Invalid role ID.", err)
+	roleID := c.Params("id")
+	if roleID == "" {
+		return utils.BadRequest(c, "Invalid role ID.", nil)
 	}
 
-	cacheKey := fmt.Sprintf("roles:permissions:role:%d", roleID)
+	cacheKey := fmt.Sprintf("roles:permissions:role:%s", roleID)
 	var cached []entities.Permission
 	if hit, _ := ctrl.Repo.Cache.Get(c.Context(), cacheKey, &cached); hit {
 		return utils.OK(c, "Permissions fetched.", cached)
@@ -137,9 +136,9 @@ func (ctrl *RolesController) GetRolePermissionsController(c *fiber.Ctx) error {
 }
 
 func (ctrl *RolesController) SetRolePermissionsController(c *fiber.Ctx) error {
-	roleID, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		return utils.BadRequest(c, "Invalid role ID.", err)
+	roleID := c.Params("id")
+	if roleID == "" {
+		return utils.BadRequest(c, "Invalid role ID.", nil)
 	}
 
 	existing, err := ctrl.Repo.GetRoleRepository(roleID)

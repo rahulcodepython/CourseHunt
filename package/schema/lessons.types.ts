@@ -15,14 +15,14 @@ export const LessonZod = z.object({
 export type Lesson = z.infer<typeof LessonZod>;
 
 export const LessonVideoContentZod = z.object({
-    id: z.string(),
+    lesson_id: z.string(),
     video_url: z.string(),
     written_content: z.string().nullable().optional(),
 });
 export type LessonVideoContent = z.infer<typeof LessonVideoContentZod>;
 
 export const LessonDocumentContentZod = z.object({
-    id: z.string(),
+    lesson_id: z.string(),
     content: z.string(),
 });
 export type LessonDocumentContent = z.infer<typeof LessonDocumentContentZod>;

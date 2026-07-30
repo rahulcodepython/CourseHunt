@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Loading from "@package/components/loading";
 import { useGetQuestionMutation, useSubmitQuizMutation } from "@package/query-hooks/quiz.api";
-import type { SubmitQuizAnswerInput } from "@package/schema/quiz.types";
+import type { SubmitSingleAnswerInput } from "@package/schema/quiz.types";
 import { toast } from "sonner";
 import { QuizIntro } from "./QuizIntro";
 import { QuizResultView } from "./QuizResultView";
@@ -19,16 +19,12 @@ interface QuizTakerProps {
 	};
 }
 
-// This component keeps all quiz STATE and network calls; QuizIntro,
-// QuizResultView, and QuizQuestionView are pure presentational pieces that
-// just receive props, which makes each one trivial to reuse or restyle
-// independently of the fetch/answer-tracking logic.
 export function QuizTaker({ quizMetadata }: QuizTakerProps) {
 	const [quizStarted, setQuizStarted] = useState(false);
 	const [currentQuestion, setCurrentQuestion] = useState<any>(null);
 	const [remainingQuestions, setRemainingQuestions] = useState(0);
 	const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-	const [userAnswers, setUserAnswers] = useState<SubmitQuizAnswerInput[]>([]);
+	const [singleAnswers, setSingleAnswers] = useState<SubmitSingleAnswerInput[]>([]);
 	const [fetchedQuestionIds, setFetchedQuestionIds] = useState<string[]>([]);
 	const [quizResult, setQuizResult] = useState<any>(null);
 
@@ -40,7 +36,7 @@ export function QuizTaker({ quizMetadata }: QuizTakerProps) {
 		setCurrentQuestion(null);
 		setRemainingQuestions(0);
 		setSelectedAnswer(null);
-		setUserAnswers([]);
+		setSingleAnswers([]);
 		setFetchedQuestionIds([]);
 		setQuizResult(null);
 	}, [quizMetadata.id]);
@@ -49,7 +45,7 @@ export function QuizTaker({ quizMetadata }: QuizTakerProps) {
 		setQuizStarted(true);
 		setQuizResult(null);
 		setSelectedAnswer(null);
-		setUserAnswers([]);
+		setSingleAnswers([]);
 		setFetchedQuestionIds([]);
 
 		const res = await getQuestionMutation.execute({
@@ -69,14 +65,14 @@ export function QuizTaker({ quizMetadata }: QuizTakerProps) {
 	const handleNextQuestion = async () => {
 		if (!currentQuestion) return;
 
-		const newAnswer: SubmitQuizAnswerInput = {
+		const newAnswer: SubmitSingleAnswerInput = {
 			question_id: currentQuestion.id,
-			selected_option_ids: selectedAnswer ? [selectedAnswer] : [],
+			selected_option_id: selectedAnswer || "",
 			is_skipped: !selectedAnswer,
 		};
 
-		const updatedAnswers = [...userAnswers, newAnswer];
-		setUserAnswers(updatedAnswers);
+		const updatedAnswers = [...singleAnswers, newAnswer];
+		setSingleAnswers(updatedAnswers);
 
 		if (remainingQuestions > 0) {
 			const updatedFetchedIds = [...fetchedQuestionIds, currentQuestion.id];
@@ -96,7 +92,7 @@ export function QuizTaker({ quizMetadata }: QuizTakerProps) {
 		} else {
 			const res = await submitQuizMutation.execute({
 				quizId: quizMetadata.id,
-				data: { answers: updatedAnswers },
+				data: { single_answers: updatedAnswers },
 			});
 			if (res?.data) {
 				setQuizResult(res.data);

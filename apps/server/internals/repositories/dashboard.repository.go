@@ -55,8 +55,8 @@ func (r *DashboardRepository) TutorDashboardRepository(tutorID string) (*entitie
 		SELECT json_build_object(
 			'total_courses', (SELECT COUNT(*) FROM courses WHERE tutor_id = $1),
 			'published_courses', (SELECT COUNT(*) FROM courses WHERE tutor_id = $1 AND status = 'published'),
-			'total_students', COALESCE((SELECT total_students FROM tutor_profile WHERE user_id = $1), 0),
-			'rating_avg', COALESCE((SELECT rating_avg FROM tutor_profile WHERE user_id = $1), 0.0),
+			'total_students', COALESCE((SELECT total_students FROM profiles WHERE user_id = $1), 0),
+			'rating_avg', COALESCE((SELECT rating_avg FROM profiles WHERE user_id = $1), 0.0),
 			'total_revenue', COALESCE((
 				SELECT SUM(t.amount) FROM transactions t
 				JOIN courses c ON c.id = t.course_id
@@ -93,7 +93,7 @@ func (r *DashboardRepository) AdminDashboardRepository() (*entities.AdminDashboa
 
 	query := `
 		SELECT json_build_object(
-			'total_users', (SELECT COUNT(*) FROM "user"),
+			'total_users', (SELECT COUNT(*) FROM "users"),
 			'total_tutors', (
 				SELECT COUNT(DISTINCT ur.user_id)
 				FROM user_roles ur
@@ -127,7 +127,7 @@ func (r *DashboardRepository) AdminDashboardRepository() (*entities.AdminDashboa
 			'user_growth', COALESCE((
 				SELECT json_agg(growth_rows) FROM (
 					SELECT TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') AS month, COUNT(*) AS count
-					FROM "user"
+					FROM "users"
 					WHERE "createdAt" >= CURRENT_DATE - INTERVAL '12 months'
 					GROUP BY month ORDER BY month
 				) growth_rows

@@ -25,10 +25,10 @@ func (r *CoursesRepository) CreateRepository(tutorID string, req entities.Create
 	slug := utils.Slugify(req.Title)
 	var resp entities.Course
 	err := r.DB.Get(&resp, `
-		INSERT INTO courses (tutor_id, slug, title, short_description, category_id, subcategory_id, language, level, status, benefits, requirements)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE(NULLIF($8, ''), 'all'), COALESCE(NULLIF($9, ''), 'draft'), $10, $11)
+		INSERT INTO courses (tutor_id, slug, title, short_description, category_id, language, level, status, benefits, requirements)
+		VALUES ($1, $2, $3, $4, $5, $6, COALESCE(NULLIF($7, ''), 'all'), COALESCE(NULLIF($8, ''), 'draft'), $9, $10)
 		RETURNING *, 0 AS student_count`,
-		tutorID, slug, req.Title, req.ShortDescription, req.CategoryID, req.SubcategoryID,
+		tutorID, slug, req.Title, req.ShortDescription, req.CategoryID,
 		req.Language, req.Level, req.Status,
 		pq.Array([]string{}), pq.Array([]string{}))
 	return &resp, err
@@ -58,7 +58,6 @@ func (r *CoursesRepository) UpdateRepository(id, tutorID string, req entities.Up
 		"benefits":          benefits,
 		"requirements":      requirements,
 		"category_id":       req.CategoryID,
-		"subcategory_id":    req.SubcategoryID,
 		"coupon_allowed":    req.CouponAllowed,
 		"status":            req.Status,
 	}
@@ -81,7 +80,6 @@ func (r *CoursesRepository) UpdateRepository(id, tutorID string, req entities.Up
 				benefits = COALESCE(:benefits, benefits),
 				requirements = COALESCE(:requirements, requirements),
 				category_id = COALESCE(:category_id, category_id),
-				subcategory_id = COALESCE(:subcategory_id, subcategory_id),
 				coupon_allowed = COALESCE(:coupon_allowed, coupon_allowed),
 				status = COALESCE(:status, status),
 				updated_at = CURRENT_TIMESTAMP

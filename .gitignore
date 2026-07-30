@@ -47,3 +47,5 @@ next-env.d.ts
 # api (Go backend)
 apps/api/server
 .opencode
+
+*_PLAN.md

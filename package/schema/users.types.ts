@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
 export const RoleZod = z.object({
-    id: z.number(),
+    id: z.string(),
     name: z.string(),
 });
 export type Role = z.infer<typeof RoleZod>;
 
 export const AssignRoleRequestZod = z.object({
-    role_id: z.number(),
+    role_id: z.string(),
 });
 export type AssignRoleRequest = z.infer<typeof AssignRoleRequestZod>;
 
@@ -25,31 +25,28 @@ export type UserListResponse = z.infer<typeof UserListResponseZod>;
 
 export const RoleAssignmentResponseZod = z.object({
     user_id: z.string(),
-    role_id: z.number(),
+    role_id: z.string(),
 });
 export type RoleAssignmentResponse = z.infer<typeof RoleAssignmentResponseZod>;
 
-export const UserProfileZod = z.object({
+export const ProfileZod = z.object({
     id: z.string(),
     user_id: z.string(),
     headline: z.string().nullable().optional(),
     bio: z.string().nullable().optional(),
     website: z.string().nullable().optional(),
+    total_students: z.number().optional(),
+    rating_avg: z.number().optional(),
+    created_at: z.string().optional(),
     updated_at: z.string(),
 });
-export type UserProfile = z.infer<typeof UserProfileZod>;
+export type Profile = z.infer<typeof ProfileZod>;
 
-export const TutorProfileZod = z.object({
-    id: z.string(),
-    user_id: z.string(),
-    headline: z.string().nullable().optional(),
-    bio: z.string().nullable().optional(),
-    website: z.string().nullable().optional(),
-    total_students: z.number(),
-    rating_avg: z.number(),
-    updated_at: z.string(),
-});
-export type TutorProfile = z.infer<typeof TutorProfileZod>;
+export const UserProfileZod = ProfileZod;
+export type UserProfile = Profile;
+
+export const TutorProfileZod = ProfileZod;
+export type TutorProfile = Profile;
 
 export const UpdateProfileRequestZod = z.object({
     headline: z.string().nullable().optional(),

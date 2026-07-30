@@ -22,7 +22,6 @@ type Course struct {
 	Benefits             []string  `json:"benefits" db:"benefits"`
 	Requirements         []string  `json:"requirements" db:"requirements"`
 	CategoryID           *string   `json:"-" db:"category_id"`
-	SubcategoryID        *string   `json:"-" db:"subcategory_id"`
 	CouponAllowed        bool      `json:"coupon_allowed" db:"coupon_allowed"`
 	TotalLectures        int       `json:"total_lectures" db:"total_lectures"`
 	TotalDurationSeconds int       `json:"total_duration_seconds" db:"total_duration_seconds"`
@@ -62,7 +61,6 @@ type CreateCourseRequest struct {
 	Title            string  `json:"title" validate:"required,min=3,max=200"`
 	ShortDescription *string `json:"short_description"`
 	CategoryID       *string `json:"category_id"`
-	SubcategoryID    *string `json:"subcategory_id"`
 	Language         string  `json:"language"`
 	Level            string  `json:"level" validate:"omitempty,oneof=beginner intermediate advanced all"`
 	Status           string  `json:"status" validate:"omitempty,oneof=draft published archived"`
@@ -81,7 +79,6 @@ type UpdateCourseRequest struct {
 	Benefits         *[]string `json:"benefits"`
 	Requirements     *[]string `json:"requirements"`
 	CategoryID       *string   `json:"category_id"`
-	SubcategoryID    *string   `json:"subcategory_id"`
 	CouponAllowed    *bool     `json:"coupon_allowed"`
 	Status           *string   `json:"status" validate:"omitempty,oneof=draft published archived"`
 }
@@ -99,7 +96,6 @@ type CoursePublicResponse struct {
 	RatingAvg        float64               `json:"rating_avg" db:"rating_avg"`
 	FeedbackCount    int                   `json:"feedback_count" db:"feedback_count"`
 	Category         *generic.CategoryInfo  `json:"category"`
-	Subcategory      *generic.CategoryInfo  `json:"subcategory"`
 	Instructor       generic.InstructorInfo `json:"instructor" db:""`
 }
 
@@ -137,7 +133,6 @@ type CourseLandingResponse struct {
 	Benefits             []string              `json:"benefits"`
 	Requirements         []string              `json:"requirements"`
 	Category             *generic.CategoryInfo  `json:"category"`
-	Subcategory          *generic.CategoryInfo  `json:"subcategory"`
 	Instructor           generic.InstructorInfo `json:"instructor"`
 	TotalLectures        int                   `json:"total_lectures"`
 	TotalDurationSeconds int                   `json:"total_duration_seconds"`

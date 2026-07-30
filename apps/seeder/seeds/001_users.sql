@@ -1,4 +1,4 @@
--- 001_users.sql: Seed Roles, Users, Credentials, Roles Mapping, and Profiles
+-- 001_users.sql: Seed Roles, Permissions, Users, Credentials, Roles Mapping, and Profiles
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Insert Standard System Roles
@@ -9,129 +9,155 @@ INSERT INTO roles (name, description, is_system) VALUES
     ('enrolled', 'User enrolled in at least one course',    true)
 ON CONFLICT (name) DO NOTHING;
 
--- Insert Users (2 Admins, 3 Tutors, 7 Students)
-INSERT INTO "user" (id, name, email, "emailVerified", image) VALUES
-    ('usr-admin-001', 'System Admin', 'admin@example.com', true, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'),
-    ('usr-admin-002', 'Lead Admin', 'superadmin@example.com', true, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80'),
-    ('usr-tutor-001', 'Alex Rivers (Go & Systems Expert)', 'tutor@example.com', true, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80'),
-    ('usr-tutor-002', 'Dr. Sarah Smith (Data Science Lead)', 'sarah.smith@example.com', true, 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80'),
-    ('usr-tutor-003', 'John Doe (Next.js & Frontend Architect)', 'john.doe@example.com', true, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80'),
-    ('usr-student-001', 'Regular Student', 'user@example.com', true, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'),
-    ('usr-student-002', 'Alice Vance', 'alice@example.com', true, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&q=80'),
-    ('usr-student-003', 'Bob Miller', 'bob@example.com', true, 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80'),
-    ('usr-student-004', 'Charlie Brown', 'charlie@example.com', true, 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80'),
-    ('usr-student-005', 'David Wright', 'david@example.com', true, 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80'),
-    ('usr-student-006', 'Eva Davis', 'eva@example.com', true, 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=250&q=80'),
-    ('usr-student-007', 'Fiona Gallagher', 'fiona@example.com', true, 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=250&q=80')
-ON CONFLICT (id) DO NOTHING;
+-- Insert System Permissions (matching apps/server/internals/generic/permissions.go)
+INSERT INTO permissions (name, description) VALUES
+    -- Admin permissions
+    ('admin:categories:manage',    'Manage categories (admin)'),
+    ('admin:courses:inspect',      'Inspect all courses (admin)'),
+    ('admin:dashboard',            'View admin dashboard'),
+    ('admin:discussion:read',      'Read discussions (admin)'),
+    ('admin:discussion:write',     'Write in discussions (admin)'),
+    ('admin:discussion:delete',    'Delete discussions (admin)'),
+    ('admin:enrollments:inspect',  'Inspect enrollments (admin)'),
+    ('admin:coupons:manage',       'Manage coupons (admin)'),
+    ('admin:feedback:inspect',     'Inspect feedbacks (admin)'),
+    ('admin:transactions:read_all','View all transactions (admin)'),
+    ('admin:users:list',           'List all users (admin)'),
+    ('admin:users:role:assign',    'Assign user roles (admin)'),
+    ('admin:users:role:revoke',    'Revoke user roles (admin)'),
+    ('admin:users:create',         'Create user accounts (admin)'),
+    ('admin:users:read',           'Read user details (admin)'),
+    ('admin:roles:create',         'Create custom roles (admin)'),
+    ('admin:roles:read',           'List roles and permissions (admin)'),
+    ('admin:roles:update',         'Update custom roles (admin)'),
+    ('admin:roles:delete',         'Delete custom roles (admin)'),
+    ('admin:roles:assign',         'Assign custom roles (admin)'),
+    ('admin:profile',              'Access admin profile list (admin)'),
 
--- Insert Credentials (Passwords: admin123456, tutor123456, user123456 / password123)
-INSERT INTO credentials (user_id, password_hash) VALUES
-    ('usr-admin-001', crypt('admin123456', gen_salt('bf'))),
-    ('usr-admin-002', crypt('admin123456', gen_salt('bf'))),
-    ('usr-tutor-001', crypt('tutor123456', gen_salt('bf'))),
-    ('usr-tutor-002', crypt('tutor123456', gen_salt('bf'))),
-    ('usr-tutor-003', crypt('tutor123456', gen_salt('bf'))),
-    ('usr-student-001', crypt('user123456', gen_salt('bf'))),
-    ('usr-student-002', crypt('password123', gen_salt('bf'))),
-    ('usr-student-003', crypt('password123', gen_salt('bf'))),
-    ('usr-student-004', crypt('password123', gen_salt('bf'))),
-    ('usr-student-005', crypt('password123', gen_salt('bf'))),
-    ('usr-student-006', crypt('password123', gen_salt('bf'))),
-    ('usr-student-007', crypt('password123', gen_salt('bf')))
-ON CONFLICT (user_id) DO UPDATE SET password_hash = EXCLUDED.password_hash;
+    -- Tutor permissions
+    ('tutor:courses:manage',       'Manage own courses (tutor)'),
+    ('tutor:dashboard',            'View tutor dashboard'),
+    ('tutor:discussion:read',      'Read discussions (tutor)'),
+    ('tutor:discussion:write',     'Write in discussions (tutor)'),
+    ('tutor:discussion:delete',    'Delete discussions (tutor)'),
+    ('tutor:feedback:manage',      'Manage feedbacks for own courses (tutor)'),
+    ('tutor:quiz:manage',          'Manage quizzes for own courses (tutor)'),
+    ('tutor:updates:manage',       'Manage updates for own courses (tutor)'),
+    ('tutor:profile',              'Access tutor profile (tutor)'),
 
--- Map User Roles
-INSERT INTO user_roles (user_id, role_id)
-SELECT u.id, r.id
-FROM "user" u
-JOIN roles r ON (
-    (u.id LIKE 'usr-admin%' AND r.name = 'admin') OR
-    (u.id LIKE 'usr-tutor%' AND r.name = 'tutor') OR
-    (u.id LIKE 'usr-student%' AND r.name = 'user')
-)
-ON CONFLICT DO NOTHING;
+    -- Enrolled permissions
+    ('enrolled:courses:study',     'Access study page for enrolled course'),
+    ('enrolled:dashboard',         'View student dashboard'),
+    ('enrolled:discussion:read',   'Read discussions in enrolled course'),
+    ('enrolled:discussion:write',  'Post in discussions in enrolled course'),
+    ('enrolled:quiz:access',       'Attempt quiz in enrolled course'),
+    ('enrolled:updates:feed',      'Read update feed for enrolled courses'),
 
--- Map Role Permissions
+    -- User permissions
+    ('user:cart:manage',           'Manage shopping cart'),
+    ('user:certificate:manage',    'View and claim certificates'),
+    ('user:enrollments:read',      'View own enrollments'),
+    ('user:feedback:create',       'Submit course feedback'),
+    ('user:notes:manage',          'Manage personal lesson notes'),
+    ('user:transactions:initiate', 'Initiate purchases'),
+    ('user:transactions:read_own',  'View own transaction history'),
+    ('user:profile',               'View and update user profile'),
+    ('user:wishlist:manage',       'Manage wishlist items')
+ON CONFLICT (name) DO NOTHING;
+
+-- Map Role-Permissions
 DO $$
 DECLARE
-    r_admin   INTEGER := (SELECT id FROM roles WHERE name = 'admin');
-    r_tutor   INTEGER := (SELECT id FROM roles WHERE name = 'tutor');
-    r_user    INTEGER := (SELECT id FROM roles WHERE name = 'user');
+    r_admin    UUID := (SELECT id FROM roles WHERE name = 'admin');
+    r_tutor    UUID := (SELECT id FROM roles WHERE name = 'tutor');
+    r_enrolled UUID := (SELECT id FROM roles WHERE name = 'enrolled');
+    r_user     UUID := (SELECT id FROM roles WHERE name = 'user');
     p RECORD;
 BEGIN
-    -- admin gets every permission
+    -- Admin gets EVERY permission
     FOR p IN SELECT id FROM permissions LOOP
         INSERT INTO role_permissions (role_id, permission_id)
         VALUES (r_admin, p.id)
         ON CONFLICT DO NOTHING;
     END LOOP;
 
-    -- tutor permissions
-    FOR p IN SELECT id FROM permissions WHERE name IN (
-        'dashboard:tutor', 'dashboard:user',
-        'profile:read', 'profile:update',
-        'me:read', 'me:update',
-        'courses:browse', 'courses:view', 'courses:create', 'courses:update', 'courses:delete', 'courses:publish',
-        'chapters:create', 'chapters:update', 'chapters:delete',
-        'lessons:create', 'lessons:update', 'lessons:delete', 'lessons:content',
-        'resources:create', 'resources:delete',
-        'quiz:create', 'quiz:update', 'quiz:delete',
-        'discussions:read', 'discussions:create', 'discussions:delete',
-        'updates:read', 'updates:create', 'updates:update', 'updates:delete',
-        'feedbacks:read',
-        'storage:upload-media',
-        'categories:read'
-    ) LOOP
+    -- Tutor permissions
+    FOR p IN SELECT id FROM permissions WHERE name LIKE 'tutor:%' LOOP
         INSERT INTO role_permissions (role_id, permission_id)
         VALUES (r_tutor, p.id)
         ON CONFLICT DO NOTHING;
     END LOOP;
 
-    -- user (learner) permissions
-    FOR p IN SELECT id FROM permissions WHERE name IN (
-        'dashboard:user',
-        'profile:read', 'profile:update',
-        'me:read', 'me:update',
-        'courses:browse', 'courses:enrolled', 'courses:study',
-        'lessons:content', 'lessons:progress:mark',
-        'discussions:read', 'discussions:create',
-        'notes:upsert', 'notes:read',
-        'updates:read',
-        'feedbacks:create',
-        'coupons:check',
-        'transactions:initiate', 'transactions:read:own',
-        'wishlist:read', 'wishlist:add', 'wishlist:remove',
-        'cart:read', 'cart:add', 'cart:remove',
-        'certificates:read',
-        'categories:read',
-        'quiz:attempt'
-    ) LOOP
+    -- Enrolled permissions
+    FOR p IN SELECT id FROM permissions WHERE name LIKE 'enrolled:%' LOOP
+        INSERT INTO role_permissions (role_id, permission_id)
+        VALUES (r_enrolled, p.id)
+        ON CONFLICT DO NOTHING;
+    END LOOP;
+
+    -- User permissions
+    FOR p IN SELECT id FROM permissions WHERE name LIKE 'user:%' LOOP
         INSERT INTO role_permissions (role_id, permission_id)
         VALUES (r_user, p.id)
         ON CONFLICT DO NOTHING;
     END LOOP;
 END $$;
 
--- Insert / Update User Profiles
-INSERT INTO user_profile (user_id, bio, headline, website) VALUES
-    ('usr-admin-001', 'Platform Administrator managing operations and course quality.', 'CourseHunt Platform Admin', 'https://coursehunt.com'),
-    ('usr-admin-002', 'Operations & System Security Lead at CourseHunt.', 'Senior Admin', 'https://coursehunt.com'),
-    ('usr-tutor-001', 'Senior Backend Engineer with 10+ years specializing in Go, Distributed Systems, and High Performance Computing.', 'Go & Microservices Architect', 'https://alexrivers.dev'),
-    ('usr-tutor-002', 'PhD in Machine Learning. Ex-FAANG AI Researcher teaching Data Science, Deep Learning, and LLMs.', 'AI & Data Science Instructor', 'https://sarahsmith.ai'),
-    ('usr-tutor-003', 'Full Stack Developer & Open Source Contributor. Passionate about Next.js, React, and TypeScript UI engineering.', 'Principal Frontend Engineer', 'https://johndoe.codes'),
-    ('usr-student-001', 'Passionate learner exploring Go backend engineering and modern web technologies.', 'Software Developer', NULL),
-    ('usr-student-002', 'Computer Science student focusing on Frontend engineering.', 'CS Undergrad', NULL),
-    ('usr-student-003', 'Self-taught developer building full-stack applications.', 'Junior Web Developer', NULL),
-    ('usr-student-004', 'DevOps enthusiast transitioning into Cloud Native engineering.', 'Junior Systems Engineer', NULL),
-    ('usr-student-005', 'Data enthusiast learning Python & AI models.', 'Data Analyst', NULL),
-    ('usr-student-006', 'UI/UX Designer expanding into React and Next.js frontend development.', 'Product Designer', NULL),
-    ('usr-student-007', 'Mobile app developer learning Flutter and React Native.', 'App Developer', NULL)
-ON CONFLICT (user_id) DO UPDATE SET bio = EXCLUDED.bio, headline = EXCLUDED.headline, website = EXCLUDED.website;
+-- Insert Users (2 Admins, 3 Tutors, 7 Students)
+INSERT INTO "users" (id, name, email, "emailVerified", image) VALUES
+    ('11111111-1111-1111-1111-111111111101', 'System Admin', 'admin@example.com', true, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'),
+    ('11111111-1111-1111-1111-111111111102', 'Lead Admin', 'superadmin@example.com', true, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80'),
+    ('22222222-2222-2222-2222-222222222201', 'Alex Rivers (Go & Systems Expert)', 'tutor@example.com', true, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80'),
+    ('22222222-2222-2222-2222-222222222202', 'Dr. Sarah Smith (Data Science Lead)', 'sarah.smith@example.com', true, 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80'),
+    ('22222222-2222-2222-2222-222222222203', 'John Doe (Next.js & Frontend Architect)', 'john.doe@example.com', true, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80'),
+    ('33333333-3333-3333-3333-333333333301', 'Regular Student', 'user@example.com', true, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'),
+    ('33333333-3333-3333-3333-333333333302', 'Alice Vance', 'alice@example.com', true, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&q=80'),
+    ('33333333-3333-3333-3333-333333333303', 'Bob Miller', 'bob@example.com', true, 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80'),
+    ('33333333-3333-3333-3333-333333333304', 'Charlie Brown', 'charlie@example.com', true, 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80'),
+    ('33333333-3333-3333-3333-333333333305', 'David Wright', 'david@example.com', true, 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80'),
+    ('33333333-3333-3333-3333-333333333306', 'Eva Davis', 'eva@example.com', true, 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=250&q=80'),
+    ('33333333-3333-3333-3333-333333333307', 'Fiona Gallagher', 'fiona@example.com', true, 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=250&q=80')
+ON CONFLICT (id) DO NOTHING;
 
--- Insert / Update Tutor Profiles
-INSERT INTO tutor_profile (user_id, bio, headline, website) VALUES
-    ('usr-tutor-001', 'Alex Rivers is a veteran software architect who has led Go microservices transformations at scale. He has taught over 50,000 students worldwide.', 'Go & Microservices Architect', 'https://alexrivers.dev'),
-    ('usr-tutor-002', 'Dr. Sarah Smith holds a PhD from MIT and brings real-world AI research experience into interactive, easy-to-grasp courses.', 'AI & Data Science Instructor', 'https://sarahsmith.ai'),
-    ('usr-tutor-003', 'John Doe is a Next.js Core Contributor and UI design advocate focused on clean code, performance, and accessibility.', 'Principal Frontend Engineer', 'https://johndoe.codes')
+-- Insert Credentials (Passwords: admin123456, tutor123456, user123456 / password123)
+INSERT INTO credentials (user_id, password_hash) VALUES
+    ('11111111-1111-1111-1111-111111111101', crypt('admin123456', gen_salt('bf'))),
+    ('11111111-1111-1111-1111-111111111102', crypt('admin123456', gen_salt('bf'))),
+    ('22222222-2222-2222-2222-222222222201', crypt('tutor123456', gen_salt('bf'))),
+    ('22222222-2222-2222-2222-222222222202', crypt('tutor123456', gen_salt('bf'))),
+    ('22222222-2222-2222-2222-222222222203', crypt('tutor123456', gen_salt('bf'))),
+    ('33333333-3333-3333-3333-333333333301', crypt('user123456', gen_salt('bf'))),
+    ('33333333-3333-3333-3333-333333333302', crypt('password123', gen_salt('bf'))),
+    ('33333333-3333-3333-3333-333333333303', crypt('password123', gen_salt('bf'))),
+    ('33333333-3333-3333-3333-333333333304', crypt('password123', gen_salt('bf'))),
+    ('33333333-3333-3333-3333-333333333305', crypt('password123', gen_salt('bf'))),
+    ('33333333-3333-3333-3333-333333333306', crypt('password123', gen_salt('bf'))),
+    ('33333333-3333-3333-3333-333333333307', crypt('password123', gen_salt('bf')))
+ON CONFLICT (user_id) DO UPDATE SET password_hash = EXCLUDED.password_hash;
+
+-- Map User Roles
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM "users" u
+JOIN roles r ON (
+    (u.email LIKE '%admin%' AND r.name = 'admin') OR
+    (u.email LIKE '%tutor%' AND r.name = 'tutor') OR
+    (u.email NOT LIKE '%admin%' AND u.email NOT LIKE '%tutor%' AND r.name = 'user')
+)
+ON CONFLICT DO NOTHING;
+
+-- Insert User Profiles (Merged single `profiles` table)
+INSERT INTO profiles (user_id, bio, headline, website, total_students, rating_avg) VALUES
+    ('11111111-1111-1111-1111-111111111101', 'Platform Administrator managing operations and course quality.', 'CourseHunt Platform Admin', 'https://coursehunt.com', 0, 0),
+    ('11111111-1111-1111-1111-111111111102', 'Operations & System Security Lead at CourseHunt.', 'Senior Admin', 'https://coursehunt.com', 0, 0),
+    ('22222222-2222-2222-2222-222222222201', 'Alex Rivers is a veteran software architect who has led Go microservices transformations at scale.', 'Go & Microservices Architect', 'https://alexrivers.dev', 120, 4.90),
+    ('22222222-2222-2222-2222-222222222202', 'Dr. Sarah Smith holds a PhD from MIT and brings real-world AI research experience into interactive, easy-to-grasp courses.', 'AI & Data Science Instructor', 'https://sarahsmith.ai', 85, 4.95),
+    ('22222222-2222-2222-2222-222222222203', 'John Doe is a Next.js Core Contributor and UI design advocate focused on clean code, performance, and accessibility.', 'Principal Frontend Engineer', 'https://johndoe.codes', 95, 4.85),
+    ('33333333-3333-3333-3333-333333333301', 'Passionate learner exploring Go backend engineering and modern web technologies.', 'Software Developer', NULL, 0, 0),
+    ('33333333-3333-3333-3333-333333333302', 'Computer Science student focusing on Frontend engineering.', 'CS Undergrad', NULL, 0, 0),
+    ('33333333-3333-3333-3333-333333333303', 'Self-taught developer building full-stack applications.', 'Junior Web Developer', NULL, 0, 0),
+    ('33333333-3333-3333-3333-333333333304', 'DevOps enthusiast transitioning into Cloud Native engineering.', 'Junior Systems Engineer', NULL, 0, 0),
+    ('33333333-3333-3333-3333-333333333305', 'Data enthusiast learning Python & AI models.', 'Data Analyst', NULL, 0, 0),
+    ('33333333-3333-3333-3333-333333333306', 'UI/UX Designer expanding into React and Next.js frontend development.', 'Product Designer', NULL, 0, 0),
+    ('33333333-3333-3333-3333-333333333307', 'Mobile app developer learning Flutter and React Native.', 'App Developer', NULL, 0, 0)
 ON CONFLICT (user_id) DO UPDATE SET bio = EXCLUDED.bio, headline = EXCLUDED.headline, website = EXCLUDED.website;

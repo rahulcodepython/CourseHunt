@@ -1,10 +1,12 @@
+BEGIN;
+
 CREATE TABLE IF NOT EXISTS lesson_progress (
-    id          text PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-    lesson_id   text NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
-    course_id   text NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-    completed   boolean DEFAULT false,
-    completed_at timestamptz,
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID NOT NULL REFERENCES "users"(id) ON DELETE CASCADE,
+    lesson_id   UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+    course_id   UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    completed   BOOLEAN DEFAULT false,
+    completed_at TIMESTAMPTZ,
     UNIQUE(user_id, lesson_id)
 );
 
@@ -13,7 +15,7 @@ CREATE INDEX IF NOT EXISTS idx_lesson_progress_user_course ON lesson_progress(us
 -- Trigger: increment chapter_progress on lesson completion
 CREATE OR REPLACE FUNCTION update_chapter_progress_on_lesson_complete() RETURNS TRIGGER AS $$
 DECLARE
-    v_chapter_id         text;
+    v_chapter_id         UUID;
     v_chapter_lesson_cnt INTEGER;
     v_completed_lessons  INTEGER;
 BEGIN
@@ -37,3 +39,5 @@ DROP TRIGGER IF EXISTS trg_chapter_progress ON lesson_progress;
 CREATE TRIGGER trg_chapter_progress
     AFTER INSERT OR UPDATE ON lesson_progress
     FOR EACH ROW EXECUTE FUNCTION update_chapter_progress_on_lesson_complete();
+
+COMMIT;

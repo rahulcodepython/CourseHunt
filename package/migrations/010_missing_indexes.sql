@@ -1,5 +1,7 @@
--- 010: Missing database indexes for query performance
+-- 010: Missing database indexes & performance optimizations for query performance
 -- All use IF NOT EXISTS so they are safe to re-run.
+
+BEGIN;
 
 -- chapters
 CREATE INDEX IF NOT EXISTS idx_chapters_course_chapter ON chapters(course_id, chapter_no);
@@ -25,6 +27,10 @@ CREATE INDEX IF NOT EXISTS idx_enrollments_user_revoked ON enrollments(user_id, 
 CREATE INDEX IF NOT EXISTS idx_enrollments_course_enrolled ON enrollments(course_id, enrolled_at DESC);
 CREATE INDEX IF NOT EXISTS idx_enrollments_course_revoked ON enrollments(course_id, revoked);
 CREATE INDEX IF NOT EXISTS idx_enrollments_user_revoked_enrolled ON enrollments(user_id, revoked, enrolled_at DESC);
+CREATE INDEX IF NOT EXISTS idx_enrollments_user_completed ON enrollments(user_id, completed) WHERE revoked = false;
+
+-- BRIN index for enrollments time-series
+CREATE INDEX IF NOT EXISTS idx_enrollments_enrolled_at_brin ON enrollments USING brin(enrolled_at) WITH (pages_per_range = 32);
 
 -- certificates
 CREATE INDEX IF NOT EXISTS idx_certificates_user_issued ON certificates(user_id, issued_at DESC);
@@ -35,12 +41,17 @@ CREATE INDEX IF NOT EXISTS idx_transactions_user_created ON transactions(user_id
 CREATE INDEX IF NOT EXISTS idx_transactions_course_created ON transactions(course_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_status_created ON transactions(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_status ON transactions(user_id, status, created_at DESC);
+
+-- BRIN index for transactions time-series
+CREATE INDEX IF NOT EXISTS idx_transactions_created_at_brin ON transactions USING brin(created_at);
 
 -- courses
 CREATE INDEX IF NOT EXISTS idx_courses_slug_status ON courses(slug, status) WHERE status = 'published';
 CREATE INDEX IF NOT EXISTS idx_courses_status_created ON courses(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_courses_tutor_created ON courses(tutor_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_courses_tutor_id ON courses(tutor_id);
+CREATE INDEX IF NOT EXISTS idx_courses_status_price ON courses(status, final_price) WHERE status = 'published';
 
 -- coupons
 CREATE UNIQUE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
@@ -49,6 +60,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_coupon_usages_lookup ON coupon_usages(coup
 
 -- lessons
 CREATE INDEX IF NOT EXISTS idx_lessons_chapter_lesson ON lessons(chapter_id, lesson_no);
+CREATE INDEX IF NOT EXISTS idx_lessons_chapter_lesson_type ON lessons(chapter_id, lesson_no) INCLUDE (lesson_type, title);
 
 -- lesson_resources
 CREATE INDEX IF NOT EXISTS idx_lesson_resources_lesson ON lesson_resources(lesson_id);
@@ -68,10 +80,11 @@ CREATE INDEX IF NOT EXISTS idx_quiz_attempts_quiz_user ON quiz_attempts(quiz_id,
 -- feedbacks
 CREATE UNIQUE INDEX IF NOT EXISTS idx_feedbacks_course_user ON feedbacks(course_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_feedbacks_course_created ON feedbacks(course_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feedbacks_course_rating ON feedbacks(course_id, rating DESC) WHERE is_pinned = false;
 
--- course_updates
-CREATE INDEX IF NOT EXISTS idx_course_updates_created ON course_updates(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_course_updates_course_created ON course_updates(course_id, created_at DESC);
+-- updates
+CREATE INDEX IF NOT EXISTS idx_updates_created ON updates(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_updates_course_created ON updates(course_id, created_at DESC);
 
 -- update_seen
 CREATE INDEX IF NOT EXISTS idx_update_seen_user ON update_seen(user_id);
@@ -81,11 +94,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_chapter_progress_user ON chapter_progress(
 CREATE UNIQUE INDEX IF NOT EXISTS idx_lesson_progress_user ON lesson_progress(lesson_id, user_id);
 
 -- users
-CREATE INDEX IF NOT EXISTS idx_user_created_at ON "user"("createdAt" DESC);
-CREATE INDEX IF NOT EXISTS idx_user_email ON "user"(email);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON "users"("createdAt" DESC);
+CREATE INDEX IF NOT EXISTS idx_users_email ON "users"(email);
 
 -- webhook_events
 CREATE UNIQUE INDEX IF NOT EXISTS idx_webhook_events_razorpay ON webhook_events(razorpay_event_id);
 
 -- user_roles
 CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
+
+COMMIT;

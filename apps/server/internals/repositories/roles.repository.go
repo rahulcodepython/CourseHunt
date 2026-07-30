@@ -20,7 +20,7 @@ func NewRolesRepository(db *sqlx.DB, cache *cache.Cache) *RolesRepository {
 
 func (r *RolesRepository) ListRolesRepository() ([]entities.Role, error) {
 	var roles []entities.Role
-	err := r.DB.Select(&roles, `SELECT id, name, description, is_system FROM roles ORDER BY id`)
+	err := r.DB.Select(&roles, `SELECT id, name, description, is_system FROM roles ORDER BY name`)
 	return roles, err
 }
 
@@ -37,7 +37,7 @@ func (r *RolesRepository) CreateRoleRepository(req entities.CreateRoleRequest) (
 	return &role, nil
 }
 
-func (r *RolesRepository) GetRoleRepository(roleID int) (*entities.Role, error) {
+func (r *RolesRepository) GetRoleRepository(roleID string) (*entities.Role, error) {
 	var role entities.Role
 	err := r.DB.Get(&role,
 		`SELECT id, name, description, is_system FROM roles WHERE id = $1`,
@@ -49,7 +49,7 @@ func (r *RolesRepository) GetRoleRepository(roleID int) (*entities.Role, error) 
 	return &role, nil
 }
 
-func (r *RolesRepository) UpdateRoleRepository(roleID int, req entities.UpdateRoleRequest) (*entities.Role, error) {
+func (r *RolesRepository) UpdateRoleRepository(roleID string, req entities.UpdateRoleRequest) (*entities.Role, error) {
 	var setClauses []string
 	args := []any{}
 	idx := 1
@@ -83,8 +83,8 @@ func (r *RolesRepository) UpdateRoleRepository(roleID int, req entities.UpdateRo
 	return &role, nil
 }
 
-func (r *RolesRepository) DeleteRoleRepository(roleID int) (string, error) {
-	var deletedID int
+func (r *RolesRepository) DeleteRoleRepository(roleID string) (string, error) {
+	var deletedID string
 	err := r.DB.Get(&deletedID, `
 		WITH del_perms AS (
 			DELETE FROM role_permissions WHERE role_id = $1 RETURNING 1
@@ -97,23 +97,23 @@ func (r *RolesRepository) DeleteRoleRepository(roleID int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%d", deletedID), nil
+	return deletedID, nil
 }
 
-func (r *RolesRepository) GetRolePermissionsRepository(roleID int) ([]entities.Permission, error) {
+func (r *RolesRepository) GetRolePermissionsRepository(roleID string) ([]entities.Permission, error) {
 	var permissions []entities.Permission
 	err := r.DB.Select(&permissions,
 		`SELECT p.id, p.name, p.description
 		 FROM permissions p
 		 INNER JOIN role_permissions rp ON rp.permission_id = p.id
 		 WHERE rp.role_id = $1
-		 ORDER BY p.id`,
+		 ORDER BY p.name`,
 		roleID,
 	)
 	return permissions, err
 }
 
-func (r *RolesRepository) SetRolePermissionsRepository(roleID int, permissionIDs []int) error {
+func (r *RolesRepository) SetRolePermissionsRepository(roleID string, permissionIDs []string) error {
 	tx, err := r.DB.Beginx()
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func (r *RolesRepository) SetRolePermissionsRepository(roleID int, permissionIDs
 		values := []string{}
 		args := []any{roleID}
 		for i, pid := range permissionIDs {
-			idx := i*2 + 2
+			idx := i + 2
 			values = append(values, fmt.Sprintf("($1, $%d)", idx))
 			args = append(args, pid)
 		}
@@ -147,6 +147,6 @@ func (r *RolesRepository) SetRolePermissionsRepository(roleID int, permissionIDs
 
 func (r *RolesRepository) ListPermissionsRepository() ([]entities.Permission, error) {
 	var permissions []entities.Permission
-	err := r.DB.Select(&permissions, `SELECT id, name, description FROM permissions ORDER BY id`)
+	err := r.DB.Select(&permissions, `SELECT id, name, description FROM permissions ORDER BY name`)
 	return permissions, err
 }

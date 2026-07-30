@@ -18,21 +18,28 @@ type Lesson struct {
 }
 
 type LessonVideoContent struct {
-	ID             string  `json:"id" db:"id"`
-	VideoURL       string  `json:"video_url" db:"video_url"`
-	WrittenContent *string `json:"written_content" db:"written_content"`
+	LessonID       string    `json:"lesson_id" db:"lesson_id"`
+	VideoURL       string    `json:"video_url" db:"video_url"`
+	WrittenContent *string   `json:"written_content" db:"written_content"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type LessonDocumentContent struct {
-	ID      string `json:"id" db:"id"`
-	Content string `json:"content" db:"content"`
+	LessonID  string    `json:"lesson_id" db:"lesson_id"`
+	Content   string    `json:"content" db:"content"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type LessonResource struct {
-	ID       string  `json:"id" db:"id"`
-	Title    string  `json:"title" db:"title"`
-	FileURL  string  `json:"file_url" db:"file_url"`
-	FileType *string `json:"file_type" db:"file_type"`
+	ID        string    `json:"id" db:"id"`
+	LessonID  string    `json:"lesson_id" db:"lesson_id"`
+	Title     string    `json:"title" db:"title"`
+	FileURL   string    `json:"file_url" db:"file_url"`
+	FileType  *string   `json:"file_type" db:"file_type"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // ── Lessons ──
@@ -73,7 +80,7 @@ type AggregatedLessonContentResponse struct {
 	LessonType      string                 `json:"lesson_type"`
 	VideoContent    *LessonVideoContent    `json:"video_content"`
 	DocumentContent *LessonDocumentContent `json:"document_content"`
-	QuizContent     *QuizMetadata     `json:"quiz_content"`
+	QuizContent     *QuizMetadata          `json:"quiz_content"`
 }
 
 type LessonCompleteResponse struct {

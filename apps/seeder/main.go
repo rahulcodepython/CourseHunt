@@ -42,13 +42,15 @@ func main() {
 	log.Println("[seeder] RESETTING DATABASE TABLES (Truncating data)...")
 	log.Println("==================================================")
 	truncateSQL := `
-		TRUNCATE "user", roles, categories, courses, chapters, lessons, 
+		TRUNCATE "users", roles, permissions, role_permissions, categories, courses, chapters, lessons, 
 		quiz_metadata, quiz_questions, quiz_options, quiz_arrange_items, 
-		quiz_fill_blank_answers, quiz_attempts, quiz_attempt_answers, 
+		quiz_fill_blank_answers, quiz_attempts, quiz_attempt_single_answers, 
+		quiz_attempt_multi_answers, quiz_attempt_multi_answer_options, 
+		quiz_attempt_arrange_answers, quiz_attempt_fill_answers, 
 		enrollments, lesson_progress, chapter_progress, feedbacks, 
 		coupons, coupon_usages, transactions, webhook_events, discussions, 
-		user_notes, course_updates, update_seen, certificates, wishlists, 
-		cart_items RESTART IDENTITY CASCADE;
+		notes, updates, update_seen, certificates, wishlists, 
+		cart_items, profiles RESTART IDENTITY CASCADE;
 	`
 	if _, err := db.Exec(truncateSQL); err != nil {
 		log.Fatalf("[seeder] Failed to truncate database tables: %v", err)
@@ -65,9 +67,11 @@ func main() {
 	log.Println("==================================================")
 	log.Println("[seeder] VERIFYING SEEDED RECORD COUNTS")
 	log.Println("==================================================")
-	printTableCount(db, "user", `"user"`)
+	printTableCount(db, "users", `"users"`)
 	printTableCount(db, "roles", "roles")
+	printTableCount(db, "permissions", "permissions")
 	printTableCount(db, "role_permissions", "role_permissions")
+	printTableCount(db, "profiles", "profiles")
 	printTableCount(db, "categories", "categories")
 	printTableCount(db, "courses", "courses")
 	printTableCount(db, "chapters", "chapters")

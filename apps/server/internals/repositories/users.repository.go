@@ -17,12 +17,12 @@ func NewUsersRepository(db *sqlx.DB) *UsersRepository {
 	return &UsersRepository{DB: db}
 }
 
-func (r *UsersRepository) AssignRoleRepository(userID string, roleID int) error {
+func (r *UsersRepository) AssignRoleRepository(userID string, roleID string) error {
 	_, err := r.DB.Exec(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, userID, roleID)
 	return err
 }
 
-func (r *UsersRepository) DeleteRoleRepository(userID string, roleID int) error {
+func (r *UsersRepository) DeleteRoleRepository(userID string, roleID string) error {
 	_, err := r.DB.Exec(`DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2`, userID, roleID)
 	return err
 }
@@ -63,21 +63,21 @@ func (r *UsersRepository) ListRepository(page, limit int, name, email, role stri
 	err := r.DB.Get(&result, fmt.Sprintf(`
 		WITH user_roles_agg AS (
 			SELECT ur.user_id,
-				   json_agg(json_build_object('id', r.id, 'name', r.name) ORDER BY r.id) AS roles
+				   json_agg(json_build_object('id', r.id, 'name', r.name) ORDER BY r.name) AS roles
 			FROM user_roles ur
 			JOIN roles r ON r.id = ur.role_id
 			GROUP BY ur.user_id
 		),
 		count_cte AS (
 			SELECT COUNT(*) AS total
-			FROM "user" u
+			FROM "users" u
 			%s
 		),
 		data_cte AS (
 			SELECT 
 				u.id, u.name, u.email, u.image, u."emailVerified" AS email_verified, u.banned, u."createdAt" AS created_at, u."updatedAt" AS updated_at,
 				COALESCE(ura.roles, '[]'::json) AS roles
-			FROM "user" u
+			FROM "users" u
 			LEFT JOIN user_roles_agg ura ON ura.user_id = u.id
 			%s
 			ORDER BY u."createdAt" DESC

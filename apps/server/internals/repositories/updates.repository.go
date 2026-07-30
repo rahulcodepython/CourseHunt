@@ -22,7 +22,7 @@ func (r *UpdatesRepository) CreateRepository(createdBy string, req entities.Crea
 	var data []byte
 	err := r.DB.Get(&data, `
 		WITH inserted AS (
-			INSERT INTO course_updates (course_id, created_by, message)
+			INSERT INTO updates (course_id, created_by, message)
 			VALUES ($1, $2, $3)
 			RETURNING id, course_id, created_by, message, created_at
 		)
@@ -54,7 +54,7 @@ func (r *UpdatesRepository) UpdateRepository(id string, message string) (*entiti
 	var data []byte
 	err := r.DB.Get(&data, `
 		WITH updated AS (
-			UPDATE course_updates SET message = $1 WHERE id = $2
+			UPDATE updates SET message = $1 WHERE id = $2
 			RETURNING id, course_id, created_by, message, created_at
 		)
 		SELECT json_build_object(
@@ -83,7 +83,7 @@ func (r *UpdatesRepository) UpdateRepository(id string, message string) (*entiti
 
 func (r *UpdatesRepository) DeleteRepository(id string) (string, error) {
 	var deletedID string
-	err := r.DB.Get(&deletedID, `DELETE FROM course_updates WHERE id = $1 RETURNING id`, id)
+	err := r.DB.Get(&deletedID, `DELETE FROM updates WHERE id = $1 RETURNING id`, id)
 	return deletedID, err
 }
 
@@ -97,18 +97,18 @@ func (r *UpdatesRepository) FeedRepository(userID string, page, limit int) (*ent
 
 	err := r.DB.Get(&result, `
 		WITH current_seen AS (
-			SELECT cu.created_at AS last_seen_at
+			SELECT u.created_at AS last_seen_at
 			FROM update_seen us
-			JOIN course_updates cu ON cu.id = us.update_id
+			JOIN updates u ON u.id = us.update_id
 			WHERE us.user_id = $1
-			ORDER BY cu.created_at DESC
+			ORDER BY u.created_at DESC
 			LIMIT 1
 		),
 		latest_update AS (
-			SELECT cu.id
-			FROM course_updates cu
-			WHERE (cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
-			ORDER BY cu.created_at DESC
+			SELECT u.id
+			FROM updates u
+			WHERE (u.course_id IS NULL OR u.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
+			ORDER BY u.created_at DESC
 			LIMIT 1
 		),
 		upsert_seen AS (
@@ -118,16 +118,16 @@ func (r *UpdatesRepository) FeedRepository(userID string, page, limit int) (*ent
 			RETURNING 1
 		),
 		eligible_updates AS (
-			SELECT cu.id, cu.message, cu.created_at,
+			SELECT u.id, u.message, u.created_at,
 				   json_build_object(
-				   		'id', COALESCE(cu.course_id, ''),
+				   		'id', COALESCE(u.course_id, ''),
 				   		'title', COALESCE(c.title, ''),
 				   		'thumbnail', c.image_url
 				   ) AS course,
-				   (cu.created_at > COALESCE((SELECT last_seen_at FROM current_seen), '-infinity'::timestamptz)) AS is_unseen
-			FROM course_updates cu
-			LEFT JOIN courses c ON c.id = cu.course_id
-			WHERE (cu.course_id IS NULL OR cu.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
+				   (u.created_at > COALESCE((SELECT last_seen_at FROM current_seen), '-infinity'::timestamptz)) AS is_unseen
+			FROM updates u
+			LEFT JOIN courses c ON c.id = u.course_id
+			WHERE (u.course_id IS NULL OR u.course_id IN (SELECT course_id FROM enrollments WHERE user_id = $1 AND revoked = false))
 		),
 		count_cte AS (
 			SELECT COUNT(*) AS total FROM eligible_updates
@@ -168,18 +168,18 @@ func (r *UpdatesRepository) ListRepository(page, limit int) ([]entities.CourseUp
 	}
 	err := r.DB.Get(&result, `
 		WITH count_cte AS (
-			SELECT COUNT(*) AS total FROM course_updates
+			SELECT COUNT(*) AS total FROM updates
 		),
 		data_cte AS (
-			SELECT cu.id, cu.created_by, cu.message, cu.created_at,
+			SELECT u.id, u.created_by, u.message, u.created_at,
 				   json_build_object(
-				   		'id', COALESCE(cu.course_id, ''),
+				   		'id', COALESCE(u.course_id, ''),
 				   		'title', COALESCE(c.title, ''),
 				   		'thumbnail', c.image_url
 				   ) AS course
-			FROM course_updates cu
-			LEFT JOIN courses c ON c.id = cu.course_id
-			ORDER BY cu.created_at DESC LIMIT $1 OFFSET $2
+			FROM updates u
+			LEFT JOIN courses c ON c.id = u.course_id
+			ORDER BY u.created_at DESC LIMIT $1 OFFSET $2
 		)
 		SELECT 
 			COALESCE((SELECT total FROM count_cte), 0) AS total,

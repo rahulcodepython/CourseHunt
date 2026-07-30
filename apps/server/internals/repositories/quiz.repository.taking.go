@@ -4,7 +4,6 @@ import (
 	"coursehunt/server/internals/entities"
 	"coursehunt/server/internals/generic"
 	"encoding/json"
-	"errors"
 
 	"github.com/lib/pq"
 )
@@ -50,7 +49,7 @@ func (r *QuizRepository) ReadNextQuestionUnifiedRepository(quizID, userID string
 				SELECT json_build_object(
 					'question', sq.*,
 					'options', COALESCE((
-						SELECT json_agg(o.* ORDER BY RANDOM()) 
+						SELECT json_agg(o.* ORDER BY o.sort_order, RANDOM()) 
 						FROM quiz_options o WHERE o.question_id = sq.id AND sq.question_type IN ('single_choice', 'multi_choice')
 					), '[]'::json),
 					'arrange_items', COALESCE((
@@ -221,88 +220,114 @@ func (r *QuizRepository) GetQuizForEvaluationRepository(quizID, userID string) (
 	}, nil
 }
 
-func (r *QuizRepository) SaveQuizAttemptRepository(quizID, userID string, score float64, passed bool, correctCount, incorrectCount, skippedCount int, answers []entities.AttemptAnswerToSave) (string, error) {
-	var insQuestionIDs []string
-	var insSelectedOptIDs [][]string
-	var insArrangeOrders [][]int64
-	var insFillTexts []*string
-	var insSkippeds []bool
-	var insCorrects []bool
-
-	for _, a := range answers {
-		insQuestionIDs = append(insQuestionIDs, a.QuestionID)
-		insSelectedOptIDs = append(insSelectedOptIDs, a.SelectedOptionIDs)
-		var arrOrder64 []int64
-		for _, v := range a.ArrangeOrder {
-			arrOrder64 = append(arrOrder64, int64(v))
-		}
-		insArrangeOrders = append(insArrangeOrders, arrOrder64)
-		insFillTexts = append(insFillTexts, a.FillText)
-		insSkippeds = append(insSkippeds, a.IsSkipped)
-		insCorrects = append(insCorrects, a.IsCorrect)
+type QuizAnswersToSave struct {
+	SingleAnswers []entities.QuizAttemptSingleAnswer
+	MultiAnswers  []struct {
+		Answer            entities.QuizAttemptMultiAnswer
+		SelectedOptionIDs []string
 	}
+	ArrangeAnswers []entities.QuizAttemptArrangeAnswer
+	FillAnswers    []entities.QuizAttemptFillAnswer
+}
 
-	query := `
-		WITH quiz_info AS (
-			SELECT course_id FROM chapters ch 
-			JOIN lessons l ON l.chapter_id = ch.id 
-			JOIN quiz_metadata qm ON qm.lesson_id = l.id 
-			WHERE qm.id = $1
-		),
-		enrollment_auth AS (
-			SELECT EXISTS (
-				SELECT 1 FROM enrollments e 
-				JOIN quiz_info qi ON e.course_id = qi.course_id
-				WHERE e.user_id = $2 AND e.revoked = false
-			) as is_enrolled
-		),
-		new_attempt AS (
-			INSERT INTO quiz_attempts (quiz_id, user_id, submitted_at, total_score, passed, correct_count, incorrect_count, skipped_count)
-			SELECT $1, $2, NOW(), $3, $4, $5, $6, $7
-			FROM enrollment_auth WHERE is_enrolled = true
-			RETURNING id
-		),
-		inserted_answers AS (
-			INSERT INTO quiz_attempt_answers (attempt_id, question_id, selected_option_ids, arrange_order, fill_text, is_skipped, is_correct)
-			SELECT 
-				(SELECT id FROM new_attempt),
-				unnest($8::text[]), 
-				unnest($9::text[][]), 
-				unnest($10::int8[][]), 
-				unnest($11::text[]), 
-				unnest($12::boolean[]), 
-				unnest($13::boolean[])
-			WHERE array_length($8::text[], 1) > 0 AND (SELECT id FROM new_attempt) IS NOT NULL
-			RETURNING id
-		)
-		SELECT 
-			EXISTS(SELECT 1 FROM quiz_info) AS quiz_exists,
-			COALESCE((SELECT is_enrolled FROM enrollment_auth), false) AS is_enrolled,
-			(SELECT id FROM new_attempt) AS attempt_id
-	`
-
-	var result struct {
-		QuizExists bool    `db:"quiz_exists"`
-		IsEnrolled bool    `db:"is_enrolled"`
-		AttemptID  *string `db:"attempt_id"`
-	}
-
-	err := r.DB.Get(&result, query,
-		quizID, userID, score, passed, correctCount, incorrectCount, skippedCount,
-		pq.Array(insQuestionIDs), pq.Array(insSelectedOptIDs), pq.Array(insArrangeOrders), pq.Array(insFillTexts), pq.Array(insSkippeds), pq.Array(insCorrects),
-	)
+func (r *QuizRepository) SaveQuizAttemptRepository(quizID, userID string, score float64, passed bool, correctCount, incorrectCount, skippedCount int, answers QuizAnswersToSave) (string, error) {
+	tx, err := r.DB.Beginx()
 	if err != nil {
 		return "", err
 	}
+	defer tx.Rollback()
 
-	switch {
-	case !result.QuizExists:
-		return "", generic.ErrQuizNotFound
-	case !result.IsEnrolled:
+	var isEnrolled bool
+	checkQuery := `
+		SELECT EXISTS (
+			SELECT 1 FROM enrollments e
+			JOIN quiz_metadata qm ON qm.id = $1
+			JOIN lessons l ON l.id = qm.lesson_id
+			JOIN chapters ch ON ch.id = l.chapter_id
+			WHERE e.user_id = $2 AND e.course_id = ch.course_id AND e.revoked = false
+		)
+	`
+	if err := tx.Get(&isEnrolled, checkQuery, quizID, userID); err != nil {
+		return "", err
+	}
+	if !isEnrolled {
 		return "", generic.ErrQuizNotEnrolled
-	case result.AttemptID == nil:
-		return "", errors.New("failed to save attempt")
 	}
 
-	return *result.AttemptID, nil
+	var attemptID string
+	insertAttempt := `
+		INSERT INTO quiz_attempts (quiz_id, user_id, submitted_at, total_score, passed, correct_count, incorrect_count, skipped_count)
+		VALUES ($1, $2, NOW(), $3, $4, $5, $6, $7)
+		RETURNING id
+	`
+	if err := tx.Get(&attemptID, insertAttempt, quizID, userID, score, passed, correctCount, incorrectCount, skippedCount); err != nil {
+		return "", err
+	}
+
+	// 1. Single answers
+	for _, sa := range answers.SingleAnswers {
+		_, err := tx.Exec(`
+			INSERT INTO quiz_attempt_single_answers (attempt_id, question_id, selected_option_id, is_correct, is_skipped)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (attempt_id, question_id) DO NOTHING
+		`, attemptID, sa.QuestionID, sa.SelectedOptionID, sa.IsCorrect, sa.IsSkipped)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// 2. Multi answers + junction
+	for _, ma := range answers.MultiAnswers {
+		var multiAnswerID string
+		err := tx.Get(&multiAnswerID, `
+			INSERT INTO quiz_attempt_multi_answers (attempt_id, question_id, is_correct, is_skipped)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (attempt_id, question_id) DO UPDATE SET is_correct = EXCLUDED.is_correct
+			RETURNING id
+		`, attemptID, ma.Answer.QuestionID, ma.Answer.IsCorrect, ma.Answer.IsSkipped)
+		if err != nil {
+			return "", err
+		}
+
+		for _, optID := range ma.SelectedOptionIDs {
+			_, err := tx.Exec(`
+				INSERT INTO quiz_attempt_multi_answer_options (multi_answer_id, selected_option_id)
+				VALUES ($1, $2)
+				ON CONFLICT DO NOTHING
+			`, multiAnswerID, optID)
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
+	// 3. Arrange answers
+	for _, aa := range answers.ArrangeAnswers {
+		_, err := tx.Exec(`
+			INSERT INTO quiz_attempt_arrange_answers (attempt_id, question_id, arrange_item_id, submitted_order, is_correct, is_skipped)
+			VALUES ($1, $2, $3, $4, $5, $6)
+			ON CONFLICT (attempt_id, question_id, arrange_item_id) DO NOTHING
+		`, attemptID, aa.QuestionID, aa.ArrangeItemID, aa.SubmittedOrder, aa.IsCorrect, aa.IsSkipped)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// 4. Fill answers
+	for _, fa := range answers.FillAnswers {
+		_, err := tx.Exec(`
+			INSERT INTO quiz_attempt_fill_answers (attempt_id, question_id, fill_text, is_correct, is_skipped)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (attempt_id, question_id) DO NOTHING
+		`, attemptID, fa.QuestionID, fa.FillText, fa.IsCorrect, fa.IsSkipped)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return "", err
+	}
+
+	return attemptID, nil
 }

@@ -2,16 +2,7 @@ package entities
 
 import "time"
 
-type UserProfile struct {
-	ID        string    `json:"id" db:"id"`
-	UserID    string    `json:"user_id" db:"user_id"`
-	Headline  *string   `json:"headline" db:"headline"`
-	Bio       *string   `json:"bio" db:"bio"`
-	Website   *string   `json:"website" db:"website"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-}
-
-type TutorProfile struct {
+type Profile struct {
 	ID            string    `json:"id" db:"id"`
 	UserID        string    `json:"user_id" db:"user_id"`
 	Headline      *string   `json:"headline" db:"headline"`
@@ -19,6 +10,7 @@ type TutorProfile struct {
 	Website       *string   `json:"website" db:"website"`
 	TotalStudents int       `json:"total_students" db:"total_students"`
 	RatingAvg     float64   `json:"rating_avg" db:"rating_avg"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }
 

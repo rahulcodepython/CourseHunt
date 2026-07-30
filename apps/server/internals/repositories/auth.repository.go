@@ -23,7 +23,7 @@ func (r *AuthRepository) LoginWithEmailRepository(email, sessionHash string, exp
 			       u."createdAt", u."updatedAt", u.banned,
 			       c.password_hash,
 			       c.password_changed_at AS "passwordChangedAt"
-			FROM "user" u
+			FROM "users" u
 			LEFT JOIN credentials c ON c.user_id = u.id
 			WHERE u.email = $1
 		),
@@ -78,7 +78,7 @@ func (r *AuthRepository) LoginWithGoogleRepository(email, sessionHash string, ex
 			SELECT u.id, u.name, u.email, u."emailVerified", u.image,
 			       u."createdAt", u."updatedAt", u.banned,
 			       COALESCE(c.password_changed_at, NOW()) AS "passwordChangedAt"
-			FROM "user" u
+			FROM "users" u
 			LEFT JOIN credentials c ON c.user_id = u.id
 			WHERE u.email = $1
 		),
@@ -158,7 +158,7 @@ func (r *AuthRepository) RotateSessionRepository(oldHash, newHash string, expire
 			SELECT u.id, u.name, u.email, u."emailVerified", u.image,
 			       u."createdAt", u."updatedAt", u.banned,
 			       c.password_changed_at AS "passwordChangedAt"
-			FROM "user" u
+			FROM "users" u
 			LEFT JOIN credentials c ON c.user_id = u.id
 			WHERE u.id = (SELECT user_id FROM active_user_id)
 		),
@@ -203,13 +203,18 @@ func (r *AuthRepository) DeleteSessionRepository(hash string) error {
 }
 
 func (r *AuthRepository) CreateUserRepository(hashedPassword, name, email, createdBy, role string) (string, error) {
+	var createdByUUID *string
+	if createdBy != "" {
+		createdByUUID = &createdBy
+	}
+
 	query := `
 		WITH target_role AS (
 			SELECT id FROM roles WHERE name = $5
 		),
 		inserted_user AS (
-			INSERT INTO "user" (id, name, email, "emailVerified", "createdBy", "createdAt", "updatedAt")
-			SELECT gen_random_uuid()::text, $1, $2, true, $3, NOW(), NOW()
+			INSERT INTO "users" (id, name, email, "emailVerified", "createdBy", "createdAt", "updatedAt")
+			SELECT gen_random_uuid(), $1, $2, true, $3, NOW(), NOW()
 			FROM target_role
 			RETURNING id
 		),
@@ -227,7 +232,7 @@ func (r *AuthRepository) CreateUserRepository(hashedPassword, name, email, creat
 	`
 
 	var userID string
-	err := r.DB.QueryRowx(query, name, email, createdBy, hashedPassword, role).Scan(&userID)
+	err := r.DB.QueryRowx(query, name, email, createdByUUID, hashedPassword, role).Scan(&userID)
 	if err != nil {
 		return "", err
 	}
@@ -259,7 +264,7 @@ func (r *AuthRepository) ChangePasswordRepository(userID, newHashedPassword, new
 			SELECT u.id, u.name, u.email, u."emailVerified", u.image,
 			       u."createdAt", u."updatedAt", u.banned,
 			       uc.password_changed_at AS "passwordChangedAt"
-			FROM "user" u
+			FROM "users" u
 			JOIN updated_credentials uc ON uc.user_id = u.id
 		),
 		roles_cte AS (
@@ -309,7 +314,7 @@ func (r *AuthRepository) GetUserByIDRepository(userID string) (*entities.User, e
 			SELECT u.id, u.name, u.email, u."emailVerified", u.image,
 			       u."createdAt", u."updatedAt", u.banned,
 			       c.password_changed_at AS "passwordChangedAt"
-			FROM "user" u
+			FROM "users" u
 			LEFT JOIN credentials c ON c.user_id = u.id
 			WHERE u.id = $1
 		),

@@ -1,7 +1,9 @@
+BEGIN;
+
 -- Trigger: update course stats when chapters change
 CREATE OR REPLACE FUNCTION update_course_stats() RETURNS TRIGGER AS $$
 DECLARE
-    v_course_id text;
+    v_course_id UUID;
 BEGIN
     IF TG_OP = 'DELETE' THEN
         v_course_id := OLD.course_id;
@@ -21,3 +23,5 @@ DROP TRIGGER IF EXISTS trg_course_stats ON chapters;
 CREATE TRIGGER trg_course_stats
     AFTER INSERT OR UPDATE OR DELETE ON chapters
     FOR EACH ROW EXECUTE FUNCTION update_course_stats();
+
+COMMIT;

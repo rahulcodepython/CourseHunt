@@ -51,9 +51,11 @@ func (r *LessonsRepository) ReadContentRepository(lessonID, userID string, scope
 				CASE 
 					WHEN li.lesson_type = 'video' THEN (
 						SELECT json_build_object(
-							'id', vc.id,
+							'lesson_id', vc.lesson_id,
 							'video_url', vc.video_url,
-							'written_content', vc.written_content
+							'written_content', vc.written_content,
+							'created_at', vc.created_at,
+							'updated_at', vc.updated_at
 						)
 						FROM lesson_video_content vc
 						WHERE vc.lesson_id = li.lesson_id
@@ -63,8 +65,10 @@ func (r *LessonsRepository) ReadContentRepository(lessonID, userID string, scope
 				CASE 
 					WHEN li.lesson_type = 'document' THEN (
 						SELECT json_build_object(
-							'id', dc.id,
-							'content', dc.content
+							'lesson_id', dc.lesson_id,
+							'content', dc.content,
+							'created_at', dc.created_at,
+							'updated_at', dc.updated_at
 						)
 						FROM lesson_document_content dc
 						WHERE dc.lesson_id = li.lesson_id
@@ -79,7 +83,9 @@ func (r *LessonsRepository) ReadContentRepository(lessonID, userID string, scope
 							'title', qm.title,
 							'time_limit_seconds', qm.time_limit_seconds,
 							'total_questions', qm.total_questions,
-							'pass_score_percent', qm.pass_score_percent
+							'pass_score_percent', qm.pass_score_percent,
+							'created_at', qm.created_at,
+							'updated_at', qm.updated_at
 						)
 						FROM quiz_metadata qm
 						WHERE qm.lesson_id = li.lesson_id
@@ -133,11 +139,11 @@ func (r *LessonsRepository) UpsertVideoContentRepository(lessonID, tutorID strin
 			WHERE l.id = $1
 		),
 		inserted AS (
-			INSERT INTO lesson_video_content (lesson_id, video_url, written_content)
-			SELECT $1, $2, $3
+			INSERT INTO lesson_video_content (lesson_id, video_url, written_content, updated_at)
+			SELECT $1, $2, $3, CURRENT_TIMESTAMP
 			WHERE EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $4)
-			ON CONFLICT (lesson_id) DO UPDATE SET video_url = $2, written_content = $3
-			RETURNING id, video_url, written_content
+			ON CONFLICT (lesson_id) DO UPDATE SET video_url = $2, written_content = $3, updated_at = CURRENT_TIMESTAMP
+			RETURNING lesson_id, video_url, written_content, created_at, updated_at
 		)
 		SELECT 
 			(SELECT tutor_id FROM auth) AS course_tutor_id,
@@ -181,11 +187,11 @@ func (r *LessonsRepository) UpsertDocumentContentRepository(lessonID, tutorID, c
 			WHERE l.id = $1
 		),
 		inserted AS (
-			INSERT INTO lesson_document_content (lesson_id, content)
-			SELECT $1, $2
+			INSERT INTO lesson_document_content (lesson_id, content, updated_at)
+			SELECT $1, $2, CURRENT_TIMESTAMP
 			WHERE EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $3)
-			ON CONFLICT (lesson_id) DO UPDATE SET content = $2
-			RETURNING id, content
+			ON CONFLICT (lesson_id) DO UPDATE SET content = $2, updated_at = CURRENT_TIMESTAMP
+			RETURNING lesson_id, content, created_at, updated_at
 		)
 		SELECT 
 			(SELECT tutor_id FROM auth) AS course_tutor_id,

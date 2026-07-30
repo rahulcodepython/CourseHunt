@@ -5,7 +5,6 @@ export const CreateCourseRequestZod = z.object({
     title: z.string(),
     short_description: z.string().nullable().optional(),
     category_id: z.string().nullable().optional(),
-    subcategory_id: z.string().nullable().optional(),
     language: z.string(),
     level: z.string(),
     status: z.string(),
@@ -25,7 +24,6 @@ export const UpdateCourseRequestZod = z.object({
     benefits: z.array(z.string()).optional(),
     requirements: z.array(z.string()).optional(),
     category_id: z.string().nullable().optional(),
-    subcategory_id: z.string().nullable().optional(),
     coupon_allowed: z.boolean().optional(),
     status: z.string().optional(),
 });
@@ -94,7 +92,6 @@ export const CourseLandingResponseZod = z.object({
     benefits: z.array(z.string()),
     requirements: z.array(z.string()),
     category: CategoryInfoZod.nullable().optional(),
-    subcategory: CategoryInfoZod.nullable().optional(),
     instructor: InstructorInfoZod,
     total_lectures: z.number(),
     total_duration_seconds: z.number(),
@@ -163,7 +160,6 @@ export const CoursePublicResponseZod = z.object({
     rating_avg: z.number(),
     feedback_count: z.number(),
     category: CategoryInfoZod.nullable().optional(),
-    subcategory: CategoryInfoZod.nullable().optional(),
     instructor: InstructorInfoZod,
 });
 export type CoursePublicResponse = z.infer<typeof CoursePublicResponseZod>;

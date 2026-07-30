@@ -1,35 +1,51 @@
 package entities
 
+import "time"
+
 type QuizMetadata struct {
-	ID               string `json:"id" db:"id"`
-	LessonID         string `json:"lesson_id" db:"lesson_id"`
-	Title            string `json:"title" db:"title"`
-	TimeLimitSeconds int    `json:"time_limit_seconds" db:"time_limit_seconds"`
-	TotalQuestions   int    `json:"total_questions" db:"total_questions"`
-	PassScorePercent int    `json:"pass_score_percent" db:"pass_score_percent"`
+	ID               string    `json:"id" db:"id"`
+	LessonID         string    `json:"lesson_id" db:"lesson_id"`
+	Title            string    `json:"title" db:"title"`
+	TimeLimitSeconds int       `json:"time_limit_seconds" db:"time_limit_seconds"`
+	TotalQuestions   int       `json:"total_questions" db:"total_questions"`
+	PassScorePercent int       `json:"pass_score_percent" db:"pass_score_percent"`
+	CreatedAt        time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type QuizQuestion struct {
-	ID            string  `json:"id" db:"id"`
-	QuizID        string  `json:"quiz_id" db:"quiz_id"`
-	QuestionType  string  `json:"question_type" db:"question_type"`
-	QuestionText  string  `json:"question_text" db:"question_text"`
-	Points        int     `json:"points" db:"points"`
-	FillBlankHint *string `json:"fill_blank_hint" db:"fill_blank_hint"`
+	ID            string    `json:"id" db:"id"`
+	QuizID        string    `json:"quiz_id" db:"quiz_id"`
+	QuestionType  string    `json:"question_type" db:"question_type"`
+	QuestionText  string    `json:"question_text" db:"question_text"`
+	Points        int       `json:"points" db:"points"`
+	FillBlankHint *string   `json:"fill_blank_hint" db:"fill_blank_hint"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type QuizOption struct {
-	ID         string `json:"id" db:"id"`
-	QuestionID string `json:"question_id" db:"question_id"`
-	OptionText string `json:"option_text" db:"option_text"`
-	IsCorrect  bool   `json:"is_correct,omitempty" db:"is_correct"`
+	ID         string    `json:"id" db:"id"`
+	QuestionID string    `json:"question_id" db:"question_id"`
+	OptionText string    `json:"option_text" db:"option_text"`
+	IsCorrect  bool      `json:"is_correct,omitempty" db:"is_correct"`
+	SortOrder  int       `json:"sort_order" db:"sort_order"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 }
 
 type QuizArrangeItem struct {
-	ID           string `json:"id" db:"id"`
-	QuestionID   string `json:"question_id" db:"question_id"`
-	ItemText     string `json:"item_text" db:"item_text"`
-	CorrectOrder int    `json:"correct_order" db:"correct_order"`
+	ID           string    `json:"id" db:"id"`
+	QuestionID   string    `json:"question_id" db:"question_id"`
+	ItemText     string    `json:"item_text" db:"item_text"`
+	CorrectOrder int       `json:"correct_order" db:"correct_order"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+}
+
+type QuizFillBlankAnswer struct {
+	ID         string    `json:"id" db:"id"`
+	QuestionID string    `json:"question_id" db:"question_id"`
+	Answer     string    `json:"answer" db:"answer"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 }
 
 type QuestionValidation struct {
@@ -41,7 +57,7 @@ type QuestionValidation struct {
 	CorrectFillAnswers  []string `json:"correct_fill_answers"`
 }
 
-// ── Quiz ──
+// ── Quiz Question Creation & Submission ──
 
 type CreateQuizRequest struct {
 	Title            string `json:"title" validate:"required,min=2,max=200"`
@@ -52,6 +68,7 @@ type CreateQuizRequest struct {
 type QuestionOptionInput struct {
 	OptionText string `json:"option_text" validate:"required"`
 	IsCorrect  bool   `json:"is_correct"`
+	SortOrder  int    `json:"sort_order"`
 }
 
 type QuestionArrangeItemInput struct {
@@ -73,19 +90,43 @@ type NextQuestionRequest struct {
 	FetchedQuestionIDs []string `json:"fetched_question_ids"`
 }
 
-type SubmitQuizAnswerInput struct {
-	QuestionID        string   `json:"question_id" validate:"required,uuid"`
-	SelectedOptionIDs []string `json:"selected_option_ids"`
-	ArrangeOrder      []int    `json:"arrange_order"`
-	FillText          *string  `json:"fill_text"`
+type SubmitSingleAnswerInput struct {
+	QuestionID       string `json:"question_id" validate:"required"`
+	SelectedOptionID string `json:"selected_option_id" validate:"required"`
+	IsSkipped        bool   `json:"is_skipped"`
+}
+
+type SubmitMultiAnswerInput struct {
+	QuestionID        string   `json:"question_id" validate:"required"`
+	SelectedOptionIDs []string `json:"selected_option_ids" validate:"required"`
 	IsSkipped         bool     `json:"is_skipped"`
 }
 
-type SubmitQuizRequest struct {
-	Answers []SubmitQuizAnswerInput `json:"answers" validate:"required,min=1,dive"`
+type ArrangeSubmittedItem struct {
+	ItemID string `json:"item_id" validate:"required"`
+	Order  int    `json:"order" validate:"required"`
 }
 
-// ── Quiz Response ──
+type SubmitArrangeAnswerInput struct {
+	QuestionID string                 `json:"question_id" validate:"required"`
+	Items      []ArrangeSubmittedItem `json:"items" validate:"required"`
+	IsSkipped  bool                   `json:"is_skipped"`
+}
+
+type SubmitFillAnswerInput struct {
+	QuestionID string `json:"question_id" validate:"required"`
+	FillText   string `json:"fill_text" validate:"required"`
+	IsSkipped  bool   `json:"is_skipped"`
+}
+
+type SubmitQuizRequest struct {
+	SingleAnswers  []SubmitSingleAnswerInput  `json:"single_answers"`
+	MultiAnswers   []SubmitMultiAnswerInput   `json:"multi_answers"`
+	ArrangeAnswers []SubmitArrangeAnswerInput `json:"arrange_answers"`
+	FillAnswers    []SubmitFillAnswerInput    `json:"fill_answers"`
+}
+
+// ── Quiz Question Response Models ──
 
 type QuestionForAttempt struct {
 	ID            string                  `json:"id"`
@@ -130,13 +171,49 @@ type SubmitQuizResponse struct {
 	Results        []QuizResultItem `json:"results"`
 }
 
-type AttemptAnswerToSave struct {
-	QuestionID        string
-	SelectedOptionIDs []string
-	ArrangeOrder      []int
-	FillText          *string
-	IsSkipped         bool
-	IsCorrect         bool
+type QuizAttemptSingleAnswer struct {
+	ID               string    `json:"id" db:"id"`
+	AttemptID        string    `json:"attempt_id" db:"attempt_id"`
+	QuestionID       string    `json:"question_id" db:"question_id"`
+	SelectedOptionID string    `json:"selected_option_id" db:"selected_option_id"`
+	IsCorrect        bool      `json:"is_correct" db:"is_correct"`
+	IsSkipped        bool      `json:"is_skipped" db:"is_skipped"`
+	CreatedAt        time.Time `json:"created_at" db:"created_at"`
+}
+
+type QuizAttemptMultiAnswer struct {
+	ID         string    `json:"id" db:"id"`
+	AttemptID  string    `json:"attempt_id" db:"attempt_id"`
+	QuestionID string    `json:"question_id" db:"question_id"`
+	IsCorrect  bool      `json:"is_correct" db:"is_correct"`
+	IsSkipped  bool      `json:"is_skipped" db:"is_skipped"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+}
+
+type QuizAttemptMultiAnswerOption struct {
+	MultiAnswerID    string `json:"multi_answer_id" db:"multi_answer_id"`
+	SelectedOptionID string `json:"selected_option_id" db:"selected_option_id"`
+}
+
+type QuizAttemptArrangeAnswer struct {
+	ID             string    `json:"id" db:"id"`
+	AttemptID      string    `json:"attempt_id" db:"attempt_id"`
+	QuestionID     string    `json:"question_id" db:"question_id"`
+	ArrangeItemID  string    `json:"arrange_item_id" db:"arrange_item_id"`
+	SubmittedOrder int       `json:"submitted_order" db:"submitted_order"`
+	IsCorrect      bool      `json:"is_correct" db:"is_correct"`
+	IsSkipped      bool      `json:"is_skipped" db:"is_skipped"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
+}
+
+type QuizAttemptFillAnswer struct {
+	ID         string    `json:"id" db:"id"`
+	AttemptID  string    `json:"attempt_id" db:"attempt_id"`
+	QuestionID string    `json:"question_id" db:"question_id"`
+	FillText   string    `json:"fill_text" db:"fill_text"`
+	IsCorrect  bool      `json:"is_correct" db:"is_correct"`
+	IsSkipped  bool      `json:"is_skipped" db:"is_skipped"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 }
 
 type QuizEvaluationData struct {

@@ -2,25 +2,25 @@
 
 -- Root Categories
 INSERT INTO categories (id, parent_id, name) VALUES
-    ('cat-web-dev',    NULL, 'Web Development'),
-    ('cat-mobile-dev', NULL, 'Mobile Development'),
-    ('cat-data-ai',    NULL, 'Data Science & AI'),
-    ('cat-cloud-devops',NULL, 'Cloud & DevOps'),
-    ('cat-design-ux',  NULL, 'Design & UX')
-ON CONFLICT DO NOTHING;
+    ('44444444-4444-4444-4444-444444444401', NULL, 'Web Development'),
+    ('44444444-4444-4444-4444-444444444402', NULL, 'Mobile Development'),
+    ('44444444-4444-4444-4444-444444444403', NULL, 'Data Science & AI'),
+    ('44444444-4444-4444-4444-444444444404', NULL, 'Cloud & DevOps'),
+    ('44444444-4444-4444-4444-444444444405', NULL, 'Design & UX')
+ON CONFLICT (id) DO NOTHING;
 
--- Subcategories
+-- Subcategories (Categories with parent_id)
 INSERT INTO categories (id, parent_id, name) VALUES
-    ('subcat-react-next',  'cat-web-dev',     'React & Next.js'),
-    ('subcat-golang',      'cat-web-dev',     'Golang & Backend'),
-    ('subcat-vue-nuxt',    'cat-web-dev',     'Vue & Nuxt'),
-    ('subcat-node-micro',  'cat-web-dev',     'Node.js & Microservices'),
-    ('subcat-flutter',     'cat-mobile-dev',  'Flutter & Dart'),
-    ('subcat-react-native','cat-mobile-dev',  'React Native'),
-    ('subcat-ml-python',   'cat-data-ai',     'Machine Learning with Python'),
-    ('subcat-deep-llm',    'cat-data-ai',     'Deep Learning & LLMs'),
-    ('subcat-k8s-docker',  'cat-cloud-devops','Docker & Kubernetes'),
-    ('subcat-aws-cloud',   'cat-cloud-devops','AWS & Cloud Architecture'),
-    ('subcat-ui-ux-design','cat-design-ux',   'UI/UX Design Fundamentals'),
-    ('subcat-figma',       'cat-design-ux',   'Figma & Prototyping')
-ON CONFLICT DO NOTHING;
+    ('44444444-4444-4444-4444-444444444411', '44444444-4444-4444-4444-444444444401', 'React & Next.js'),
+    ('44444444-4444-4444-4444-444444444412', '44444444-4444-4444-4444-444444444401', 'Golang & Backend'),
+    ('44444444-4444-4444-4444-444444444413', '44444444-4444-4444-4444-444444444401', 'Vue & Nuxt'),
+    ('44444444-4444-4444-4444-444444444414', '44444444-4444-4444-4444-444444444401', 'Node.js & Microservices'),
+    ('44444444-4444-4444-4444-444444444415', '44444444-4444-4444-4444-444444444402', 'Flutter & Dart'),
+    ('44444444-4444-4444-4444-444444444416', '44444444-4444-4444-4444-444444444402', 'React Native'),
+    ('44444444-4444-4444-4444-444444444417', '44444444-4444-4444-4444-444444444403', 'Machine Learning with Python'),
+    ('44444444-4444-4444-4444-444444444418', '44444444-4444-4444-4444-444444444403', 'Deep Learning & LLMs'),
+    ('44444444-4444-4444-4444-444444444419', '44444444-4444-4444-4444-444444444404', 'Docker & Kubernetes'),
+    ('44444444-4444-4444-4444-444444444420', '44444444-4444-4444-4444-444444444404', 'AWS & Cloud Architecture'),
+    ('44444444-4444-4444-4444-444444444421', '44444444-4444-4444-4444-444444444405', 'UI/UX Design Fundamentals'),
+    ('44444444-4444-4444-4444-444444444422', '44444444-4444-4444-4444-444444444405', 'Figma & Prototyping')
+ON CONFLICT (id) DO NOTHING;

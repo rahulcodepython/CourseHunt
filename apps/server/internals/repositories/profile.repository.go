@@ -7,23 +7,23 @@ import (
 	"errors"
 )
 
-func (r *UsersRepository) ReadUserProfileRepository(userID string) (*entities.UserProfile, error) {
-	var p entities.UserProfile
-	if err := r.DB.Get(&p, `SELECT id, user_id, headline, bio, website, updated_at FROM user_profile WHERE user_id = $1`, userID); err != nil {
+func (r *UsersRepository) ReadProfileRepository(userID string) (*entities.Profile, error) {
+	var p entities.Profile
+	if err := r.DB.Get(&p, `SELECT id, user_id, headline, bio, website, total_students, rating_avg, created_at, updated_at FROM profiles WHERE user_id = $1`, userID); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func (r *UsersRepository) ReadTutorProfileRepository(userID string) (*entities.TutorProfile, error) {
-	var p entities.TutorProfile
-	if err := r.DB.Get(&p, `SELECT id, user_id, headline, bio, website, total_students, rating_avg, updated_at FROM tutor_profile WHERE user_id = $1`, userID); err != nil {
-		return nil, err
-	}
-	return &p, nil
+func (r *UsersRepository) ReadUserProfileRepository(userID string) (*entities.Profile, error) {
+	return r.ReadProfileRepository(userID)
 }
 
-func (r *UsersRepository) UpsertUserProfileRepository(userID string, req entities.UpdateProfileRequest) (*entities.UserProfile, error) {
+func (r *UsersRepository) ReadTutorProfileRepository(userID string) (*entities.Profile, error) {
+	return r.ReadProfileRepository(userID)
+}
+
+func (r *UsersRepository) UpsertProfileRepository(userID string, req entities.UpdateProfileRequest) (*entities.Profile, error) {
 	var result struct {
 		EmailVerified bool             `db:"email_verified"`
 		InsertedData  *json.RawMessage `db:"inserted_data"`
@@ -31,15 +31,15 @@ func (r *UsersRepository) UpsertUserProfileRepository(userID string, req entitie
 
 	query := `
 		WITH auth AS (
-			SELECT "emailVerified" FROM "user" WHERE id = $1
+			SELECT "emailVerified" FROM "users" WHERE id = $1
 		),
 		inserted AS (
-			INSERT INTO user_profile (user_id, headline, bio, website, updated_at)
+			INSERT INTO profiles (user_id, headline, bio, website, updated_at)
 			SELECT $1, $2, $3, $4, CURRENT_TIMESTAMP
 			FROM auth a
 			WHERE a."emailVerified" = true
 			ON CONFLICT (user_id) DO UPDATE SET headline = $2, bio = $3, website = $4, updated_at = CURRENT_TIMESTAMP
-			RETURNING id, user_id, headline, bio, website, updated_at
+			RETURNING id, user_id, headline, bio, website, total_students, rating_avg, created_at, updated_at
 		)
 		SELECT 
 			COALESCE((SELECT "emailVerified" FROM auth), false) AS email_verified,
@@ -57,52 +57,19 @@ func (r *UsersRepository) UpsertUserProfileRepository(userID string, req entitie
 		return nil, errors.New("failed to save profile")
 	}
 
-	var p entities.UserProfile
+	var p entities.Profile
 	if err := json.Unmarshal(*result.InsertedData, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func (r *UsersRepository) UpsertTutorProfileRepository(userID string, req entities.UpdateProfileRequest) (*entities.TutorProfile, error) {
-	var result struct {
-		EmailVerified bool             `db:"email_verified"`
-		InsertedData  *json.RawMessage `db:"inserted_data"`
-	}
+func (r *UsersRepository) UpsertUserProfileRepository(userID string, req entities.UpdateProfileRequest) (*entities.Profile, error) {
+	return r.UpsertProfileRepository(userID, req)
+}
 
-	query := `
-		WITH auth AS (
-			SELECT "emailVerified" FROM "user" WHERE id = $1
-		),
-		inserted AS (
-			INSERT INTO tutor_profile (user_id, headline, bio, website, updated_at)
-			SELECT $1, $2, $3, $4, CURRENT_TIMESTAMP
-			FROM auth a
-			WHERE a."emailVerified" = true
-			ON CONFLICT (user_id) DO UPDATE SET headline = $2, bio = $3, website = $4, updated_at = CURRENT_TIMESTAMP
-			RETURNING id, user_id, headline, bio, website, total_students, rating_avg, updated_at
-		)
-		SELECT 
-			COALESCE((SELECT "emailVerified" FROM auth), false) AS email_verified,
-			(SELECT row_to_json(inserted.*) FROM inserted) AS inserted_data
-	`
-	err := r.DB.Get(&result, query, userID, req.Headline, req.Bio, req.Website)
-	if err != nil {
-		return nil, err
-	}
-
-	switch {
-	case !result.EmailVerified:
-		return nil, generic.ErrUsersNotVerified
-	case result.InsertedData == nil:
-		return nil, errors.New("failed to save tutor profile")
-	}
-
-	var p entities.TutorProfile
-	if err := json.Unmarshal(*result.InsertedData, &p); err != nil {
-		return nil, err
-	}
-	return &p, nil
+func (r *UsersRepository) UpsertTutorProfileRepository(userID string, req entities.UpdateProfileRequest) (*entities.Profile, error) {
+	return r.UpsertProfileRepository(userID, req)
 }
 
 func (r *UsersRepository) AdminListProfilesRepository(page, limit int) ([]entities.AdminProfileItem, int, error) {
@@ -115,25 +82,26 @@ func (r *UsersRepository) AdminListProfilesRepository(page, limit int) ([]entiti
 
 	err := r.DB.Get(&result, `
 		WITH count_cte AS (
-			SELECT COUNT(*) AS total FROM "user" u
+			SELECT COUNT(*) AS total FROM "users" u
 		),
 		data_cte AS (
 			SELECT 
 				u.id AS user_id,
 				u.email,
 				COALESCE(u.name, '') AS name,
-				u.role,
-				COALESCE(up.id, tp.id, '') AS id,
-				COALESCE(up.headline, tp.headline) AS headline,
-				COALESCE(up.bio, tp.bio) AS bio,
-				COALESCE(up.website, tp.website) AS website,
-				tp.total_students,
-				tp.rating_avg,
-				COALESCE(up.updated_at, tp.updated_at, CURRENT_TIMESTAMP) AS updated_at
-			FROM "user" u
-			LEFT JOIN user_profile up ON up.user_id = u.id
-			LEFT JOIN tutor_profile tp ON tp.user_id = u.id
-			ORDER BY u.created_at DESC
+				COALESCE(r.name, '') AS role,
+				COALESCE(p.id, '') AS id,
+				p.headline,
+				p.bio,
+				p.website,
+				p.total_students,
+				p.rating_avg,
+				COALESCE(p.updated_at, u."updatedAt", CURRENT_TIMESTAMP) AS updated_at
+			FROM "users" u
+			LEFT JOIN profiles p ON p.user_id = u.id
+			LEFT JOIN user_roles ur ON ur.user_id = u.id
+			LEFT JOIN roles r ON r.id = ur.role_id
+			ORDER BY u."createdAt" DESC
 			LIMIT $1 OFFSET $2
 		)
 		SELECT 

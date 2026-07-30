@@ -1,3 +1,5 @@
+BEGIN;
+
 -- Trigger: update total_questions on quiz_metadata after question insert/delete
 CREATE OR REPLACE FUNCTION update_quiz_question_count() RETURNS TRIGGER AS $$
 BEGIN
@@ -14,3 +16,5 @@ DROP TRIGGER IF EXISTS trg_quiz_question_count ON quiz_questions;
 CREATE TRIGGER trg_quiz_question_count
     AFTER INSERT OR DELETE ON quiz_questions
     FOR EACH ROW EXECUTE FUNCTION update_quiz_question_count();
+
+COMMIT;

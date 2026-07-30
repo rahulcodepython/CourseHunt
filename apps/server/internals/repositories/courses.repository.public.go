@@ -36,15 +36,11 @@ func (r *CoursesRepository) PublicSingleRepository(slug, userID string) (*entiti
 				WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name)
 				ELSE NULL
 			END,
-			'subcategory', CASE 
-				WHEN subcat.id IS NOT NULL THEN json_build_object('id', subcat.id, 'name', subcat.name)
-				ELSE NULL
-			END,
 			'instructor', json_build_object(
 				'id', u.id,
 				'name', COALESCE(u.name, ''),
 				'image', u.image,
-				'headline', tp.headline
+				'headline', p.headline
 			),
 			'chapters', (
 				SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
@@ -66,9 +62,8 @@ func (r *CoursesRepository) PublicSingleRepository(slug, userID string) (*entiti
 		)
 		FROM courses c
 		LEFT JOIN categories cat ON c.category_id = cat.id
-		LEFT JOIN categories subcat ON c.subcategory_id = subcat.id
-		LEFT JOIN "user" u ON c.tutor_id = u.id
-		LEFT JOIN tutor_profiles tp ON u.id = tp.user_id
+		LEFT JOIN "users" u ON c.tutor_id = u.id
+		LEFT JOIN profiles p ON u.id = p.user_id
 		WHERE c.slug = $1 AND c.status = 'published'
 	`
 	err := r.DB.Get(&resultData, query, slug, userID)
@@ -94,14 +89,14 @@ func (r *CoursesRepository) PublicListRepository(page, limit int, categoryID, su
 	args := []interface{}{}
 	idx := 1
 
-	if categoryID != "" {
-		where = append(where, fmt.Sprintf("c.category_id = $%d", idx))
-		args = append(args, categoryID)
-		idx++
+	targetCatID := categoryID
+	if targetCatID == "" && subcategoryID != "" {
+		targetCatID = subcategoryID
 	}
-	if subcategoryID != "" {
-		where = append(where, fmt.Sprintf("c.subcategory_id = $%d", idx))
-		args = append(args, subcategoryID)
+
+	if targetCatID != "" {
+		where = append(where, fmt.Sprintf("c.category_id = $%d", idx))
+		args = append(args, targetCatID)
 		idx++
 	}
 	if level != "" {
@@ -132,12 +127,10 @@ func (r *CoursesRepository) PublicListRepository(page, limit int, categoryID, su
 			       c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits,
 			       c.level, c.rating_avg, c.feedback_count,
 			       CASE WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name) ELSE NULL END AS category,
-			       CASE WHEN subcat.id IS NOT NULL THEN json_build_object('id', subcat.id, 'name', subcat.name) ELSE NULL END AS subcategory,
 			       json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS instructor
 			FROM courses c
 			LEFT JOIN categories cat ON c.category_id = cat.id
-			LEFT JOIN categories subcat ON c.subcategory_id = subcat.id
-			LEFT JOIN "user" u ON u.id = c.tutor_id
+			LEFT JOIN "users" u ON u.id = c.tutor_id
 			WHERE %s
 			ORDER BY c.created_at DESC
 			LIMIT $%d OFFSET $%d

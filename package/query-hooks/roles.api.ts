@@ -31,7 +31,7 @@ export function useCreateRoleMutation() {
 
 export function useUpdateRoleMutation() {
     return useSimpleMutation({
-        mutationFn: ({ id, data }: { id: number; data: z.infer<typeof UpdateRoleRequestZod> }) =>
+        mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateRoleRequestZod> }) =>
             apiRequest({ url: `/api/v1/roles/${id}`, method: "PUT", data }, RoleZod),
         invalidateKeys: [queryKeys.roles()],
         showToast: true,
@@ -40,14 +40,14 @@ export function useUpdateRoleMutation() {
 
 export function useDeleteRoleMutation() {
     return useSimpleMutation({
-        mutationFn: (id: number) =>
+        mutationFn: (id: string) =>
             apiRequest({ url: `/api/v1/roles/${id}`, method: "DELETE" }, z.any()),
         invalidateKeys: [queryKeys.roles()],
         showToast: true,
     });
 }
 
-export function useRolePermissionsQuery(roleId: number) {
+export function useRolePermissionsQuery(roleId: string) {
     return useAppQuery([...queryKeys.roles(), "permissions", roleId], () =>
         apiRequest({ url: `/api/v1/roles/${roleId}/permissions`, method: "GET" }, z.array(PermissionZod)),
     );
@@ -55,7 +55,7 @@ export function useRolePermissionsQuery(roleId: number) {
 
 export function useUpdateRolePermissionsMutation() {
     return useSimpleMutation({
-        mutationFn: ({ id, data }: { id: number; data: z.infer<typeof RolePermissionUpdateZod> }) =>
+        mutationFn: ({ id, data }: { id: string; data: z.infer<typeof RolePermissionUpdateZod> }) =>
             apiRequest({ url: `/api/v1/roles/${id}/permissions`, method: "PUT", data }, z.any()),
         invalidateKeys: [queryKeys.roles()],
         showToast: true,

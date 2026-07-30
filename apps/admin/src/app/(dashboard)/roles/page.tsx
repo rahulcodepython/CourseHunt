@@ -24,10 +24,10 @@ export default function RolesPage() {
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [newRoleName, setNewRoleName] = useState("");
     const [newRoleDescription, setNewRoleDescription] = useState("");
-    const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
-    const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
+    const [expandedRoleId, setExpandedRoleId] = useState<string | null>(null);
+    const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
 
-    const { data: rolePermissions } = useRolePermissionsQuery(expandedRoleId || 0);
+    const { data: rolePermissions } = useRolePermissionsQuery(expandedRoleId || "");
 
     const handleCreateRole = async () => {
         if (!newRoleName) return;
@@ -52,7 +52,7 @@ export default function RolesPage() {
         }
     };
 
-    const handleToggleExpand = (roleId: number) => {
+    const handleToggleExpand = (roleId: string) => {
         if (expandedRoleId === roleId) {
             setExpandedRoleId(null);
             setSelectedPermissionIds([]);
@@ -61,13 +61,13 @@ export default function RolesPage() {
         }
     };
 
-    const handleTogglePermission = (permId: number) => {
+    const handleTogglePermission = (permId: string) => {
         setSelectedPermissionIds((prev) =>
             prev.includes(permId) ? prev.filter((id) => id !== permId) : [...prev, permId],
         );
     };
 
-    const handleSavePermissions = async (roleId: number) => {
+    const handleSavePermissions = async (roleId: string) => {
         try {
             await updateRolePermissions.mutateAsync({ id: roleId, data: { permission_ids: selectedPermissionIds } });
             toast.success("Permissions updated");

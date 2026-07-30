@@ -25,14 +25,15 @@ func (r *CoursesRepository) ListRepository(page, limit int, userID string, scope
 		args = append(args, status)
 		idx++
 	}
-	if categoryID != "" {
-		where = append(where, fmt.Sprintf("c.category_id = $%d", idx))
-		args = append(args, categoryID)
-		idx++
+
+	targetCatID := categoryID
+	if targetCatID == "" && subcategoryID != "" {
+		targetCatID = subcategoryID
 	}
-	if subcategoryID != "" {
-		where = append(where, fmt.Sprintf("c.subcategory_id = $%d", idx))
-		args = append(args, subcategoryID)
+
+	if targetCatID != "" {
+		where = append(where, fmt.Sprintf("c.category_id = $%d", idx))
+		args = append(args, targetCatID)
 		idx++
 	}
 	if level != "" {
@@ -75,7 +76,7 @@ func (r *CoursesRepository) ListRepository(page, limit int, userID string, scope
 		data_cte AS (
 			SELECT c.id, c.tutor_id, c.slug, c.title, c.short_description, c.long_description, c.image_url, c.preview_video_url,
 			       c.language, c.level, c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits, COALESCE(c.requirements, '{}') AS requirements,
-			       c.category_id, c.subcategory_id, c.coupon_allowed, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
+			       c.category_id, c.coupon_allowed, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
 			       COALESCE(ec.student_count, 0) AS student_count,
 			       c.created_at, c.updated_at
 			FROM courses c

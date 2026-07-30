@@ -1,9 +1,11 @@
 -- 009: Course stats triggers (chapter, lesson counts)
 
+BEGIN;
+
 -- Trigger: update chapter stats when lessons change
 CREATE OR REPLACE FUNCTION update_chapter_stats() RETURNS TRIGGER AS $$
 DECLARE
-    v_chapter_id text;
+    v_chapter_id UUID;
 BEGIN
     IF TG_OP = 'DELETE' THEN
         v_chapter_id := OLD.chapter_id;
@@ -23,3 +25,5 @@ DROP TRIGGER IF EXISTS trg_chapter_stats ON lessons;
 CREATE TRIGGER trg_chapter_stats
     AFTER INSERT OR UPDATE OR DELETE ON lessons
     FOR EACH ROW EXECUTE FUNCTION update_chapter_stats();
+
+COMMIT;
