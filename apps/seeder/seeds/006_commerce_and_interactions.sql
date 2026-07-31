@@ -1,163 +1,164 @@
 -- 006_commerce_and_interactions.sql: Seed Coupons, Enrollments, Lesson Progress, Feedbacks, Wishlists, Cart Items, Discussions, Certificates, Transactions
 
--- Coupons (10 Coupons)
 INSERT INTO coupons (id, code, discount_percent, max_usage, expires_at, is_active) VALUES
-    ('dddddddd-dddd-dddd-dddd-dddddddddd01', 'WELCOME50',  50.00, 1000, CURRENT_TIMESTAMP + INTERVAL '90 days', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddd02', 'GOFLASH',    30.00,  500, CURRENT_TIMESTAMP + INTERVAL '60 days', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddd03', 'NEXTJS20',   20.00,  300, CURRENT_TIMESTAMP + INTERVAL '30 days', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddd04', 'DEVOPS15',   15.00,  200, CURRENT_TIMESTAMP + INTERVAL '45 days', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddd05', 'DATASCIENCE', 25.00,  400, CURRENT_TIMESTAMP + INTERVAL '60 days', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddd06', 'AIFUTURE',   40.00,  100, CURRENT_TIMESTAMP + INTERVAL '15 days', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddd07', 'FLUTTER30',  30.00,  250, CURRENT_TIMESTAMP + INTERVAL '30 days', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddd08', 'FIGMADESIGN', 10.00,  500, CURRENT_TIMESTAMP + INTERVAL '90 days', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddd09', 'RUSTMASTER', 35.00,  150, CURRENT_TIMESTAMP + INTERVAL '45 days', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddd10', 'VUEROCKS',   12.00,  300, CURRENT_TIMESTAMP + INTERVAL '60 days', true)
-ON CONFLICT (id) DO NOTHING;
+    (gen_random_uuid(), 'WELCOME50', 50.00, 1000, CURRENT_TIMESTAMP + INTERVAL '90 days', true),
+    (gen_random_uuid(), 'GOFLASH', 30.00, 500, CURRENT_TIMESTAMP + INTERVAL '60 days', true),
+    (gen_random_uuid(), 'NEXTJS20', 20.00, 300, CURRENT_TIMESTAMP + INTERVAL '30 days', true),
+    (gen_random_uuid(), 'DEVOPS15', 15.00, 200, CURRENT_TIMESTAMP + INTERVAL '45 days', true),
+    (gen_random_uuid(), 'DATASCIENCE', 25.00, 400, CURRENT_TIMESTAMP + INTERVAL '60 days', true),
+    (gen_random_uuid(), 'AIFUTURE', 40.00, 100, CURRENT_TIMESTAMP + INTERVAL '15 days', true),
+    (gen_random_uuid(), 'FLUTTER30', 30.00, 250, CURRENT_TIMESTAMP + INTERVAL '30 days', true),
+    (gen_random_uuid(), 'FIGMADESIGN', 10.00, 500, CURRENT_TIMESTAMP + INTERVAL '90 days', true),
+    (gen_random_uuid(), 'RUSTMASTER', 35.00, 150, CURRENT_TIMESTAMP + INTERVAL '45 days', true),
+    (gen_random_uuid(), 'VUEROCKS', 12.00, 300, CURRENT_TIMESTAMP + INTERVAL '60 days', true)
+ON CONFLICT (code) DO NOTHING;
 
--- Enrollments (15 Enrollments)
-INSERT INTO enrollments (id, user_id, course_id, enrolled_at) VALUES
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555501', CURRENT_TIMESTAMP - INTERVAL '10 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555502', CURRENT_TIMESTAMP - INTERVAL '8 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555503', CURRENT_TIMESTAMP - INTERVAL '5 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee04', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555502', CURRENT_TIMESTAMP - INTERVAL '12 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee05', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555508', CURRENT_TIMESTAMP - INTERVAL '6 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee06', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555501', CURRENT_TIMESTAMP - INTERVAL '9 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee07', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555509', CURRENT_TIMESTAMP - INTERVAL '4 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee08', '33333333-3333-3333-3333-333333333304', '55555555-5555-5555-5555-555555555504', CURRENT_TIMESTAMP - INTERVAL '15 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee09', '33333333-3333-3333-3333-333333333304', '55555555-5555-5555-5555-555555555503', CURRENT_TIMESTAMP - INTERVAL '3 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee10', '33333333-3333-3333-3333-333333333305', '55555555-5555-5555-5555-555555555505', CURRENT_TIMESTAMP - INTERVAL '11 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee11', '33333333-3333-3333-3333-333333333305', '55555555-5555-5555-5555-555555555506', CURRENT_TIMESTAMP - INTERVAL '2 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee12', '33333333-3333-3333-3333-333333333306', '55555555-5555-5555-5555-555555555508', CURRENT_TIMESTAMP - INTERVAL '7 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee13', '33333333-3333-3333-3333-333333333306', '55555555-5555-5555-5555-555555555510', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee14', '33333333-3333-3333-3333-333333333307', '55555555-5555-5555-5555-555555555507', CURRENT_TIMESTAMP - INTERVAL '14 days'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee15', '33333333-3333-3333-3333-333333333307', '55555555-5555-5555-5555-555555555502', CURRENT_TIMESTAMP - INTERVAL '5 days')
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO enrollments (id, user_id, course_id, enrolled_at)
+SELECT gen_random_uuid(), u.id, c.id, v.enrolled_at FROM (VALUES
+    ('user@example.com', 'go-golang-microservices-masterclass', CURRENT_TIMESTAMP - INTERVAL '10 days'),
+    ('user@example.com', 'fullstack-nextjs-react-mastery', CURRENT_TIMESTAMP - INTERVAL '8 days'),
+    ('user@example.com', 'system-design-distributed-systems', CURRENT_TIMESTAMP - INTERVAL '5 days'),
+    ('alice@example.com', 'fullstack-nextjs-react-mastery', CURRENT_TIMESTAMP - INTERVAL '12 days'),
+    ('alice@example.com', 'figma-ui-ux-design-system-mastery', CURRENT_TIMESTAMP - INTERVAL '6 days'),
+    ('bob@example.com', 'go-golang-microservices-masterclass', CURRENT_TIMESTAMP - INTERVAL '9 days'),
+    ('bob@example.com', 'rust-systems-programming-masterclass', CURRENT_TIMESTAMP - INTERVAL '4 days'),
+    ('charlie@example.com', 'docker-kubernetes-modern-devops', CURRENT_TIMESTAMP - INTERVAL '15 days'),
+    ('charlie@example.com', 'system-design-distributed-systems', CURRENT_TIMESTAMP - INTERVAL '3 days'),
+    ('david@example.com', 'python-data-science-machine-learning-bootcamp', CURRENT_TIMESTAMP - INTERVAL '11 days'),
+    ('david@example.com', 'deep-learning-llms-transformers-python', CURRENT_TIMESTAMP - INTERVAL '2 days'),
+    ('eva@example.com', 'figma-ui-ux-design-system-mastery', CURRENT_TIMESTAMP - INTERVAL '7 days'),
+    ('eva@example.com', 'vue-nuxt3-modern-web-apps', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+    ('fiona@example.com', 'flutter-dart-multiplatform-mobile-dev', CURRENT_TIMESTAMP - INTERVAL '14 days'),
+    ('fiona@example.com', 'fullstack-nextjs-react-mastery', CURRENT_TIMESTAMP - INTERVAL '5 days')
+) AS v(email, slug, enrolled_at) JOIN users u ON u.email=v.email JOIN courses c ON c.slug=v.slug ON CONFLICT (id) DO NOTHING;
 
--- Lesson Progress (30 Progress items)
-INSERT INTO lesson_progress (id, user_id, lesson_id, course_id, completed, completed_at) VALUES
-    ('ffffffff-ffff-ffff-ffff-ffffffffff01', '33333333-3333-3333-3333-333333333301', '77777777-7777-7777-0001-0000000101', '55555555-5555-5555-5555-555555555501', true, CURRENT_TIMESTAMP - INTERVAL '9 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff02', '33333333-3333-3333-3333-333333333301', '77777777-7777-7777-0001-0000000102', '55555555-5555-5555-5555-555555555501', true, CURRENT_TIMESTAMP - INTERVAL '9 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff03', '33333333-3333-3333-3333-333333333301', '77777777-7777-7777-0001-0000000103', '55555555-5555-5555-5555-555555555501', true, CURRENT_TIMESTAMP - INTERVAL '8 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff04', '33333333-3333-3333-3333-333333333301', '77777777-7777-7777-0001-0000000104', '55555555-5555-5555-5555-555555555501', true, CURRENT_TIMESTAMP - INTERVAL '8 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff05', '33333333-3333-3333-3333-333333333301', '77777777-7777-7777-0001-0000000105', '55555555-5555-5555-5555-555555555501', true, CURRENT_TIMESTAMP - INTERVAL '7 days'),
+INSERT INTO lesson_progress (id, user_id, lesson_id, course_id, completed, completed_at)
+SELECT gen_random_uuid(), u.id, l.id, c.id, v.completed, v.completed_at FROM (VALUES
+    ('user@example.com', 'go-golang-microservices-masterclass', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '9 days'),
+    ('user@example.com', 'go-golang-microservices-masterclass', 1, 2, true, CURRENT_TIMESTAMP - INTERVAL '9 days'),
+    ('user@example.com', 'go-golang-microservices-masterclass', 1, 3, true, CURRENT_TIMESTAMP - INTERVAL '8 days'),
+    ('user@example.com', 'go-golang-microservices-masterclass', 1, 4, true, CURRENT_TIMESTAMP - INTERVAL '8 days'),
+    ('user@example.com', 'go-golang-microservices-masterclass', 1, 5, true, CURRENT_TIMESTAMP - INTERVAL '7 days'),
+    ('alice@example.com', 'fullstack-nextjs-react-mastery', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '11 days'),
+    ('alice@example.com', 'fullstack-nextjs-react-mastery', 1, 2, true, CURRENT_TIMESTAMP - INTERVAL '10 days'),
+    ('alice@example.com', 'fullstack-nextjs-react-mastery', 1, 3, true, CURRENT_TIMESTAMP - INTERVAL '10 days'),
+    ('alice@example.com', 'fullstack-nextjs-react-mastery', 1, 4, false, NULL),
+    ('bob@example.com', 'go-golang-microservices-masterclass', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '8 days'),
+    ('bob@example.com', 'go-golang-microservices-masterclass', 1, 2, true, CURRENT_TIMESTAMP - INTERVAL '8 days'),
+    ('bob@example.com', 'rust-systems-programming-masterclass', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+    ('charlie@example.com', 'docker-kubernetes-modern-devops', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '14 days'),
+    ('charlie@example.com', 'docker-kubernetes-modern-devops', 1, 2, true, CURRENT_TIMESTAMP - INTERVAL '14 days'),
+    ('charlie@example.com', 'docker-kubernetes-modern-devops', 1, 3, true, CURRENT_TIMESTAMP - INTERVAL '13 days'),
+    ('charlie@example.com', 'docker-kubernetes-modern-devops', 1, 4, true, CURRENT_TIMESTAMP - INTERVAL '12 days'),
+    ('charlie@example.com', 'docker-kubernetes-modern-devops', 1, 5, true, CURRENT_TIMESTAMP - INTERVAL '12 days'),
+    ('david@example.com', 'python-data-science-machine-learning-bootcamp', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '10 days'),
+    ('david@example.com', 'python-data-science-machine-learning-bootcamp', 1, 2, true, CURRENT_TIMESTAMP - INTERVAL '10 days'),
+    ('david@example.com', 'python-data-science-machine-learning-bootcamp', 1, 3, true, CURRENT_TIMESTAMP - INTERVAL '9 days'),
+    ('eva@example.com', 'figma-ui-ux-design-system-mastery', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '6 days'),
+    ('eva@example.com', 'figma-ui-ux-design-system-mastery', 1, 2, true, CURRENT_TIMESTAMP - INTERVAL '6 days'),
+    ('eva@example.com', 'vue-nuxt3-modern-web-apps', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+    ('fiona@example.com', 'flutter-dart-multiplatform-mobile-dev', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '13 days'),
+    ('fiona@example.com', 'flutter-dart-multiplatform-mobile-dev', 1, 2, true, CURRENT_TIMESTAMP - INTERVAL '13 days'),
+    ('fiona@example.com', 'flutter-dart-multiplatform-mobile-dev', 1, 3, true, CURRENT_TIMESTAMP - INTERVAL '12 days'),
+    ('fiona@example.com', 'fullstack-nextjs-react-mastery', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+    ('fiona@example.com', 'fullstack-nextjs-react-mastery', 1, 2, true, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+    ('user@example.com', 'system-design-distributed-systems', 1, 1, true, CURRENT_TIMESTAMP - INTERVAL '4 days'),
+    ('user@example.com', 'system-design-distributed-systems', 1, 2, true, CURRENT_TIMESTAMP - INTERVAL '3 days')
+) AS v(email, l_slug, ch_no, l_no, completed, completed_at)
+JOIN users u ON u.email=v.email JOIN courses c ON c.slug=v.l_slug
+JOIN chapters ch ON ch.course_id=c.id AND ch.chapter_no=v.ch_no
+JOIN lessons l ON l.chapter_id=ch.id AND l.lesson_no=v.l_no ON CONFLICT (id) DO NOTHING;
 
-    ('ffffffff-ffff-ffff-ffff-ffffffffff06', '33333333-3333-3333-3333-333333333302', '77777777-7777-7777-0002-0000000101', '55555555-5555-5555-5555-555555555502', true, CURRENT_TIMESTAMP - INTERVAL '11 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff07', '33333333-3333-3333-3333-333333333302', '77777777-7777-7777-0002-0000000102', '55555555-5555-5555-5555-555555555502', true, CURRENT_TIMESTAMP - INTERVAL '10 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff08', '33333333-3333-3333-3333-333333333302', '77777777-7777-7777-0002-0000000103', '55555555-5555-5555-5555-555555555502', true, CURRENT_TIMESTAMP - INTERVAL '10 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff09', '33333333-3333-3333-3333-333333333302', '77777777-7777-7777-0002-0000000104', '55555555-5555-5555-5555-555555555502', false, NULL),
+INSERT INTO feedbacks (id, user_id, course_id, rating, content, created_at)
+SELECT gen_random_uuid(), u.id, c.id, v.rating, v.content, v.created_at FROM (VALUES
+    ('user@example.com', 'go-golang-microservices-masterclass', 5, 'Absolute gold standard course for Go microservices! Fiber and sqlx explanations are top tier.', CURRENT_TIMESTAMP - INTERVAL '6 days'),
+    ('bob@example.com', 'go-golang-microservices-masterclass', 5, 'Great practical examples. The gRPC section helped me refactor my company service.', CURRENT_TIMESTAMP - INTERVAL '5 days'),
+    ('alice@example.com', 'fullstack-nextjs-react-mastery', 5, 'Next.js 15 App router explained so clearly. Highly recommend John Doe!', CURRENT_TIMESTAMP - INTERVAL '8 days'),
+    ('fiona@example.com', 'fullstack-nextjs-react-mastery', 4, 'Very good overview of Server Components and Server Actions.', CURRENT_TIMESTAMP - INTERVAL '3 days'),
+    ('user@example.com', 'system-design-distributed-systems', 5, 'Alex Rivers is an amazing instructor. System design principles are crystal clear.', CURRENT_TIMESTAMP - INTERVAL '2 days'),
+    ('charlie@example.com', 'docker-kubernetes-modern-devops', 5, 'Docker and Kubernetes simplified! Built my first cluster seamlessly.', CURRENT_TIMESTAMP - INTERVAL '10 days'),
+    ('david@example.com', 'python-data-science-machine-learning-bootcamp', 5, 'Pandas & ML models explained with real dataset examples.', CURRENT_TIMESTAMP - INTERVAL '7 days'),
+    ('david@example.com', 'deep-learning-llms-transformers-python', 5, 'PyTorch and LLM fine-tuning content is cutting-edge.', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+    ('fiona@example.com', 'flutter-dart-multiplatform-mobile-dev', 4, 'Flutter widgets and Riverpod state management covered thoroughly.', CURRENT_TIMESTAMP - INTERVAL '10 days'),
+    ('eva@example.com', 'figma-ui-ux-design-system-mastery', 5, 'Figma Auto Layout 5.0 and design system tokens are fantastic.', CURRENT_TIMESTAMP - INTERVAL '4 days'),
+    ('bob@example.com', 'rust-systems-programming-masterclass', 5, 'Rust memory model and borrow checker finally clicked for me.', CURRENT_TIMESTAMP - INTERVAL '2 days'),
+    ('eva@example.com', 'vue-nuxt3-modern-web-apps', 4, 'Solid Vue 3 & Nuxt 3 full-stack guide.', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+    ('charlie@example.com', 'system-design-distributed-systems', 5, 'Invaluable preparation for high-level system design interviews.', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+    ('alice@example.com', 'figma-ui-ux-design-system-mastery', 5, 'Extremely practical design-to-code workflow.', CURRENT_TIMESTAMP - INTERVAL '5 days'),
+    ('user@example.com', 'fullstack-nextjs-react-mastery', 5, 'Loved the Better-Auth and Prisma/Postgres integration details.', CURRENT_TIMESTAMP - INTERVAL '4 days')
+) AS v(email, slug, rating, content, created_at) JOIN users u ON u.email=v.email JOIN courses c ON c.slug=v.slug ON CONFLICT (id) DO NOTHING;
 
-    ('ffffffff-ffff-ffff-ffff-ffffffffff10', '33333333-3333-3333-3333-333333333303', '77777777-7777-7777-0001-0000000101', '55555555-5555-5555-5555-555555555501', true, CURRENT_TIMESTAMP - INTERVAL '8 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff11', '33333333-3333-3333-3333-333333333303', '77777777-7777-7777-0001-0000000102', '55555555-5555-5555-5555-555555555501', true, CURRENT_TIMESTAMP - INTERVAL '8 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff12', '33333333-3333-3333-3333-333333333303', '77777777-7777-7777-0009-0000000101', '55555555-5555-5555-5555-555555555509', true, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+INSERT INTO wishlists (id, user_id, course_id)
+SELECT gen_random_uuid(), u.id, c.id FROM (VALUES
+    ('user@example.com', 'docker-kubernetes-modern-devops'),
+    ('user@example.com', 'deep-learning-llms-transformers-python'),
+    ('alice@example.com', 'go-golang-microservices-masterclass'),
+    ('alice@example.com', 'system-design-distributed-systems'),
+    ('bob@example.com', 'python-data-science-machine-learning-bootcamp'),
+    ('charlie@example.com', 'rust-systems-programming-masterclass'),
+    ('david@example.com', 'go-golang-microservices-masterclass'),
+    ('eva@example.com', 'fullstack-nextjs-react-mastery'),
+    ('fiona@example.com', 'figma-ui-ux-design-system-mastery'),
+    ('fiona@example.com', 'vue-nuxt3-modern-web-apps')
+) AS v(email, slug) JOIN users u ON u.email=v.email JOIN courses c ON c.slug=v.slug ON CONFLICT (id) DO NOTHING;
 
-    ('ffffffff-ffff-ffff-ffff-ffffffffff13', '33333333-3333-3333-3333-333333333304', '77777777-7777-7777-0004-0000000101', '55555555-5555-5555-5555-555555555504', true, CURRENT_TIMESTAMP - INTERVAL '14 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff14', '33333333-3333-3333-3333-333333333304', '77777777-7777-7777-0004-0000000102', '55555555-5555-5555-5555-555555555504', true, CURRENT_TIMESTAMP - INTERVAL '14 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff15', '33333333-3333-3333-3333-333333333304', '77777777-7777-7777-0004-0000000103', '55555555-5555-5555-5555-555555555504', true, CURRENT_TIMESTAMP - INTERVAL '13 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff16', '33333333-3333-3333-3333-333333333304', '77777777-7777-7777-0004-0000000104', '55555555-5555-5555-5555-555555555504', true, CURRENT_TIMESTAMP - INTERVAL '12 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff17', '33333333-3333-3333-3333-333333333304', '77777777-7777-7777-0004-0000000105', '55555555-5555-5555-5555-555555555504', true, CURRENT_TIMESTAMP - INTERVAL '12 days'),
+INSERT INTO cart_items (id, user_id, course_id)
+SELECT gen_random_uuid(), u.id, c.id FROM (VALUES
+    ('user@example.com', 'rust-systems-programming-masterclass'),
+    ('alice@example.com', 'python-data-science-machine-learning-bootcamp'),
+    ('bob@example.com', 'docker-kubernetes-modern-devops'),
+    ('charlie@example.com', 'deep-learning-llms-transformers-python'),
+    ('david@example.com', 'fullstack-nextjs-react-mastery'),
+    ('eva@example.com', 'flutter-dart-multiplatform-mobile-dev'),
+    ('fiona@example.com', 'system-design-distributed-systems'),
+    ('alice@example.com', 'vue-nuxt3-modern-web-apps'),
+    ('bob@example.com', 'figma-ui-ux-design-system-mastery'),
+    ('charlie@example.com', 'go-golang-microservices-masterclass')
+) AS v(email, slug) JOIN users u ON u.email=v.email JOIN courses c ON c.slug=v.slug ON CONFLICT (id) DO NOTHING;
 
-    ('ffffffff-ffff-ffff-ffff-ffffffffff18', '33333333-3333-3333-3333-333333333305', '77777777-7777-7777-0005-0000000101', '55555555-5555-5555-5555-555555555505', true, CURRENT_TIMESTAMP - INTERVAL '10 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff19', '33333333-3333-3333-3333-333333333305', '77777777-7777-7777-0005-0000000102', '55555555-5555-5555-5555-555555555505', true, CURRENT_TIMESTAMP - INTERVAL '10 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff20', '33333333-3333-3333-3333-333333333305', '77777777-7777-7777-0005-0000000103', '55555555-5555-5555-5555-555555555505', true, CURRENT_TIMESTAMP - INTERVAL '9 days'),
+INSERT INTO discussions (id, course_id, user_id, lesson_id, content, created_at)
+SELECT gen_random_uuid(), c.id, u.id, l.id, v.content, v.created_at FROM (VALUES
+    ('go-golang-microservices-masterclass', 'user@example.com', 'go-golang-microservices-masterclass', 1, 2, 'Should we allow credentials when setting allowed origins in Fiber middleware?', CURRENT_TIMESTAMP - INTERVAL '5 days'),
+    ('go-golang-microservices-masterclass', 'bob@example.com', 'go-golang-microservices-masterclass', 1, 3, 'What is the optimal max_open_conns setting for a 4-core database server?', CURRENT_TIMESTAMP - INTERVAL '4 days'),
+    ('fullstack-nextjs-react-mastery', 'alice@example.com', 'fullstack-nextjs-react-mastery', 1, 2, 'When should we prefer Server Actions over standard Fiber API routes?', CURRENT_TIMESTAMP - INTERVAL '7 days'),
+    ('system-design-distributed-systems', 'charlie@example.com', 'system-design-distributed-systems', 2, 1, 'How does consistent hashing prevent cascading failures during node crash?', CURRENT_TIMESTAMP - INTERVAL '2 days'),
+    ('docker-kubernetes-modern-devops', 'charlie@example.com', 'docker-kubernetes-modern-devops', 3, 1, 'Is NGINX ingress controller preferred over Traefik in production?', CURRENT_TIMESTAMP - INTERVAL '9 days'),
+    ('python-data-science-machine-learning-bootcamp', 'david@example.com', 'python-data-science-machine-learning-bootcamp', 2, 1, 'Tips for downcasting float64 columns to float32 on big datasets.', CURRENT_TIMESTAMP - INTERVAL '6 days'),
+    ('deep-learning-llms-transformers-python', 'david@example.com', 'deep-learning-llms-transformers-python', 4, 1, 'What rank r value is recommended for fine-tuning Llama 3 8B?', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+    ('flutter-dart-multiplatform-mobile-dev', 'fiona@example.com', 'flutter-dart-multiplatform-mobile-dev', 3, 1, 'Why is Riverpod recommended over Provider for new Flutter apps?', CURRENT_TIMESTAMP - INTERVAL '8 days'),
+    ('figma-ui-ux-design-system-mastery', 'eva@example.com', 'figma-ui-ux-design-system-mastery', 2, 1, 'How to link color mode variables to Tailwind dark classes.', CURRENT_TIMESTAMP - INTERVAL '3 days'),
+    ('rust-systems-programming-masterclass', 'bob@example.com', 'rust-systems-programming-masterclass', 1, 1, 'When to use RefCell versus Mutex for interior mutability?', CURRENT_TIMESTAMP - INTERVAL '2 days')
+) AS v(c_slug, email, l_slug, ch_no, l_no, content, created_at)
+JOIN courses c ON c.slug=v.c_slug JOIN users u ON u.email=v.email
+JOIN chapters ch ON ch.course_id=(SELECT id FROM courses WHERE slug=v.l_slug) AND ch.chapter_no=v.ch_no
+JOIN lessons l ON l.chapter_id=ch.id AND l.lesson_no=v.l_no ON CONFLICT (id) DO NOTHING;
 
-    ('ffffffff-ffff-ffff-ffff-ffffffffff21', '33333333-3333-3333-3333-333333333306', '77777777-7777-7777-0008-0000000101', '55555555-5555-5555-5555-555555555508', true, CURRENT_TIMESTAMP - INTERVAL '6 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff22', '33333333-3333-3333-3333-333333333306', '77777777-7777-7777-0008-0000000102', '55555555-5555-5555-5555-555555555508', true, CURRENT_TIMESTAMP - INTERVAL '6 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff23', '33333333-3333-3333-3333-333333333306', '77777777-7777-7777-0010-0000000101', '55555555-5555-5555-5555-555555555510', true, CURRENT_TIMESTAMP - INTERVAL '1 day'),
+INSERT INTO certificates (id, user_id, course_id, issued_at)
+SELECT gen_random_uuid(), u.id, c.id, v.issued_at FROM (VALUES
+    ('user@example.com', 'go-golang-microservices-masterclass', CURRENT_TIMESTAMP - INTERVAL '7 days'),
+    ('charlie@example.com', 'docker-kubernetes-modern-devops', CURRENT_TIMESTAMP - INTERVAL '12 days'),
+    ('alice@example.com', 'figma-ui-ux-design-system-mastery', CURRENT_TIMESTAMP - INTERVAL '5 days'),
+    ('david@example.com', 'python-data-science-machine-learning-bootcamp', CURRENT_TIMESTAMP - INTERVAL '9 days'),
+    ('fiona@example.com', 'flutter-dart-multiplatform-mobile-dev', CURRENT_TIMESTAMP - INTERVAL '11 days'),
+    ('bob@example.com', 'go-golang-microservices-masterclass', CURRENT_TIMESTAMP - INTERVAL '4 days'),
+    ('user@example.com', 'system-design-distributed-systems', CURRENT_TIMESTAMP - INTERVAL '2 days'),
+    ('eva@example.com', 'vue-nuxt3-modern-web-apps', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+    ('alice@example.com', 'fullstack-nextjs-react-mastery', CURRENT_TIMESTAMP - INTERVAL '6 days'),
+    ('bob@example.com', 'rust-systems-programming-masterclass', CURRENT_TIMESTAMP - INTERVAL '1 day')
+) AS v(email, slug, issued_at) JOIN users u ON u.email=v.email JOIN courses c ON c.slug=v.slug ON CONFLICT (id) DO NOTHING;
 
-    ('ffffffff-ffff-ffff-ffff-ffffffffff24', '33333333-3333-3333-3333-333333333307', '77777777-7777-7777-0007-0000000101', '55555555-5555-5555-5555-555555555507', true, CURRENT_TIMESTAMP - INTERVAL '13 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff25', '33333333-3333-3333-3333-333333333307', '77777777-7777-7777-0007-0000000102', '55555555-5555-5555-5555-555555555507', true, CURRENT_TIMESTAMP - INTERVAL '13 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff26', '33333333-3333-3333-3333-333333333307', '77777777-7777-7777-0007-0000000103', '55555555-5555-5555-5555-555555555507', true, CURRENT_TIMESTAMP - INTERVAL '12 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff27', '33333333-3333-3333-3333-333333333307', '77777777-7777-7777-0002-0000000101', '55555555-5555-5555-5555-555555555502', true, CURRENT_TIMESTAMP - INTERVAL '4 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff28', '33333333-3333-3333-3333-333333333307', '77777777-7777-7777-0002-0000000102', '55555555-5555-5555-5555-555555555502', true, CURRENT_TIMESTAMP - INTERVAL '4 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff29', '33333333-3333-3333-3333-333333333301', '77777777-7777-7777-0003-0000000101', '55555555-5555-5555-5555-555555555503', true, CURRENT_TIMESTAMP - INTERVAL '4 days'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffff30', '33333333-3333-3333-3333-333333333301', '77777777-7777-7777-0003-0000000102', '55555555-5555-5555-5555-555555555503', true, CURRENT_TIMESTAMP - INTERVAL '3 days')
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO transactions (id, user_id, course_id, amount, status, razorpay_order_id, razorpay_payment_id)
+SELECT gen_random_uuid(), u.id, c.id, v.amount, v.status, v.razorpay_order_id, v.razorpay_payment_id FROM (VALUES
+    ('user@example.com', 'go-golang-microservices-masterclass', 49.99, 'success', 'order_K1a2b3c4d5', 'pay_P1a2b3c4d5'),
+    ('user@example.com', 'fullstack-nextjs-react-mastery', 59.99, 'success', 'order_K2a2b3c4d5', 'pay_P2a2b3c4d5'),
+    ('alice@example.com', 'fullstack-nextjs-react-mastery', 59.99, 'success', 'order_K3a2b3c4d5', 'pay_P3a2b3c4d5'),
+    ('bob@example.com', 'go-golang-microservices-masterclass', 49.99, 'success', 'order_K4a2b3c4d5', 'pay_P4a2b3c4d5'),
+    ('charlie@example.com', 'docker-kubernetes-modern-devops', 39.99, 'success', 'order_K5a2b3c4d5', 'pay_P5a2b3c4d5'),
+    ('david@example.com', 'python-data-science-machine-learning-bootcamp', 44.99, 'success', 'order_K6a2b3c4d5', 'pay_P6a2b3c4d5'),
+    ('eva@example.com', 'figma-ui-ux-design-system-mastery', 29.99, 'success', 'order_K7a2b3c4d5', 'pay_P7a2b3c4d5'),
+    ('fiona@example.com', 'flutter-dart-multiplatform-mobile-dev', 49.99, 'success', 'order_K8a2b3c4d5', 'pay_P8a2b3c4d5'),
+    ('bob@example.com', 'rust-systems-programming-masterclass', 54.99, 'success', 'order_K9a2b3c4d5', 'pay_P9a2b3c4d5'),
+    ('eva@example.com', 'vue-nuxt3-modern-web-apps', 34.99, 'success', 'order_K0a2b3c4d5', 'pay_P0a2b3c4d5')
+) AS v(email, slug, amount, status, razorpay_order_id, razorpay_payment_id)
+JOIN users u ON u.email=v.email JOIN courses c ON c.slug=v.slug ON CONFLICT (id) DO NOTHING;
 
--- Feedbacks / Reviews (15 Feedbacks)
-INSERT INTO feedbacks (id, user_id, course_id, rating, content, created_at) VALUES
-    ('12121212-1212-1212-1212-121212121201', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555501', 5, 'Absolute gold standard course for Go microservices! Fiber and sqlx explanations are top tier.', CURRENT_TIMESTAMP - INTERVAL '6 days'),
-    ('12121212-1212-1212-1212-121212121202', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555501', 5, 'Great practical examples. The gRPC section helped me refactor my company service.', CURRENT_TIMESTAMP - INTERVAL '5 days'),
-    ('12121212-1212-1212-1212-121212121203', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555502', 5, 'Next.js 15 App router explained so clearly. Highly recommend John Doe!', CURRENT_TIMESTAMP - INTERVAL '8 days'),
-    ('12121212-1212-1212-1212-121212121204', '33333333-3333-3333-3333-333333333307', '55555555-5555-5555-5555-555555555502', 4, 'Very good overview of Server Components and Server Actions.', CURRENT_TIMESTAMP - INTERVAL '3 days'),
-    ('12121212-1212-1212-1212-121212121205', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555503', 5, 'Alex Rivers is an amazing instructor. System design principles are crystal clear.', CURRENT_TIMESTAMP - INTERVAL '2 days'),
-    ('12121212-1212-1212-1212-121212121206', '33333333-3333-3333-3333-333333333304', '55555555-5555-5555-5555-555555555504', 5, 'Docker and Kubernetes simplified! Built my first cluster seamlessly.', CURRENT_TIMESTAMP - INTERVAL '10 days'),
-    ('12121212-1212-1212-1212-121212121207', '33333333-3333-3333-3333-333333333305', '55555555-5555-5555-5555-555555555505', 5, 'Pandas & ML models explained with real dataset examples.', CURRENT_TIMESTAMP - INTERVAL '7 days'),
-    ('12121212-1212-1212-1212-121212121208', '33333333-3333-3333-3333-333333333305', '55555555-5555-5555-5555-555555555506', 5, 'PyTorch and LLM fine-tuning content is cutting-edge.', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-    ('12121212-1212-1212-1212-121212121209', '33333333-3333-3333-3333-333333333307', '55555555-5555-5555-5555-555555555507', 4, 'Flutter widgets and Riverpod state management covered thoroughly.', CURRENT_TIMESTAMP - INTERVAL '10 days'),
-    ('12121212-1212-1212-1212-121212121210', '33333333-3333-3333-3333-333333333306', '55555555-5555-5555-5555-555555555508', 5, 'Figma Auto Layout 5.0 and design system tokens are fantastic.', CURRENT_TIMESTAMP - INTERVAL '4 days'),
-    ('12121212-1212-1212-1212-121212121211', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555509', 5, 'Rust memory model and borrow checker finally clicked for me.', CURRENT_TIMESTAMP - INTERVAL '2 days'),
-    ('12121212-1212-1212-1212-121212121212', '33333333-3333-3333-3333-333333333306', '55555555-5555-5555-5555-555555555510', 4, 'Solid Vue 3 & Nuxt 3 full-stack guide.', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-    ('12121212-1212-1212-1212-121212121213', '33333333-3333-3333-3333-333333333304', '55555555-5555-5555-5555-555555555503', 5, 'Invaluable preparation for high-level system design interviews.', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-    ('12121212-1212-1212-1212-121212121214', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555508', 5, 'Extremely practical design-to-code workflow.', CURRENT_TIMESTAMP - INTERVAL '5 days'),
-    ('12121212-1212-1212-1212-121212121215', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555502', 5, 'Loved the Better-Auth and Prisma/Postgres integration details.', CURRENT_TIMESTAMP - INTERVAL '4 days')
-ON CONFLICT (id) DO NOTHING;
-
--- Wishlists (10 Items)
-INSERT INTO wishlists (id, user_id, course_id) VALUES
-    ('34343434-3434-3434-3434-343434343401', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555504'),
-    ('34343434-3434-3434-3434-343434343402', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555506'),
-    ('34343434-3434-3434-3434-343434343403', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555501'),
-    ('34343434-3434-3434-3434-343434343404', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555503'),
-    ('34343434-3434-3434-3434-343434343405', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555505'),
-    ('34343434-3434-3434-3434-343434343406', '33333333-3333-3333-3333-333333333304', '55555555-5555-5555-5555-555555555509'),
-    ('34343434-3434-3434-3434-343434343407', '33333333-3333-3333-3333-333333333305', '55555555-5555-5555-5555-555555555501'),
-    ('34343434-3434-3434-3434-343434343408', '33333333-3333-3333-3333-333333333306', '55555555-5555-5555-5555-555555555502'),
-    ('34343434-3434-3434-3434-343434343409', '33333333-3333-3333-3333-333333333307', '55555555-5555-5555-5555-555555555508'),
-    ('34343434-3434-3434-3434-343434343410', '33333333-3333-3333-3333-333333333307', '55555555-5555-5555-5555-555555555510')
-ON CONFLICT (id) DO NOTHING;
-
--- Cart Items (10 Items)
-INSERT INTO cart_items (id, user_id, course_id) VALUES
-    ('56565656-5656-5656-5656-565656565601', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555509'),
-    ('56565656-5656-5656-5656-565656565602', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555505'),
-    ('56565656-5656-5656-5656-565656565603', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555504'),
-    ('56565656-5656-5656-5656-565656565604', '33333333-3333-3333-3333-333333333304', '55555555-5555-5555-5555-555555555506'),
-    ('56565656-5656-5656-5656-565656565605', '33333333-3333-3333-3333-333333333305', '55555555-5555-5555-5555-555555555502'),
-    ('56565656-5656-5656-5656-565656565606', '33333333-3333-3333-3333-333333333306', '55555555-5555-5555-5555-555555555507'),
-    ('56565656-5656-5656-5656-565656565607', '33333333-3333-3333-3333-333333333307', '55555555-5555-5555-5555-555555555503'),
-    ('56565656-5656-5656-5656-565656565608', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555510'),
-    ('56565656-5656-5656-5656-565656565609', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555508'),
-    ('56565656-5656-5656-5656-565656565610', '33333333-3333-3333-3333-333333333304', '55555555-5555-5555-5555-555555555501')
-ON CONFLICT (id) DO NOTHING;
-
--- Discussions & Replies (10 Discussions)
-INSERT INTO discussions (id, course_id, user_id, lesson_id, content, created_at) VALUES
-    ('78787878-7878-7878-7878-787878787801', '55555555-5555-5555-5555-555555555501', '33333333-3333-3333-3333-333333333301', '77777777-7777-7777-0001-0000000102', 'Should we allow credentials when setting allowed origins in Fiber middleware?', CURRENT_TIMESTAMP - INTERVAL '5 days'),
-    ('78787878-7878-7878-7878-787878787802', '55555555-5555-5555-5555-555555555501', '33333333-3333-3333-3333-333333333303', '77777777-7777-7777-0001-0000000103', 'What is the optimal max_open_conns setting for a 4-core database server?', CURRENT_TIMESTAMP - INTERVAL '4 days'),
-    ('78787878-7878-7878-7878-787878787803', '55555555-5555-5555-5555-555555555502', '33333333-3333-3333-3333-333333333302', '77777777-7777-7777-0002-0000000102', 'When should we prefer Server Actions over standard Fiber API routes?', CURRENT_TIMESTAMP - INTERVAL '7 days'),
-    ('78787878-7878-7878-7878-787878787804', '55555555-5555-5555-5555-555555555503', '33333333-3333-3333-3333-333333333304', '77777777-7777-7777-0003-0000000201', 'How does consistent hashing prevent cascading failures during node crash?', CURRENT_TIMESTAMP - INTERVAL '2 days'),
-    ('78787878-7878-7878-7878-787878787805', '55555555-5555-5555-5555-555555555504', '33333333-3333-3333-3333-333333333304', '77777777-7777-7777-0004-0000000301', 'Is NGINX ingress controller preferred over Traefik in production?', CURRENT_TIMESTAMP - INTERVAL '9 days'),
-    ('78787878-7878-7878-7878-787878787806', '55555555-5555-5555-5555-555555555505', '33333333-3333-3333-3333-333333333305', '77777777-7777-7777-0005-0000000201', 'Tips for downcasting float64 columns to float32 on big datasets.', CURRENT_TIMESTAMP - INTERVAL '6 days'),
-    ('78787878-7878-7878-7878-787878787807', '55555555-5555-5555-5555-555555555506', '33333333-3333-3333-3333-333333333305', '77777777-7777-7777-0006-0000000401', 'What rank r value is recommended for fine-tuning Llama 3 8B?', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-    ('78787878-7878-7878-7878-787878787808', '55555555-5555-5555-5555-555555555507', '33333333-3333-3333-3333-333333333307', '77777777-7777-7777-0007-0000000301', 'Why is Riverpod recommended over Provider for new Flutter apps?', CURRENT_TIMESTAMP - INTERVAL '8 days'),
-    ('78787878-7878-7878-7878-787878787809', '55555555-5555-5555-5555-555555555508', '33333333-3333-3333-3333-333333333306', '77777777-7777-7777-0008-0000000201', 'How to link color mode variables to Tailwind dark classes.', CURRENT_TIMESTAMP - INTERVAL '3 days'),
-    ('78787878-7878-7878-7878-787878787810', '55555555-5555-5555-5555-555555555509', '33333333-3333-3333-3333-333333333303', '77777777-7777-7777-0009-0000000101', 'When to use RefCell versus Mutex for interior mutability?', CURRENT_TIMESTAMP - INTERVAL '2 days')
-ON CONFLICT (id) DO NOTHING;
-
--- Certificates (10 Certificates)
-INSERT INTO certificates (id, user_id, course_id, issued_at) VALUES
-    ('56565656-5656-5656-5656-565656565601', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555501', CURRENT_TIMESTAMP - INTERVAL '7 days'),
-    ('56565656-5656-5656-5656-565656565602', '33333333-3333-3333-3333-333333333304', '55555555-5555-5555-5555-555555555504', CURRENT_TIMESTAMP - INTERVAL '12 days'),
-    ('56565656-5656-5656-5656-565656565603', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555508', CURRENT_TIMESTAMP - INTERVAL '5 days'),
-    ('56565656-5656-5656-5656-565656565604', '33333333-3333-3333-3333-333333333305', '55555555-5555-5555-5555-555555555505', CURRENT_TIMESTAMP - INTERVAL '9 days'),
-    ('56565656-5656-5656-5656-565656565605', '33333333-3333-3333-3333-333333333307', '55555555-5555-5555-5555-555555555507', CURRENT_TIMESTAMP - INTERVAL '11 days'),
-    ('56565656-5656-5656-5656-565656565606', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555501', CURRENT_TIMESTAMP - INTERVAL '4 days'),
-    ('56565656-5656-5656-5656-565656565607', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555503', CURRENT_TIMESTAMP - INTERVAL '2 days'),
-    ('56565656-5656-5656-5656-565656565608', '33333333-3333-3333-3333-333333333306', '55555555-5555-5555-5555-555555555510', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-    ('56565656-5656-5656-5656-565656565609', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555502', CURRENT_TIMESTAMP - INTERVAL '6 days'),
-    ('56565656-5656-5656-5656-565656565610', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555509', CURRENT_TIMESTAMP - INTERVAL '1 day')
-ON CONFLICT (id) DO NOTHING;
-
--- Transactions (10 Transactions)
-INSERT INTO transactions (id, user_id, course_id, amount, status, razorpay_order_id, razorpay_payment_id) VALUES
-    ('90909090-9090-9090-9090-909090909001', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555501', 49.99, 'success', 'order_K1a2b3c4d5', 'pay_P1a2b3c4d5'),
-    ('90909090-9090-9090-9090-909090909002', '33333333-3333-3333-3333-333333333301', '55555555-5555-5555-5555-555555555502', 59.99, 'success', 'order_K2a2b3c4d5', 'pay_P2a2b3c4d5'),
-    ('90909090-9090-9090-9090-909090909003', '33333333-3333-3333-3333-333333333302', '55555555-5555-5555-5555-555555555502', 59.99, 'success', 'order_K3a2b3c4d5', 'pay_P3a2b3c4d5'),
-    ('90909090-9090-9090-9090-909090909004', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555501', 49.99, 'success', 'order_K4a2b3c4d5', 'pay_P4a2b3c4d5'),
-    ('90909090-9090-9090-9090-909090909005', '33333333-3333-3333-3333-333333333304', '55555555-5555-5555-5555-555555555504', 39.99, 'success', 'order_K5a2b3c4d5', 'pay_P5a2b3c4d5'),
-    ('90909090-9090-9090-9090-909090909006', '33333333-3333-3333-3333-333333333305', '55555555-5555-5555-5555-555555555505', 44.99, 'success', 'order_K6a2b3c4d5', 'pay_P6a2b3c4d5'),
-    ('90909090-9090-9090-9090-909090909007', '33333333-3333-3333-3333-333333333306', '55555555-5555-5555-5555-555555555508', 29.99, 'success', 'order_K7a2b3c4d5', 'pay_P7a2b3c4d5'),
-    ('90909090-9090-9090-9090-909090909008', '33333333-3333-3333-3333-333333333307', '55555555-5555-5555-5555-555555555507', 49.99, 'success', 'order_K8a2b3c4d5', 'pay_P8a2b3c4d5'),
-    ('90909090-9090-9090-9090-909090909009', '33333333-3333-3333-3333-333333333303', '55555555-5555-5555-5555-555555555509', 54.99, 'success', 'order_K9a2b3c4d5', 'pay_P9a2b3c4d5'),
-    ('90909090-9090-9090-9090-909090909010', '33333333-3333-3333-3333-333333333306', '55555555-5555-5555-5555-555555555510', 34.99, 'success', 'order_K0a2b3c4d5', 'pay_P0a2b3c4d5')
-ON CONFLICT (id) DO NOTHING;

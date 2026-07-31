@@ -105,34 +105,38 @@ END $$;
 
 -- Insert Users (2 Admins, 3 Tutors, 7 Students)
 INSERT INTO "users" (id, name, email, "emailVerified", image) VALUES
-    ('11111111-1111-1111-1111-111111111101', 'System Admin', 'admin@example.com', true, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'),
-    ('11111111-1111-1111-1111-111111111102', 'Lead Admin', 'superadmin@example.com', true, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80'),
-    ('22222222-2222-2222-2222-222222222201', 'Alex Rivers (Go & Systems Expert)', 'tutor@example.com', true, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80'),
-    ('22222222-2222-2222-2222-222222222202', 'Dr. Sarah Smith (Data Science Lead)', 'sarah.smith@example.com', true, 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80'),
-    ('22222222-2222-2222-2222-222222222203', 'John Doe (Next.js & Frontend Architect)', 'john.doe@example.com', true, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80'),
-    ('33333333-3333-3333-3333-333333333301', 'Regular Student', 'user@example.com', true, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'),
-    ('33333333-3333-3333-3333-333333333302', 'Alice Vance', 'alice@example.com', true, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&q=80'),
-    ('33333333-3333-3333-3333-333333333303', 'Bob Miller', 'bob@example.com', true, 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80'),
-    ('33333333-3333-3333-3333-333333333304', 'Charlie Brown', 'charlie@example.com', true, 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80'),
-    ('33333333-3333-3333-3333-333333333305', 'David Wright', 'david@example.com', true, 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80'),
-    ('33333333-3333-3333-3333-333333333306', 'Eva Davis', 'eva@example.com', true, 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=250&q=80'),
-    ('33333333-3333-3333-3333-333333333307', 'Fiona Gallagher', 'fiona@example.com', true, 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=250&q=80')
-ON CONFLICT (id) DO NOTHING;
+    (gen_random_uuid(), 'System Admin', 'admin@example.com', true, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'Lead Admin', 'superadmin@example.com', true, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'Alex Rivers (Go & Systems Expert)', 'tutor@example.com', true, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'Dr. Sarah Smith (Data Science Lead)', 'sarah.smith@example.com', true, 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'John Doe (Next.js & Frontend Architect)', 'john.doe@example.com', true, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'Regular Student', 'user@example.com', true, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'Alice Vance', 'alice@example.com', true, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'Bob Miller', 'bob@example.com', true, 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'Charlie Brown', 'charlie@example.com', true, 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'David Wright', 'david@example.com', true, 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'Eva Davis', 'eva@example.com', true, 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=250&q=80'),
+    (gen_random_uuid(), 'Fiona Gallagher', 'fiona@example.com', true, 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=250&q=80')
+ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, image = EXCLUDED.image;
 
 -- Insert Credentials (Passwords: admin123456, tutor123456, user123456 / password123)
-INSERT INTO credentials (user_id, password_hash) VALUES
-    ('11111111-1111-1111-1111-111111111101', crypt('admin123456', gen_salt('bf'))),
-    ('11111111-1111-1111-1111-111111111102', crypt('admin123456', gen_salt('bf'))),
-    ('22222222-2222-2222-2222-222222222201', crypt('tutor123456', gen_salt('bf'))),
-    ('22222222-2222-2222-2222-222222222202', crypt('tutor123456', gen_salt('bf'))),
-    ('22222222-2222-2222-2222-222222222203', crypt('tutor123456', gen_salt('bf'))),
-    ('33333333-3333-3333-3333-333333333301', crypt('user123456', gen_salt('bf'))),
-    ('33333333-3333-3333-3333-333333333302', crypt('password123', gen_salt('bf'))),
-    ('33333333-3333-3333-3333-333333333303', crypt('password123', gen_salt('bf'))),
-    ('33333333-3333-3333-3333-333333333304', crypt('password123', gen_salt('bf'))),
-    ('33333333-3333-3333-3333-333333333305', crypt('password123', gen_salt('bf'))),
-    ('33333333-3333-3333-3333-333333333306', crypt('password123', gen_salt('bf'))),
-    ('33333333-3333-3333-3333-333333333307', crypt('password123', gen_salt('bf')))
+INSERT INTO credentials (user_id, password_hash)
+SELECT u.id, crypt(v.password, gen_salt('bf'))
+FROM (VALUES
+    ('admin@example.com', 'admin123456'),
+    ('superadmin@example.com', 'admin123456'),
+    ('tutor@example.com', 'tutor123456'),
+    ('sarah.smith@example.com', 'tutor123456'),
+    ('john.doe@example.com', 'tutor123456'),
+    ('user@example.com', 'user123456'),
+    ('alice@example.com', 'password123'),
+    ('bob@example.com', 'password123'),
+    ('charlie@example.com', 'password123'),
+    ('david@example.com', 'password123'),
+    ('eva@example.com', 'password123'),
+    ('fiona@example.com', 'password123')
+) AS v(email, password)
+JOIN users u ON u.email = v.email
 ON CONFLICT (user_id) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- Map User Roles
@@ -147,17 +151,21 @@ JOIN roles r ON (
 ON CONFLICT DO NOTHING;
 
 -- Insert User Profiles (Merged single `profiles` table)
-INSERT INTO profiles (user_id, bio, headline, website, total_students, rating_avg) VALUES
-    ('11111111-1111-1111-1111-111111111101', 'Platform Administrator managing operations and course quality.', 'CourseHunt Platform Admin', 'https://coursehunt.com', 0, 0),
-    ('11111111-1111-1111-1111-111111111102', 'Operations & System Security Lead at CourseHunt.', 'Senior Admin', 'https://coursehunt.com', 0, 0),
-    ('22222222-2222-2222-2222-222222222201', 'Alex Rivers is a veteran software architect who has led Go microservices transformations at scale.', 'Go & Microservices Architect', 'https://alexrivers.dev', 120, 4.90),
-    ('22222222-2222-2222-2222-222222222202', 'Dr. Sarah Smith holds a PhD from MIT and brings real-world AI research experience into interactive, easy-to-grasp courses.', 'AI & Data Science Instructor', 'https://sarahsmith.ai', 85, 4.95),
-    ('22222222-2222-2222-2222-222222222203', 'John Doe is a Next.js Core Contributor and UI design advocate focused on clean code, performance, and accessibility.', 'Principal Frontend Engineer', 'https://johndoe.codes', 95, 4.85),
-    ('33333333-3333-3333-3333-333333333301', 'Passionate learner exploring Go backend engineering and modern web technologies.', 'Software Developer', NULL, 0, 0),
-    ('33333333-3333-3333-3333-333333333302', 'Computer Science student focusing on Frontend engineering.', 'CS Undergrad', NULL, 0, 0),
-    ('33333333-3333-3333-3333-333333333303', 'Self-taught developer building full-stack applications.', 'Junior Web Developer', NULL, 0, 0),
-    ('33333333-3333-3333-3333-333333333304', 'DevOps enthusiast transitioning into Cloud Native engineering.', 'Junior Systems Engineer', NULL, 0, 0),
-    ('33333333-3333-3333-3333-333333333305', 'Data enthusiast learning Python & AI models.', 'Data Analyst', NULL, 0, 0),
-    ('33333333-3333-3333-3333-333333333306', 'UI/UX Designer expanding into React and Next.js frontend development.', 'Product Designer', NULL, 0, 0),
-    ('33333333-3333-3333-3333-333333333307', 'Mobile app developer learning Flutter and React Native.', 'App Developer', NULL, 0, 0)
+INSERT INTO profiles (user_id, bio, headline, website, total_students, rating_avg)
+SELECT u.id, v.bio, v.headline, v.website, v.total_students, v.rating_avg
+FROM (VALUES
+    ('admin@example.com', 'Platform Administrator managing operations and course quality.', 'CourseHunt Platform Admin', 'https://coursehunt.com', 0, 0),
+    ('superadmin@example.com', 'Operations & System Security Lead at CourseHunt.', 'Senior Admin', 'https://coursehunt.com', 0, 0),
+    ('tutor@example.com', 'Alex Rivers is a veteran software architect who has led Go microservices transformations at scale.', 'Go & Microservices Architect', 'https://alexrivers.dev', 120, 4.90),
+    ('sarah.smith@example.com', 'Dr. Sarah Smith holds a PhD from MIT and brings real-world AI research experience into interactive, easy-to-grasp courses.', 'AI & Data Science Instructor', 'https://sarahsmith.ai', 85, 4.95),
+    ('john.doe@example.com', 'John Doe is a Next.js Core Contributor and UI design advocate focused on clean code, performance, and accessibility.', 'Principal Frontend Engineer', 'https://johndoe.codes', 95, 4.85),
+    ('user@example.com', 'Passionate learner exploring Go backend engineering and modern web technologies.', 'Software Developer', NULL, 0, 0),
+    ('alice@example.com', 'Computer Science student focusing on Frontend engineering.', 'CS Undergrad', NULL, 0, 0),
+    ('bob@example.com', 'Self-taught developer building full-stack applications.', 'Junior Web Developer', NULL, 0, 0),
+    ('charlie@example.com', 'DevOps enthusiast transitioning into Cloud Native engineering.', 'Junior Systems Engineer', NULL, 0, 0),
+    ('david@example.com', 'Data enthusiast learning Python & AI models.', 'Data Analyst', NULL, 0, 0),
+    ('eva@example.com', 'UI/UX Designer expanding into React and Next.js frontend development.', 'Product Designer', NULL, 0, 0),
+    ('fiona@example.com', 'Mobile app developer learning Flutter and React Native.', 'App Developer', NULL, 0, 0)
+) AS v(email, bio, headline, website, total_students, rating_avg)
+JOIN users u ON u.email = v.email
 ON CONFLICT (user_id) DO UPDATE SET bio = EXCLUDED.bio, headline = EXCLUDED.headline, website = EXCLUDED.website;

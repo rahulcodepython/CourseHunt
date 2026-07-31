@@ -2,25 +2,29 @@
 
 -- Root Categories
 INSERT INTO categories (id, parent_id, name) VALUES
-    ('44444444-4444-4444-4444-444444444401', NULL, 'Web Development'),
-    ('44444444-4444-4444-4444-444444444402', NULL, 'Mobile Development'),
-    ('44444444-4444-4444-4444-444444444403', NULL, 'Data Science & AI'),
-    ('44444444-4444-4444-4444-444444444404', NULL, 'Cloud & DevOps'),
-    ('44444444-4444-4444-4444-444444444405', NULL, 'Design & UX')
-ON CONFLICT (id) DO NOTHING;
+    (gen_random_uuid(), NULL, 'Web Development'),
+    (gen_random_uuid(), NULL, 'Mobile Development'),
+    (gen_random_uuid(), NULL, 'Data Science & AI'),
+    (gen_random_uuid(), NULL, 'Cloud & DevOps'),
+    (gen_random_uuid(), NULL, 'Design & UX')
+ON CONFLICT (parent_id, name) DO NOTHING;
 
 -- Subcategories (Categories with parent_id)
-INSERT INTO categories (id, parent_id, name) VALUES
-    ('44444444-4444-4444-4444-444444444411', '44444444-4444-4444-4444-444444444401', 'React & Next.js'),
-    ('44444444-4444-4444-4444-444444444412', '44444444-4444-4444-4444-444444444401', 'Golang & Backend'),
-    ('44444444-4444-4444-4444-444444444413', '44444444-4444-4444-4444-444444444401', 'Vue & Nuxt'),
-    ('44444444-4444-4444-4444-444444444414', '44444444-4444-4444-4444-444444444401', 'Node.js & Microservices'),
-    ('44444444-4444-4444-4444-444444444415', '44444444-4444-4444-4444-444444444402', 'Flutter & Dart'),
-    ('44444444-4444-4444-4444-444444444416', '44444444-4444-4444-4444-444444444402', 'React Native'),
-    ('44444444-4444-4444-4444-444444444417', '44444444-4444-4444-4444-444444444403', 'Machine Learning with Python'),
-    ('44444444-4444-4444-4444-444444444418', '44444444-4444-4444-4444-444444444403', 'Deep Learning & LLMs'),
-    ('44444444-4444-4444-4444-444444444419', '44444444-4444-4444-4444-444444444404', 'Docker & Kubernetes'),
-    ('44444444-4444-4444-4444-444444444420', '44444444-4444-4444-4444-444444444404', 'AWS & Cloud Architecture'),
-    ('44444444-4444-4444-4444-444444444421', '44444444-4444-4444-4444-444444444405', 'UI/UX Design Fundamentals'),
-    ('44444444-4444-4444-4444-444444444422', '44444444-4444-4444-4444-444444444405', 'Figma & Prototyping')
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO categories (id, parent_id, name)
+SELECT gen_random_uuid(), c.id, v.name
+FROM (VALUES
+    ('Web Development', 'React & Next.js'),
+    ('Web Development', 'Golang & Backend'),
+    ('Web Development', 'Vue & Nuxt'),
+    ('Web Development', 'Node.js & Microservices'),
+    ('Mobile Development', 'Flutter & Dart'),
+    ('Mobile Development', 'React Native'),
+    ('Data Science & AI', 'Machine Learning with Python'),
+    ('Data Science & AI', 'Deep Learning & LLMs'),
+    ('Cloud & DevOps', 'Docker & Kubernetes'),
+    ('Cloud & DevOps', 'AWS & Cloud Architecture'),
+    ('Design & UX', 'UI/UX Design Fundamentals'),
+    ('Design & UX', 'Figma & Prototyping')
+) AS v(parent_name, name)
+JOIN categories c ON c.name = v.parent_name AND c.parent_id IS NULL
+ON CONFLICT (parent_id, name) DO NOTHING;
