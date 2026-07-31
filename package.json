@@ -13,14 +13,18 @@
     "sharp"
   ],
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "turbo": "^2.5.0"
+    "@types/node": "^26.1.2",
+    "turbo": "^2.10.7",
+    "typescript": "7.0.2"
   },
-  "packageManager": "pnpm@11.17.0",
+  "packageManager": "pnpm@11.18.0",
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "zod": "^4.4.3"
+  },
+  "resolutions": {
+    "typescript": "^7.0.0"
   }
 }
