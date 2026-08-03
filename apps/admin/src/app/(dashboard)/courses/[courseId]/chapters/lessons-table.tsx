@@ -2,6 +2,7 @@
 
 import { useLessonsQuery } from "@package/query-hooks/lessons.api";
 import { Button } from "@package/ui/button";
+import { Badge } from "@package/ui/badge";
 import { Icon } from "@package/components/icon";
 import { cn } from "@package/lib/utils";
 import Link from "next/link";
@@ -12,6 +13,21 @@ interface LessonsTableProps {
 	courseId: string;
 }
 
+const lessonTypeBadge: Record<string, { label: string; className: string }> = {
+	video: {
+		label: "Video",
+		className: "bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-400",
+	},
+	document: {
+		label: "Document",
+		className: "bg-green-100 text-green-800 dark:bg-green-500/15 dark:text-green-400",
+	},
+	quiz: {
+		label: "Quiz",
+		className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400",
+	},
+};
+
 export function LessonsTable({ chapterId, courseId }: LessonsTableProps) {
 	const { data: raw, isLoading } = useLessonsQuery(chapterId);
 	const lessons: Lesson[] = raw?.data ?? [];
@@ -21,39 +37,38 @@ export function LessonsTable({ chapterId, courseId }: LessonsTableProps) {
 	return (
 		<div className="space-y-3">
 			{lessons.map((lesson) => (
-				<div key={lesson.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-2 px-3 rounded-lg bg-background border gap-3 sm:gap-0">
-					<div className="flex items-start sm:items-center gap-3">
-						<div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0 text-xs font-medium">
-							{lesson.lesson_no}
-						</div>
-						<div>
-							<div className="flex items-center gap-2">
-								<span className="text-sm font-medium">{lesson.title}</span>
-								<span className={cn(
-									"text-[10px] uppercase font-bold px-1.5 py-0.5 rounded",
-									lesson.lesson_type === "video" ? "bg-blue-500/10 text-blue-500" :
-									lesson.lesson_type === "document" ? "bg-green-500/10 text-green-500" :
-									"bg-amber-500/10 text-amber-500"
-								)}>
-									{lesson.lesson_type}
-								</span>
-							</div>
-							<p className="text-xs text-muted-foreground line-clamp-1">{lesson.short_description || "No description"}</p>
-						</div>
+				<div
+					key={lesson.id}
+					className="flex items-start gap-3 rounded-lg border bg-background p-3"
+				>
+					<div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground">
+						{lesson.lesson_no}
 					</div>
-					<div className="flex items-center gap-1.5 self-end sm:self-auto">
-						<Link href={`/discussions/${lesson.id}`} title="View discussions">
-							<Button variant="outline" size="sm">
-								<Icon name="IconMessage" className="w-4 h-4" />
-								<span className="ml-1 text-xs">Discussions</span>
-							</Button>
-						</Link>
+					<div className="min-w-0 flex-1">
+						<div className="flex items-center gap-2">
+							<p className="truncate font-medium">{lesson.title}</p>
+							<Badge
+								className={cn(
+									"shrink-0",
+									lessonTypeBadge[lesson.lesson_type]?.className,
+								)}
+							>
+								{lessonTypeBadge[lesson.lesson_type]?.label ?? lesson.lesson_type}
+							</Badge>
+						</div>
+						<p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">
+							{lesson.short_description || "No description"}
+						</p>
 					</div>
+					<Button variant="outline" size="sm" asChild className="shrink-0">
+						<Link href={`/discussions/${lesson.id}`}>Discussions</Link>
+					</Button>
 				</div>
 			))}
 			{lessons.length === 0 && (
-				<div className="text-center py-6 border-2 border-dashed rounded-lg">
-					<p className="text-sm text-muted-foreground">No lessons in this chapter.</p>
+				<div className="flex flex-col items-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-muted-foreground">
+					<Icon name="IconHierarchy" className="size-6 opacity-40" />
+					<p className="text-sm">No lessons in this chapter.</p>
 				</div>
 			)}
 		</div>

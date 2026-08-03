@@ -1,13 +1,17 @@
 "use client";
 
 import { useChangePasswordMutation } from "@package/query-hooks/auth.api";
+import { AuthCard } from "@package/components/auth-card";
 import { Button } from "@package/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
 import { Label } from "@package/ui/label";
+import { Icon } from "@package/components/icon";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
+
+const inputClass =
+  "border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30";
 
 export default function ChangePasswordPage() {
     const router = useRouter();
@@ -45,55 +49,65 @@ export default function ChangePasswordPage() {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-zinc-950 via-zinc-900 to-zinc-950 p-4">
-            <Card className="w-full max-w-md border-zinc-800 bg-zinc-900/50 backdrop-blur-xl shadow-2xl">
-                <CardHeader className="space-y-1 text-center">
-                    <CardTitle className="text-3xl font-bold tracking-tight text-white">Change Password</CardTitle>
-                    <CardDescription className="text-zinc-400">
-                        You must change your password before continuing
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="currentPassword">Current Password</Label>
-                            <Input
-                                id="currentPassword"
-                                type="password"
-                                value={currentPassword}
-                                onChange={(e) => setCurrentPassword(e.target.value)}
-                                required
-                                className="bg-zinc-800 border-zinc-700"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="newPassword">New Password</Label>
-                            <Input
-                                id="newPassword"
-                                type="password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                required
-                                className="bg-zinc-800 border-zinc-700"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                            <Input
-                                id="confirmPassword"
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                                className="bg-zinc-800 border-zinc-700"
-                            />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? "Changing..." : "Change Password"}
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
-        </div>
+        <AuthCard
+            title="Change Password"
+            subtitle="You must change your password before continuing"
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                    <Label htmlFor="current" className="text-zinc-300">
+                        Current Password
+                    </Label>
+                    <Input
+                        id="current"
+                        type="password"
+                        placeholder="Enter current password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className={inputClass}
+                        autoComplete="current-password"
+                        required
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label htmlFor="new" className="text-zinc-300">
+                        New Password
+                    </Label>
+                    <Input
+                        id="new"
+                        type="password"
+                        placeholder="Minimum 8 characters"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className={inputClass}
+                        autoComplete="new-password"
+                        required
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label htmlFor="confirm" className="text-zinc-300">
+                        Confirm Password
+                    </Label>
+                    <Input
+                        id="confirm"
+                        type="password"
+                        placeholder="Re-enter new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={inputClass}
+                        autoComplete="new-password"
+                        required
+                    />
+                </div>
+                <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60"
+                >
+                    {isLoading && <Icon name="IconLoader2" className="animate-spin" />}
+                    Change Password
+                </Button>
+            </form>
+        </AuthCard>
     );
 }

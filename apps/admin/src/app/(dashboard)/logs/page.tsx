@@ -1,5 +1,8 @@
 "use client";
 
+import * as React from "react";
+import { toast } from "sonner";
+
 import { Icon } from "@package/components/icon";
 import { Badge } from "@package/ui/badge";
 import { Button } from "@package/ui/button";
@@ -7,42 +10,135 @@ import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@package/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table";
-import { useState } from "react";
+import { PageHeader } from "@package/components/page-header";
 
-const demoLogs = [
-    { time: "2026-07-21 14:32:01", level: "INFO", source: "api", message: "User login successful", details: "john@example.com" },
-    { time: "2026-07-21 14:30:45", level: "WARN", source: "web", message: "High memory usage detected", details: "78% of 8GB" },
-    { time: "2026-07-21 14:28:12", level: "ERROR", source: "api", message: "Database connection timeout", details: "Retry 3/3 failed" },
-    { time: "2026-07-21 14:25:00", level: "INFO", source: "tutor", message: "Course published", details: "React 101 by John" },
-    { time: "2026-07-21 14:20:33", level: "ERROR", source: "payment", message: "Razorpay webhook failed", details: "Signature mismatch" },
+const appLogs = [
+    { timestamp: "2026-07-31 10:41:02", level: "INFO", source: "users-service", message: "User profile updated successfully", details: "user_id=usr_003" },
+    { timestamp: "2026-07-31 10:35:18", level: "WARN", source: "payment-service", message: "Payment gateway response delayed", details: "latency=210ms" },
+    { timestamp: "2026-07-31 10:22:47", level: "INFO", source: "course-service", message: "Course published", details: "course_id=crs_006" },
+    { timestamp: "2026-07-31 09:58:31", level: "ERROR", source: "media-service", message: "Failed to upload file to ImageKit", details: "file=lecture_12.mp4" },
+    { timestamp: "2026-07-31 09:41:05", level: "INFO", source: "auth-service", message: "Admin session refreshed", details: "user_id=adm_001" },
 ];
 
-const levelVariant: Record<string, "secondary" | "outline" | "destructive"> = {
+const levelBadge: Record<string, "secondary" | "outline" | "destructive"> = {
     INFO: "secondary",
     WARN: "outline",
     ERROR: "destructive",
 };
 
 const levelClass: Record<string, string> = {
-    INFO: "bg-blue-100 text-blue-800",
-    WARN: "bg-yellow-100 text-yellow-800",
+    INFO: "bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-400",
+    WARN: "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-400",
     ERROR: "",
 };
 
+function EmptyLogState({ icon, message }: { icon: "IconCheck" | "IconFileText"; message: string }) {
+    return (
+        <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
+            <Icon name={icon} className="size-10 opacity-40" />
+            <p className="text-sm">{message}</p>
+        </div>
+    );
+}
+
+function ApplicationTab() {
+    const [search, setSearch] = React.useState("");
+
+    const filtered = appLogs.filter(
+        (log) =>
+            log.message.toLowerCase().includes(search.toLowerCase()) ||
+            log.source.toLowerCase().includes(search.toLowerCase()) ||
+            log.level.toLowerCase().includes(search.toLowerCase()),
+    );
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Application Logs</CardTitle>
+                <div className="relative">
+                    <Icon
+                        name="IconSearch"
+                        className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                        placeholder="Search logs..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-64 pl-9"
+                    />
+                </div>
+            </CardHeader>
+            <CardContent className="p-0">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Timestamp</TableHead>
+                            <TableHead>Level</TableHead>
+                            <TableHead>Source</TableHead>
+                            <TableHead>Message</TableHead>
+                            <TableHead>Details</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filtered.map((log) => (
+                            <TableRow key={log.timestamp}>
+                                <TableCell className="font-mono text-xs">{log.timestamp}</TableCell>
+                                <TableCell>
+                                    <Badge variant={levelBadge[log.level] || "outline"} className={levelClass[log.level] || ""}>
+                                        {log.level}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="font-mono text-xs">{log.source}</TableCell>
+                                <TableCell>{log.message}</TableCell>
+                                <TableCell className="font-mono text-xs text-muted-foreground">{log.details}</TableCell>
+                            </TableRow>
+                        ))}
+                        {filtered.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                    No logs match your search
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function LogsPage() {
-    const [search, setSearch] = useState("");
+    const handleExport = () => {
+        const csv = [
+            "timestamp,level,source,message,details",
+            ...appLogs.map((log) =>
+                [log.timestamp, log.level, log.source, log.message, log.details]
+                    .map((value) => `"${value}"`)
+                    .join(","),
+            ),
+        ].join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "application-logs.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Logs exported as CSV");
+    };
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">Logs</h1>
-                    <p className="text-muted-foreground text-sm">Platform logs and error monitoring</p>
-                </div>
-                <Button variant="outline">
-                    <Icon name="IconDownload" className="mr-1 h-4 w-4" /> Export CSV
-                </Button>
-            </div>
+            <PageHeader
+                title="Logs"
+                subtitle="View and export platform log entries"
+                actions={
+                    <Button onClick={handleExport}>
+                        <Icon name="IconDownload" className="size-4" />
+                        Export CSV
+                    </Button>
+                }
+            />
 
             <Tabs defaultValue="application">
                 <TabsList>
@@ -51,77 +147,27 @@ export default function LogsPage() {
                     <TabsTrigger value="access">API Access</TabsTrigger>
                     <TabsTrigger value="auth">Auth</TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="application" className="mt-4">
+                <TabsContent value="application">
+                    <ApplicationTab />
+                </TabsContent>
+                <TabsContent value="errors">
                     <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <CardTitle>Application Logs</CardTitle>
-                                <div className="relative w-64">
-                                    <Icon name="IconSearch" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search logs..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="pl-10"
-                                    />
-                                </div>
-                            </div>
-                        </CardHeader>
                         <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Timestamp</TableHead>
-                                        <TableHead>Level</TableHead>
-                                        <TableHead>Source</TableHead>
-                                        <TableHead>Message</TableHead>
-                                        <TableHead>Details</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {demoLogs.map((log, i) => (
-                                        <TableRow key={i}>
-                                            <TableCell className="font-mono text-xs text-muted-foreground">{log.time}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={levelVariant[log.level] || "outline"} className={levelClass[log.level] || ""}>
-                                                    {log.level}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="font-mono text-xs">{log.source}</TableCell>
-                                            <TableCell>{log.message}</TableCell>
-                                            <TableCell className="text-muted-foreground text-sm">{log.details}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                            <EmptyLogState icon="IconCheck" message="No error logs to display" />
                         </CardContent>
                     </Card>
                 </TabsContent>
-
-                <TabsContent value="errors" className="mt-4">
+                <TabsContent value="access">
                     <Card>
-                        <CardContent className="text-center py-12 text-muted-foreground">
-                            <Icon name="IconCheck" className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                            <p>No error logs to display</p>
+                        <CardContent className="p-0">
+                            <EmptyLogState icon="IconFileText" message="Access logs will appear here" />
                         </CardContent>
                     </Card>
                 </TabsContent>
-
-                <TabsContent value="access" className="mt-4">
+                <TabsContent value="auth">
                     <Card>
-                        <CardContent className="text-center py-12 text-muted-foreground">
-                            <Icon name="IconFileText" className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                            <p>Access logs will appear here</p>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="auth" className="mt-4">
-                    <Card>
-                        <CardContent className="text-center py-12 text-muted-foreground">
-                            <Icon name="IconFileText" className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                            <p>Auth logs will appear here</p>
+                        <CardContent className="p-0">
+                            <EmptyLogState icon="IconFileText" message="Auth logs will appear here" />
                         </CardContent>
                     </Card>
                 </TabsContent>

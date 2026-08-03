@@ -1,58 +1,79 @@
 "use client";
 
-import { Icon } from "@package/components/icon";
-import { Badge } from "@package/ui/badge";
+import * as React from "react";
+import { toast } from "sonner";
+
+import { PageHeader } from "@package/components/page-header";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
 import { Label } from "@package/ui/label";
-import { Separator } from "@package/ui/separator";
 import { Switch } from "@package/ui/switch";
-import { useState } from "react";
 
-const initialToggles = {
-    registration: true,
-    courseCreation: true,
-    payments: true,
-    feedback: true,
-    discussions: true,
-    googleOAuth: true,
-};
+const serviceToggles = [
+    { key: "registration", label: "User Registration", description: "Allow new users to sign up on the platform", default: true },
+    { key: "courseCreation", label: "Course Creation", description: "Allow tutors to create and publish courses", default: true },
+    { key: "payments", label: "Payment Processing", description: "Enable online payments for enrollments", default: true },
+    { key: "feedback", label: "Feedback System", description: "Allow students to leave course feedback", default: true },
+    { key: "discussions", label: "Discussion System", description: "Enable lesson discussions for students", default: true },
+    { key: "googleOAuth", label: "Google OAuth Login", description: "Allow sign in with Google accounts", default: true },
+];
+
+const settingsFields = [
+    { key: "siteName", label: "Site Name", type: "text", defaultValue: "CourseHunt" },
+    { key: "supportEmail", label: "Support Email", type: "email", defaultValue: "support@coursehunt.com" },
+    { key: "currency", label: "Currency", type: "text", defaultValue: "INR", disabled: true },
+    { key: "taxRate", label: "Tax Rate %", type: "number", defaultValue: "18" },
+    { key: "minPrice", label: "Min Course Price ₹", type: "number", defaultValue: "99" },
+    { key: "maxPrice", label: "Max Course Price ₹", type: "number", defaultValue: "9999" },
+    { key: "sessionTimeout", label: "Session Timeout (minutes)", type: "number", defaultValue: "60" },
+];
 
 export default function SystemConfigPage() {
-    const [toggles, setToggles] = useState(initialToggles);
+    const [toggles, setToggles] = React.useState<Record<string, boolean>>(() =>
+        Object.fromEntries(serviceToggles.map((s) => [s.key, s.default])),
+    );
+    const [values, setValues] = React.useState<Record<string, string>>(() =>
+        Object.fromEntries(settingsFields.map((f) => [f.key, f.defaultValue])),
+    );
+
+    const handleSave = () => {
+        toast.success("Settings saved (local only)");
+    };
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold">System Configuration</h1>
-                <p className="text-muted-foreground text-sm">Manage platform settings and service toggles</p>
-            </div>
+            <PageHeader
+                title="System Configuration"
+                subtitle="Manage platform settings and service toggles"
+            />
 
             <Card>
                 <CardHeader>
                     <CardTitle>Service Toggles</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    {[
-                        { key: "registration", label: "User Registration", desc: "Allow new users to sign up" },
-                        { key: "courseCreation", label: "Course Creation", desc: "Allow tutors to create courses" },
-                        { key: "payments", label: "Payment Processing", desc: "Enable payment gateway" },
-                        { key: "feedback", label: "Feedback System", desc: "Allow users to submit reviews" },
-                        { key: "discussions", label: "Discussion System", desc: "Enable course discussions" },
-                        { key: "googleOAuth", label: "Google OAuth Login", desc: "Allow sign in with Google" },
-                    ].map(({ key, label, desc }) => (
-                        <div key={key} className="flex items-center justify-between py-2">
-                            <div>
-                                <p className="font-medium text-sm">{label}</p>
-                                <p className="text-xs text-muted-foreground">{desc}</p>
+                <CardContent>
+                    <div className="divide-y">
+                        {serviceToggles.map((service) => (
+                            <div
+                                key={service.key}
+                                className="flex items-center justify-between py-2.5"
+                            >
+                                <div className="pr-4">
+                                    <p className="text-sm font-medium">{service.label}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {service.description}
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={toggles[service.key]}
+                                    onCheckedChange={(checked) =>
+                                        setToggles((prev) => ({ ...prev, [service.key]: checked }))
+                                    }
+                                />
                             </div>
-                            <Switch
-                                checked={toggles[key as keyof typeof toggles]}
-                                onCheckedChange={(v: boolean) => setToggles({ ...toggles, [key]: v })}
-                            />
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
 
@@ -60,44 +81,33 @@ export default function SystemConfigPage() {
                 <CardHeader>
                     <CardTitle>Platform Settings</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Site Name</Label>
-                            <Input defaultValue="CourseHunt" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Support Email</Label>
-                            <Input defaultValue="support@coursehunt.com" />
-                        </div>
+                        {settingsFields.map((field) => (
+                            <div
+                                key={field.key}
+                                className={field.key === "supportEmail" ? "col-span-2" : ""}
+                            >
+                                <Label htmlFor={field.key}>{field.label}</Label>
+                                <Input
+                                    id={field.key}
+                                    type={field.type}
+                                    value={values[field.key]}
+                                    disabled={field.disabled}
+                                    onChange={(e) =>
+                                        setValues((prev) => ({
+                                            ...prev,
+                                            [field.key]: e.target.value,
+                                        }))
+                                    }
+                                    className="mt-1.5 bg-muted/30"
+                                />
+                            </div>
+                        ))}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Currency</Label>
-                            <Input defaultValue="INR" disabled />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Tax Rate (%)</Label>
-                            <Input type="number" defaultValue={18} />
-                        </div>
+                    <div className="mt-6">
+                        <Button onClick={handleSave}>Save Settings</Button>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Min Course Price (₹)</Label>
-                            <Input type="number" defaultValue={99} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Max Course Price (₹)</Label>
-                            <Input type="number" defaultValue={9999} />
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Session Timeout (minutes)</Label>
-                        <Input type="number" defaultValue={60} />
-                    </div>
-                    <Button>
-                        <Icon name="IconDeviceFloppy" className="mr-1 h-4 w-4" /> Save Settings
-                    </Button>
                 </CardContent>
             </Card>
         </div>

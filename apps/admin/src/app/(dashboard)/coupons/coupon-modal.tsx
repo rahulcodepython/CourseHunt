@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@package/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@package/ui/dialog";
 import { CouponForm } from "./coupon-form";
 
 export function CouponModal({
@@ -16,7 +16,12 @@ export function CouponModal({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{editingCoupon ? "Edit Coupon" : "Create New Coupon"}</DialogTitle>
+                    <DialogTitle>{editingCoupon ? "Edit Coupon" : "Create Coupon"}</DialogTitle>
+                    <DialogDescription>
+                        {editingCoupon
+                            ? "Update the coupon details"
+                            : "Create a new discount coupon"}
+                    </DialogDescription>
                 </DialogHeader>
                 <CouponForm editingCoupon={editingCoupon} onSuccess={() => onOpenChange(false)} />
             </DialogContent>

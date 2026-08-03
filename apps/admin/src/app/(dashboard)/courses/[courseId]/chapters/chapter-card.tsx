@@ -1,8 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
+import { Card, CardContent } from "@package/ui/card";
 import { Button } from "@package/ui/button";
 import { Icon } from "@package/components/icon";
+import { cn } from "@package/lib/utils";
 import type { Chapter } from "@package/schema/chapters.types";
 import { LessonsTable } from "./lessons-table";
 import { useState } from "react";
@@ -13,32 +14,41 @@ interface ChapterCardProps {
 }
 
 export function ChapterCard({ chapter, courseId }: ChapterCardProps) {
-	const [expanded, setExpanded] = useState(false);
+	const [open, setOpen] = useState(false);
 
 	return (
-		<Card>
-			<CardHeader className="flex flex-row items-center justify-between py-4">
-				<div className="flex items-center gap-3">
-					<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
-						{chapter.chapter_no}
-					</div>
-					<div>
-						<CardTitle className="text-base">{chapter.title}</CardTitle>
-						<p className="text-xs text-muted-foreground">{chapter.total_lectures} lessons</p>
+		<Card className="gap-0">
+			<CardContent className="flex items-start gap-3 py-4">
+				<div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+					{chapter.chapter_no}
+				</div>
+				<div className="flex min-w-0 flex-1 flex-col">
+					<p className="font-semibold">{chapter.title}</p>
+					<p className="text-sm text-muted-foreground">
+						{chapter.total_lectures} lessons
+					</p>
+					<div className="mt-2">
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							onClick={() => setOpen((o) => !o)}
+							className="justify-start gap-1 px-0 font-medium"
+						>
+							{open ? "Hide Lessons" : "Show Lessons"}
+							<Icon
+								name="IconChevronDown"
+								className={cn("size-3.5 transition-transform", open && "rotate-180")}
+							/>
+						</Button>
+						{open && (
+							<div className="mt-3 space-y-3 border-t bg-muted/5 pt-4">
+								<LessonsTable chapterId={chapter.id} courseId={courseId} />
+							</div>
+						)}
 					</div>
 				</div>
-				<Button size="sm" variant={expanded ? "default" : "outline"} onClick={() => setExpanded(!expanded)}>
-					<Icon name={expanded ? "IconChevronUp" : "IconChevronDown"} className="w-4 h-4 mr-1" />
-					{expanded ? "Hide Lessons" : "Show Lessons"}
-				</Button>
-			</CardHeader>
-			{expanded && (
-				<CardContent className="pt-0 border-t bg-muted/5">
-					<div className="pt-4">
-						<LessonsTable chapterId={chapter.id} courseId={courseId} />
-					</div>
-				</CardContent>
-			)}
+			</CardContent>
 		</Card>
 	);
 }

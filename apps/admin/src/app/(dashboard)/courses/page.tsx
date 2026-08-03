@@ -1,22 +1,26 @@
 "use client";
 
+import * as React from "react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { useManageCoursesQuery } from "@package/query-hooks/courses.api";
-import { useState } from "react";
+import { useDebounce } from "@package/hooks/use-debounce";
+import { PageHeader } from "@package/components/page-header";
 import { CoursesToolbar } from "./courses-toolbar";
 import { CoursesTable } from "./courses-table";
 
 export default function CoursesPage() {
-	const [page, setPage] = useState(1);
+	const [page, setPage] = React.useState(1);
 	const limit = 10;
-	const [search, setSearch] = useState("");
-	const [status, setStatus] = useState("all");
-	const [level, setLevel] = useState("all");
+	const [search, setSearch] = React.useState("");
+	const debouncedSearch = useDebounce(search, 350);
+	const [status, setStatus] = React.useState("all");
+	const [level, setLevel] = React.useState("all");
 
 	const { data: raw, isLoading } = useManageCoursesQuery({
 		page,
 		limit,
-		search: search || undefined,
+		search: debouncedSearch || undefined,
 		status: status === "all" ? undefined : status,
 		level: level === "all" ? undefined : level,
 	});
@@ -27,18 +31,24 @@ export default function CoursesPage() {
 
 	return (
 		<div className="space-y-6">
-			<div>
-				<h1 className="text-2xl font-bold">Courses</h1>
-				<p className="text-muted-foreground text-sm">View all platform courses</p>
-			</div>
+			<PageHeader
+				title="Courses"
+				subtitle="Search, filter and manage all platform courses"
+			/>
 
 			<CoursesToolbar
 				search={search}
 				onSearchChange={setSearch}
 				status={status}
-				onStatusChange={setStatus}
+				onStatusChange={(v) => {
+					setStatus(v);
+					setPage(1);
+				}}
 				level={level}
-				onLevelChange={setLevel}
+				onLevelChange={(v) => {
+					setLevel(v);
+					setPage(1);
+				}}
 			/>
 
 			<Card>

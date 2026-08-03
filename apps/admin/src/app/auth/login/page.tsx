@@ -1,14 +1,18 @@
 "use client";
 
 import { Icon } from "@package/components/icon";
+import { AuthCard } from "@package/components/auth-card";
 import { useLoginWithEmailMutation, useLoginWithGoogleMutation } from "@package/query-hooks/auth.api";
 import { Button } from "@package/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
 import { Label } from "@package/ui/label";
+import { Separator } from "@package/ui/separator";
 import React from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+
+const inputClass =
+  "border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30";
 
 export default function AdminLoginPage() {
     const loginEmailMutation = useLoginWithEmailMutation();
@@ -50,75 +54,95 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-zinc-950 via-zinc-900 to-zinc-950 p-4">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse delay-700" />
+        <AuthCard
+            title="Admin Portal"
+            subtitle="Sign in to manage the platform"
+        >
+            <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div className="space-y-1.5">
+                    <Label htmlFor="email" className="text-zinc-300">
+                        Email
+                    </Label>
+                    <Input
+                        id="email"
+                        type="email"
+                        placeholder="admin@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={inputClass}
+                        autoComplete="email"
+                        required
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-zinc-300">
+                        Password
+                    </Label>
+                    <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={inputClass}
+                        autoComplete="current-password"
+                        required
+                    />
+                </div>
+                <Button
+                    type="submit"
+                    disabled={isEmailLoading || isGoogleLoading}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60"
+                >
+                    {isEmailLoading && <Icon name="IconLoader2" className="animate-spin" />}
+                    Sign in with Email
+                </Button>
+            </form>
+
+            <div className="my-6 flex items-center gap-3">
+                <Separator className="flex-1 bg-zinc-800" />
+                <span className="text-xs text-zinc-500">Or continue with</span>
+                <Separator className="flex-1 bg-zinc-800" />
             </div>
 
-            <Card className="w-full max-w-md border-zinc-800 bg-zinc-900/50 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in duration-500">
-                <CardHeader className="space-y-1 text-center">
-                    <CardTitle className="text-3xl font-bold tracking-tight text-white">Admin Portal</CardTitle>
-                    <CardDescription className="text-zinc-400">Sign in to manage the platform</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-6 py-6">
-                    <form onSubmit={handleEmailLogin} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="admin@example.com"
-                                required
-                                className="bg-zinc-800 border-zinc-700"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                className="bg-zinc-800 border-zinc-700"
-                            />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={isEmailLoading}>
-                            {isEmailLoading ? <Icon name="IconLoader" className="h-5 w-5 animate-spin" /> : "Sign in with Email"}
-                        </Button>
-                    </form>
+            <Button
+                type="button"
+                variant="outline"
+                disabled={isEmailLoading || isGoogleLoading}
+                onClick={handleGoogleLogin}
+                className="w-full border-zinc-700 bg-zinc-800/60 text-white transition-transform hover:scale-[1.02] hover:bg-zinc-800 active:scale-[0.98] disabled:hover:scale-100"
+            >
+                {isGoogleLoading ? (
+                    <Icon name="IconLoader2" className="animate-spin" />
+                ) : (
+                    <svg viewBox="0 0 24 24" className="size-4">
+                        <path
+                            fill="#4285F4"
+                            d="M23.5 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.45a5.53 5.53 0 0 1-2.4 3.63v3h3.88c2.27-2.09 3.57-5.17 3.57-8.87z"
+                        />
+                        <path
+                            fill="#34A853"
+                            d="M12 24c3.24 0 5.96-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.11 0-5.75-2.1-6.69-4.93H1.27v3.09A11.99 11.99 0 0 0 12 24z"
+                        />
+                        <path
+                            fill="#FBBC05"
+                            d="M5.31 14.32a7.19 7.19 0 0 1 0-4.64V6.59H1.27a11.99 11.99 0 0 0 0 10.82l4.04-3.09z"
+                        />
+                        <path
+                            fill="#EA4335"
+                            d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43A11.96 11.96 0 0 0 12 0 11.99 11.99 0 0 0 1.27 6.59l4.04 3.09C6.25 6.85 8.89 4.75 12 4.75z"
+                        />
+                    </svg>
+                )}
+                Sign in with Google
+            </Button>
 
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-zinc-800" /></div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-zinc-900/50 px-2 text-zinc-500 backdrop-blur-xl">Or continue with</span>
-                        </div>
-                    </div>
-
-                    <Button variant="outline" type="button" disabled={isGoogleLoading} onClick={handleGoogleLogin}
-                        className="w-full h-10 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
-                        {isGoogleLoading ? <Icon name="IconLoader" className="h-5 w-5 animate-spin" /> : (
-                            <span className="flex items-center justify-center gap-4">
-                                <Icon name="IconBrandGoogle" /> Sign in with Google
-                            </span>
-                        )}
-                    </Button>
-
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-zinc-800" /></div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-zinc-900/50 px-2 text-zinc-500 backdrop-blur-xl">Admin Access Only</span>
-                        </div>
-                    </div>
-                    <div className="text-center text-sm text-zinc-500">
-                        Need admin access?{" "}
-                        <span className="text-emerald-400 font-medium">Contact super administrator</span>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+            <div className="mt-8 border-t border-zinc-800 pt-4 text-center">
+                <p className="text-xs text-zinc-500">Admin Access Only</p>
+                <p className="mt-1 text-xs text-zinc-600">
+                    Contact super administrator for access
+                </p>
+            </div>
+        </AuthCard>
     );
 }

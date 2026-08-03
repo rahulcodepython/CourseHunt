@@ -1,4 +1,5 @@
 import { Skeleton } from "@package/ui/skeleton";
+import { cn } from "@package/lib/utils";
 
 export default function Loading() {
     return (
@@ -14,4 +15,20 @@ export default function Loading() {
             </div>
         </div>
     );
+}
+
+export function LoadingSpinner({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "flex min-h-[60vh] w-full items-center justify-center",
+        className,
+      )}
+    >
+      <div className="flex flex-col items-center gap-3">
+        <div className="size-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <span className="text-sm text-muted-foreground">Loading…</span>
+      </div>
+    </div>
+  );
 }

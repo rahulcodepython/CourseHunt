@@ -1,72 +1,99 @@
 "use client";
 
-import { Icon } from "@package/components/icon";
+import { PageHeader } from "@package/components/page-header";
+import { StatCard } from "@package/components/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@package/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@package/ui/table";
+import { Skeleton } from "@package/ui/skeleton";
 import { useAdminDashboardQuery } from "@package/query-hooks/dashboard.api";
 import type { AdminDashboard, AdminTopCourse, UserGrowth } from "@package/schema/dashboard.types";
-import Loading from "@package/components/loading";
+import { formatINR } from "@package/lib/format";
 
 export default function AdminDashboardPage() {
     const { data: raw, isLoading } = useAdminDashboardQuery();
 
-    if (isLoading) return <Loading />;
-    if (!raw?.data) return <div className="text-center py-20 text-muted-foreground">Failed to load dashboard.</div>;
+    if (isLoading || !raw?.data) {
+        return (
+            <div className="space-y-6">
+                <PageHeader
+                    title="Admin Dashboard"
+                    subtitle="Overview of platform performance"
+                />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <Card key={i} className="gap-4">
+                            <CardContent>
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="mt-3 h-8 w-32" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                        <Card key={i}>
+                            <CardHeader>
+                                <Skeleton className="h-5 w-32" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-40 w-full" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     const d: AdminDashboard = raw.data;
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                <p className="text-muted-foreground text-sm">Platform overview and key metrics</p>
+            <PageHeader
+                title="Admin Dashboard"
+                subtitle="Overview of platform performance and growth"
+            />
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                    title="Total Students"
+                    value={d.total_users.toLocaleString()}
+                    icon="IconUsers"
+                    description="Registered platform users"
+                />
+                <StatCard
+                    title="Active Courses"
+                    value={d.total_courses.toLocaleString()}
+                    icon="IconBook"
+                    description="Courses currently available"
+                />
+                <StatCard
+                    title="Total Enrollments"
+                    value={d.total_enrollments.toLocaleString()}
+                    icon="IconShoppingCart"
+                    description="Cumulative enrollments"
+                />
+                <StatCard
+                    title="Total Revenue"
+                    value={formatINR(d.total_revenue || 0)}
+                    icon="IconCurrencyRupee"
+                    description="Lifetime platform revenue"
+                />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                        <Icon name="IconUsers" className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{d.total_users}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
-                        <Icon name="IconBook" className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{d.total_courses}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Total Enrollments</CardTitle>
-                        <Icon name="IconShoppingCart" className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{d.total_enrollments}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                        <Icon name="IconCurrencyRupee" className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">₹{d.total_revenue?.toLocaleString() || "0"}</div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
                         <CardTitle>Top Courses</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -78,13 +105,13 @@ export default function AdminDashboardPage() {
                             <TableBody>
                                 {d.top_courses?.length ? d.top_courses.map((c: AdminTopCourse, i: number) => (
                                     <TableRow key={i}>
-                                        <TableCell className="font-medium">{c.title}</TableCell>
-                                        <TableCell className="text-right">{c.students}</TableCell>
-                                        <TableCell className="text-right">₹{c.revenue?.toLocaleString() || "0"}</TableCell>
+                                        <TableCell className="max-w-[280px] truncate font-medium">{c.title}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{c.students.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-medium tabular-nums">{formatINR(c.revenue || 0)}</TableCell>
                                     </TableRow>
                                 )) : (
                                     <TableRow>
-                                        <TableCell colSpan={3} className="text-center text-muted-foreground py-8">No course data yet</TableCell>
+                                        <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">No course data yet</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -96,7 +123,7 @@ export default function AdminDashboardPage() {
                     <CardHeader>
                         <CardTitle>User Growth</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -108,11 +135,11 @@ export default function AdminDashboardPage() {
                                 {d.user_growth?.length ? d.user_growth.map((g: UserGrowth, i: number) => (
                                     <TableRow key={i}>
                                         <TableCell className="font-medium">{g.month}</TableCell>
-                                        <TableCell className="text-right">{g.count}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{g.count.toLocaleString()}</TableCell>
                                     </TableRow>
                                 )) : (
                                     <TableRow>
-                                        <TableCell colSpan={2} className="text-center text-muted-foreground py-8">No growth data yet</TableCell>
+                                        <TableCell colSpan={2} className="h-24 text-center text-muted-foreground">No growth data yet</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>

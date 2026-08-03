@@ -1,5 +1,7 @@
 "use client";
 
+import * as React from "react";
+
 import { Icon } from "@package/components/icon";
 import { Badge } from "@package/ui/badge";
 import { Button } from "@package/ui/button";
@@ -7,11 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
 import { Input } from "@package/ui/input";
 import { Label } from "@package/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@package/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@package/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@package/ui/dialog";
 import { useCategoriesQuery, useCreateCategoryMutation, useDeleteCategoryMutation, useUpdateCategoryMutation } from "@package/query-hooks/categories.api";
-import { useState } from "react";
-import Loading from "@package/components/loading";
+import { useDebounce } from "@package/hooks/use-debounce";
+import { PageHeader } from "@package/components/page-header";
+import { LoadingSpinner as Loading } from "@package/components/loading";
+import LoadingButton from "@package/components/loading-button";
 import { ConfirmDeleteDialog } from "@package/components/confirm-delete-dialog";
+import { cn } from "@package/lib/utils";
 
 interface CategoryFormData {
     name: string;
@@ -19,259 +24,342 @@ interface CategoryFormData {
     description: string;
 }
 
+function CategoryTreeItem({
+    category,
+    depth,
+    allCategories,
+    onEdit,
+    onDelete,
+}: {
+    category: any;
+    depth: number;
+    allCategories: any[];
+    onEdit: (category: any) => void;
+    onDelete: (id: string) => void;
+}) {
+    const [expanded, setExpanded] = React.useState(true);
+    const children = allCategories.filter((c: any) => c.parent_id === category.id);
+
+    return (
+        <div>
+            <div
+                className="group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 hover:bg-muted/50"
+                style={{ paddingLeft: depth * 20 + 8 }}
+            >
+                <button
+                    type="button"
+                    className={cn(
+                        "flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted",
+                        children.length === 0 && "invisible",
+                    )}
+                    onClick={() => setExpanded((e) => !e)}
+                    aria-label={expanded ? "Collapse" : "Expand"}
+                >
+                    <Icon
+                        name="IconChevronRight"
+                        className={cn(
+                            "size-3.5 transition-transform",
+                            expanded && "rotate-90",
+                        )}
+                    />
+                </button>
+                <Icon name="IconFolder" className="size-4 shrink-0 text-amber-500" />
+                <span className="flex-1 truncate text-sm font-medium">
+                    {category.name}
+                </span>
+                <Badge variant="secondary" className="shrink-0">
+                    {category.course_count ?? 0}
+                </Badge>
+                <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        onClick={() => onEdit(category)}
+                        aria-label={`Edit ${category.name}`}
+                    >
+                        <Icon name="IconPencil" className="size-3.5" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-destructive hover:text-destructive"
+                        onClick={() => onDelete(category.id)}
+                        aria-label={`Delete ${category.name}`}
+                    >
+                        <Icon name="IconTrash" className="size-3.5" />
+                    </Button>
+                </div>
+            </div>
+            {expanded &&
+                children.map((child) => (
+                    <CategoryTreeItem
+                        key={child.id}
+                        category={child}
+                        depth={depth + 1}
+                        allCategories={allCategories}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                    />
+                ))}
+        </div>
+    );
+}
+
+function CategoryDialog({
+    open,
+    onOpenChange,
+    editing,
+    categories,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    editing: any | null;
+    categories: any[];
+}) {
+    const createMutation = useCreateCategoryMutation();
+    const [name, setName] = React.useState("");
+    const [parentId, setParentId] = React.useState("none");
+
+    React.useEffect(() => {
+        if (open) {
+            setName(editing?.name ?? "");
+            setParentId(editing?.parent_id ?? "none");
+        }
+    }, [open, editing]);
+
+    const updateMutation = editing
+        ? useUpdateCategoryMutation(editing.id)
+        : null;
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!name.trim()) return;
+        if (editing && updateMutation) {
+            await updateMutation.execute({ name: name.trim() });
+        } else {
+            await createMutation.execute({
+                name: name.trim(),
+                parent_id: parentId === "none" ? undefined : parentId,
+            });
+        }
+        onOpenChange(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>
+                        {editing ? "Edit Category" : "Create Category"}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {editing
+                            ? "Update the category name"
+                            : "Add a new course category"}
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="cat-name">Name</Label>
+                        <Input
+                            id="cat-name"
+                            placeholder="e.g. Web Development"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                    </div>
+                    {!editing && (
+                        <div className="space-y-1.5">
+                            <Label>Parent Category</Label>
+                            <Select value={parentId} onValueChange={(value) => setParentId(value ?? "")}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None (Top Level)</SelectItem>
+                                    {categories
+                                        .filter((c: any) => !c.parent_id)
+                                        .map((c: any) => (
+                                            <SelectItem key={c.id} value={c.id}>
+                                                {c.name}
+                                            </SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <LoadingButton
+                            isLoading={createMutation.isPending || !!updateMutation?.isPending}
+                        >
+                            <Button type="submit">
+                                {editing ? "Save Changes" : "Create"}
+                            </Button>
+                        </LoadingButton>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export default function CategoriesPage() {
     const { data: raw, isLoading } = useCategoriesQuery();
     const categories: any[] = raw?.data ?? [];
     const createMutation = useCreateCategoryMutation();
     const deleteMutation = useDeleteCategoryMutation();
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = React.useState("");
+    const [debouncedSearch, setDebouncedSearch] = React.useState("");
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+    const [editing, setEditing] = React.useState<any | null>(null);
+    const [deleting, setDeleting] = React.useState<any | null>(null);
 
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editing, setEditing] = useState<any | null>(null);
-    const [formData, setFormData] = useState<CategoryFormData>({ name: "", parent_id: null, description: "" });
+    const roots = categories.filter((c: any) => !c.parent_id);
 
-    const [deleteId, setDeleteId] = useState<string | null>(null);
+    React.useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(search), 300);
+        return () => clearTimeout(timer);
+    }, [search]);
 
-    const rootCategories = categories.filter((c: any) => !c.parent_id);
-    const getChildren = (parentId: string) => categories.filter((c: any) => c.parent_id === parentId);
+    const filteredRoots = React.useMemo(() => {
+        const q = debouncedSearch.toLowerCase();
+        if (!q) return roots;
+        return roots.filter(
+            (c: any) =>
+                c.name.toLowerCase().includes(q) ||
+                categories.some(
+                    (child: any) =>
+                        child.parent_id === c.id &&
+                        child.name.toLowerCase().includes(q),
+                ),
+        );
+    }, [roots, categories, debouncedSearch]);
 
-    const filtered = search
-        ? categories.filter((c: any) => c.name?.toLowerCase().includes(search.toLowerCase()))
-        : categories;
+    const subcategoryCount = categories.filter((c: any) => c.parent_id).length;
 
     const openCreate = () => {
         setEditing(null);
-        setFormData({ name: "", parent_id: null, description: "" });
         setDialogOpen(true);
     };
 
-    const openEdit = (cat: any) => {
-        setEditing(cat);
-        setFormData({
-            name: cat.name || "",
-            parent_id: cat.parent_id || null,
-            description: "",
-        });
+    const openEdit = (category: any) => {
+        setEditing(category);
         setDialogOpen(true);
-    };
-
-    const handleSave = async () => {
-        if (editing) {
-            await useUpdateCategoryMutation(editing.id).execute({ name: formData.name });
-        } else {
-            await createMutation.execute({
-                name: formData.name,
-                parent_id: formData.parent_id,
-            });
-        }
-        setDialogOpen(false);
     };
 
     const handleDelete = async () => {
-        if (deleteId) {
-            await deleteMutation.execute(deleteId);
-            setDeleteId(null);
-        }
+        if (!deleting) return;
+        await deleteMutation.execute(deleting.id);
+        setDeleting(null);
     };
 
-    if (isLoading) return <Loading />;
+    if (isLoading || !raw?.data) {
+        return (
+            <div className="space-y-6">
+                <PageHeader title="Categories" subtitle="Organize courses with categories and subcategories" />
+                <Loading />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">Categories</h1>
-                    <p className="text-muted-foreground text-sm">Manage course categories and subcategories</p>
-                </div>
-                <Button onClick={openCreate}>
-                    <Icon name="IconPlus" className="mr-1 h-4 w-4" /> Create Category
-                </Button>
-            </div>
+            <PageHeader
+                title="Categories"
+                subtitle="Organize courses with categories and subcategories"
+                actions={
+                    <Button onClick={openCreate}>
+                        <Icon name="IconPlus" className="size-4" />
+                        Create Category
+                    </Button>
+                }
+            />
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
                 <Card className="lg:col-span-3">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <CardTitle>All Categories ({filtered.length})</CardTitle>
-                            <div className="relative w-48">
-                                <Icon name="IconSearch" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>All Categories ({categories.length})</CardTitle>
+                        <div className="relative">
+                            <Icon
+                                name="IconSearch"
+                                className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                            />
+                            <Input
+                                placeholder="Search..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-48 pl-9"
+                            />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {filtered.length === 0 ? (
-                            <div className="text-center py-12 text-muted-foreground">
-                                <Icon name="IconFolder" className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                                <p>No categories yet. Create your first category to organize courses.</p>
+                        {filteredRoots.length === 0 ? (
+                            <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+                                <Icon name="IconFolder" className="size-10 opacity-40" />
+                                <p className="text-sm">No categories yet...</p>
                             </div>
                         ) : (
-                            <div className="space-y-1">
-                                {rootCategories.map((cat: any) => (
+                            <div className="space-y-0.5">
+                                {filteredRoots.map((root: any) => (
                                     <CategoryTreeItem
-                                        key={cat.id}
-                                        category={cat}
-                                        getChildren={getChildren}
-                                        onEdit={() => openEdit(cat)}
-                                        onDelete={setDeleteId}
+                                        key={root.id}
+                                        category={root}
+                                        depth={0}
+                                        allCategories={categories}
+                                        onEdit={openEdit}
+                                        onDelete={setDeleting}
                                     />
                                 ))}
-                                {search && categories.filter((c: any) => c.parent_id).map((cat: any) => {
-                                    if (rootCategories.some((rc: any) => rc.id === cat.parent_id)) return null;
-                                    if (!cat.name?.toLowerCase().includes(search.toLowerCase())) return null;
-                                    return (
-                                        <CategoryTreeItem
-                                            key={cat.id}
-                                            category={cat}
-                                            getChildren={getChildren}
-                                            onEdit={() => openEdit(cat)}
-                                            onDelete={setDeleteId}
-                                        />
-                                    );
-                                })}
                             </div>
                         )}
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-2">
+                <Card className="self-start lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Quick Stats</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex justify-between text-sm">
+                    <CardContent className="space-y-3">
+                        <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Total Categories</span>
-                            <span className="font-medium">{categories.length}</span>
+                            <span className="font-semibold">{categories.length}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Top-Level</span>
-                            <span className="font-medium">{rootCategories.length}</span>
+                            <span className="font-semibold">{roots.length}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Subcategories</span>
-                            <span className="font-medium">{categories.length - rootCategories.length}</span>
+                            <span className="font-semibold">{subcategoryCount}</span>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{editing ? "Edit Category" : "Create Category"}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="cat-name">Name</Label>
-                            <Input
-                                id="cat-name"
-                                placeholder="Category name"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            />
-                        </div>
-                        {!editing && (
-                            <div className="space-y-2">
-                                <Label htmlFor="cat-parent">Parent Category</Label>
-                                <Select
-                                    value={formData.parent_id || "none"}
-                                    onValueChange={(v) => setFormData({ ...formData, parent_id: v === "none" ? null : v })}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="None (top-level)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">None (top-level)</SelectItem>
-                                        {categories.filter((c: any) => !c.parent_id).map((cat: any) => (
-                                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-                        <div className="flex gap-2 pt-2">
-                            <Button className="flex-1" onClick={handleSave} disabled={createMutation.isPending}>
-                                <Icon name="IconDeviceFloppy" className="mr-1 h-4 w-4" /> Save
-                            </Button>
-                            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                                Cancel
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <CategoryDialog
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                editing={editing}
+                categories={categories}
+            />
 
             <ConfirmDeleteDialog
-                open={!!deleteId}
-                onOpenChange={(open) => !open && setDeleteId(null)}
+                open={!!deleting}
+                onOpenChange={(open) => !open && setDeleting(null)}
                 onConfirm={handleDelete}
-                title="Delete Category"
-                description="Are you sure you want to delete this category? Courses assigned to this category may become uncategorized."
                 isLoading={deleteMutation.isPending}
+                title="Delete Category"
+                description={`Are you sure you want to delete "${deleting?.name}"? This action cannot be undone.`}
             />
-        </div>
-    );
-}
-
-function CategoryTreeItem({
-    category,
-    getChildren,
-    onEdit,
-    onDelete,
-    depth = 0,
-}: {
-    category: any;
-    getChildren: (parentId: string) => any[];
-    onEdit: () => void;
-    onDelete: (id: string) => void;
-    depth?: number;
-}) {
-    const children = getChildren(category.id);
-    const [expanded, setExpanded] = useState(true);
-
-    return (
-        <div>
-            <div
-                className="flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-muted/50 group cursor-pointer"
-                style={{ paddingLeft: `${depth * 20 + 8}px` }}
-            >
-                {children.length > 0 ? (
-                    <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground">
-                        <Icon name={expanded ? "IconChevronDown" : "IconChevronRight"} className="h-4 w-4" />
-                    </button>
-                ) : (
-                    <span className="w-4" />
-                )}
-                <Icon name="IconFolder" className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-sm font-medium flex-1">{category.name}</span>
-                <Badge variant="secondary" className="text-xs">{category.course_count ?? 0}</Badge>
-                <button onClick={onEdit} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground">
-                    <Icon name="IconPencil" className="h-3.5 w-3.5" />
-                </button>
-                <button onClick={() => onDelete(category.id)} className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive">
-                    <Icon name="IconTrash" className="h-3.5 w-3.5" />
-                </button>
-            </div>
-            {
-            expanded && children.length > 0 && <div>
-                    {
-                    children.map((child: any) => <CategoryTreeItem
-                            key={child.id}
-                            category={child}
-                            getChildren={getChildren}
-                            onEdit={onEdit}
-                            onDelete={onDelete}
-                            depth={depth + 1}
-                        />
-                    )
-                    }
-                </div>
-            }
         </div>
     );
 }

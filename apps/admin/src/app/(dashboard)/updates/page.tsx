@@ -1,87 +1,195 @@
 "use client";
 
+import * as React from "react";
+
 import { Icon } from "@package/components/icon";
 import { Badge } from "@package/ui/badge";
 import { Button } from "@package/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@package/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@package/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@package/ui/dialog";
 import { Input } from "@package/ui/input";
 import { Label } from "@package/ui/label";
 import { Textarea } from "@package/ui/textarea";
 import { DataTable, type DataTableColumn } from "@package/components/data-table";
 import { useUpdatesQuery, useCreateUpdateMutation, useUpdateUpdateMutation, useDeleteUpdateMutation } from "@package/query-hooks/updates.api";
-import { useState } from "react";
+import { PageHeader } from "@package/components/page-header";
+import { LoadingSpinner as Loading } from "@package/components/loading";
+import LoadingButton from "@package/components/loading-button";
 import { ConfirmDeleteDialog } from "@package/components/confirm-delete-dialog";
+import { formatDate } from "@package/lib/format";
 import type { CourseUpdate } from "@package/schema/updates.types";
+
+function UpdateDialog({
+    open,
+    onOpenChange,
+    editing,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    editing: CourseUpdate | null;
+}) {
+    const createMutation = useCreateUpdateMutation();
+    const updateMutation = useUpdateUpdateMutation();
+    const [message, setMessage] = React.useState("");
+    const [courseId, setCourseId] = React.useState("");
+
+    React.useEffect(() => {
+        if (open) {
+            setMessage(editing?.message ?? "");
+            setCourseId(editing?.course?.id ?? "");
+        }
+    }, [open, editing]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!message.trim()) return;
+        if (editing) {
+            await updateMutation.execute({ id: editing.id, data: { message: message.trim() } });
+        } else {
+            await createMutation.execute({
+                message: message.trim(),
+                course_id: courseId.trim() || undefined,
+            });
+        }
+        onOpenChange(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editing ? "Edit Update" : "Create Update"}</DialogTitle>
+                    <DialogDescription>
+                        Publish a platform announcement or course update
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="upd-message">Message</Label>
+                        <Textarea
+                            id="upd-message"
+                            placeholder="What's new?"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            rows={4}
+                            required
+                        />
+                    </div>
+                    {!editing && (
+                        <div className="space-y-1.5">
+                            <Label htmlFor="upd-course">Course ID (optional)</Label>
+                            <Input
+                                id="upd-course"
+                                placeholder="Leave empty for platform-wide"
+                                value={courseId}
+                                onChange={(e) => setCourseId(e.target.value)}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                If empty, the update is shown platform-wide.
+                            </p>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <LoadingButton
+                            isLoading={createMutation.isPending || updateMutation.isPending}
+                        >
+                            <Button type="submit">
+                                {editing ? "Save Changes" : "Create Update"}
+                            </Button>
+                        </LoadingButton>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export default function UpdatesPage() {
     const { data: raw, isLoading } = useUpdatesQuery();
-    const createMutation = useCreateUpdateMutation();
-    const updateMutation = useUpdateUpdateMutation();
     const deleteMutation = useDeleteUpdateMutation();
     const updates: CourseUpdate[] = raw?.data?.data ?? [];
 
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editing, setEditing] = useState<CourseUpdate | null>(null);
-    const [message, setMessage] = useState("");
-    const [courseId, setCourseId] = useState("");
-
-    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+    const [editing, setEditing] = React.useState<CourseUpdate | null>(null);
+    const [deleting, setDeleting] = React.useState<CourseUpdate | null>(null);
 
     const openCreate = () => {
         setEditing(null);
-        setMessage("");
-        setCourseId("");
         setDialogOpen(true);
     };
 
     const openEdit = (u: CourseUpdate) => {
         setEditing(u);
-        setMessage(u.message || "");
-        setCourseId(u.course?.id || "");
         setDialogOpen(true);
     };
 
-    const handleSave = async () => {
-        const data: any = { message };
-        if (!editing && courseId) data.course_id = courseId;
-        if (editing) {
-            await updateMutation.execute({ id: editing.id, data });
-        } else {
-            await createMutation.execute(data);
+    const handleDelete = async () => {
+        if (deleting) {
+            await deleteMutation.execute(deleting.id);
+            setDeleting(null);
         }
-        setDialogOpen(false);
     };
 
-    const handleDelete = async () => {
-        if (deleteId) {
-            await deleteMutation.execute(deleteId);
-            setDeleteId(null);
-        }
-    };
+    if (isLoading || !raw?.data) {
+        return (
+            <div className="space-y-6">
+                <PageHeader
+                    title="Updates"
+                    subtitle="Manage platform announcements and course updates"
+                />
+                <Loading />
+            </div>
+        );
+    }
 
     const columns: DataTableColumn<CourseUpdate>[] = [
         {
             header: "Date",
-            render: (u) => <span className="text-sm">{new Date(u.created_at).toLocaleDateString()}</span>,
+            render: (u) => <span className="text-muted-foreground">{formatDate(u.created_at)}</span>,
         },
         {
             header: "Message",
-            render: (u) => <span className="text-muted-foreground text-sm max-w-xs truncate block">{u.message}</span>,
+            render: (u) => (
+                <span className="block max-w-xs truncate text-muted-foreground">{u.message}</span>
+            ),
         },
         {
             header: "Course",
-            render: (u) => <span className="text-sm">{u.course?.title || "Platform-wide"}</span>,
+            render: (u) =>
+                u.course ? (
+                    <Badge variant="secondary">{u.course.title}</Badge>
+                ) : (
+                    <Badge variant="default">Platform-wide</Badge>
+                ),
         },
         {
             header: "",
             render: (u) => (
-                <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(u)}>
-                        <Icon name="IconPencil" className="h-4 w-4" />
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        onClick={() => openEdit(u)}
+                        aria-label="Edit update"
+                    >
+                        <Icon name="IconPencil" className="size-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleteId(u.id)}>
-                        <Icon name="IconTrash" className="h-4 w-4" />
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-destructive hover:text-destructive"
+                        onClick={() => setDeleting(u)}
+                        aria-label="Delete update"
+                    >
+                        <Icon name="IconTrash" className="size-4" />
                     </Button>
                 </div>
             ),
@@ -91,39 +199,16 @@ export default function UpdatesPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">Updates</h1>
-                    <p className="text-muted-foreground text-sm">Manage platform announcements and updates</p>
-                </div>
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={openCreate}>
-                            <Icon name="IconPlus" className="mr-1 h-4 w-4" /> Create Update
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>{editing ? "Edit Update" : "Create Update"}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Message</Label>
-                                <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Update message" rows={4} />
-                            </div>
-                            {!editing && (
-                                <div className="space-y-2">
-                                    <Label>Course ID (optional)</Label>
-                                    <Input value={courseId} onChange={(e) => setCourseId(e.target.value)} placeholder="Leave empty for platform-wide" />
-                                </div>
-                            )}
-                            <Button onClick={handleSave} className="w-full">
-                                <Icon name="IconDeviceFloppy" className="mr-1 h-4 w-4" /> {editing ? "Save Changes" : "Create"}
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            </div>
+            <PageHeader
+                title="Updates"
+                subtitle="Manage platform announcements and course updates"
+                actions={
+                    <Button onClick={openCreate}>
+                        <Icon name="IconPlus" className="size-4" />
+                        Create Update
+                    </Button>
+                }
+            />
 
             <Card>
                 <CardHeader>
@@ -134,20 +219,32 @@ export default function UpdatesPage() {
                         columns={columns}
                         data={updates}
                         keyExtractor={(u) => u.id}
-                        isLoading={isLoading}
+                        isLoading={false}
                         page={1}
                         totalPages={1}
                         total={updates.length}
                         pageSize={updates.length || 1}
                         onPageChange={() => {}}
                         label="updates"
+                        emptyState={
+                            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                                <Icon name="IconWorld" className="size-8 opacity-40" />
+                                <p className="text-sm">No updates yet</p>
+                            </div>
+                        }
                     />
                 </CardContent>
             </Card>
 
+            <UpdateDialog
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                editing={editing}
+            />
+
             <ConfirmDeleteDialog
-                open={!!deleteId}
-                onOpenChange={(open) => !open && setDeleteId(null)}
+                open={!!deleting}
+                onOpenChange={(open) => !open && setDeleting(null)}
                 onConfirm={handleDelete}
                 title="Delete Update"
                 description="Are you sure you want to delete this update? This action cannot be undone."
