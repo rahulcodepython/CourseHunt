@@ -1,12 +1,12 @@
 "use client";
 
-import { apiRequest } from "@/package/react-query/client";
+import { apiRequest } from "@package/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@/package/react-query/mutation";
-import { useAppQuery } from "@/package/react-query/query";
-import { queryKeys } from "@/package/react-query/query-keys";
-import { RoleZod, PermissionZod, CreateRoleRequestZod, UpdateRoleRequestZod, RolePermissionUpdateZod } from "@/package/schema/roles.types";
+import { useSimpleMutation } from "@package/react-query/mutation";
+import { useAppQuery } from "@package/react-query/query";
+import { queryKeys } from "@package/react-query/query-keys";
+import { RoleZod, PermissionZod, CreateRoleRequestZod, UpdateRoleRequestZod, RolePermissionUpdateZod } from "@package/schema/roles.types";
 
 export function useRolesQuery() {
     return useAppQuery(queryKeys.roles(), () =>

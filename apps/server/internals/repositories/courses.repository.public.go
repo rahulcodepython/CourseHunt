@@ -31,7 +31,7 @@ func (r *CoursesRepository) PublicSingleRepository(slug, userID string) (*entiti
 			'total_duration_seconds', c.total_duration_seconds,
 			'rating_avg', c.rating_avg,
 			'feedback_count', c.feedback_count,
-			'is_enrolled', EXISTS(SELECT 1 FROM enrollments e WHERE e.user_id = $2 AND e.course_id = c.id AND e.revoked = false),
+			'is_enrolled', EXISTS(SELECT 1 FROM enrollments e WHERE e.user_id = NULLIF($2, '')::uuid AND e.course_id = c.id AND e.revoked = false),
 			'category', CASE 
 				WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name)
 				ELSE NULL
@@ -95,7 +95,7 @@ func (r *CoursesRepository) PublicListRepository(page, limit int, categoryID, su
 	}
 
 	if targetCatID != "" {
-		where = append(where, fmt.Sprintf("c.category_id = $%d", idx))
+		where = append(where, fmt.Sprintf("c.category_id = NULLIF($%d, '')::uuid", idx))
 		args = append(args, targetCatID)
 		idx++
 	}
@@ -130,7 +130,7 @@ func (r *CoursesRepository) PublicListRepository(page, limit int, categoryID, su
 			       json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS instructor
 			FROM courses c
 			LEFT JOIN categories cat ON c.category_id = cat.id
-			LEFT JOIN "users" u ON u.id = c.tutor_id
+			LEFT JOIN "users" u ON c.tutor_id = u.id
 			WHERE %s
 			ORDER BY c.created_at DESC
 			LIMIT $%d OFFSET $%d
@@ -144,9 +144,10 @@ func (r *CoursesRepository) PublicListRepository(page, limit int, categoryID, su
 		return nil, 0, err
 	}
 
-	var cards []entities.CoursePublicResponse
-	if err := json.Unmarshal(result.Data, &cards); err != nil {
+	var list []entities.CoursePublicResponse
+	if err := json.Unmarshal(result.Data, &list); err != nil {
 		return nil, 0, err
 	}
-	return cards, result.Total, nil
+
+	return list, result.Total, nil
 }

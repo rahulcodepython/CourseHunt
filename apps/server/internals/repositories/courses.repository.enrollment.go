@@ -16,10 +16,10 @@ func (r *CoursesRepository) StudyMetadataRepository(courseID, userID string) (*e
 
 	query := `
 		WITH target_course AS (
-			SELECT id FROM courses WHERE id = $1
+			SELECT id FROM courses WHERE id = NULLIF($1, '')::uuid
 		),
 		enrollment_info AS (
-			SELECT id FROM enrollments WHERE course_id = $1 AND user_id = $2 AND revoked = false
+			SELECT id FROM enrollments WHERE course_id = NULLIF($1, '')::uuid AND user_id = NULLIF($2, '')::uuid AND revoked = false
 		)
 		SELECT 
 			EXISTS(SELECT 1 FROM target_course) AS course_exists,
@@ -50,19 +50,19 @@ func (r *CoursesRepository) StudyMetadataRepository(courseID, userID string) (*e
 												l.id, l.lesson_no, l.title, l.lesson_type, l.duration_seconds,
 												COALESCE(lp.completed, false) AS completed
 											FROM lessons l
-											LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = $2
+											LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = NULLIF($2, '')::uuid
 											WHERE l.chapter_id = ch.id
 										) lessons_tree
 									) AS lessons
 								FROM chapters ch
-								LEFT JOIN chapter_progress cp ON cp.chapter_id = ch.id AND cp.user_id = $2
+								LEFT JOIN chapter_progress cp ON cp.chapter_id = ch.id AND cp.user_id = NULLIF($2, '')::uuid
 								WHERE ch.course_id = c.id
 							) chapters_tree
 						)
 					)
 					FROM courses c
-					LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = $2
-					WHERE c.id = $1
+					LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = NULLIF($2, '')::uuid
+					WHERE c.id = NULLIF($1, '')::uuid
 				)
 				ELSE NULL
 			END AS study_data
@@ -100,13 +100,13 @@ func (r *CoursesRepository) EnrolledCoursesRepository(userID string, page, limit
 		WITH count_cte AS (
 			SELECT COUNT(*) AS total_count
 			FROM enrollments e
-			WHERE e.user_id = $1 AND e.revoked = false
+			WHERE e.user_id = NULLIF($1, '')::uuid AND e.revoked = false
 		),
 		data_cte AS (
 			SELECT c.id, c.slug, c.title, c.image_url, e.completion_percent, e.last_accessed_lesson_id
 			FROM enrollments e
 			JOIN courses c ON c.id = e.course_id
-			WHERE e.user_id = $1 AND e.revoked = false
+			WHERE e.user_id = NULLIF($1, '')::uuid AND e.revoked = false
 			ORDER BY e.enrolled_at DESC
 			LIMIT $2 OFFSET $3
 		)

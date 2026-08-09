@@ -1,11 +1,11 @@
 "use client";
 
-import { apiRequest } from "@/package/react-query/client";
+import { apiRequest } from "@package/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation, useObjectMutation } from "@/package/react-query/mutation";
-import { useAppQuery } from "@/package/react-query/query";
-import { queryKeys } from "@/package/react-query/query-keys";
+import { useSimpleMutation, useObjectMutation } from "@package/react-query/mutation";
+import { useAppQuery } from "@package/react-query/query";
+import { queryKeys } from "@package/react-query/query-keys";
 import {
 	AssignRoleRequestZod,
 	UserListResponseZod,
@@ -14,11 +14,11 @@ import {
 	TutorProfileZod,
 	UpdateProfileRequestZod,
 	AdminProfileItemZod,
-} from "@/package/schema/users.types";
-import { PaginatedResponseZod } from "@/package/schema/common.types";
+} from "@package/schema/users.types";
+import { PaginatedResponseZod } from "@package/schema/common.types";
 
 export function useUsersQuery(params?: Record<string, string | number>) {
-	return useAppQuery(queryKeys.users(), () =>
+	return useAppQuery(queryKeys.users(params), () =>
 		apiRequest({ url: "/api/v1/users", method: "GET", params }, PaginatedResponseZod(UserListResponseZod)),
 	);
 }

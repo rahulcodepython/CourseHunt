@@ -12,6 +12,10 @@ func json[T any](c *fiber.Ctx, status int, success bool, message string, data T,
 	var errStr string
 	if err != nil {
 		errStr = err.Error()
+		c.Locals("handler_error", err)
+	}
+	if status >= 400 {
+		c.Locals("handler_error_msg", message)
 	}
 	body := generic.Response[T]{
 		Success: success,

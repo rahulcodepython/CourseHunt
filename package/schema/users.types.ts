@@ -16,10 +16,12 @@ export const UserListResponseZod = z.object({
     name: z.string(),
     email: z.string(),
     image: z.string().nullable().optional(),
-    emailVerified: z.boolean(),
+    emailVerified: z.boolean().optional(),
+    email_verified: z.boolean().optional(),
     banned: z.boolean(),
-    createdAt: z.string(),
-    roles: z.array(RoleZod),
+    createdAt: z.string().optional(),
+    created_at: z.string().optional(),
+    roles: z.array(RoleZod).nullable().optional().transform((val) => val ?? []),
 });
 export type UserListResponse = z.infer<typeof UserListResponseZod>;
 

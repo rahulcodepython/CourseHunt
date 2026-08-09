@@ -1,10 +1,10 @@
 "use client";
 
 import { z } from "zod";
-import { apiRequest } from "@/package/react-query/client";
-import { useSimpleMutation, useObjectMutation } from "@/package/react-query/mutation";
-import { useAppQuery } from "@/package/react-query/query";
-import { queryKeys } from "@/package/react-query/query-keys";
+import { apiRequest } from "@package/react-query/client";
+import { useSimpleMutation, useObjectMutation } from "@package/react-query/mutation";
+import { useAppQuery } from "@package/react-query/query";
+import { queryKeys } from "@package/react-query/query-keys";
 import {
 	LoginRequestZod,
 	GoogleLoginRequestZod,
@@ -13,7 +13,7 @@ import {
 	CreateUserRequestZod,
 	CreateUserResponseZod,
 	UserZod,
-} from "@/package/schema/auth.types";
+} from "@package/schema/auth.types";
 
 export function useAuthMeQuery(options?: { enabled?: boolean }) {
 	return useAppQuery(

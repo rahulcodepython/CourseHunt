@@ -121,7 +121,7 @@ ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, image = EXCLUDED.image;
 
 -- Insert Credentials (Passwords: admin123456, tutor123456, user123456 / password123)
 INSERT INTO credentials (user_id, password_hash)
-SELECT u.id, crypt(v.password, gen_salt('bf'))
+SELECT u.id, crypt(v.password, gen_salt('bf', 10))
 FROM (VALUES
     ('admin@example.com', 'admin123456'),
     ('superadmin@example.com', 'admin123456'),

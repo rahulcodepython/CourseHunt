@@ -1,12 +1,12 @@
 "use client";
 
-import { apiRequest } from "@/package/react-query/client";
+import { apiRequest } from "@package/react-query/client";
 
-import { usePaginatedMutation, prependToPaginated } from "@/package/react-query/mutation";
-import { useAppQuery } from "@/package/react-query/query";
-import { queryKeys } from "@/package/react-query/query-keys";
-import { CertificateZod } from "@/package/schema/certificate.types";
-import { PaginatedResponseZod } from "@/package/schema/common.types";
+import { usePaginatedMutation, prependToPaginated } from "@package/react-query/mutation";
+import { useAppQuery } from "@package/react-query/query";
+import { queryKeys } from "@package/react-query/query-keys";
+import { CertificateZod } from "@package/schema/certificate.types";
+import { PaginatedResponseZod } from "@package/schema/common.types";
 
 export function useCertificatesQuery() {
 	return useAppQuery(queryKeys.certificates(), () =>

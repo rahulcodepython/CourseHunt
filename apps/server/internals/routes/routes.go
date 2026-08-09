@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"time"
+
 	"coursehunt/server/internals/config"
 	"coursehunt/server/internals/controllers"
 	"coursehunt/server/internals/middlewares"
@@ -116,27 +118,57 @@ func (r *Router) SetUp() {
 	}))
 
 	healthHandler := func(c *fiber.Ctx) error {
+		type ServiceStatus struct {
+			Status string `json:"status"`
+			Error  string `json:"error,omitempty"`
+		}
+
+		services := make(map[string]ServiceStatus)
+		allHealthy := true
+
 		if err := r.DB.Ping(); err != nil {
-			return utils.InternalError(c, "PostgreSQL database service is down or unreachable.", err)
+			allHealthy = false
+			services["postgres"] = ServiceStatus{Status: "down", Error: err.Error()}
+		} else {
+			services["postgres"] = ServiceStatus{Status: "up"}
 		}
 
 		if err := r.Cache.Ping(c.Context()); err != nil {
-			return utils.InternalError(c, "Redis cache service is down or unreachable.", err)
+			allHealthy = false
+			services["redis"] = ServiceStatus{Status: "down", Error: err.Error()}
+		} else {
+			services["redis"] = ServiceStatus{Status: "up"}
 		}
 
 		if err := minio.Ping(c.Context()); err != nil {
-			return utils.InternalError(c, "MinIO object storage service is down or unreachable.", err)
+			allHealthy = false
+			services["minio"] = ServiceStatus{Status: "down", Error: err.Error()}
+		} else {
+			services["minio"] = ServiceStatus{Status: "up"}
 		}
 
-		return utils.OK(c, "All service health checks passed successfully.", fiber.Map{
-			"status":  "ok",
-			"version": "1.0.0",
-			"services": fiber.Map{
-				"postgres": "connected",
-				"redis":    "connected",
-				"minio":    "connected",
-			},
-		})
+		statusStr := "healthy"
+		if !allHealthy {
+			statusStr = "unhealthy"
+		}
+
+		healthData := fiber.Map{
+			"status":    statusStr,
+			"timestamp": time.Now().Format(time.RFC3339),
+			"version":   "1.0.0",
+			"services":  services,
+		}
+
+		if !allHealthy {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(generic.Response[any]{
+				Success: false,
+				Message: "One or more dependent services are down or unreachable.",
+				Data:    healthData,
+				Error:   "service dependency failure",
+			})
+		}
+
+		return utils.OK(c, "All service health checks passed successfully.", healthData)
 	}
 
 	// Kept: bare, unversioned health check for infra probes (load balancer / k8s liveness)
@@ -161,7 +193,7 @@ func (r *Router) SetUp() {
 
 	public.Get("/categories", r.Categories.ListController)
 	public.Get("/courses", r.Courses.PublicListController)
-	public.Get("/courses/:slug", r.Courses.PublicSingleController)
+	public.Get("/courses/course/:slug", r.Courses.PublicSingleController)
 	public.Get("/feedbacks/pinned", r.Feedbacks.ListPinnedController)
 	public.Post("/transactions/webhook", r.Transactions.WebhookController)
 

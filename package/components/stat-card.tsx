@@ -1,11 +1,11 @@
-import { Icon, type IconProps } from "@package/components/icon";
+import { Icon, type IconName } from "@package/components/icon";
 import { Card, CardContent } from "@package/ui/card";
 import { cn } from "@package/lib/utils";
 
 interface StatCardProps {
   title: string;
   value: string;
-  icon: IconProps["name"];
+  icon: IconName;
   description?: string;
   iconClassName?: string;
 }

@@ -29,7 +29,7 @@ func (r *AuthRepository) LoginWithEmailRepository(email, sessionHash string, exp
 		),
 		session_insert AS (
 			INSERT INTO sessions (user_id, refresh_token_hash, expires_at)
-			SELECT id, $2, $3 FROM user_cte WHERE banned = false
+			SELECT id, $2::text, $3::timestamptz FROM user_cte WHERE banned = false AND $2::text != ''
 		),
 		roles_cte AS (
 			SELECT COALESCE(json_agg(r.name ORDER BY r.name), '[]'::json) AS roles
@@ -84,7 +84,7 @@ func (r *AuthRepository) LoginWithGoogleRepository(email, sessionHash string, ex
 		),
 		session_insert AS (
 			INSERT INTO sessions (user_id, refresh_token_hash, expires_at)
-			SELECT id, $2, $3 FROM user_cte WHERE banned = false
+			SELECT id, $2::text, $3::timestamptz FROM user_cte WHERE banned = false AND $2::text != ''
 		),
 		roles_cte AS (
 			SELECT COALESCE(json_agg(r.name ORDER BY r.name), '[]'::json) AS roles

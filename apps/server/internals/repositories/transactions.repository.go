@@ -278,7 +278,7 @@ func (r *TransactionsRepository) GetCheckoutCourseRepository(ctx context.Context
 			COALESCE(u.name, '') AS "instructor.name",
 			u.image AS "instructor.image"
 		FROM courses c
-		JOIN "user" u ON u.id = c.tutor_id
+		JOIN "users" u ON u.id = c.tutor_id
 		WHERE c.id = $1`, courseID)
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/helpers"
 	"coursehunt/server/internals/repositories"
+	"errors"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -23,6 +24,9 @@ func NewQuizService(db *sqlx.DB, repo *repositories.QuizRepository, enrollmentsR
 func (s *QuizService) SubmitQuizService(quizID, userID string, req entities.SubmitQuizRequest) (*entities.SubmitQuizResponse, error) {
 	quiz, err := s.Repo.GetQuizForEvaluationRepository(quizID, userID)
 	if err != nil {
+		if errors.Is(err, generic.ErrQuizNotEnrolled) {
+			return nil, generic.ErrQuizNotEnrolled
+		}
 		return nil, generic.ErrQuizNotFound
 	}
 

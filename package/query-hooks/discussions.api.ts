@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@/package/react-query/client";
+import { apiRequest } from "@package/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@/package/react-query/mutation";
-import { useAppQuery } from "@/package/react-query/query";
-import { queryKeys } from "@/package/react-query/query-keys";
-import { DiscussionZod, CreateDiscussionRequestZod, UpdateDiscussionRequestZod } from "@/package/schema/discussions.types";
-import { PaginatedResponseZod, DeleteResponseZod } from "@/package/schema/common.types";
+import { useSimpleMutation } from "@package/react-query/mutation";
+import { useAppQuery } from "@package/react-query/query";
+import { queryKeys } from "@package/react-query/query-keys";
+import { DiscussionZod, CreateDiscussionRequestZod, UpdateDiscussionRequestZod } from "@package/schema/discussions.types";
+import { PaginatedResponseZod, DeleteResponseZod } from "@package/schema/common.types";
 
 export function useDiscussionsQuery(lessonId: string, page: number = 1, limit: number = 10) {
 	return useAppQuery([...queryKeys.discussions(lessonId), page, limit], () =>

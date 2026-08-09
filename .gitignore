@@ -49,3 +49,6 @@ apps/api/server
 .opencode
 
 *_PLAN.md
+
+.vscode
+.workspace

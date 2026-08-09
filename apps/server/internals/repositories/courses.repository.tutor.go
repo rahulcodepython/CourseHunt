@@ -15,7 +15,7 @@ func (r *CoursesRepository) ListRepository(page, limit int, userID string, scope
 	idx := 1
 
 	if scope == generic.ScopeTutor {
-		where = append(where, fmt.Sprintf("c.tutor_id = $%d", idx))
+		where = append(where, fmt.Sprintf("c.tutor_id = NULLIF($%d, '')::uuid", idx))
 		args = append(args, userID)
 		idx++
 	}
@@ -32,7 +32,7 @@ func (r *CoursesRepository) ListRepository(page, limit int, userID string, scope
 	}
 
 	if targetCatID != "" {
-		where = append(where, fmt.Sprintf("c.category_id = $%d", idx))
+		where = append(where, fmt.Sprintf("c.category_id = NULLIF($%d, '')::uuid", idx))
 		args = append(args, targetCatID)
 		idx++
 	}
@@ -47,7 +47,7 @@ func (r *CoursesRepository) ListRepository(page, limit int, userID string, scope
 		idx++
 	}
 	if scope != generic.ScopeTutor && filterTutorID != "" {
-		where = append(where, fmt.Sprintf("c.tutor_id = $%d", idx))
+		where = append(where, fmt.Sprintf("c.tutor_id = NULLIF($%d, '')::uuid", idx))
 		args = append(args, filterTutorID)
 		idx++
 	}

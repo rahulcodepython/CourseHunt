@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"log"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -13,6 +11,11 @@ func GlobalErrorHandler(c *fiber.Ctx, err error) error {
 		code = e.Code
 	}
 
-	log.Printf("[error] %s %s -> %d: %v", c.Method(), c.Path(), code, err)
-	return InternalError(c, "An unexpected error occurred.", err)
+	c.Locals("handler_error", err)
+
+	if code == fiber.StatusNotFound {
+		return NotFound(c, "Requested resource not found.", err)
+	}
+
+	return json[any](c, code, false, "An unexpected error occurred.", nil, err)
 }

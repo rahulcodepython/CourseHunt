@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@/package/react-query/client";
+import { apiRequest } from "@package/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation, useArrayMutation, appendToArray, removeFromArray } from "@/package/react-query/mutation";
-import { useAppQuery } from "@/package/react-query/query";
-import { queryKeys } from "@/package/react-query/query-keys";
-import { WishlistItemZod } from "@/package/schema/wishlist.types";
-import { SuccessResponseZod, DeleteResponseZod } from "@/package/schema/common.types";
+import { useSimpleMutation, useArrayMutation, appendToArray, removeFromArray } from "@package/react-query/mutation";
+import { useAppQuery } from "@package/react-query/query";
+import { queryKeys } from "@package/react-query/query-keys";
+import { WishlistItemZod } from "@package/schema/wishlist.types";
+import { SuccessResponseZod, DeleteResponseZod } from "@package/schema/common.types";
 
 export function useWishlistQuery() {
 	return useAppQuery(queryKeys.wishlist(), () =>

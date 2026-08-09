@@ -8,7 +8,7 @@ import {
 import { useCallback } from "react";
 import { toast } from "sonner";
 
-import type { ApiResponse, PaginatedResponse } from "@/package/schema/common.types";
+import type { ApiResponse, PaginatedResponse } from "@package/schema/common.types";
 
 // =============================================================================
 // Types

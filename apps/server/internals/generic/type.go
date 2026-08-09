@@ -12,17 +12,17 @@ type PaginatedResponse[T any] struct {
 
 // UserInfo represents basic user details used across multiple modules.
 type UserInfo struct {
-	ID    string  `json:"id"`
-	Name  string  `json:"name"`
-	Image *string `json:"image"`
+	ID    string  `json:"id" db:"id"`
+	Name  string  `json:"name" db:"name"`
+	Image *string `json:"image" db:"image"`
 }
 
 // InstructorInfo represents instructor details used across modules.
 type InstructorInfo struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	Image    *string `json:"image"`
-	Headline *string `json:"headline,omitempty"`
+	ID       string  `json:"id" db:"id"`
+	Name     string  `json:"name" db:"name"`
+	Image    *string `json:"image" db:"image"`
+	Headline *string `json:"headline,omitempty" db:"headline"`
 }
 
 // CategoryInfo represents basic category/subcategory details.

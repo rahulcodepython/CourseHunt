@@ -7,7 +7,7 @@ import (
 
 type CourseUpdate struct {
 	ID        string            `json:"id" db:"id"`
-	Course    generic.CourseInfo `json:"course" db:""`
+	Course    generic.CourseInfo `json:"course" db:"course"`
 	CreatedBy *string           `json:"created_by" db:"created_by"`
 	Message   string            `json:"message" db:"message"`
 	CreatedAt time.Time         `json:"created_at" db:"created_at"`
@@ -25,7 +25,7 @@ type UpdateUpdateRequest struct {
 type UpdateFeedItem struct {
 	ID        string            `json:"id" db:"id"`
 	Message   string            `json:"message" db:"message"`
-	Course    generic.CourseInfo `json:"course" db:""`
+	Course    generic.CourseInfo `json:"course" db:"course"`
 	CreatedAt time.Time         `json:"created_at" db:"created_at"`
 	IsUnseen  bool              `json:"is_unseen" db:"is_unseen"`
 }

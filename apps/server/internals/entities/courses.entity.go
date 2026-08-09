@@ -96,7 +96,7 @@ type CoursePublicResponse struct {
 	RatingAvg        float64               `json:"rating_avg" db:"rating_avg"`
 	FeedbackCount    int                   `json:"feedback_count" db:"feedback_count"`
 	Category         *generic.CategoryInfo  `json:"category"`
-	Instructor       generic.InstructorInfo `json:"instructor" db:""`
+	Instructor       generic.InstructorInfo `json:"instructor" db:"instructor"`
 }
 
 type LessonResponse struct {
@@ -152,8 +152,8 @@ type EnrolledCourseResponse struct {
 }
 
 type CourseStudyResponse struct {
-	Course            generic.CourseInfo  `json:"course"`
-	CompletionPercent float64            `json:"completion_percent"`
-	Completed         bool               `json:"completed"`
-	Chapters          []StudyChapterItem `json:"chapters"`
+	Course            generic.CourseInfo  `json:"course" db:"course"`
+	CompletionPercent float64             `json:"completion_percent"`
+	Completed         bool                `json:"completed"`
+	Chapters          []StudyChapterItem  `json:"chapters"`
 }

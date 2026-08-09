@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CategoryInfoZod, InstructorInfoZod } from '@/package/schema/common.types';
+import { CategoryInfoZod, InstructorInfoZod } from "@package/schema/common.types";
 
 export const CreateCourseRequestZod = z.object({
     title: z.string(),

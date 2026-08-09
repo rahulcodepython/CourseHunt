@@ -1,27 +1,33 @@
+"use client";
+
+import * as React from "react";
 import { Icon } from "@package/components/icon";
-import { Button } from '@package/ui/button';
 
-import React from 'react';
+import { cn } from "@package/lib/utils";
+import { Button, type ButtonProps } from "@package/ui/button";
 
-const LoadingButton = ({
-    isLoading,
-    children,
-    className,
-    title,
-}: {
-    isLoading: boolean;
-    children: React.ReactNode;
-    className?: string;
-    title?: string;
-}) => {
-    return (
-        isLoading ? <Button className={className} disabled={true}>
-            <Icon name="IconLoader2" className="animate-spin inline-block w-5 h-5" />
-            <span className="">
-                {title || 'Loading...'}
-            </span>
-        </Button> : children
-    )
+type LoadingButtonProps = ButtonProps & {
+  loading?: boolean;
+  loadingText?: string;
+};
+
+export function LoadingButton({
+  loading = false,
+  loadingText,
+  children,
+  disabled,
+  className,
+  ...props
+}: LoadingButtonProps) {
+  return (
+    <Button
+      disabled={disabled || loading}
+      className={cn("relative", className)}
+      {...props}
+    >
+      {loading && <Icon name="IconLoader" className="animate-spin" />}
+      {loading && loadingText ? loadingText : children}
+    </Button>
+  );
 }
 
-export default LoadingButton

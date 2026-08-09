@@ -8,8 +8,8 @@ import (
 
 type Feedback struct {
 	ID        string            `json:"id" db:"id"`
-	Course    generic.CourseInfo `json:"course" db:""`
-	User      generic.UserInfo   `json:"user" db:""`
+	Course    generic.CourseInfo `json:"course" db:"course"`
+	User      generic.UserInfo   `json:"user" db:"user"`
 	Rating    int               `json:"rating" db:"rating"`
 	Content   *string           `json:"content" db:"content"`
 	IsPinned  bool              `json:"is_pinned" db:"is_pinned"`

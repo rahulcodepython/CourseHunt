@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CourseInfoZod } from '@/package/schema/common.types';
+import { CourseInfoZod } from "@package/schema/common.types";
 
 export const CertificateZod = z.object({
     id: z.string(),

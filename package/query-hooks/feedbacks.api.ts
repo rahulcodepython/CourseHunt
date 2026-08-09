@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@/package/react-query/client";
+import { apiRequest } from "@package/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation, usePaginatedMutation, removeFromPaginated } from "@/package/react-query/mutation";
-import { useAppQuery } from "@/package/react-query/query";
-import { queryKeys } from "@/package/react-query/query-keys";
-import { FeedbackZod, CreateFeedbackRequestZod, PinFeedbackRequestZod } from "@/package/schema/feedbacks.types";
-import { PaginatedResponseZod, DeleteResponseZod } from "@/package/schema/common.types";
+import { useSimpleMutation, usePaginatedMutation, removeFromPaginated } from "@package/react-query/mutation";
+import { useAppQuery } from "@package/react-query/query";
+import { queryKeys } from "@package/react-query/query-keys";
+import { FeedbackZod, CreateFeedbackRequestZod, PinFeedbackRequestZod } from "@package/schema/feedbacks.types";
+import { PaginatedResponseZod, DeleteResponseZod } from "@package/schema/common.types";
 
 const feedbackKeys = [queryKeys.feedbacks(), queryKeys.feedbacksPinned()];
 

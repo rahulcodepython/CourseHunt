@@ -3,10 +3,11 @@
   "private": true,
   "scripts": {
     "dev": "turbo dev",
-    "dev:api": "pnpm --filter @coursehunt/api dev",
-    "dev:web": "pnpm --filter @coursehunt/web dev",
-    "dev:tutor": "pnpm --filter @coursehunt/tutor dev",
-    "dev:admin": "pnpm --filter @coursehunt/admin dev",
+    "dev:api": "pnpm --silent --filter @coursehunt/api dev",
+    "dev:web": "pnpm --silent --filter @coursehunt/web dev",
+    "dev:tutor": "pnpm --silent --filter @coursehunt/tutor dev",
+    "dev:admin": "pnpm --silent --filter @coursehunt/admin dev",
+    "dev:work": "pnpm --silent --filter @coursehunt/workspace dev",
     "seed": "pnpm --filter @coursehunt/seeder seed"
   },
   "onlyBuiltDependencies": [

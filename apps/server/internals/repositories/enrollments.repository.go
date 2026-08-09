@@ -19,7 +19,7 @@ func NewEnrollmentsRepository(db *sqlx.DB) *EnrollmentsRepository {
 }
 
 func (r *EnrollmentsRepository) RevokeRepository(userID, courseID string) error {
-	_, err := r.DB.Exec(`UPDATE enrollments SET revoked = true WHERE user_id = $1 AND course_id = $2`, userID, courseID)
+	_, err := r.DB.Exec(`UPDATE enrollments SET revoked = true WHERE user_id = NULLIF($1, '')::uuid AND course_id = NULLIF($2, '')::uuid`, userID, courseID)
 	return err
 }
 
@@ -62,13 +62,13 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 
 		err := r.DB.Get(&result, fmt.Sprintf(`
 			WITH auth AS (
-				SELECT EXISTS(SELECT 1 FROM courses WHERE id = $1 AND tutor_id = $2) AS is_owner
+				SELECT EXISTS(SELECT 1 FROM courses WHERE id = NULLIF($1, '')::uuid AND tutor_id = NULLIF($2, '')::uuid) AS is_owner
 			),
 			count_cte AS (
 				SELECT COUNT(*) AS total FROM enrollments e
 				LEFT JOIN "user" u ON e.user_id = u.id
 				CROSS JOIN auth a
-				WHERE e.course_id = $1 AND a.is_owner = true%s
+				WHERE e.course_id = NULLIF($1, '')::uuid AND a.is_owner = true%s
 			),
 			data_cte AS (
 				SELECT 
@@ -81,7 +81,7 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 				FROM enrollments e
 				LEFT JOIN "user" u ON e.user_id = u.id
 				CROSS JOIN auth a
-				WHERE e.course_id = $1 AND a.is_owner = true%s
+				WHERE e.course_id = NULLIF($1, '')::uuid AND a.is_owner = true%s
 				ORDER BY e.enrolled_at DESC
 				LIMIT $%d OFFSET $%d
 			)
@@ -112,11 +112,11 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 	idx := 3
 
 	if courseID != "" {
-		where = append(where, fmt.Sprintf("e.course_id = $%d", idx))
+		where = append(where, fmt.Sprintf("e.course_id = NULLIF($%d, '')::uuid", idx))
 		args = append(args, courseID)
 		idx++
 	} else {
-		where = append(where, fmt.Sprintf("c.tutor_id = $%d", idx))
+		where = append(where, fmt.Sprintf("c.tutor_id = NULLIF($%d, '')::uuid", idx))
 		args = append(args, userID)
 		idx++
 	}
@@ -185,7 +185,7 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 func (r *EnrollmentsRepository) EnrollRepository(userID, courseID string) error {
 	_, err := r.DB.Exec(`
 		INSERT INTO enrollments (user_id, course_id, revoked)
-		VALUES ($1, $2, false)
+		VALUES (NULLIF($1, '')::uuid, NULLIF($2, '')::uuid, false)
 		ON CONFLICT (user_id, course_id) DO UPDATE SET revoked = false`,
 		userID, courseID,
 	)

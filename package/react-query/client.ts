@@ -1,13 +1,13 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { z } from "zod";
-import { ApiResponse, ApiResponseZod } from "@/package/schema/common.types";
+import { ApiResponse, ApiResponseZod } from "@package/schema/common.types";
 
 // =============================================================================
 // Axios Instance
 // =============================================================================
 
 const api: AxiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "",
+    baseURL: process.env.NEXT_PUBLIC_API_URL ?? "",
     withCredentials: true,
 });
 

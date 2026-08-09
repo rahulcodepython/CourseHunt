@@ -9,7 +9,7 @@ import (
 type Coupon struct {
 	ID              string            `json:"id" db:"id"`
 	Code            string            `json:"code" db:"code"`
-	Course          generic.CourseInfo `json:"course" db:""`
+	Course          generic.CourseInfo `json:"course" db:"course"`
 	DiscountPercent float64           `json:"discount_percent" db:"discount_percent"`
 	MaxUsage        int               `json:"max_usage" db:"max_usage"`
 	UsageCount      int               `json:"usage_count" db:"usage_count"`

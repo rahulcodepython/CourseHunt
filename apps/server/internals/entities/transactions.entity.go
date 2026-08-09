@@ -39,12 +39,12 @@ type InitiateTransactionResponse struct {
 // ── Checkout Course Response ──
 
 type CheckoutCourseResponse struct {
-	ID          string                `json:"id"`
-	Title       string                `json:"title"`
-	ImageURL    *string               `json:"image_url"`
-	Instructor  generic.InstructorInfo `json:"instructor"`
-	ActualPrice float64               `json:"actual_price"`
-	FinalPrice  float64               `json:"final_price"`
+	ID          string                 `json:"id"`
+	Title       string                 `json:"title"`
+	ImageURL    *string                `json:"image_url"`
+	Instructor  generic.InstructorInfo `json:"instructor" db:"instructor"`
+	ActualPrice float64                `json:"actual_price"`
+	FinalPrice  float64                `json:"final_price"`
 }
 
 // ── Transaction Status Response ──

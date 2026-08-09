@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@/package/react-query/client";
+import { apiRequest } from "@package/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation, usePaginatedMutation, removeFromPaginated } from "@/package/react-query/mutation";
-import { useAppQuery } from "@/package/react-query/query";
-import { queryKeys } from "@/package/react-query/query-keys";
-import { CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CoursePublicResponseZod, EnrolledCourseResponseZod, CourseZod } from "@/package/schema/courses.types";
-import { PaginatedResponseZod, DeleteResponseZod } from "@/package/schema/common.types";
+import { useSimpleMutation, usePaginatedMutation, removeFromPaginated } from "@package/react-query/mutation";
+import { useAppQuery } from "@package/react-query/query";
+import { queryKeys } from "@package/react-query/query-keys";
+import { CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CoursePublicResponseZod, EnrolledCourseResponseZod, CourseZod } from "@package/schema/courses.types";
+import { PaginatedResponseZod, DeleteResponseZod } from "@package/schema/common.types";
 
 export function useCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; level?: string }) {
 	const searchParams = new URLSearchParams();
@@ -31,7 +31,7 @@ export function useCourseStudyQuery(id: string) {
 
 export function useCourseLandingQuery(slug: string) {
 	return useAppQuery(queryKeys.courseLanding(slug), () =>
-		apiRequest({ url: `/api/v1/courses/${slug}`, method: "GET" }, CourseLandingResponseZod),
+		apiRequest({ url: `/api/v1/courses/course/${slug}`, method: "GET" }, CourseLandingResponseZod),
 	);
 }
 

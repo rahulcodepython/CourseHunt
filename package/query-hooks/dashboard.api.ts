@@ -1,10 +1,10 @@
 "use client";
 
-import { apiRequest } from "@/package/react-query/client";
+import { apiRequest } from "@package/react-query/client";
 
-import { useAppQuery } from "@/package/react-query/query";
-import { queryKeys } from "@/package/react-query/query-keys";
-import { AdminDashboardZod, TutorDashboardZod, UserDashboardZod } from "@/package/schema/dashboard.types";
+import { useAppQuery } from "@package/react-query/query";
+import { queryKeys } from "@package/react-query/query-keys";
+import { AdminDashboardZod, TutorDashboardZod, UserDashboardZod } from "@package/schema/dashboard.types";
 
 export function useAdminDashboardQuery() {
 	return useAppQuery(queryKeys.dashboardAdmin(), () =>
