@@ -1,9 +1,9 @@
 "use client";
 
-import { useSessionStore } from '@package/store/session.store'
-import { cn } from "@package/lib/utils"
+import { useSessionStore } from '@/store/session.store'
+import { cn } from "@/lib/utils"
 import { useRouter } from 'next/navigation'
-import { Button } from '@package/ui/button'
+import { Button } from '@/components/ui/button'
 
 export default function EnrollButton({ _id, className }: { _id: string | number, className?: string }) {
     const session = useSessionStore((s) => s.data)

@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@package/react-query/client";
+import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@package/react-query/mutation";
-import { useAppQuery } from "@package/react-query/query";
-import { queryKeys } from "@package/react-query/query-keys";
-import { PaginatedResponseZod } from "@package/schema/common.types";
-import { TransactionZod, InitiateTransactionRequestZod, InitiateTransactionResponseZod, CheckoutCourseResponseZod, TransactionStatusResponseZod } from "@package/schema/transactions.types";
+import { useSimpleMutation } from "@/react-query/mutation";
+import { useAppQuery } from "@/react-query/query";
+import { queryKeys } from "@/react-query/query-keys";
+import { PaginatedResponseZod } from "@/schema/common.types";
+import { TransactionZod, InitiateTransactionRequestZod, InitiateTransactionResponseZod, CheckoutCourseResponseZod, TransactionStatusResponseZod } from "@/schema/transactions.types";
 
 export function useTransactionsQuery(params?: { page?: number; limit?: number }) {
 	const searchParams = new URLSearchParams();

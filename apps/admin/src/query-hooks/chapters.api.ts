@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@package/react-query/client";
+import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
-import { useArrayMutation, appendToArray, replaceInArray, removeFromArray } from "@package/react-query/mutation";
-import { useAppQuery } from "@package/react-query/query";
-import { queryKeys } from "@package/react-query/query-keys";
-import { ChapterZod, CreateChapterRequestZod, UpdateChapterRequestZod } from "@package/schema/chapters.types";
-import { DeleteResponseZod } from "@package/schema/common.types";
+import { useArrayMutation, appendToArray, replaceInArray, removeFromArray } from "@/react-query/mutation";
+import { useAppQuery } from "@/react-query/query";
+import { queryKeys } from "@/react-query/query-keys";
+import { ChapterZod, CreateChapterRequestZod, UpdateChapterRequestZod } from "@/schema/chapters.types";
+import { DeleteResponseZod } from "@/schema/common.types";
 
 export function useChaptersQuery(courseId: string) {
 	return useAppQuery(queryKeys.chapters(courseId), () =>

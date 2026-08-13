@@ -1,4 +1,4 @@
-import { JwtPayload, JwtPayloadZod } from "@package/schema/common.types";
+import { JwtPayload, JwtPayloadZod } from "@/schema/common.types";
 
 export function decodeJwtPayload(token: string): JwtPayload | null {
     try {

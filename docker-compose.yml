@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
     volumes:
       - pgdata:/var/lib/postgresql
-      - ./package/migrations:/docker-entrypoint-initdb.d:ro
+      - ./apps/server/internals/migrations:/docker-entrypoint-initdb.d:ro
     networks:
       - coursehunt-network
     healthcheck:

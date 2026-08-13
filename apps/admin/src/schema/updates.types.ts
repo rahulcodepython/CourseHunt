@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CourseInfoZod, PaginatedResponseZod } from "@package/schema/common.types";
+import { CourseInfoZod, PaginatedResponseZod } from "@/schema/common.types";
 
 export const CourseUpdateZod = z.object({
     id: z.string(),

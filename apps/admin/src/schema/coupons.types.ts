@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CourseInfoZod } from "@package/schema/common.types";
+import { CourseInfoZod } from "@/schema/common.types";
 
 export const CreateCouponRequestZod = z.object({
     code: z.string(),

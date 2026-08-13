@@ -1,4 +1,4 @@
-import { Icon } from "@package/components/icon";
+import { Icon } from "@/components/icon";
 
 
 export default function Footer() {
@@ -8,7 +8,7 @@ export default function Footer() {
                 <div className="grid md:grid-cols-4 gap-8">
                     <div className="space-y-4">
                         <div className="flex items-center space-x-2">
-                            <Icon name="IconBook" className="h-8 w-8 text-primary" />
+                            <Icon name="book" className="h-8 w-8 text-primary" />
                             <span className="text-2xl font-bold">CourseHunt</span>
                         </div>
                         <p className="text-muted-foreground">Empowering learners worldwide with high-quality online education.</p>

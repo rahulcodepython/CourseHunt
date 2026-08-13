@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserInfoZod, CourseInfoZod, CouponInfoZod, InstructorInfoZod } from "@package/schema/common.types";
+import { UserInfoZod, CourseInfoZod, CouponInfoZod, InstructorInfoZod } from "@/schema/common.types";
 
 export const TransactionZod = z.object({
     id: z.string(),

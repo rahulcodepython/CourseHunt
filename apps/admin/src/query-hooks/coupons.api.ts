@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@package/react-query/client";
+import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
-import { usePaginatedMutation, prependToPaginated, replaceInPaginated, removeFromPaginated } from "@package/react-query/mutation";
-import { useAppQuery } from "@package/react-query/query";
-import { queryKeys } from "@package/react-query/query-keys";
-import { CouponZod, CreateCouponRequestZod, UpdateCouponRequestZod, CouponCheckResponseZod } from "@package/schema/coupons.types";
-import { PaginatedResponseZod, DeleteResponseZod } from "@package/schema/common.types";
+import { usePaginatedMutation, prependToPaginated, replaceInPaginated, removeFromPaginated } from "@/react-query/mutation";
+import { useAppQuery } from "@/react-query/query";
+import { queryKeys } from "@/react-query/query-keys";
+import { CouponZod, CreateCouponRequestZod, UpdateCouponRequestZod, CouponCheckResponseZod } from "@/schema/coupons.types";
+import { PaginatedResponseZod, DeleteResponseZod } from "@/schema/common.types";
 
 export function useCouponsQuery() {
 	return useAppQuery(queryKeys.coupons(), () =>

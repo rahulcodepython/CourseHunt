@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@package/react-query/client";
+import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@package/react-query/mutation";
-import { useAppQuery } from "@package/react-query/query";
-import { queryKeys } from "@package/react-query/query-keys";
-import { UserNoteZod, UpsertNoteRequestZod, NoteResponseZod } from "@package/schema/notes.types";
-import { DeleteResponseZod } from "@package/schema/common.types";
+import { useSimpleMutation } from "@/react-query/mutation";
+import { useAppQuery } from "@/react-query/query";
+import { queryKeys } from "@/react-query/query-keys";
+import { UserNoteZod, UpsertNoteRequestZod, NoteResponseZod } from "@/schema/notes.types";
+import { DeleteResponseZod } from "@/schema/common.types";
 
 export function useNotesQuery(lessonId: string) {
 	return useAppQuery(queryKeys.notes(lessonId), () =>

@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@package/react-query/client";
+import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation, usePaginatedMutation, removeFromPaginated } from "@package/react-query/mutation";
-import { useAppQuery } from "@package/react-query/query";
-import { queryKeys } from "@package/react-query/query-keys";
-import { CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CoursePublicResponseZod, EnrolledCourseResponseZod, CourseZod } from "@package/schema/courses.types";
-import { PaginatedResponseZod, DeleteResponseZod } from "@package/schema/common.types";
+import { useSimpleMutation, usePaginatedMutation, removeFromPaginated } from "@/react-query/mutation";
+import { useAppQuery } from "@/react-query/query";
+import { queryKeys } from "@/react-query/query-keys";
+import { CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CoursePublicResponseZod, EnrolledCourseResponseZod, CourseZod } from "@/schema/courses.types";
+import { PaginatedResponseZod, DeleteResponseZod } from "@/schema/common.types";
 
 export function useCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; level?: string }) {
 	const searchParams = new URLSearchParams();

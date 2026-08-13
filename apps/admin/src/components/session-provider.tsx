@@ -1,7 +1,7 @@
 "use client";
 
-import { useAuthMeQuery } from "@package/query-hooks/auth.api";
-import { useSessionStore } from "@package/store/session.store";
+import { useAuthMeQuery } from "@/query-hooks/auth.api";
+import { useSessionStore } from "@/store/session.store";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 

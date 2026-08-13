@@ -1,6 +1,6 @@
-import { apiRequest } from "@package/react-query/client";
-import { useSimpleMutation } from "@package/react-query/mutation";
-import { UploadMediaResponseZod } from "@package/schema/upload.types";
+import { apiRequest } from "@/react-query/client";
+import { useSimpleMutation } from "@/react-query/mutation";
+import { UploadMediaResponseZod } from "@/schema/upload.types";
 import { z } from "zod";
 import axios from "axios";
 

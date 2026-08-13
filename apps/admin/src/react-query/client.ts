@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { z } from "zod";
-import { ApiResponse, ApiResponseZod } from "@package/schema/common.types";
+import { ApiResponse, ApiResponseZod } from "@/schema/common.types";
 
 // =============================================================================
 // Axios Instance

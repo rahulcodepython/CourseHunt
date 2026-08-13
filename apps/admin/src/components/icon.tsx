@@ -35,6 +35,7 @@ import {
   IconHierarchy,
   IconHistory,
   IconHome,
+  IconHeart,
   IconInfoCircle,
   IconLayoutDashboard,
   IconList,
@@ -108,6 +109,7 @@ export type IconName =
   | "folder"
   | "globe"
   | "hard-drive"
+  | "heart"
   | "hierarchy"
   | "history"
   | "home"
@@ -181,6 +183,7 @@ const iconRegistry: Record<IconName, React.ComponentType<IconProps>> = {
   folder: IconFolder,
   globe: IconGlobe,
   "hard-drive": IconDeviceFloppy,
+  heart: IconHeart,
   hierarchy: IconHierarchy,
   history: IconHistory,
   home: IconHome,

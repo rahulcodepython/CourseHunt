@@ -1,23 +1,14 @@
 "use client";
 
-import { Icon } from "@package/components/icon";
-import { Button } from "@package/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@package/ui/dropdown-menu";
-import { useLogoutMutation } from "@package/query-hooks/auth.api";
-import { useSessionStore } from "@package/store/session.store";
-import { Avatar, AvatarFallback, AvatarImage } from "@package/ui/avatar";
+import { Icon } from "@/components/icon";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useLogoutMutation } from "@/query-hooks/auth.api";
+import { useSessionStore } from "@/store/session.store";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { toast } from "sonner";
-
-interface SessionUser {
-	id: string;
-	name: string;
-	email: string;
-	image?: string | null;
-	role?: string;
-}
 
 export default function Header() {
 	const user = useSessionStore((s) => s.data?.user);
@@ -40,7 +31,7 @@ export default function Header() {
 			<nav className="container mx-auto px-4 py-2 flex items-center justify-between">
 				<div className="flex items-center gap-6">
 					<Link href="/" className="flex items-center gap-2">
-						<Icon name="IconSearch" className="h-6 w-6 text-primary" />
+						<Icon name="search" className="h-6 w-6 text-primary" />
 						<span className="text-xl font-bold">CourseHunt</span>
 					</Link>
 					<div className="hidden md:flex items-center gap-6">
@@ -54,7 +45,7 @@ export default function Header() {
 						<>
 							<Link href="/wishlist">
 								<Button variant="ghost" size="icon" className="relative">
-									<Icon name="IconHeart" className="h-5 w-5" />
+									<Icon name="heart" className="h-5 w-5" />
 								</Button>
 							</Link>
 							<DropdownMenu>

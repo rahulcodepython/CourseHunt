@@ -1,12 +1,12 @@
-import { Icon } from "@package/components/icon";
-import { Badge } from "@package/ui/badge";
+import { Icon } from "@/components/icon";
+import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,
 	CardFooter,
 	CardHeader,
-} from "@package/ui/card";
-import type { CoursePublicResponse } from "@package/schema/courses.types";
+} from "@/components/ui/card";
+import type { CoursePublicResponse } from "@/schema/courses.types";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -62,11 +62,11 @@ export default function CourseCard({
 
 						<div className="flex items-center gap-4 text-sm text-muted-foreground">
 							<div className="flex items-center gap-1">
-								<Icon name="IconClock" className="w-5 h-5" />
+								<Icon name="clock" className="w-5 h-5" />
 								<span>{courseData.short_description || ""}</span>
 							</div>
 							<div className="flex items-center gap-1">
-								<Icon name="IconUsers" className="w-5 h-5" />
+								<Icon name="users" className="w-5 h-5" />
 								<span>{courseData.feedback_count} students</span>
 							</div>
 						</div>
@@ -74,7 +74,7 @@ export default function CourseCard({
 						<div className="flex items-center gap-2">
 							<div className="flex items-center">
 								{[1, 2, 3, 4, 5].map((star) => (
-									<Icon name="IconStar"
+									<Icon name="star"
 										key={star}
 										className={`w-5 h-5 ${
 											star <= Math.round(rating)

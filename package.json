@@ -2,12 +2,11 @@
   "name": "coursehunt",
   "private": true,
   "scripts": {
-    "dev": "turbo dev",
-    "dev:api": "pnpm --silent --filter @coursehunt/api dev",
-    "dev:web": "pnpm --silent --filter @coursehunt/web dev",
-    "dev:tutor": "pnpm --silent --filter @coursehunt/tutor dev",
-    "dev:admin": "pnpm --silent --filter @coursehunt/admin dev",
-    "dev:work": "pnpm --silent --filter @coursehunt/workspace dev",
+    "dev:admin": "pnpm --filter @coursehunt/admin dev",
+    "dev:server": "pnpm --filter @coursehunt/server dev",
+    "build:admin": "pnpm --filter @coursehunt/admin build",
+    "build:server": "pnpm --filter @coursehunt/server build",
+    "typecheck": "pnpm --filter @coursehunt/admin typecheck",
     "seed": "pnpm --filter @coursehunt/seeder seed"
   },
   "onlyBuiltDependencies": [
@@ -15,7 +14,6 @@
   ],
   "devDependencies": {
     "@types/node": "^26.1.2",
-    "turbo": "^2.10.7",
     "typescript": "7.0.2"
   },
   "packageManager": "pnpm@11.18.0",

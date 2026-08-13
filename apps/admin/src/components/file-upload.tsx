@@ -1,12 +1,12 @@
 "use client";
 
-import { Icon } from "@package/components/icon";
-import { Button } from "@package/ui/button";
-import { Input } from "@package/ui/input";
-import { Label } from "@package/ui/label";
-import { useUploadMediaMutation } from "@package/query-hooks/upload.api";
-import type { ApiResponse } from "@package/schema/common.types";
-import type { UploadMediaResponse } from "@package/schema/upload.types";
+import { Icon } from "@/components/icon";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useUploadMediaMutation } from "@/query-hooks/upload.api";
+import type { ApiResponse } from "@/schema/common.types";
+import type { UploadMediaResponse } from "@/schema/upload.types";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";

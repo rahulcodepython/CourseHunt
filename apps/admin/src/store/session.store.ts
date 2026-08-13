@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { SessionData, SessionUser } from "@package/schema/session.schema";
+import type { SessionData, SessionUser } from "@/schema/session.schema";
 
 interface SessionState {
   data: SessionData | null;

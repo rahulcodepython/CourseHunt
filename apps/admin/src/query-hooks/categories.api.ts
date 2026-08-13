@@ -1,13 +1,13 @@
 "use client";
 
-import { apiRequest } from "@package/react-query/client";
+import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
-import { useArrayMutation, appendToArray, replaceInArray, removeFromArray } from "@package/react-query/mutation";
-import { useAppQuery } from "@package/react-query/query";
-import { queryKeys } from "@package/react-query/query-keys";
-import { CategoryZod, CreateCategoryRequestZod, UpdateCategoryRequestZod } from "@package/schema/category.types";
-import { DeleteResponseZod } from "@package/schema/common.types";
+import { useArrayMutation, appendToArray, replaceInArray, removeFromArray } from "@/react-query/mutation";
+import { useAppQuery } from "@/react-query/query";
+import { queryKeys } from "@/react-query/query-keys";
+import { CategoryZod, CreateCategoryRequestZod, UpdateCategoryRequestZod } from "@/schema/category.types";
+import { DeleteResponseZod } from "@/schema/common.types";
 
 export function useCategoriesQuery() {
 	return useAppQuery(queryKeys.categories(), () =>

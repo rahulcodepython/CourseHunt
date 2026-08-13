@@ -1,11 +1,11 @@
 "use client";
 
-import { apiRequest } from "@package/react-query/client";
+import { apiRequest } from "@/react-query/client";
 
-import { useAppQuery } from "@package/react-query/query";
-import { queryKeys } from "@package/react-query/query-keys";
-import { ListEnrollmentResponseZod } from "@package/schema/enrollments.types";
-import { PaginatedResponseZod } from "@package/schema/common.types";
+import { useAppQuery } from "@/react-query/query";
+import { queryKeys } from "@/react-query/query-keys";
+import { ListEnrollmentResponseZod } from "@/schema/enrollments.types";
+import { PaginatedResponseZod } from "@/schema/common.types";
 
 export function useEnrollmentsQuery(courseId: string) {
 	return useAppQuery(queryKeys.enrollments(courseId), () =>

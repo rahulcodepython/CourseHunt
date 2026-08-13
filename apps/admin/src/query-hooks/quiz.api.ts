@@ -1,16 +1,16 @@
 "use client";
 
-import { apiRequest } from "@package/react-query/client";
+import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@package/react-query/mutation";
-import { queryKeys } from "@package/react-query/query-keys";
+import { useSimpleMutation } from "@/react-query/mutation";
+import { queryKeys } from "@/react-query/query-keys";
 import {
 	CreateQuizRequestZod, NextQuestionRequestZod,
 	SubmitQuizRequestZod, CreateQuestionRequestZod, NextQuestionResponseZod,
 	SubmitQuizResponseZod, QuizMetadataZod, QuizQuestionZod
-} from "@package/schema/quiz.types";
-import { DeleteResponseZod } from "@package/schema/common.types";
+} from "@/schema/quiz.types";
+import { DeleteResponseZod } from "@/schema/common.types";
 
 export function useCreateQuizMutation() {
 	return useSimpleMutation({

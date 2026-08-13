@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserInfoZod } from "@package/schema/common.types";
+import { UserInfoZod } from "@/schema/common.types";
 
 export const ListEnrollmentResponseZod = z.object({
     id: z.string(),
