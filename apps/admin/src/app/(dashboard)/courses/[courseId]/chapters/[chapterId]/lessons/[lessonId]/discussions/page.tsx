@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/page-header";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { FormDialog } from "@/components/form-dialog";
 import { Icon } from "@/components/icon";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import UserAvatar from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/format";
+import { useDebounce } from "@/hooks/use-debounce";
 
 function formatHandle(name: string): string {
   const clean = name.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -52,26 +53,17 @@ function DiscussionItem({
   onOpenReplyModal: (target: ReplyTarget) => void;
   onOpenDeleteConfirm: (target: DeleteTarget) => void;
 }) {
-  const initials = (discussion.user?.name || "U")
-    .split(" ")
-    .map((n: string) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
   const handle = formatHandle(discussion.user?.name || "user");
 
   return (
     <div className="py-4 space-y-3">
       <div className="flex gap-3 items-start">
-        <Avatar className="size-9 shrink-0 border">
-          {discussion.user?.image ? (
-            <AvatarImage src={discussion.user.image} />
-          ) : null}
-          <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          name={discussion.user?.name}
+          image={discussion.user?.image}
+          className="size-9 shrink-0 border"
+          fallbackClassName="font-bold"
+        />
 
         <div className="flex-1 space-y-1">
           <div className="flex items-center gap-2 text-xs">
@@ -185,6 +177,11 @@ function ReplyDialog({
   );
 }
 
+import { useCourseLandingQuery } from "@/query-hooks/courses.api";
+import { useChaptersQuery } from "@/query-hooks/chapters.api";
+import { useLessonsQuery } from "@/query-hooks/lessons.api";
+import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
+
 export default function LessonDiscussionsPage() {
   const params = useParams<{
     courseId: string;
@@ -193,25 +190,42 @@ export default function LessonDiscussionsPage() {
   }>();
   const { courseId, chapterId, lessonId } = params;
 
+  const { data: courseData } = useCourseLandingQuery(courseId);
+  const { data: chaptersData } = useChaptersQuery(courseId);
+  const { data: lessonsData } = useLessonsQuery(chapterId);
+
+  const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
+  const currentLesson = (lessonsData?.data as any[])?.find((l: any) => l.id === lessonId);
+
+  useSetBreadcrumbs([
+    { label: "Courses", href: "/courses" },
+    { label: courseData?.data?.title || "Course", href: `/courses/overview/${courseId}` },
+    { label: "Chapters", href: `/courses/${courseId}/chapters` },
+    { label: currentChapter?.title || "Chapter", href: `/courses/${courseId}/chapters/${chapterId}/lessons` },
+    { label: currentLesson?.title || "Lesson" },
+    { label: "Discussions" },
+  ]);
+
   const { data: rawDiscussions, isLoading } = useDiscussionsQuery(lessonId);
   const createMutation = useCreateDiscussionMutation();
   const deleteMutation = useDeleteDiscussionMutation();
 
   const discussions: Discussion[] = (rawDiscussions?.data?.data as any) ?? (Array.isArray(rawDiscussions?.data) ? rawDiscussions.data : []);
   const [search, setSearch] = React.useState("");
+  const debouncedSearch = useDebounce(search, 300);
 
   const [replyTarget, setReplyTarget] = React.useState<ReplyTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<DeleteTarget | null>(null);
 
   const filteredDiscussions = React.useMemo(() => {
-    if (!search.trim()) return discussions;
-    const q = search.toLowerCase();
+    if (!debouncedSearch.trim()) return discussions;
+    const q = debouncedSearch.toLowerCase();
     return discussions.filter(
       (d) =>
         d.content.toLowerCase().includes(q) ||
         d.user.name.toLowerCase().includes(q),
     );
-  }, [discussions, search]);
+  }, [discussions, debouncedSearch]);
 
   const handleSendReply = async (text: string) => {
     if (!replyTarget) return;

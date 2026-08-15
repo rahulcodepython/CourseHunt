@@ -1,139 +1,233 @@
 package middlewares
 
 import (
-	"errors"
+	"context"
+	"crypto/ed25519"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
+	"sync"
 	"time"
 
 	"coursehunt/server/internals/config"
 	"coursehunt/server/internals/generic"
-	"coursehunt/server/internals/helpers"
 	"coursehunt/server/internals/pkg/cache"
-	"coursehunt/server/internals/services"
+	"coursehunt/server/internals/repositories"
 	"coursehunt/server/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func parseAndValidateJWT(cfg *config.Config, tokenString string) (*generic.UserClaims, error) {
+// ── JWKS fetch + cache ──
+//
+// Keys are cached in-process first, then in Redis, then fetched from the
+// admin app's JWKS endpoint (see apps/admin/src/app/api/auth/[...all]/route.ts).
+
+type JWKSKey struct {
+	Kty string `json:"kty"`
+	Kid string `json:"kid"`
+	Use string `json:"use"`
+	Alg string `json:"alg"`
+	Crv string `json:"crv"`
+	X   string `json:"x"`
+}
+
+type JWKSResponse struct {
+	Keys []JWKSKey `json:"keys"`
+}
+
+type jwksStore struct {
+	mu        sync.RWMutex
+	keys      []JWKSKey
+	fetchedAt time.Time
+	ttl       time.Duration
+}
+
+func (s *jwksStore) get() ([]JWKSKey, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if len(s.keys) == 0 || time.Since(s.fetchedAt) >= s.ttl {
+		return nil, false
+	}
+	return s.keys, true
+}
+
+func (s *jwksStore) set(keys []JWKSKey) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.keys = keys
+	s.fetchedAt = time.Now()
+}
+
+var store = &jwksStore{ttl: 10 * time.Minute}
+
+func fetchJWKS(ctx context.Context, cch *cache.Cache, jwksURL string) ([]JWKSKey, error) {
+	if keys, ok := store.get(); ok {
+		return keys, nil
+	}
+
+	if cch != nil {
+		if cached, found := cch.GetGraceTokens(ctx, generic.JWKSRedisCacheKey); found {
+			var keys []JWKSKey
+			if err := json.Unmarshal([]byte(cached.AccessToken), &keys); err == nil && len(keys) > 0 {
+				store.set(keys)
+				return keys, nil
+			}
+		}
+	}
+
+	keys, err := fetchJWKSFromEndpoint(ctx, jwksURL)
+	if err != nil {
+		return nil, err
+	}
+	store.set(keys)
+
+	if cch != nil && len(keys) > 0 {
+		if raw, err := json.Marshal(keys); err == nil {
+			cch.SetGraceTokens(ctx, generic.JWKSRedisCacheKey, &cache.GraceTokenPayload{AccessToken: string(raw)})
+		}
+	}
+
+	return keys, nil
+}
+
+func fetchJWKSFromEndpoint(ctx context.Context, jwksURL string) ([]JWKSKey, error) {
+	client := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, jwksURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch JWKS from %s: status %d", jwksURL, resp.StatusCode)
+	}
+
+	var jwks JWKSResponse
+	if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
+		return nil, err
+	}
+	return jwks.Keys, nil
+}
+
+// publicKeyFromJWK converts a JWK "x" field (base64url raw Ed25519 public key)
+// into an ed25519.PublicKey usable by jwt.SigningMethodEdDSA.
+func publicKeyFromJWK(key JWKSKey) (ed25519.PublicKey, error) {
+	if key.Crv != "Ed25519" {
+		return nil, fmt.Errorf("unsupported curve %q", key.Crv)
+	}
+	raw, err := base64.RawURLEncoding.DecodeString(key.X)
+	if err != nil {
+		return nil, err
+	}
+	if len(raw) != ed25519.PublicKeySize {
+		return nil, fmt.Errorf("invalid Ed25519 public key length %d", len(raw))
+	}
+	return ed25519.PublicKey(raw), nil
+}
+
+// ── JWT parsing ──
+
+func parseAndValidateJWT(ctx context.Context, cch *cache.Cache, cfg *config.Config, tokenString string) (*generic.UserClaims, error) {
+	keys, err := fetchJWKS(ctx, cch, cfg.JWKSURL)
+	if err != nil {
+		return nil, err
+	}
+	if len(keys) == 0 {
+		return nil, generic.ErrAuthEmptyJWKS
+	}
+
 	token, err := jwt.ParseWithClaims(tokenString, &generic.UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if token.Method != jwt.SigningMethodHS512 {
+		if token.Method != jwt.SigningMethodEdDSA {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(cfg.JWTSecret), nil
+
+		kid, _ := token.Header["kid"].(string)
+		for _, key := range keys {
+			if kid != "" && key.Kid != "" && key.Kid != kid {
+				continue
+			}
+			if pub, err := publicKeyFromJWK(key); err == nil {
+				return pub, nil
+			}
+		}
+		return nil, generic.ErrAuthNoMatchingKey
 	})
 	if err != nil || !token.Valid {
-		return nil, errors.New("invalid or expired token")
+		return nil, generic.ErrAuthInvalidToken
 	}
 
 	claims, ok := token.Claims.(*generic.UserClaims)
 	if !ok {
-		return nil, errors.New("invalid token claims")
+		return nil, generic.ErrAuthInvalidClaims
 	}
-
 	if claims.Banned {
-		return nil, errors.New("account is banned")
+		return nil, generic.ErrAuthUserBanned
 	}
 
 	return claims, nil
 }
 
-func parseAndValidateRefreshJWT(cfg *config.Config, tokenString string) error {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if token.Method != jwt.SigningMethodHS512 {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(cfg.JWTSecret), nil
-	})
-	if err != nil || !token.Valid {
-		return errors.New("invalid or expired refresh token")
-	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || claims["type"] != "refresh" {
-		return errors.New("invalid refresh token type")
-	}
-	return nil
-}
-
-func setUserContext(c *fiber.Ctx, claims *generic.UserClaims) {
-	permissionSet := make(map[string]struct{}, len(claims.Permissions))
-	for _, p := range claims.Permissions {
-		permissionSet[p] = struct{}{}
+func setUserContext(c *fiber.Ctx, userID string, roles []string, permissions []string) {
+	perms := make(map[string]struct{}, len(permissions))
+	for _, p := range permissions {
+		perms[p] = struct{}{}
 	}
 
 	c.Locals("user", &generic.UserContext{
-		UserID:      claims.Subject,
-		Roles:       claims.Roles,
-		Permissions: permissionSet,
+		UserID:      userID,
+		Roles:       roles,
+		Permissions: perms,
 	})
 }
 
-func BaseAuthMiddleware(cfg *config.Config, authSvc *services.AuthService, cch *cache.Cache) fiber.Handler {
+// extractToken reads the JWT from the Authorization header first, falling
+// back to the configured auth cookie (both are populated by the admin app —
+// see apps/admin/src/lib/auth-client.ts).
+func extractToken(c *fiber.Ctx, cfg *config.Config) string {
+	if auth := c.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
+		return strings.TrimPrefix(auth, "Bearer ")
+	}
+	return c.Cookies(cfg.AuthCookieName)
+}
+
+// ── Middleware ──
+
+func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo *repositories.UsersRepository) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		accessToken := c.Cookies(cfg.AuthCookieName)
-		refreshToken := c.Cookies(cfg.RefreshCookieName)
+		token := extractToken(c, cfg)
+		if token == "" {
+			return utils.Unauthorized(c, "Authorization token missing or session expired.", generic.ErrAuthTokenMissing)
+		}
 
-		// 1. FAST PATH: Access Token is valid
-		if accessToken != "" {
-			claims, err := parseAndValidateJWT(cfg, accessToken)
-			if err == nil {
-				setUserContext(c, claims)
-				return c.Next()
+		claims, err := parseAndValidateJWT(c.Context(), cch, cfg, token)
+		if err != nil {
+			return utils.Unauthorized(c, "Authorization token missing or session expired.", err)
+		}
+
+		// JWT permissions are a snapshot taken at token mint time (7-day
+		// lifetime), so a token can outlive role/permission changes in the DB
+		// and produce false 403s. Resolve the user's current roles/permissions
+		// from the database on every request, falling back to the token claims
+		// if the lookup fails so auth never breaks on a transient DB error.
+		roles := claims.Roles
+		permissions := claims.Permissions
+		if usersRepo != nil && claims.Subject != "" {
+			if fresh, err := usersRepo.GetRolesAndPermissions(claims.Subject); err == nil {
+				roles = fresh.Roles
+				permissions = fresh.Permissions
 			}
 		}
 
-		// 2. AUTO-REFRESH PATH: Access Token missing/expired, but Refresh Token is present
-		if refreshToken != "" {
-			// A. Check Redis Grace Cache first (Parallel Request handling)
-			if gracePayload, found := cch.GetGraceTokens(c.Context(), refreshToken); found {
-				helpers.SetCookies(cfg, c, gracePayload.AccessToken, gracePayload.RefreshToken)
-				if claims, err := parseAndValidateJWT(cfg, gracePayload.AccessToken); err == nil {
-					setUserContext(c, claims)
-					return c.Next()
-				}
-			}
-
-			// B. Acquire Redis Lock for Rotation
-			lockKey := helpers.HashToken(refreshToken)
-			locked, _ := cch.AcquireLock(c.Context(), lockKey)
-			if !locked {
-				// Another parallel request is rotating right now! Wait 100ms and check Grace Cache again
-				time.Sleep(100 * time.Millisecond)
-				if gracePayload, found := cch.GetGraceTokens(c.Context(), refreshToken); found {
-					helpers.SetCookies(cfg, c, gracePayload.AccessToken, gracePayload.RefreshToken)
-					if claims, err := parseAndValidateJWT(cfg, gracePayload.AccessToken); err == nil {
-						setUserContext(c, claims)
-						return c.Next()
-					}
-				}
-			} else {
-				defer cch.ReleaseLock(c.Context(), lockKey)
-			}
-
-			// C. Rotate Token Session in DB
-			resp, newRefreshToken, err := authSvc.RefreshTokenService(refreshToken)
-			if err == nil && resp != nil {
-				// D. Save in Redis Grace Cache for 30s
-				cch.SetGraceTokens(c.Context(), refreshToken, &cache.GraceTokenPayload{
-					AccessToken:  resp.AccessToken,
-					RefreshToken: newRefreshToken,
-				})
-
-				// E. Write new HTTP-only cookies to Response
-				helpers.SetCookies(cfg, c, resp.AccessToken, newRefreshToken)
-
-				// F. Parse & Set Context
-				if claims, err := parseAndValidateJWT(cfg, resp.AccessToken); err == nil {
-					setUserContext(c, claims)
-					return c.Next()
-				}
-			}
-		}
-
-		// 3. FALLBACK: Unauthorized
-		helpers.ClearCookies(cfg, c)
-		return utils.Unauthorized(c, "Authorization token missing or session expired.", errors.New("unauthorized"))
+		setUserContext(c, claims.Subject, roles, permissions)
+		return c.Next()
 	}
 }
 
@@ -141,12 +235,12 @@ func PermissionGuard(requiredPermissions ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user, ok := c.Locals("user").(*generic.UserContext)
 		if !ok || user == nil {
-			return utils.Unauthorized(c, "Unauthorized.", errors.New("user context not found"))
+			return utils.Unauthorized(c, "Unauthorized.", generic.ErrAuthNoUserContext)
 		}
 
-		for _, reqPerm := range requiredPermissions {
-			if _, hasPerm := user.Permissions[reqPerm]; hasPerm {
-				c.Locals("permission", reqPerm)
+		for _, perm := range requiredPermissions {
+			if _, hasPerm := user.Permissions[perm]; hasPerm {
+				c.Locals("permission", perm)
 				return c.Next()
 			}
 		}

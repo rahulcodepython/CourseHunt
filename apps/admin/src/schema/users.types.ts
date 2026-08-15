@@ -11,6 +11,11 @@ export const AssignRoleRequestZod = z.object({
 });
 export type AssignRoleRequest = z.infer<typeof AssignRoleRequestZod>;
 
+export const RoleItemZod = z.union([
+    z.object({ id: z.string().optional(), name: z.string() }),
+    z.string().transform((name) => ({ id: name, name })),
+]);
+
 export const UserListResponseZod = z.object({
     id: z.string(),
     name: z.string(),
@@ -18,10 +23,14 @@ export const UserListResponseZod = z.object({
     image: z.string().nullable().optional(),
     emailVerified: z.boolean().optional(),
     email_verified: z.boolean().optional(),
-    banned: z.boolean(),
+    role: z.string().optional(),
+    banned: z.boolean().optional().default(false),
     createdAt: z.string().optional(),
     created_at: z.string().optional(),
-    roles: z.array(RoleZod).nullable().optional().transform((val) => val ?? []),
+    roles: z.union([
+        z.array(RoleItemZod),
+        z.string().transform((r) => [{ id: r, name: r }]),
+    ]).nullable().optional().transform((val) => (Array.isArray(val) && val.length > 0 ? val : [])),
 });
 export type UserListResponse = z.infer<typeof UserListResponseZod>;
 

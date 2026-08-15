@@ -3,45 +3,49 @@
 import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
-import { useArrayMutation, appendToArray, replaceInArray, removeFromArray } from "@/react-query/mutation";
+import {
+	useArrayMutation,
+	appendToArray,
+	replaceInArray,
+	removeFromArray,
+} from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { CategoryZod, CreateCategoryRequestZod, UpdateCategoryRequestZod } from "@/schema/category.types";
-import { DeleteResponseZod } from "@/schema/common.types";
+import { Category, CategoryZod, CreateCategoryRequestZod, UpdateCategoryRequestZod } from "@/schema/category.types";
+import { DeleteResponse, DeleteResponseZod, PaginatedResponseZod } from "@/schema/common.types";
 
 export function useCategoriesQuery() {
 	return useAppQuery(queryKeys.categories(), () =>
-		apiRequest({ url: "/api/v1/categories", method: "GET" }, z.array(CategoryZod)),
+		apiRequest({ url: "/api/v1/categories", method: "GET" }, z.union([z.array(CategoryZod), PaginatedResponseZod(CategoryZod)])),
 	);
 }
 
 export function useCreateCategoryMutation() {
-	return useArrayMutation({
+	return useArrayMutation<Category, z.infer<typeof CreateCategoryRequestZod>, Category>({
 		mutationFn: (data: z.infer<typeof CreateCategoryRequestZod>) =>
 			apiRequest({ url: "/api/v1/categories", method: "POST", data }, CategoryZod),
 		queryKey: queryKeys.categories(),
-		updater: (cat) => appendToArray(cat),
+		updater: (newCat) => appendToArray(newCat),
 		showToast: true,
 	});
 }
 
 export function useDeleteCategoryMutation() {
-	return useArrayMutation({
+	return useArrayMutation<DeleteResponse, string, Category>({
 		mutationFn: (id: string) =>
 			apiRequest({ url: `/api/v1/categories/${id}`, method: "DELETE" }, DeleteResponseZod),
 		queryKey: queryKeys.categories(),
 		updater: (res) => removeFromArray(res.id),
-		optimistic: (id) => removeFromArray(id),
 		showToast: true,
 	});
 }
 
-export function useUpdateCategoryMutation(id: string) {
-	return useArrayMutation({
-		mutationFn: (data: z.infer<typeof UpdateCategoryRequestZod>) =>
+export function useUpdateCategoryMutation() {
+	return useArrayMutation<Category, { id: string; data: z.infer<typeof UpdateCategoryRequestZod> }, Category>({
+		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateCategoryRequestZod> }) =>
 			apiRequest({ url: `/api/v1/categories/${id}`, method: "PATCH", data }, CategoryZod),
 		queryKey: queryKeys.categories(),
-		updater: (cat) => replaceInArray(cat as any),
+		updater: (updatedCat) => replaceInArray(updatedCat),
 		showToast: true,
 	});
 }

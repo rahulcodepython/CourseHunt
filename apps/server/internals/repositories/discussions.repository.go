@@ -23,7 +23,7 @@ func NewDiscussionsRepository(db *sqlx.DB, enrollmentsRepo *EnrollmentsRepositor
 // $3 is always the userID parameter position across all discussion queries.
 func buildAuthCTE(scope generic.AuthScope) string {
 	switch scope {
-	case generic.ScopeEnrolled:
+	case generic.ScopeUser:
 		return `
 		auth AS (
 			SELECT EXISTS (
@@ -47,7 +47,7 @@ func buildAuthCTE(scope generic.AuthScope) string {
 			SELECT true AS is_authorized
 		),`
 	default:
-		// ScopeUser — user access, skip target-level auth
+		// ScopeUser — user access
 		return `
 		auth AS (
 			SELECT true AS is_authorized
@@ -59,7 +59,7 @@ func buildAuthCTE(scope generic.AuthScope) string {
 // where the auth check uses lesson_info instead of target_info.
 func buildCreateAuthCTE(scope generic.AuthScope) (string, bool) {
 	switch scope {
-	case generic.ScopeEnrolled:
+	case generic.ScopeUser:
 		return `
 		auth AS (
 			SELECT EXISTS (
@@ -84,14 +84,14 @@ func buildCreateAuthCTE(scope generic.AuthScope) (string, bool) {
 
 // authRequiredForScope returns true if the scope requires authorization checks.
 func authRequiredForScope(scope generic.AuthScope) bool {
-	return scope == generic.ScopeEnrolled || scope == generic.ScopeTutor
+	return scope == generic.ScopeUser || scope == generic.ScopeTutor
 }
 
 // buildUpdateAuthCTE returns the auth CTE for update operations.
 // Unlike list/create, update checks are done against discussion_info.
 func buildUpdateAuthCTE(scope generic.AuthScope) string {
 	switch scope {
-	case generic.ScopeEnrolled:
+	case generic.ScopeUser:
 		return `
 		auth AS (
 			SELECT EXISTS (
@@ -117,7 +117,7 @@ func buildUpdateAuthCTE(scope generic.AuthScope) string {
 // buildDeleteAuthCTE returns the auth CTE for delete operations.
 func buildDeleteAuthCTE(scope generic.AuthScope) (string, bool) {
 	switch scope {
-	case generic.ScopeEnrolled:
+	case generic.ScopeUser:
 		return `
 		auth AS (
 			SELECT EXISTS (
@@ -146,7 +146,7 @@ func buildDeleteAuthCTE(scope generic.AuthScope) (string, bool) {
 // This is for update operations where ownership is required.
 func ownerWhereClause(scope generic.AuthScope, userParam string) (string, bool) {
 	switch scope {
-	case generic.ScopeEnrolled:
+	case generic.ScopeUser:
 		return fmt.Sprintf("AND discussions.user_id = %s", userParam), true
 	case generic.ScopeTutor:
 		// Tutor can update any discussion in their course
@@ -200,7 +200,7 @@ func (r *DiscussionsRepository) ListRepository(lessonID, parentID, userID string
 			SELECT d.id, d.lesson_id, d.course_id, d.parent_id, d.content, d.reply_count, d.created_at, d.updated_at,
 			       json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', COALESCE(u.image, '')) AS "user"
 			FROM discussions d
-			JOIN "user" u ON u.id = d.user_id
+			JOIN "users" u ON u.id = d.user_id
 			CROSS JOIN auth a
 			WHERE 
 				(($1 != '' AND d.lesson_id = $1 AND d.parent_id IS NULL) OR
@@ -281,7 +281,7 @@ func (r *DiscussionsRepository) CreateRepository(userID string, req entities.Cre
 			SELECT i.id, i.lesson_id, i.course_id, i.parent_id, i.content, i.reply_count, i.created_at, i.updated_at,
 			       json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', COALESCE(u.image, '')) AS "user"
 			FROM inserted i
-			JOIN "user" u ON u.id = i.user_id
+			JOIN "users" u ON u.id = i.user_id
 		)
 		SELECT
 			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
@@ -350,7 +350,7 @@ func (r *DiscussionsRepository) UpdateRepository(id, userID string, content stri
 			SELECT u.id, u.lesson_id, u.course_id, u.parent_id, u.content, u.reply_count, u.created_at, u.updated_at,
 			       json_build_object('id', usr.id, 'name', COALESCE(usr.name, ''), 'image', COALESCE(usr.image, '')) AS "user"
 			FROM updated u
-			JOIN "user" usr ON usr.id = u.user_id
+			JOIN "users" usr ON usr.id = u.user_id
 		)
 		SELECT
 			EXISTS(SELECT 1 FROM discussion_info) AS discussion_exists,
@@ -448,7 +448,7 @@ func (r *DiscussionsRepository) DeleteRepository(id, userID string, scope generi
 
 func errorForScopeAuth(scope generic.AuthScope) error {
 	switch scope {
-	case generic.ScopeEnrolled:
+	case generic.ScopeUser:
 		return generic.ErrDiscussionsNotEnrolled
 	case generic.ScopeTutor:
 		return generic.ErrDiscussionsAccessDenied
@@ -456,6 +456,3 @@ func errorForScopeAuth(scope generic.AuthScope) error {
 		return generic.ErrDiscussionsAccessDenied
 	}
 }
-
-// Ensure json is imported (used in unified methods)
-// (import already present in this file)

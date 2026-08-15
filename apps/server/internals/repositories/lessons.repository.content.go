@@ -18,7 +18,7 @@ func (r *LessonsRepository) ReadContentRepository(lessonID, userID string, scope
 	updateCTE := `SELECT NULL AS id`
 	contentWhere := `1=1`
 
-	if scope == generic.ScopeEnrolled {
+	if scope == generic.ScopeUser {
 		enrollmentCTE = `
 			SELECT EXISTS (
 				SELECT 1 FROM enrollments e

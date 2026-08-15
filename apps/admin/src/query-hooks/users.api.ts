@@ -23,12 +23,12 @@ export function useUsersQuery(params?: Record<string, string | number>) {
 	);
 }
 
-export function useAssignRoleMutation() {
+export function useAssignRoleMutation(opts?: { showToast?: boolean }) {
 	return useSimpleMutation({
 		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof AssignRoleRequestZod> }) =>
 			apiRequest({ url: `/api/v1/users/${id}/roles/assign`, method: "POST", data }, RoleAssignmentResponseZod),
 		invalidateKeys: [queryKeys.users()],
-		showToast: true,
+		showToast: opts?.showToast ?? true,
 	});
 }
 

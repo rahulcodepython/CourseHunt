@@ -1,6 +1,6 @@
 "use client";
-
 import * as React from "react";
+
 import { useTransactionsQuery } from "@/query-hooks/transactions.api";
 import type { Transaction } from "@/schema/transactions.types";
 import { PageHeader } from "@/components/page-header";
@@ -14,14 +14,14 @@ export default function TransactionsPage() {
   const transactions: Transaction[] = (raw?.data?.data as any) ?? [];
 
   const totalRevenue = transactions
-    .filter((t) => t.status === "confirmed")
+    .filter((t) => t.status === "confirmed" || t.status === "success")
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const totalRefunds = transactions
-    .filter((t) => t.status === "refunded")
+    .filter((t) => t.status === "refunded" || t.status === "failed")
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  const refundsCount = transactions.filter((t) => t.status === "refunded").length;
+  const refundsCount = transactions.filter((t) => t.status === "refunded" || t.status === "failed").length;
 
   return (
     <div className="space-y-6">
@@ -55,7 +55,9 @@ export default function TransactionsPage() {
         data={transactions}
         searchPlaceholder="Search transactions..."
         emptyIcon="currency-rupee"
-        emptyText={isLoading ? "Loading transactions..." : "No transactions found"}
+        emptyText="No transactions found"
+        isLoading={isLoading}
+        loadingText="Loading transactions..."
       />
     </div>
   );

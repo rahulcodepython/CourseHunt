@@ -2,8 +2,8 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { SortableColumnHeader } from "@/components/sortable-column-header";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
 
 export type SystemEventLog = {
   id: string;
@@ -17,19 +17,15 @@ export type SystemEventLog = {
 
 const columnHelper = createColumnHelper<SystemEventLog>();
 
+const statusMap: Record<string, StatusBadgeEntry> = {
+  resolved: { label: "Resolved", variant: "secondary", className: "bg-emerald-500/10 text-emerald-500" },
+  investigating: { label: "Investigating", variant: "outline", className: "border-amber-500/30 text-amber-500" },
+  warning: { label: "Warning", variant: "destructive" },
+};
+
 export const monitoringColumns = [
   columnHelper.accessor("date", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Date & Time</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Date & Time" />,
     cell: ({ row }) => (
       <div className="flex flex-col text-xs font-mono">
         <span className="font-semibold">{row.original.date}</span>
@@ -61,26 +57,6 @@ export const monitoringColumns = [
   }),
   columnHelper.accessor("status", {
     header: "Status",
-    cell: ({ getValue }) => {
-      const status = getValue();
-      if (status === "resolved") {
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-emerald-500/10 text-emerald-500"
-          >
-            Resolved
-          </Badge>
-        );
-      }
-      if (status === "investigating") {
-        return (
-          <Badge variant="outline" className="border-amber-500/30 text-amber-500">
-            Investigating
-          </Badge>
-        );
-      }
-      return <Badge variant="destructive">Warning</Badge>;
-    },
+    cell: ({ getValue }) => <StatusBadge status={getValue()} map={statusMap} />,
   }),
 ];

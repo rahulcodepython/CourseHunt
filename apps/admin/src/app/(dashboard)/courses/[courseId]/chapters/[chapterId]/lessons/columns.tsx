@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Lesson } from "@/schema/lessons.types";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { SortableColumnHeader } from "@/components/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/row-actions";
 import { cn } from "@/lib/utils";
 
 const columnHelper = createColumnHelper<Lesson>();
@@ -35,17 +34,7 @@ export const getColumns = (courseId: string, chapterId: string) => [
     ),
   }),
   columnHelper.accessor("title", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Title</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Title" />,
     cell: ({ row }) => {
       const lesson = row.original;
       return (
@@ -78,20 +67,20 @@ export const getColumns = (courseId: string, chapterId: string) => [
       const lesson = row.original;
       const basePath = `/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`;
       return (
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
-            <Link href={`${basePath}/feedback`}>
-              <Icon name="star" className="size-3.5 text-amber-500 fill-amber-500" />
-              <span>Feedback</span>
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
-            <Link href={`${basePath}/discussions`}>
-              <Icon name="messages" className="size-3.5 text-primary" />
-              <span>Discussions</span>
-            </Link>
-          </Button>
-        </div>
+        <RowActions>
+          <RowActionButton
+            icon="star"
+            label="View Feedback"
+            href={`${basePath}/feedback`}
+            iconClassName="text-amber-500 fill-amber-500"
+          />
+          <RowActionButton
+            icon="messages"
+            label="View Discussions"
+            href={`${basePath}/discussions`}
+            iconClassName="text-primary"
+          />
+        </RowActions>
       );
     },
   }),

@@ -1,9 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useAdminProfilesQuery, useAssignRoleMutation, useRevokeRoleMutation } from "@/query-hooks/users.api";
+import { useAssignRoleMutation, useRevokeRoleMutation, useUsersQuery } from "@/query-hooks/users.api";
+import { useSessionStore } from "@/store/session.store";
+import { hasPermission } from "@/lib/permissions";
+import { getPrimaryRole } from "@/lib/roles";
+import { CreateUserDialog } from "@/components/create-user-dialog";
 import { useRolesQuery } from "@/query-hooks/roles.api";
 import type { UserListResponse } from "@/schema/users.types";
+import type { Role } from "@/schema/roles.types";
 import { PageHeader } from "@/components/page-header";
 import { LoadingButton } from "@/components/loading-button";
 import { DataTable } from "@/components/data-table";
@@ -44,8 +49,8 @@ function ManageRolesDialog({
     const assignRoleMutation = useAssignRoleMutation();
     const revokeRoleMutation = useRevokeRoleMutation();
 
-    const roles = (rawRoles?.data as any[]) ?? [];
-    const customRoles = roles.filter((r: any) => !r.is_system);
+    const roles: Role[] = rawRoles?.data ?? [];
+    const customRoles = roles.filter((r) => !r.is_system);
 
     const {
         control,
@@ -78,7 +83,7 @@ function ManageRolesDialog({
         });
     };
 
-    const currentCustomRoles = user?.roles.filter((r: any) => r.name !== "admin") ?? [];
+    const currentCustomRoles = user?.roles.filter((r) => r.name !== "admin") ?? [];
     const isPending = assignRoleMutation.isPending || revokeRoleMutation.isPending;
 
     return (
@@ -102,7 +107,7 @@ function ManageRolesDialog({
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customRoles.length > 0 ? (
-                                            customRoles.map((role: any) => (
+                                            customRoles.map((role) => (
                                                 <SelectItem key={role.id} value={role.id}>
                                                     {role.name}
                                                 </SelectItem>
@@ -130,32 +135,30 @@ function ManageRolesDialog({
 
                 <div className="space-y-2">
                     <p className="text-sm font-medium">Current Roles</p>
-                    {currentCustomRoles.length > 0 ? (
-                        currentCustomRoles.map((role: any) => (
-                            <div
-                                key={role.id}
-                                className="flex items-center justify-between rounded-lg border px-3 py-2"
+                    {
+                        currentCustomRoles.length > 0 ? currentCustomRoles.map((role) => <div
+                            key={role.id}
+                            className="flex items-center justify-between rounded-lg border px-3 py-2"
+                        >
+                            <Badge variant="secondary" className="capitalize">
+                                {role.name}
+                            </Badge>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleRevoke(role.id ?? role.name)}
+                                disabled={isPending}
+                                aria-label={`Revoke ${role.name}`}
                             >
-                                <Badge variant="secondary" className="capitalize">
-                                    {role.name}
-                                </Badge>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-8 text-muted-foreground hover:text-destructive"
-                                    onClick={() => handleRevoke(role.id)}
-                                    disabled={isPending}
-                                    aria-label={`Revoke ${role.name}`}
-                                >
-                                    <Icon name="x" className="size-4" />
-                                </Button>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
-                            No custom roles assigned
-                        </p>
-                    )}
+                                <Icon name="x" className="size-4" />
+                            </Button>
+                        </div>
+                        )
+                            : <p className="rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
+                                No custom roles assigned
+                            </p>
+                    }
                 </div>
             </div>
             <DialogFooter className="mt-4">
@@ -168,11 +171,16 @@ function ManageRolesDialog({
 }
 
 export default function AdminsPage() {
-    const { data: rawAdmins, isLoading } = useAdminProfilesQuery();
+    const permissions = useSessionStore((s) => s.permissions);
+    const canCreateAdmin = hasPermission(permissions, "admin:users:role:assign");
+
+    const { data: rawAdmins, isLoading } = useUsersQuery({ role: "admin" });
     const [selectedUser, setSelectedUser] = React.useState<UserListResponse | null>(null);
     const [dialogOpen, setDialogOpen] = React.useState(false);
+    const [createOpen, setCreateOpen] = React.useState(false);
 
-    const admins: UserListResponse[] = (rawAdmins?.data?.data as any) ?? [];
+    const rawList: UserListResponse[] = rawAdmins?.data?.data ?? [];
+    const admins: UserListResponse[] = rawList.filter((u) => getPrimaryRole(u) === "admin");
 
     const handleManage = (user: UserListResponse) => {
         setSelectedUser(user);
@@ -186,13 +194,22 @@ export default function AdminsPage() {
             <PageHeader
                 title="Admin Users"
                 subtitle="View platform administrators and manage role assignments"
+                actions={
+                    canCreateAdmin ? <Button onClick={() => setCreateOpen(true)}>
+                        <Icon name="plus" className="size-4" />
+                        Create Admin
+                    </Button>
+                        : null
+                }
             />
 
             <DataTable
                 columns={columns}
                 data={admins}
                 emptyIcon="user-check"
-                emptyText={isLoading ? "Loading admin users..." : "No admin users found"}
+                emptyText="No admin users found"
+                isLoading={isLoading}
+                loadingText="Loading admin users..."
             />
 
             <ManageRolesDialog
@@ -200,6 +217,15 @@ export default function AdminsPage() {
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
             />
+
+            {canCreateAdmin && (
+                <CreateUserDialog
+                    open={createOpen}
+                    onOpenChange={setCreateOpen}
+                    title="Create Admin"
+                    mode="admin"
+                />
+            )}
         </div>
     );
 }

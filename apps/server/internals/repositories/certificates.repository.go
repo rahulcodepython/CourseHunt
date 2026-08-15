@@ -38,8 +38,8 @@ func (r *CertificatesRepository) IssueRepository(userID, courseID string) (*enti
 			RETURNING id, user_id, course_id, issued_at
 		)
 		SELECT
-			COALESCE(i.id, '') AS id,
-			COALESCE(i.user_id, '') AS user_id,
+			COALESCE(i.id::text, '') AS id,
+			COALESCE(i.user_id::text, '') AS user_id,
 			COALESCE(i.issued_at, NOW()) AS issued_at,
 			$2 AS "course.id",
 			COALESCE(co.title, '') AS "course.title",

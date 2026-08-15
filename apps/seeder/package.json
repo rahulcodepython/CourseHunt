@@ -1,8 +1,0 @@
-{
-  "name": "@coursehunt/seeder",
-  "private": true,
-  "scripts": {
-    "seed": "go run main.go",
-    "clean": "rm -f seed"
-  }
-}

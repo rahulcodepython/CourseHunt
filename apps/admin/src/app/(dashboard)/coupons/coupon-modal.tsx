@@ -1,6 +1,7 @@
 "use client";
 
 import { FormDialog } from "@/components/form-dialog";
+import type { Coupon } from "@/schema/coupons.types";
 import { CouponForm } from "./coupon-form";
 
 export function CouponModal({
@@ -10,7 +11,7 @@ export function CouponModal({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  editingCoupon: any | null;
+  editingCoupon: Coupon | null;
 }) {
   return (
     <FormDialog

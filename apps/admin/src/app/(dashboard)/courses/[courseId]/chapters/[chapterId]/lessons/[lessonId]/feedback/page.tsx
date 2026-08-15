@@ -12,6 +12,11 @@ import { Icon } from "@/components/icon";
 import { Button } from "@/components/ui/button";
 import { getColumns } from "./columns";
 
+import { useCourseLandingQuery } from "@/query-hooks/courses.api";
+import { useChaptersQuery } from "@/query-hooks/chapters.api";
+import { useLessonsQuery } from "@/query-hooks/lessons.api";
+import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
+
 export default function LessonFeedbackPage() {
   const params = useParams<{
     courseId: string;
@@ -19,6 +24,22 @@ export default function LessonFeedbackPage() {
     lessonId: string;
   }>();
   const { courseId, chapterId, lessonId } = params;
+
+  const { data: courseData } = useCourseLandingQuery(courseId);
+  const { data: chaptersData } = useChaptersQuery(courseId);
+  const { data: lessonsData } = useLessonsQuery(chapterId);
+
+  const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
+  const currentLesson = (lessonsData?.data as any[])?.find((l: any) => l.id === lessonId);
+
+  useSetBreadcrumbs([
+    { label: "Courses", href: "/courses" },
+    { label: courseData?.data?.title || "Course", href: `/courses/overview/${courseId}` },
+    { label: "Chapters", href: `/courses/${courseId}/chapters` },
+    { label: currentChapter?.title || "Chapter", href: `/courses/${courseId}/chapters/${chapterId}/lessons` },
+    { label: currentLesson?.title || "Lesson" },
+    { label: "Feedbacks" },
+  ]);
 
   const { data: rawFeedbacks, isLoading } = useFeedbacksQuery();
   const updateMutation = useUpdateFeedbackMutation();
@@ -65,7 +86,9 @@ export default function LessonFeedbackPage() {
         data={feedbacks}
         searchPlaceholder="Search feedback..."
         emptyIcon="star"
-        emptyText={isLoading ? "Loading feedback..." : "No feedback found for this lesson"}
+        emptyText="No feedback found for this lesson"
+        isLoading={isLoading}
+        loadingText="Loading feedback..."
       />
 
       <ConfirmDeleteDialog

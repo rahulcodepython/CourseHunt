@@ -90,7 +90,7 @@ func (r *UsersRepository) AdminListProfilesRepository(page, limit int) ([]entiti
 				u.email,
 				COALESCE(u.name, '') AS name,
 				COALESCE(r.name, '') AS role,
-				COALESCE(p.id, '') AS id,
+				COALESCE(p.id::text, '') AS id,
 				p.headline,
 				p.bio,
 				p.website,
@@ -99,7 +99,7 @@ func (r *UsersRepository) AdminListProfilesRepository(page, limit int) ([]entiti
 				COALESCE(p.updated_at, u."updatedAt", CURRENT_TIMESTAMP) AS updated_at
 			FROM "users" u
 			LEFT JOIN profiles p ON p.user_id = u.id
-			LEFT JOIN user_roles ur ON ur.user_id = u.id
+			LEFT JOIN roles_user ur ON ur.user_id = u.id
 			LEFT JOIN roles r ON r.id = ur.role_id
 			ORDER BY u."createdAt" DESC
 			LIMIT $1 OFFSET $2

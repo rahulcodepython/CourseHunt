@@ -9,7 +9,6 @@ import type { ApiResponse } from "@/schema/common.types";
 import type { UploadMediaResponse } from "@/schema/upload.types";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 
 interface FileUploadProps {
 	label: string;
@@ -41,9 +40,6 @@ export default function FileUpload({ label, onChange, field, accept, value, clas
 				onChange(field, uploadResponse.data.downloadUrl, accept);
 				setPreviousValue({ url: uploadResponse.data.downloadUrl, fileType: accept });
 				if (fileRef.current) fileRef.current.value = "";
-				toast.success("File uploaded successfully");
-			} else {
-				toast.error("Upload failed");
 			}
 		}
 	};

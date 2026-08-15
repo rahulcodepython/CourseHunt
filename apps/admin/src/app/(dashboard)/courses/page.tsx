@@ -1,6 +1,6 @@
 "use client";
-
 import * as React from "react";
+
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import { PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
@@ -22,7 +22,9 @@ export default function CoursesPage() {
         data={courses}
         searchPlaceholder="Search courses..."
         emptyIcon="book"
-        emptyText={isLoading ? "Loading courses..." : "No courses found"}
+        emptyText="No courses found"
+        isLoading={isLoading}
+        loadingText="Loading courses..."
       />
     </div>
   );

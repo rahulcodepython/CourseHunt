@@ -2,6 +2,7 @@ package razorpay
 
 import (
 	"bytes"
+	"coursehunt/server/internals/generic"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,29 +14,12 @@ import (
 
 var httpClient = &http.Client{Timeout: 30 * time.Second}
 
-// ── Types ──
+// ── Types (moved to generic/type.go) ──
 
-type Client struct {
-	KeyID         string
-	Secret        string
-	WebhookSecret string
-	BaseURL       string
-}
-
-type OrderRequest struct {
-	Amount   int64  `json:"amount"`
-	Currency string `json:"currency"`
-	Receipt  string `json:"receipt"`
-}
-
-type OrderResponse struct {
-	ID       string `json:"id"`
-	Entity   string `json:"entity"`
-	Amount   int64  `json:"amount"`
-	Currency string `json:"currency"`
-	Receipt  string `json:"receipt"`
-	Status   string `json:"status"`
-}
+type Client generic.RazorpayClient
+type OrderRequest = generic.RazorpayOrderRequest
+type OrderResponse = generic.RazorpayOrderResponse
+type WebhookPayload = generic.RazorpayWebhookPayload
 
 // ── Constructor ──
 

@@ -2,9 +2,10 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Category } from "@/schema/category.types";
+import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { SortableColumnHeader } from "@/components/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/row-actions";
 
 const columnHelper = createColumnHelper<Category>();
 
@@ -14,24 +15,14 @@ export const getColumns = (
   onDelete: (category: Category) => void,
 ) => [
   columnHelper.accessor("name", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Category Name</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Category Name" />,
     cell: ({ getValue }) => <span className="font-semibold">{getValue()}</span>,
   }),
   columnHelper.accessor("created_at", {
     header: "Created Date",
     cell: ({ getValue }) => (
       <span className="font-mono text-xs text-muted-foreground">
-        {getValue() ? new Date(getValue()).toLocaleDateString() : "—"}
+        {getValue() ? formatDate(getValue()) : "—"}
       </span>
     ),
   }),
@@ -68,26 +59,10 @@ export const getColumns = (
     cell: ({ row }) => {
       const category = row.original;
       return (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8"
-            onClick={() => onEdit(category)}
-            aria-label="Edit category"
-          >
-            <Icon name="pencil" className="size-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8 text-destructive hover:text-destructive"
-            onClick={() => onDelete(category)}
-            aria-label="Delete category"
-          >
-            <Icon name="trash" className="size-4" />
-          </Button>
-        </div>
+        <RowActions>
+          <RowActionButton icon="pencil" label="Edit Category" onClick={() => onEdit(category)} />
+          <RowActionButton icon="trash" label="Delete Category" onClick={() => onDelete(category)} destructive />
+        </RowActions>
       );
     },
   }),

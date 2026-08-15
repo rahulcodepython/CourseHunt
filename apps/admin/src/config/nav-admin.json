@@ -1,0 +1,129 @@
+[
+    {
+        "label": "Overview",
+        "items": [
+            {
+                "title": "Dashboard",
+                "href": "/",
+                "icon": "dashboard",
+                "permission": "admin:dashboard"
+            }
+        ]
+    },
+    {
+        "label": "Management",
+        "items": [
+            {
+                "title": "Users",
+                "href": "/users",
+                "icon": "users",
+                "permission": "admin:users:list"
+            },
+            {
+                "title": "Admins",
+                "href": "/admins",
+                "icon": "user-check",
+                "permission": "admin:users:list"
+            },
+            {
+                "title": "Tutors",
+                "href": "/tutors",
+                "icon": "book",
+                "permission": "admin:users:list"
+            },
+            {
+                "title": "Courses & Content",
+                "icon": "category",
+                "children": [
+                    {
+                        "title": "All Courses",
+                        "href": "/courses",
+                        "icon": "category",
+                        "permission": "admin:courses:inspect"
+                    },
+                    {
+                        "title": "Categories",
+                        "href": "/categories",
+                        "icon": "folder",
+                        "permission": "admin:categories:manage"
+                    }
+                ]
+            },
+            {
+                "title": "Updates",
+                "href": "/updates",
+                "icon": "world",
+                "permission": "admin:updates:manage"
+            }
+        ]
+    },
+    {
+        "label": "Finance",
+        "items": [
+            {
+                "title": "Billing & Sales",
+                "icon": "currency-rupee",
+                "children": [
+                    {
+                        "title": "Transactions",
+                        "href": "/transactions",
+                        "icon": "currency-rupee",
+                        "permission": "admin:transactions:read_all"
+                    },
+                    {
+                        "title": "Coupons",
+                        "href": "/coupons",
+                        "icon": "ticket",
+                        "permission": "admin:coupons:manage"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "label": "Access Control",
+        "items": [
+            {
+                "title": "Roles & Permissions",
+                "href": "/roles",
+                "icon": "shield",
+                "permission": "admin:roles:read"
+            }
+        ]
+    },
+    {
+        "label": "System",
+        "items": [
+            {
+                "title": "Security",
+                "href": "/security",
+                "icon": "lock",
+                "permission": null
+            },
+            {
+                "title": "Monitoring",
+                "href": "/monitoring",
+                "icon": "activity",
+                "permission": null
+            },
+            {
+                "title": "Logs",
+                "href": "/logs",
+                "icon": "file-text",
+                "permission": null
+            },
+            {
+                "title": "System Config",
+                "href": "/system-config",
+                "icon": "settings",
+                "permission": null
+            },
+            {
+                "title": "Maintenance",
+                "href": "/maintenance",
+                "icon": "clock",
+                "permission": null
+            }
+        ]
+    }
+]

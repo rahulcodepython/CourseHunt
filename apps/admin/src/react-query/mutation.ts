@@ -111,7 +111,7 @@ function useWithExecute<TData, TVars, TContext>(
 
 export function useSimpleMutation<TData, TVars = void>(opts: {
 	mutationFn: (vars: TVars) => Promise<ApiResponse<TData>>;
-	invalidateKeys?: QueryKey[] | ((data: TData, vars: TVars) => QueryKey[]);
+	invalidateKeys?: QueryKey[] | ((data: TData | null, vars: TVars) => QueryKey[]);
 	showToast?: boolean;
 }) {
 	const queryClient = useQueryClient();
@@ -120,7 +120,10 @@ export function useSimpleMutation<TData, TVars = void>(opts: {
 		mutationFn: opts.mutationFn,
 		onSuccess: async (response, vars) => {
 			const data = handleResponse(response, opts.showToast);
-			if (data == null) return;
+			// A successful response may legitimately carry null data (e.g.
+			// `z.null()` mutations) — invalidation must still run, so gate on
+			// `response.success` rather than `data == null`.
+			if (!response.success) return;
 			if (opts.invalidateKeys) {
 				const keys = typeof opts.invalidateKeys === "function"
 					? opts.invalidateKeys(data, vars) : opts.invalidateKeys;

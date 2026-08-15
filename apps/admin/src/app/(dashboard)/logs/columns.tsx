@@ -1,9 +1,8 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { SortableColumnHeader } from "@/components/sortable-column-header";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
 
 export type LogEntry = {
   timestamp: string;
@@ -15,19 +14,15 @@ export type LogEntry = {
 
 const columnHelper = createColumnHelper<LogEntry>();
 
+const levelMap: Record<string, StatusBadgeEntry> = {
+  INFO: { label: "INFO", variant: "secondary", className: "bg-blue-500/10 text-blue-500" },
+  WARN: { label: "WARN", variant: "outline", className: "border-amber-500/30 text-amber-500" },
+  ERROR: { label: "ERROR", variant: "destructive" },
+};
+
 export const logsColumns = [
   columnHelper.accessor("timestamp", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Timestamp</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Timestamp" />,
     cell: ({ getValue }) => (
       <span className="font-mono text-xs text-muted-foreground">
         {getValue()}
@@ -36,24 +31,7 @@ export const logsColumns = [
   }),
   columnHelper.accessor("level", {
     header: "Level",
-    cell: ({ getValue }) => {
-      const level = getValue();
-      if (level === "INFO") {
-        return (
-          <Badge variant="secondary" className="bg-blue-500/10 text-blue-500">
-            INFO
-          </Badge>
-        );
-      }
-      if (level === "WARN") {
-        return (
-          <Badge variant="outline" className="border-amber-500/30 text-amber-500">
-            WARN
-          </Badge>
-        );
-      }
-      return <Badge variant="destructive">ERROR</Badge>;
-    },
+    cell: ({ getValue }) => <StatusBadge status={getValue()} map={levelMap} />,
   }),
   columnHelper.accessor("source", {
     header: "Source",

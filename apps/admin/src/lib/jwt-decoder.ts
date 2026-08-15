@@ -8,7 +8,7 @@ export function decodeJwtPayload(token: string): JwtPayload | null {
         const json = atob(base64);
         const parsed = JSON.parse(json);
         const validated = JwtPayloadZod.safeParse(parsed);
-        return validated.success ? validated.data : (parsed as JwtPayload);
+        return validated.success ? validated.data : null;
     } catch {
         return null;
     }

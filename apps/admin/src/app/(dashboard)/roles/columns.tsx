@@ -3,8 +3,9 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Role } from "@/schema/roles.types";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icon";
+import { SortableColumnHeader } from "@/components/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/row-actions";
 import { cn } from "@/lib/utils";
 
 const columnHelper = createColumnHelper<Role>();
@@ -15,17 +16,7 @@ export const getColumns = (
   onDelete: (role: Role) => void,
 ) => [
   columnHelper.accessor("name", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Role</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Role" />,
     cell: ({ getValue }) => (
       <Badge variant="secondary" className="font-mono">
         {getValue()}
@@ -59,28 +50,19 @@ export const getColumns = (
       const role = row.original;
       const expanded = expandedRoleId === role.id;
       return (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className={cn("size-8", expanded && "border-primary text-primary")}
-            onClick={() => onToggleExpand(role.id)}
-            aria-label="Manage permissions"
-          >
-            <Icon name="shield" className="size-4" />
-          </Button>
+        <RowActions>
           {!role.is_system && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8 text-destructive hover:text-destructive"
-              onClick={() => onDelete(role)}
-              aria-label="Delete role"
-            >
-              <Icon name="trash" className="size-4" />
-            </Button>
+            <RowActionButton
+              icon="shield"
+              label="Manage Permissions"
+              onClick={() => onToggleExpand(role.id)}
+              className={cn(expanded && "border-primary text-primary")}
+            />
           )}
-        </div>
+          {!role.is_system && (
+            <RowActionButton icon="trash" label="Delete Role" onClick={() => onDelete(role)} destructive />
+          )}
+        </RowActions>
       );
     },
   }),

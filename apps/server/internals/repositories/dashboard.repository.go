@@ -96,7 +96,7 @@ func (r *DashboardRepository) AdminDashboardRepository() (*entities.AdminDashboa
 			'total_users', (SELECT COUNT(*) FROM "users"),
 			'total_tutors', (
 				SELECT COUNT(DISTINCT ur.user_id)
-				FROM user_roles ur
+				FROM roles_user ur
 				JOIN roles ro ON ro.id = ur.role_id
 				WHERE ro.name = 'tutor'
 			),

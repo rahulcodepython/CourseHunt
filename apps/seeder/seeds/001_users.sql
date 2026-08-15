@@ -1,153 +1,85 @@
--- 001_users.sql: Seed Roles, Permissions, Users, Credentials, Roles Mapping, and Profiles
+-- 001_users.sql: Seed Users, Credentials, Roles Mapping, and Profiles
+-- Roles, permissions, and role_permissions are seeded programmatically by
+-- main.go from the repo-root `permissions.json` (see scripts/sync-permissions.mjs).
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Insert Standard System Roles
-INSERT INTO roles (name, description, is_system) VALUES
-    ('admin',    'Platform administrator with full access', true),
-    ('tutor',    'Course instructor and content manager',   true),
-    ('user',     'Regular learner',                         true),
-    ('enrolled', 'User enrolled in at least one course',    true)
-ON CONFLICT (name) DO NOTHING;
-
--- Insert System Permissions (matching apps/server/internals/generic/permissions.go)
-INSERT INTO permissions (name, description) VALUES
-    -- Admin permissions
-    ('admin:categories:manage',    'Manage categories (admin)'),
-    ('admin:courses:inspect',      'Inspect all courses (admin)'),
-    ('admin:dashboard',            'View admin dashboard'),
-    ('admin:discussion:read',      'Read discussions (admin)'),
-    ('admin:discussion:write',     'Write in discussions (admin)'),
-    ('admin:discussion:delete',    'Delete discussions (admin)'),
-    ('admin:enrollments:inspect',  'Inspect enrollments (admin)'),
-    ('admin:coupons:manage',       'Manage coupons (admin)'),
-    ('admin:feedback:inspect',     'Inspect feedbacks (admin)'),
-    ('admin:transactions:read_all','View all transactions (admin)'),
-    ('admin:users:list',           'List all users (admin)'),
-    ('admin:users:role:assign',    'Assign user roles (admin)'),
-    ('admin:users:role:revoke',    'Revoke user roles (admin)'),
-    ('admin:users:create',         'Create user accounts (admin)'),
-    ('admin:users:read',           'Read user details (admin)'),
-    ('admin:roles:create',         'Create custom roles (admin)'),
-    ('admin:roles:read',           'List roles and permissions (admin)'),
-    ('admin:roles:update',         'Update custom roles (admin)'),
-    ('admin:roles:delete',         'Delete custom roles (admin)'),
-    ('admin:roles:assign',         'Assign custom roles (admin)'),
-    ('admin:profile',              'Access admin profile list (admin)'),
-
-    -- Tutor permissions
-    ('tutor:courses:manage',       'Manage own courses (tutor)'),
-    ('tutor:dashboard',            'View tutor dashboard'),
-    ('tutor:discussion:read',      'Read discussions (tutor)'),
-    ('tutor:discussion:write',     'Write in discussions (tutor)'),
-    ('tutor:discussion:delete',    'Delete discussions (tutor)'),
-    ('tutor:feedback:manage',      'Manage feedbacks for own courses (tutor)'),
-    ('tutor:quiz:manage',          'Manage quizzes for own courses (tutor)'),
-    ('tutor:updates:manage',       'Manage updates for own courses (tutor)'),
-    ('tutor:profile',              'Access tutor profile (tutor)'),
-
-    -- Enrolled permissions
-    ('enrolled:courses:study',     'Access study page for enrolled course'),
-    ('enrolled:dashboard',         'View student dashboard'),
-    ('enrolled:discussion:read',   'Read discussions in enrolled course'),
-    ('enrolled:discussion:write',  'Post in discussions in enrolled course'),
-    ('enrolled:quiz:access',       'Attempt quiz in enrolled course'),
-    ('enrolled:updates:feed',      'Read update feed for enrolled courses'),
-
-    -- User permissions
-    ('user:cart:manage',           'Manage shopping cart'),
-    ('user:certificate:manage',    'View and claim certificates'),
-    ('user:enrollments:read',      'View own enrollments'),
-    ('user:feedback:create',       'Submit course feedback'),
-    ('user:notes:manage',          'Manage personal lesson notes'),
-    ('user:transactions:initiate', 'Initiate purchases'),
-    ('user:transactions:read_own',  'View own transaction history'),
-    ('user:profile',               'View and update user profile'),
-    ('user:wishlist:manage',       'Manage wishlist items')
-ON CONFLICT (name) DO NOTHING;
-
--- Map Role-Permissions
-DO $$
-DECLARE
-    r_admin    UUID := (SELECT id FROM roles WHERE name = 'admin');
-    r_tutor    UUID := (SELECT id FROM roles WHERE name = 'tutor');
-    r_enrolled UUID := (SELECT id FROM roles WHERE name = 'enrolled');
-    r_user     UUID := (SELECT id FROM roles WHERE name = 'user');
-    p RECORD;
-BEGIN
-    -- Admin gets EVERY permission
-    FOR p IN SELECT id FROM permissions LOOP
-        INSERT INTO role_permissions (role_id, permission_id)
-        VALUES (r_admin, p.id)
-        ON CONFLICT DO NOTHING;
-    END LOOP;
-
-    -- Tutor permissions
-    FOR p IN SELECT id FROM permissions WHERE name LIKE 'tutor:%' LOOP
-        INSERT INTO role_permissions (role_id, permission_id)
-        VALUES (r_tutor, p.id)
-        ON CONFLICT DO NOTHING;
-    END LOOP;
-
-    -- Enrolled permissions
-    FOR p IN SELECT id FROM permissions WHERE name LIKE 'enrolled:%' LOOP
-        INSERT INTO role_permissions (role_id, permission_id)
-        VALUES (r_enrolled, p.id)
-        ON CONFLICT DO NOTHING;
-    END LOOP;
-
-    -- User permissions
-    FOR p IN SELECT id FROM permissions WHERE name LIKE 'user:%' LOOP
-        INSERT INTO role_permissions (role_id, permission_id)
-        VALUES (r_user, p.id)
-        ON CONFLICT DO NOTHING;
-    END LOOP;
-END $$;
-
 -- Insert Users (2 Admins, 3 Tutors, 7 Students)
-INSERT INTO "users" (id, name, email, "emailVerified", image) VALUES
-    (gen_random_uuid(), 'System Admin', 'admin@example.com', true, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'Lead Admin', 'superadmin@example.com', true, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'Alex Rivers (Go & Systems Expert)', 'tutor@example.com', true, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'Dr. Sarah Smith (Data Science Lead)', 'sarah.smith@example.com', true, 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'John Doe (Next.js & Frontend Architect)', 'john.doe@example.com', true, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'Regular Student', 'user@example.com', true, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'Alice Vance', 'alice@example.com', true, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'Bob Miller', 'bob@example.com', true, 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'Charlie Brown', 'charlie@example.com', true, 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'David Wright', 'david@example.com', true, 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'Eva Davis', 'eva@example.com', true, 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=250&q=80'),
-    (gen_random_uuid(), 'Fiona Gallagher', 'fiona@example.com', true, 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=250&q=80')
-ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, image = EXCLUDED.image;
+-- passwordChangedAt is NULL so every seeded account must change its password on first login.
+INSERT INTO "users" (id, name, email, "emailVerified", image, role) VALUES
+    (gen_random_uuid(), 'System Admin', 'admin@example.com', true, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80', 'admin'),
+    (gen_random_uuid(), 'Lead Admin', 'superadmin@example.com', true, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80', 'admin'),
+    (gen_random_uuid(), 'Alex Rivers (Go & Systems Expert)', 'tutor@example.com', true, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80', 'tutor'),
+    (gen_random_uuid(), 'Dr. Sarah Smith (Data Science Lead)', 'sarah.smith@example.com', true, 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80', 'tutor'),
+    (gen_random_uuid(), 'John Doe (Next.js & Frontend Architect)', 'john.doe@example.com', true, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80', 'tutor'),
+    (gen_random_uuid(), 'Regular Student', 'user@example.com', true, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80', 'user'),
+    (gen_random_uuid(), 'Alice Vance', 'alice@example.com', true, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&q=80', 'user'),
+    (gen_random_uuid(), 'Bob Miller', 'bob@example.com', true, 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=250&q=80', 'user'),
+    (gen_random_uuid(), 'Charlie Brown', 'charlie@example.com', true, 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80', 'user'),
+    (gen_random_uuid(), 'David Wright', 'david@example.com', true, 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80', 'user'),
+    (gen_random_uuid(), 'Eva Davis', 'eva@example.com', true, 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=250&q=80', 'user'),
+    (gen_random_uuid(), 'Fiona Gallagher', 'fiona@example.com', true, 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=250&q=80', 'user')
+ON CONFLICT (email) DO UPDATE SET
+    name = EXCLUDED.name,
+    image = EXCLUDED.image,
+    role = EXCLUDED.role,
+    "passwordChangedAt" = NULL;
 
 -- Insert Credentials (Passwords: admin123456, tutor123456, user123456 / password123)
-INSERT INTO credentials (user_id, password_hash)
-SELECT u.id, crypt(v.password, gen_salt('bf', 10))
+INSERT INTO credentials (user_id, password_hash, password_changed_at)
+SELECT u.id, crypt(v.password, gen_salt('bf', 10)), CURRENT_TIMESTAMP
 FROM (VALUES
-    ('admin@example.com', 'admin123456'),
-    ('superadmin@example.com', 'admin123456'),
-    ('tutor@example.com', 'tutor123456'),
-    ('sarah.smith@example.com', 'tutor123456'),
-    ('john.doe@example.com', 'tutor123456'),
-    ('user@example.com', 'user123456'),
-    ('alice@example.com', 'password123'),
-    ('bob@example.com', 'password123'),
-    ('charlie@example.com', 'password123'),
-    ('david@example.com', 'password123'),
-    ('eva@example.com', 'password123'),
-    ('fiona@example.com', 'password123')
-) AS v(email, password)
+    ('admin@example.com', 'admin123456', CURRENT_TIMESTAMP),
+    ('superadmin@example.com', 'admin123456', CURRENT_TIMESTAMP),
+    ('tutor@example.com', 'tutor123456', CURRENT_TIMESTAMP),
+    ('sarah.smith@example.com', 'tutor123456', CURRENT_TIMESTAMP),
+    ('john.doe@example.com', 'tutor123456', CURRENT_TIMESTAMP),
+    ('user@example.com', 'user123456', CURRENT_TIMESTAMP),
+    ('alice@example.com', 'password123', CURRENT_TIMESTAMP),
+    ('bob@example.com', 'password123', NULL),
+    ('charlie@example.com', 'password123', NULL),
+    ('david@example.com', 'password123', NULL),
+    ('eva@example.com', 'password123', NULL),
+    ('fiona@example.com', 'password123', NULL)
+) AS v(email, password, password_changed_at)
 JOIN users u ON u.email = v.email
 ON CONFLICT (user_id) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
--- Map User Roles
-INSERT INTO user_roles (user_id, role_id)
+-- Insert Better-Auth Credential Accounts (scrypt hashes, format `<salt>:<key>`)
+-- Password hashes match Better-Auth's scrypt params: N=16384, r=16, p=1, dkLen=64
+INSERT INTO "accounts" ("userId", "accountId", "providerId", "password")
+SELECT u.id, v.email, 'credential', v.hash
+FROM (VALUES
+    ('admin@example.com',  '6b2905155c4f85aad3add8f218c21bc8:9897832af325de18682de24cec4a632193b872377d11fcf688921eda23be851f4ed865ce8682390cfe8510933d7ce42fb731ea0f23a1a26e55a23457ff4d67ab'),
+    ('superadmin@example.com', '6b2905155c4f85aad3add8f218c21bc8:9897832af325de18682de24cec4a632193b872377d11fcf688921eda23be851f4ed865ce8682390cfe8510933d7ce42fb731ea0f23a1a26e55a23457ff4d67ab'),
+    ('tutor@example.com',  '46c022d9752babc3e04d0f40920ce07c:6bf70f61a74a4fd6b1dc6b8b9e920b2af65299a4a4d80df4b5a6b743a037467e5a31ceaf5a282a45759fd35b4d81432aa128ba9218de407947e76e61251ed272'),
+    ('sarah.smith@example.com', '46c022d9752babc3e04d0f40920ce07c:6bf70f61a74a4fd6b1dc6b8b9e920b2af65299a4a4d80df4b5a6b743a037467e5a31ceaf5a282a45759fd35b4d81432aa128ba9218de407947e76e61251ed272'),
+    ('john.doe@example.com', '46c022d9752babc3e04d0f40920ce07c:6bf70f61a74a4fd6b1dc6b8b9e920b2af65299a4a4d80df4b5a6b743a037467e5a31ceaf5a282a45759fd35b4d81432aa128ba9218de407947e76e61251ed272'),
+    ('user@example.com',   'e91fc7fa0e5dc589196f0b92fc7c54e6:48f5155a0696d6ecef088d4b0c5ad4524e92af5518a00765e10b1782a8aa81c94bc01ace9b7ed56e5995fc05868a112562d668d862e41b346eeefede5a108a1e'),
+    ('alice@example.com',  '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
+    ('bob@example.com',    '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
+    ('charlie@example.com','2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
+    ('david@example.com',  '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
+    ('eva@example.com',    '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
+    ('fiona@example.com',  '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90')
+) AS v(email, hash)
+JOIN "users" u ON u.email = v.email
+ON CONFLICT ("providerId", "accountId") DO NOTHING;
+
+-- Map User Roles (users.role is authoritative: admin/tutor/user)
+DELETE FROM roles_user WHERE user_id IN (
+    SELECT id FROM "users" WHERE email IN (
+        'admin@example.com', 'superadmin@example.com',
+        'tutor@example.com', 'sarah.smith@example.com', 'john.doe@example.com',
+        'user@example.com', 'alice@example.com', 'bob@example.com',
+        'charlie@example.com', 'david@example.com', 'eva@example.com', 'fiona@example.com'
+    )
+);
+
+INSERT INTO roles_user (user_id, role_id)
 SELECT u.id, r.id
 FROM "users" u
-JOIN roles r ON (
-    (u.email LIKE '%admin%' AND r.name = 'admin') OR
-    (u.email LIKE '%tutor%' AND r.name = 'tutor') OR
-    (u.email NOT LIKE '%admin%' AND u.email NOT LIKE '%tutor%' AND r.name = 'user')
-)
+JOIN roles r ON r.name = u.role
+WHERE u.role IN ('admin', 'tutor', 'user')
 ON CONFLICT DO NOTHING;
 
 -- Insert User Profiles (Merged single `profiles` table)

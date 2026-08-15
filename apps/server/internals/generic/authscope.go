@@ -5,10 +5,9 @@ import "strings"
 type AuthScope string
 
 const (
-	ScopeAdmin    AuthScope = "admin"
-	ScopeTutor    AuthScope = "tutor"
-	ScopeUser     AuthScope = "user"
-	ScopeEnrolled AuthScope = "enrolled"
+	ScopeAdmin AuthScope = "admin"
+	ScopeTutor AuthScope = "tutor"
+	ScopeUser  AuthScope = "user"
 )
 
 type AuthError struct {
@@ -22,10 +21,6 @@ func ScopeFromPermission(permission string) AuthScope {
 		return ScopeAdmin
 	case strings.HasPrefix(permission, "tutor:"):
 		return ScopeTutor
-	case strings.HasPrefix(permission, "enrolled:"):
-		return ScopeEnrolled
-	case strings.HasPrefix(permission, "user:"):
-		return ScopeUser
 	default:
 		return ScopeUser
 	}

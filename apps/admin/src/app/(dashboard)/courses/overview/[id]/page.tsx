@@ -1,6 +1,6 @@
 "use client";
-
 import * as React from "react";
+
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -61,11 +61,18 @@ const tooltipStyle = {
   fontSize: "12px",
 };
 
+import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
+
 export default function CourseOverviewPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id as string;
   const { data: raw, isLoading } = useCourseLandingQuery(courseId);
   const course = raw?.data;
+
+  useSetBreadcrumbs([
+    { label: "Courses", href: "/courses" },
+    { label: course?.title || "Course Details" },
+  ]);
 
   if (isLoading || !course) {
     return <Loading />;

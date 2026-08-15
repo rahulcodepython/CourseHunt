@@ -49,7 +49,7 @@ func (r *FeedbacksRepository) CreateRepository(userID, courseID string, req enti
 				   json_build_object('id', c.id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url) AS course,
 				   json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS "user"
 			FROM inserted i
-			JOIN "user" u ON u.id = i.user_id
+			JOIN "users" u ON u.id = i.user_id
 			LEFT JOIN courses c ON c.id = i.course_id
 		)
 		SELECT 
@@ -123,7 +123,7 @@ func (r *FeedbacksRepository) ListRepository(scope generic.AuthScope, userID str
 		WITH count_cte AS (
 			SELECT COUNT(*) AS total
 			FROM feedbacks f
-			JOIN "user" u ON u.id = f.user_id
+			JOIN "users" u ON u.id = f.user_id
 			LEFT JOIN courses c ON c.id = f.course_id
 			%s
 		),
@@ -132,7 +132,7 @@ func (r *FeedbacksRepository) ListRepository(scope generic.AuthScope, userID str
 				   json_build_object('id', c.id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url) AS course,
 				   json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS "user"
 			FROM feedbacks f
-			JOIN "user" u ON u.id = f.user_id
+			JOIN "users" u ON u.id = f.user_id
 			LEFT JOIN courses c ON c.id = f.course_id
 			%s
 			ORDER BY f.is_pinned DESC, f.created_at DESC
@@ -165,7 +165,7 @@ func (r *FeedbacksRepository) UpdateRepository(id string, pin bool) (*entities.F
 				   json_build_object('id', c.id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url) AS course,
 				   json_build_object('id', usr.id, 'name', COALESCE(usr.name, ''), 'image', usr.image) AS "user"
 			FROM updated u
-			JOIN "user" usr ON usr.id = u.user_id
+			JOIN "users" usr ON usr.id = u.user_id
 			LEFT JOIN courses c ON c.id = u.course_id
 		) formatted`, pin, id)
 	if err != nil {
@@ -205,7 +205,7 @@ func (r *FeedbacksRepository) DeleteRepository(id, userID string, scope generic.
 		SELECT
 			EXISTS(SELECT 1 FROM feedback_course) AS course_found,
 			EXISTS(SELECT 1 FROM feedback_course WHERE tutor_id = $2) AS is_owner,
-			COALESCE((SELECT id FROM deleted), '') AS deleted_id
+			COALESCE((SELECT id::text FROM deleted), '') AS deleted_id
 	`, id, userID, string(scope))
 	if err != nil {
 		return "", err

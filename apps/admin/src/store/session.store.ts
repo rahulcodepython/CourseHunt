@@ -1,35 +1,49 @@
 import { create } from "zustand";
 import type { SessionData, SessionUser } from "@/schema/session.schema";
 
+export interface SessionPayload {
+    user: SessionUser;
+    session: Record<string, unknown> | null;
+    roles: string[];
+    permissions: string[];
+}
+
 interface SessionState {
-  data: SessionData | null;
-  user: SessionUser | null;
-  isPending: boolean;
-  setSession: (data: SessionData | null) => void;
-  setPending: (isPending: boolean) => void;
-  updateUser: (user: Partial<SessionUser>) => void;
-  clear: () => void;
-  clearSession: () => void;
+    data: SessionData | null;
+    user: SessionUser | null;
+    isPending: boolean;
+    roles: string[];
+    permissions: string[];
+    setSessionPayload: (payload: SessionPayload) => void;
+    updateUser: (user: Partial<SessionUser>) => void;
+    clear: () => void;
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
-  data: null,
-  user: null,
-  isPending: true,
-  setSession: (data) => set({ data, user: data?.user ?? null, isPending: false }),
-  setPending: (isPending) => set({ isPending }),
-  updateUser: (userData) =>
-    set((state) => {
-      if (!state.data) return state;
-      const updatedUser = { ...state.data.user, ...userData };
-      return {
-        data: {
-          ...state.data,
-          user: updatedUser,
-        },
-        user: updatedUser,
-      };
-    }),
-  clear: () => set({ data: null, user: null, isPending: false }),
-  clearSession: () => set({ data: null, user: null, isPending: false }),
+    data: null,
+    user: null,
+    isPending: true,
+    roles: [],
+    permissions: [],
+    setSessionPayload: (payload) =>
+        set({
+            data: { user: payload.user, session: payload.session },
+            user: payload.user,
+            roles: payload.roles,
+            permissions: payload.permissions,
+            isPending: false,
+        }),
+    updateUser: (userData) =>
+        set((state) => {
+            if (!state.data) return state;
+            const updatedUser = { ...state.data.user, ...userData };
+            return {
+                data: {
+                    ...state.data,
+                    user: updatedUser,
+                },
+                user: updatedUser,
+            };
+        }),
+    clear: () => set({ data: null, user: null, isPending: false, roles: [], permissions: [] }),
 }));

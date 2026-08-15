@@ -1,6 +1,6 @@
 "use client";
-
 import * as React from "react";
+
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useChaptersQuery } from "@/query-hooks/chapters.api";
@@ -10,9 +10,19 @@ import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { getColumns } from "./columns";
 
+import { useCourseLandingQuery } from "@/query-hooks/courses.api";
+import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
+
 export default function CourseChaptersPage() {
   const params = useParams<{ courseId: string }>();
   const courseId = params.courseId as string;
+
+  const { data: courseData } = useCourseLandingQuery(courseId);
+  useSetBreadcrumbs([
+    { label: "Courses", href: "/courses" },
+    { label: courseData?.data?.title || "Course", href: `/courses/overview/${courseId}` },
+    { label: "Chapters" },
+  ]);
 
   const { data: rawChapters, isLoading } = useChaptersQuery(courseId);
   const chapters = rawChapters?.data ?? [];
@@ -40,7 +50,9 @@ export default function CourseChaptersPage() {
         data={chapters}
         searchPlaceholder="Search chapters..."
         emptyIcon="folder"
-        emptyText={isLoading ? "Loading chapters..." : "No chapters found for this course"}
+        emptyText="No chapters found for this course"
+        isLoading={isLoading}
+        loadingText="Loading chapters..."
       />
     </div>
   );

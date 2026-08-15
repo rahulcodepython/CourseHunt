@@ -8,9 +8,8 @@ type Role struct {
 }
 
 type Permission struct {
-	ID          string  `json:"id" db:"id"`
-	Name        string  `json:"name" db:"name"`
-	Description *string `json:"description,omitempty" db:"description"`
+	ID   string `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
 }
 
 type CreateRoleRequest struct {

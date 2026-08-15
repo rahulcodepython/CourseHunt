@@ -17,13 +17,59 @@ func NewUsersRepository(db *sqlx.DB) *UsersRepository {
 	return &UsersRepository{DB: db}
 }
 
+// RolesAndPermissionsResult holds the current roles and permissions resolved
+// from the database for a given user.
+type RolesAndPermissionsResult struct {
+	Roles       []string `db:"roles"`
+	Permissions []string `db:"permissions"`
+}
+
+// GetRolesAndPermissions resolves the user's current roles and permissions
+// from the database. Unlike the JWT claims (a snapshot taken at token mint
+// time), this is always fresh, so permission changes apply immediately.
+func (r *UsersRepository) GetRolesAndPermissions(userID string) (RolesAndPermissionsResult, error) {
+	var result struct {
+		Roles       json.RawMessage `db:"roles"`
+		Permissions json.RawMessage `db:"permissions"`
+	}
+
+	err := r.DB.Get(&result, `
+		SELECT
+			COALESCE(
+				(SELECT json_agg(DISTINCT r.name)
+				 FROM roles_user ru
+				 JOIN roles r ON r.id = ru.role_id
+				 WHERE ru.user_id = $1), '[]'::json
+			) AS roles,
+			COALESCE(
+				(SELECT json_agg(DISTINCT p.id)
+				 FROM roles_user ru
+				 JOIN role_permissions rp ON rp.role_id = ru.role_id
+				 JOIN permissions p ON p.id = rp.permission_id
+				 WHERE ru.user_id = $1), '[]'::json
+			) AS permissions
+	`, userID)
+	if err != nil {
+		return RolesAndPermissionsResult{}, err
+	}
+
+	var out RolesAndPermissionsResult
+	if err := json.Unmarshal(result.Roles, &out.Roles); err != nil {
+		return RolesAndPermissionsResult{}, err
+	}
+	if err := json.Unmarshal(result.Permissions, &out.Permissions); err != nil {
+		return RolesAndPermissionsResult{}, err
+	}
+	return out, nil
+}
+
 func (r *UsersRepository) AssignRoleRepository(userID string, roleID string) error {
-	_, err := r.DB.Exec(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, userID, roleID)
+	_, err := r.DB.Exec(`INSERT INTO roles_user (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, userID, roleID)
 	return err
 }
 
 func (r *UsersRepository) DeleteRoleRepository(userID string, roleID string) error {
-	_, err := r.DB.Exec(`DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2`, userID, roleID)
+	_, err := r.DB.Exec(`DELETE FROM roles_user WHERE user_id = $1 AND role_id = $2`, userID, roleID)
 	return err
 }
 
@@ -45,7 +91,7 @@ func (r *UsersRepository) ListRepository(page, limit int, name, email, role stri
 		idx++
 	}
 	if role != "" {
-		where = append(where, fmt.Sprintf("EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = $%d)", idx))
+		where = append(where, fmt.Sprintf("(u.role = $%d OR EXISTS (SELECT 1 FROM roles_user ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = $%d))", idx, idx))
 		args = append(args, role)
 		idx++
 	}
@@ -61,10 +107,10 @@ func (r *UsersRepository) ListRepository(page, limit int, name, email, role stri
 	}
 
 	err := r.DB.Get(&result, fmt.Sprintf(`
-		WITH user_roles_agg AS (
+		WITH roles_user_agg AS (
 			SELECT ur.user_id,
 				   json_agg(json_build_object('id', r.id, 'name', r.name) ORDER BY r.name) AS roles
-			FROM user_roles ur
+			FROM roles_user ur
 			JOIN roles r ON r.id = ur.role_id
 			GROUP BY ur.user_id
 		),
@@ -75,10 +121,10 @@ func (r *UsersRepository) ListRepository(page, limit int, name, email, role stri
 		),
 		data_cte AS (
 			SELECT 
-				u.id, u.name, u.email, u.image, u."emailVerified" AS email_verified, u.banned, u."createdAt" AS created_at, u."updatedAt" AS updated_at,
+				u.id, u.name, u.email, u.image, u.role, u."emailVerified" AS email_verified, u.banned, u."createdAt" AS created_at, u."updatedAt" AS updated_at,
 				COALESCE(ura.roles, '[]'::json) AS roles
 			FROM "users" u
-			LEFT JOIN user_roles_agg ura ON ura.user_id = u.id
+			LEFT JOIN roles_user_agg ura ON ura.user_id = u.id
 			%s
 			ORDER BY u."createdAt" DESC
 			LIMIT $1 OFFSET $2

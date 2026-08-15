@@ -6,16 +6,18 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { AuthCard } from "@/components/auth-card";
-import { useLoginWithEmailMutation, useLoginWithGoogleMutation } from "@/query-hooks/auth.api";
+import { authClient, refreshSession } from "@/lib/auth-client";
+import { ROUTES } from "@/lib/const";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/password-input";
 import { Separator } from "@/components/ui/separator";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useSessionStore } from "@/store/session.store";
 
 const inputClass =
     "border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30";
@@ -27,9 +29,7 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-function LoginForm() {
-    const loginEmailMutation = useLoginWithEmailMutation();
-    const loginGoogleMutation = useLoginWithGoogleMutation();
+export default function LoginPage() {
     const router = useRouter();
     const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
     const [isEmailLoading, setIsEmailLoading] = React.useState(false);
@@ -49,29 +49,43 @@ function LoginForm() {
     const handleGoogleLogin = async () => {
         setIsGoogleLoading(true);
         try {
-            toast.error("Google SSO client logic needs ID token to proceed");
+            await authClient.signIn.social({
+                provider: "google",
+                callbackURL: "/",
+            });
         } catch (error) {
             console.error("Login failed:", error);
             toast.error("Failed to sign in with Google. Please try again.");
-        } finally {
             setIsGoogleLoading(false);
         }
     };
 
-    const setSession = useSessionStore((s) => s.setSession);
-
     const handleEmailLogin = async (data: LoginFormData) => {
         setIsEmailLoading(true);
         try {
-            const response = await loginEmailMutation.mutateAsync({ email: data.email, password: data.password });
-            const user = response?.success && response?.data ? response.data.user : null;
-            if (user) {
-                setSession({ user, session: null });
+            const response = await authClient.signIn.email({
+                email: data.email,
+                password: data.password,
+            });
+            if (response.error) {
+                toast.error(response.error.message || "Failed to sign in. Please check credentials.");
+                return;
             }
-            router.push("/");
+            // Single session load: sets the HttpOnly access_token cookie
+            // server-side and populates the store with user + roles + permissions.
+            const payload = await refreshSession();
+            if (!payload?.user) {
+                toast.error("Failed to load session. Please try again.");
+                return;
+            }
+            if (!payload.user.passwordChangedAt) {
+                router.push(ROUTES.CHANGE_PASSWORD);
+                return;
+            }
+            router.push(ROUTES.HOME);
         } catch (error) {
             console.error("Login failed:", error);
-            toast.error("Failed to sign in. Please try again.");
+            toast.error("Failed to sign in. Please check credentials.");
         } finally {
             setIsEmailLoading(false);
         }
@@ -103,9 +117,8 @@ function LoginForm() {
                     <Label htmlFor="password" className="text-zinc-300">
                         Password
                     </Label>
-                    <Input
+                    <PasswordInput
                         id="password"
-                        type="password"
                         placeholder="••••••••"
                         {...register("password")}
                         className={inputClass}
@@ -115,14 +128,14 @@ function LoginForm() {
                         <p className="text-xs text-red-400">{errors.password.message}</p>
                     )}
                 </div>
-                <Button
+                <LoadingButton
                     type="submit"
-                    disabled={isEmailLoading || isGoogleLoading}
+                    loading={isEmailLoading}
+                    disabled={isGoogleLoading}
                     className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60"
                 >
-                    {isEmailLoading && <Loader2 className="animate-spin size-4 mr-2" />}
                     Sign in with Email
-                </Button>
+                </LoadingButton>
             </form>
 
             <div className="my-6 flex items-center gap-3">
@@ -170,13 +183,5 @@ function LoginForm() {
                 </p>
             </div>
         </AuthCard>
-    );
-}
-
-export default function AdminLoginPage() {
-    return (
-        <Suspense fallback={null}>
-            <LoginForm />
-        </Suspense>
     );
 }

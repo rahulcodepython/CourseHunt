@@ -1,6 +1,6 @@
 "use client";
-
 import * as React from "react";
+
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -8,6 +8,7 @@ import { Icon } from "@/components/icon";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { exportToCSV } from "@/lib/csv";
 import { logsColumns, type LogEntry } from "./columns";
 
 const appLogs: LogEntry[] = [
@@ -52,21 +53,11 @@ const errorLogs: LogEntry[] = appLogs.filter((l) => l.level === "ERROR");
 
 export default function LogsPage() {
   const handleExport = () => {
-    const csv = [
-      "timestamp,level,source,message,details",
-      ...appLogs.map((log) =>
-        [log.timestamp, log.level, log.source, log.message, log.details]
-          .map((value) => `"${value}"`)
-          .join(","),
-      ),
-    ].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "application-logs.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    exportToCSV(
+      "application-logs",
+      ["timestamp", "level", "source", "message", "details"],
+      appLogs.map((log) => [log.timestamp, log.level, log.source, log.message, log.details]),
+    );
     toast.success("Logs exported as CSV");
   };
 

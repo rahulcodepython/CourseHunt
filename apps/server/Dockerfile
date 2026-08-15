@@ -11,7 +11,6 @@ RUN go mod download
 # Copy source code
 WORKDIR /app
 COPY apps/server ./apps/server
-COPY package/migrations ./package/migrations
 
 # Build static Linux binary
 WORKDIR /app/apps/server

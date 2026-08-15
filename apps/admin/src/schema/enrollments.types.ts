@@ -1,9 +1,10 @@
 import { z } from 'zod';
-import { UserInfoZod } from "@/schema/common.types";
+import { UserInfoZod, CourseInfoZod } from "@/schema/common.types";
 
 export const ListEnrollmentResponseZod = z.object({
     id: z.string(),
     user: UserInfoZod,
+    course: CourseInfoZod,
     completion_percent: z.number(),
     completed: z.boolean(),
     revoked: z.boolean(),

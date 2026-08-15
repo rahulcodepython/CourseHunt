@@ -103,7 +103,7 @@ func (r *RolesRepository) DeleteRoleRepository(roleID string) (string, error) {
 func (r *RolesRepository) GetRolePermissionsRepository(roleID string) ([]entities.Permission, error) {
 	var permissions []entities.Permission
 	err := r.DB.Select(&permissions,
-		`SELECT p.id, p.name, p.description
+		`SELECT p.id, p.name
 		 FROM permissions p
 		 INNER JOIN role_permissions rp ON rp.permission_id = p.id
 		 WHERE rp.role_id = $1
@@ -147,6 +147,6 @@ func (r *RolesRepository) SetRolePermissionsRepository(roleID string, permission
 
 func (r *RolesRepository) ListPermissionsRepository() ([]entities.Permission, error) {
 	var permissions []entities.Permission
-	err := r.DB.Select(&permissions, `SELECT id, name, description FROM permissions ORDER BY name`)
+	err := r.DB.Select(&permissions, `SELECT id, name FROM permissions ORDER BY name`)
 	return permissions, err
 }

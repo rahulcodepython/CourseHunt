@@ -180,7 +180,9 @@ export default function UpdatesPage() {
         data={updates}
         searchPlaceholder="Search updates..."
         emptyIcon="world"
-        emptyText={isLoading ? "Loading updates..." : "No updates found"}
+        emptyText="No updates found"
+        isLoading={isLoading}
+        loadingText="Loading updates..."
       />
 
       <UpdateDialog

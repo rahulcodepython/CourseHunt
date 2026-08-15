@@ -74,3 +74,43 @@ type Response[T any] struct {
 	Data    T      `json:"data,omitempty"`
 	Error   string `json:"error,omitempty"`
 }
+
+// ── Razorpay Types ──
+
+type RazorpayClient struct {
+	KeyID         string
+	Secret        string
+	WebhookSecret string
+	BaseURL       string
+}
+
+type RazorpayOrderRequest struct {
+	Amount   int64  `json:"amount"`
+	Currency string `json:"currency"`
+	Receipt  string `json:"receipt"`
+}
+
+type RazorpayOrderResponse struct {
+	ID       string `json:"id"`
+	Entity   string `json:"entity"`
+	Amount   int64  `json:"amount"`
+	Currency string `json:"currency"`
+	Receipt  string `json:"receipt"`
+	Status   string `json:"status"`
+}
+
+// RazorpayWebhookPayload is the (small, relevant-fields-only) shape of a Razorpay
+// payment webhook event body.
+type RazorpayWebhookPayload struct {
+	Event   string `json:"event"`
+	Payload struct {
+		Payment struct {
+			Entity struct {
+				ID               string `json:"id"`
+				OrderID          string `json:"order_id"`
+				Status           string `json:"status"`
+				ErrorDescription string `json:"error_description"`
+			} `json:"entity"`
+		} `json:"payment"`
+	} `json:"payload"`
+}

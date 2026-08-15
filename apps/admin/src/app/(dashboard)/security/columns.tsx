@@ -1,9 +1,8 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { SortableColumnHeader } from "@/components/sortable-column-header";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
 
 export type AccessLog = {
   time: string;
@@ -15,19 +14,15 @@ export type AccessLog = {
 
 const columnHelper = createColumnHelper<AccessLog>();
 
+const statusMap: Record<string, StatusBadgeEntry> = {
+  success: { label: "Success", variant: "secondary", className: "bg-emerald-500/10 text-emerald-500" },
+  failed: { label: "Failed", variant: "destructive" },
+  blocked: { label: "Blocked", variant: "outline", className: "border-amber-500/30 text-amber-500" },
+};
+
 export const securityColumns = [
   columnHelper.accessor("time", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Time</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Time" />,
     cell: ({ getValue }) => (
       <span className="font-mono text-xs text-muted-foreground">
         {getValue()}
@@ -54,26 +49,6 @@ export const securityColumns = [
   }),
   columnHelper.accessor("status", {
     header: "Status",
-    cell: ({ getValue }) => {
-      const status = getValue();
-      if (status === "success") {
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-emerald-500/10 text-emerald-500"
-          >
-            Success
-          </Badge>
-        );
-      }
-      if (status === "failed") {
-        return <Badge variant="destructive">Failed</Badge>;
-      }
-      return (
-        <Badge variant="outline" className="border-amber-500/30 text-amber-500">
-          Blocked
-        </Badge>
-      );
-    },
+    cell: ({ getValue }) => <StatusBadge status={getValue()} map={statusMap} />,
   }),
 ];

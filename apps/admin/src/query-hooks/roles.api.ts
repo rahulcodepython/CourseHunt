@@ -7,6 +7,7 @@ import { useSimpleMutation } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
 import { RoleZod, PermissionZod, CreateRoleRequestZod, UpdateRoleRequestZod, RolePermissionUpdateZod } from "@/schema/roles.types";
+import { DeleteResponseZod } from "@/schema/common.types";
 
 export function useRolesQuery() {
     return useAppQuery(queryKeys.roles(), () =>
@@ -41,7 +42,7 @@ export function useUpdateRoleMutation() {
 export function useDeleteRoleMutation() {
     return useSimpleMutation({
         mutationFn: (id: string) =>
-            apiRequest({ url: `/api/v1/roles/${id}`, method: "DELETE" }, z.any()),
+            apiRequest({ url: `/api/v1/roles/${id}`, method: "DELETE" }, DeleteResponseZod),
         invalidateKeys: [queryKeys.roles()],
         showToast: true,
     });
@@ -56,7 +57,7 @@ export function useRolePermissionsQuery(roleId: string) {
 export function useUpdateRolePermissionsMutation() {
     return useSimpleMutation({
         mutationFn: ({ id, data }: { id: string; data: z.infer<typeof RolePermissionUpdateZod> }) =>
-            apiRequest({ url: `/api/v1/roles/${id}/permissions`, method: "PUT", data }, z.any()),
+            apiRequest({ url: `/api/v1/roles/${id}/permissions`, method: "PUT", data }, z.object({})),
         invalidateKeys: [queryKeys.roles()],
         showToast: true,
     });

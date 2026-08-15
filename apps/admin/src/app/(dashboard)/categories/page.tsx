@@ -29,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
+import type { Category } from "@/schema/category.types";
 import { getColumns } from "./columns";
 
 const categorySchema = z.object({
@@ -46,10 +48,11 @@ function CategoryDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  editing: any | null;
-  categories: any[];
+  editing: Category | null;
+  categories: Category[];
 }) {
   const createMutation = useCreateCategoryMutation();
+  const updateMutation = useUpdateCategoryMutation();
 
   const {
     register,
@@ -74,13 +77,9 @@ function CategoryDialog({
     }
   }, [open, editing, reset]);
 
-  const updateMutation = editing
-    ? useUpdateCategoryMutation(editing.id)
-    : null;
-
   const onSubmit = async (data: CategoryFormData) => {
-    if (editing && updateMutation) {
-      await updateMutation.execute({ name: data.name.trim() });
+    if (editing) {
+      await updateMutation.execute({ id: editing.id, data: { name: data.name.trim() } });
     } else {
       await createMutation.execute({
         name: data.name.trim(),
@@ -127,8 +126,8 @@ function CategoryDialog({
                   <SelectContent>
                     <SelectItem value="none">None (Top Level)</SelectItem>
                     {categories
-                      .filter((c: any) => !c.parent_id)
-                      .map((c: any) => (
+                      .filter((c) => !c.parent_id)
+                      .map((c) => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.name}
                         </SelectItem>
@@ -161,33 +160,18 @@ function CategoryDialog({
 
 export default function CategoriesPage() {
   const { data: raw, isLoading } = useCategoriesQuery();
-  const categories: any[] = raw?.data ?? [];
+  const categories: Category[] = Array.isArray(raw?.data)
+    ? raw.data
+    : ((raw?.data as { data?: Category[] } | undefined)?.data ?? []);
   const deleteMutation = useDeleteCategoryMutation();
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<any | null>(null);
-  const [deleting, setDeleting] = React.useState<any | null>(null);
-
-  const openCreate = () => {
-    setEditing(null);
-    setDialogOpen(true);
-  };
-
-  const openEdit = (category: any) => {
-    setEditing(category);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (!deleting) return;
-    await deleteMutation.execute(deleting.id);
-    setDeleting(null);
-  };
+  const { dialogOpen, setDialogOpen, editing, openCreate, openEdit, deleting, setDeleting, requestDelete, confirmDelete } =
+    useCrudDialogState<Category>();
 
   if (isLoading || (!raw?.data && !categories.length)) {
     return <Loading />;
   }
 
-  const columns = getColumns(categories, openEdit, setDeleting);
+  const columns = getColumns(categories, openEdit, requestDelete);
 
   return (
     <div className="space-y-6">
@@ -220,7 +204,7 @@ export default function CategoriesPage() {
       <ConfirmDeleteDialog
         open={!!deleting}
         onOpenChange={(open) => !open && setDeleting(null)}
-        onConfirm={handleDelete}
+        onConfirm={() => confirmDelete(deleteMutation.execute)}
         loading={deleteMutation.isPending}
         title="Delete Category"
         description={`Are you sure you want to delete "${deleting?.name}"? This action cannot be undone.`}

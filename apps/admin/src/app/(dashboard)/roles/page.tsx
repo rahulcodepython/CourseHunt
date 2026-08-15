@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 
 function PermissionsGrid({
@@ -202,9 +203,15 @@ export default function RolesPage() {
 
   const roles: Role[] = rolesRaw?.data ?? [];
 
-  const [createOpen, setCreateOpen] = React.useState(false);
+  const {
+    dialogOpen: createOpen,
+    setDialogOpen: setCreateOpen,
+    deleting,
+    setDeleting,
+    requestDelete,
+    confirmDelete,
+  } = useCrudDialogState<Role>();
   const [expandedRoleId, setExpandedRoleId] = React.useState<string | null>(null);
-  const [deleting, setDeleting] = React.useState<Role | null>(null);
 
   const { data: rolePermissions } = useRolePermissionsQuery(expandedRoleId || "");
 
@@ -215,19 +222,9 @@ export default function RolesPage() {
   const handleSavePermissions = async (roleId: string, permissionIds: string[]) => {
     try {
       await updateRolePermissions.mutateAsync({ id: roleId, data: { permission_ids: permissionIds } });
+      setExpandedRoleId(null);
     } catch {
       // handled by mutation
-    }
-  };
-
-  const handleDelete = async () => {
-    if (deleting) {
-      try {
-        await deleteRole.mutateAsync(deleting.id);
-        setDeleting(null);
-      } catch {
-        // handled by mutation
-      }
     }
   };
 
@@ -235,7 +232,8 @@ export default function RolesPage() {
     return <Loading />;
   }
 
-  const columns = getColumns(expandedRoleId, handleToggleExpand, setDeleting);
+  const columns = getColumns(expandedRoleId, handleToggleExpand, requestDelete);
+  const selectedRole = roles.find((r) => r.id === expandedRoleId);
 
   return (
     <div className="space-y-6">
@@ -258,23 +256,28 @@ export default function RolesPage() {
         emptyText="No roles found"
       />
 
-      {expandedRoleId && (
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
+      <FormDialog
+        open={!!expandedRoleId}
+        onOpenChange={(open) => !open && setExpandedRoleId(null)}
+        title={`Manage Permissions · ${selectedRole?.name ?? ""}`}
+        description="Select permissions to grant for this custom role."
+      >
+        {expandedRoleId && (
           <PermissionsGrid
             roleId={expandedRoleId}
             rolePermissions={(rolePermissions?.data ?? []).map((p: Permission) => p.id)}
             onSave={handleSavePermissions}
             isSaving={updateRolePermissions.isPending}
           />
-        </div>
-      )}
+        )}
+      </FormDialog>
 
       <CreateRoleDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       <ConfirmDeleteDialog
         open={!!deleting}
         onOpenChange={(open) => !open && setDeleting(null)}
-        onConfirm={handleDelete}
+        onConfirm={() => confirmDelete(deleteRole.execute)}
         loading={deleteRole.isPending}
         title="Delete Role"
         description={`Are you sure you want to delete the role "${deleting?.name}"? This action cannot be undone.`}

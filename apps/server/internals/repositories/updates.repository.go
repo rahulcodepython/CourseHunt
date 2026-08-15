@@ -32,7 +32,7 @@ func (r *UpdatesRepository) CreateRepository(createdBy string, req entities.Crea
 			'message', i.message,
 			'created_at', i.created_at,
 			'course', json_build_object(
-				'id', COALESCE(i.course_id, ''),
+				'id', COALESCE(i.course_id::text, ''),
 				'title', COALESCE(c.title, ''),
 				'thumbnail', c.image_url
 			)
@@ -63,7 +63,7 @@ func (r *UpdatesRepository) UpdateRepository(id string, message string) (*entiti
 			'message', u.message,
 			'created_at', u.created_at,
 			'course', json_build_object(
-				'id', COALESCE(u.course_id, ''),
+				'id', COALESCE(u.course_id::text, ''),
 				'title', COALESCE(c.title, ''),
 				'thumbnail', c.image_url
 			)
@@ -120,7 +120,7 @@ func (r *UpdatesRepository) FeedRepository(userID string, page, limit int) (*ent
 		eligible_updates AS (
 			SELECT u.id, u.message, u.created_at,
 				   json_build_object(
-				   		'id', COALESCE(u.course_id, ''),
+				   		'id', COALESCE(u.course_id::text, ''),
 				   		'title', COALESCE(c.title, ''),
 				   		'thumbnail', c.image_url
 				   ) AS course,
@@ -173,7 +173,7 @@ func (r *UpdatesRepository) ListRepository(page, limit int) ([]entities.CourseUp
 		data_cte AS (
 			SELECT u.id, u.created_by, u.message, u.created_at,
 				   json_build_object(
-				   		'id', COALESCE(u.course_id, ''),
+				   		'id', COALESCE(u.course_id::text, ''),
 				   		'title', COALESCE(c.title, ''),
 				   		'thumbnail', c.image_url
 				   ) AS course

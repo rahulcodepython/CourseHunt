@@ -30,7 +30,7 @@ func (r *CouponsRepository) ReadByCodeRepository(code string) (*entities.Coupon,
 		SELECT
 			c.id, c.code, c.discount_percent, c.max_usage, c.usage_count,
 			c.expires_at, c.is_active, c.created_by, c.created_at,
-			c.course_id AS "course.id",
+			COALESCE(c.course_id::text, '') AS "course.id",
 			COALESCE(co.title, '') AS "course.title",
 			co.image_url AS "course.thumbnail"
 		FROM coupons c
@@ -43,12 +43,20 @@ func (r *CouponsRepository) ReadByCodeRepository(code string) (*entities.Coupon,
 	return &c, nil
 }
 
-func (r *CouponsRepository) ListRepository(page, limit int, userID, status, isActive, code string) ([]entities.Coupon, int, error) {
+// ListRepository returns every coupon for admins, or only the caller's own
+// created coupons for tutors.
+func (r *CouponsRepository) ListRepository(page, limit int, userID string, scope generic.AuthScope, status, isActive, code string) ([]entities.Coupon, int, error) {
 	offset := (page - 1) * limit
 
-	where := []string{"co.tutor_id = $3"}
-	args := []any{limit, offset, userID}
-	idx := 4
+	var where []string
+	args := []any{limit, offset}
+	idx := 3
+
+	if scope != generic.ScopeAdmin {
+		where = append(where, fmt.Sprintf("c.created_by = $%d", idx))
+		args = append(args, userID)
+		idx++
+	}
 
 	if status != "" {
 		where = append(where, fmt.Sprintf("c.is_active = $%d::boolean", idx))
@@ -66,7 +74,10 @@ func (r *CouponsRepository) ListRepository(page, limit int, userID, status, isAc
 		idx++
 	}
 
-	whereClause := strings.Join(where, " AND ")
+	whereClause := "1=1"
+	if len(where) > 0 {
+		whereClause = strings.Join(where, " AND ")
+	}
 
 	query := fmt.Sprintf(`
 		WITH data_summary AS (
@@ -97,7 +108,7 @@ func (r *CouponsRepository) ListRepository(page, limit int, userID, status, isAc
 							'created_by', ds.created_by,
 							'created_at', ds.created_at,
 							'course', json_build_object(
-								'id', COALESCE(ds.course_id, ''),
+								'id', COALESCE(ds.course_id::text, ''),
 								'title', ds.course_title,
 								'thumbnail', ds.course_thumbnail
 							)
@@ -126,17 +137,21 @@ func (r *CouponsRepository) ListRepository(page, limit int, userID, status, isAc
 	return coupons, row.TotalCount, nil
 }
 
-func (r *CouponsRepository) CreateRepository(userID string, req entities.CreateCouponRequest) (*entities.Coupon, error) {
+// CreateRepository creates a coupon. Admins may target any course or leave it
+// unset (a global coupon); tutors must target one of their own courses.
+func (r *CouponsRepository) CreateRepository(userID string, scope generic.AuthScope, req entities.CreateCouponRequest) (*entities.Coupon, error) {
 	// Status Code Tracking:
-	// 0 = If coupon targets a course but it doesn't exist,
-	// 1 = Course exists but requesting user is not the tutor,
-	// 2 = Valid configuration (global coupon or owned course)
+	// 0 = coupon targets a course but it doesn't exist
+	// 1 = course exists but the requesting tutor doesn't own it
+	// 2 = valid configuration (admin: any/no course; tutor: their own course)
+	// 3 = tutor did not specify a course
 	query := `
 		WITH auth_check AS (
 			SELECT
 				CASE
 					WHEN $2::uuid IS NOT NULL AND NOT EXISTS(SELECT 1 FROM courses WHERE id = $2) THEN 0
-					WHEN $2::uuid IS NOT NULL AND NOT EXISTS(SELECT 1 FROM courses WHERE id = $2 AND tutor_id = $1) THEN 1
+					WHEN $8 != 'admin' AND $2::uuid IS NULL THEN 3
+					WHEN $8 != 'admin' AND $2::uuid IS NOT NULL AND NOT EXISTS(SELECT 1 FROM courses WHERE id = $2 AND tutor_id = $1) THEN 1
 					ELSE 2
 				END as status_code
 		),
@@ -162,7 +177,7 @@ func (r *CouponsRepository) CreateRepository(userID string, req entities.CreateC
 						'created_by', i.created_by,
 						'created_at', i.created_at,
 						'course', json_build_object(
-							'id', COALESCE(i.course_id, ''),
+							'id', COALESCE(i.course_id::text, ''),
 							'title', COALESCE(co.title, ''),
 							'thumbnail', co.image_url
 						)
@@ -177,7 +192,7 @@ func (r *CouponsRepository) CreateRepository(userID string, req entities.CreateC
 		DataJSON   []byte `db:"data_json"`
 	}
 
-	if err := r.DB.Get(&res, query, userID, req.CourseID, req.Code, req.DiscountPercent, req.MaxUsage, req.ExpiresAt, req.IsActive); err != nil {
+	if err := r.DB.Get(&res, query, userID, req.CourseID, req.Code, req.DiscountPercent, req.MaxUsage, req.ExpiresAt, req.IsActive, string(scope)); err != nil {
 		return nil, err
 	}
 
@@ -186,6 +201,8 @@ func (r *CouponsRepository) CreateRepository(userID string, req entities.CreateC
 		return nil, generic.ErrCouponsCourseNotFound
 	case 1:
 		return nil, generic.ErrCouponsUnauthorized
+	case 3:
+		return nil, generic.ErrCouponsCourseRequired
 	default:
 		var c entities.Coupon
 		if err := json.Unmarshal(res.DataJSON, &c); err != nil {
@@ -195,32 +212,30 @@ func (r *CouponsRepository) CreateRepository(userID string, req entities.CreateC
 	}
 }
 
-func (r *CouponsRepository) UpdateRepository(id, userID string, req entities.UpdateCouponRequest) (*entities.Coupon, error) {
+// UpdateRepository updates a coupon. Admins may update any coupon; tutors
+// may only update coupons they personally created.
+func (r *CouponsRepository) UpdateRepository(id, userID string, scope generic.AuthScope, req entities.UpdateCouponRequest) (*entities.Coupon, error) {
 	// Status Code Tracking:
-	// 0 = Coupon doesn't exist
-	// 1 = Coupon exists, belongs to a course, but user is not the tutor (or created_by doesn't match for global ones)
-	// 2 = Authorized match
+	// 0 = coupon doesn't exist
+	// 1 = not the coupon's creator (and not an admin)
+	// 2 = authorized
 	query := `
 		WITH status_check AS (
 			SELECT
 				CASE
-					WHEN NOT EXISTS(SELECT 1 FROM coupons WHERE id = :id) THEN 0
-					WHEN EXISTS(
-						SELECT 1 FROM coupons cp
-						LEFT JOIN courses co ON cp.course_id = co.id
-						WHERE cp.id = :id AND ((cp.course_id IS NOT NULL AND co.tutor_id != :user_id) OR (cp.course_id IS NULL AND cp.created_by != :user_id))
-					) THEN 1
+					WHEN NOT EXISTS(SELECT 1 FROM coupons WHERE id = $1) THEN 0
+					WHEN $7 != 'admin' AND EXISTS(SELECT 1 FROM coupons WHERE id = $1 AND created_by != $2) THEN 1
 					ELSE 2
 				END as status_code
 		),
 		updated AS (
 			UPDATE coupons c
 			SET
-				discount_percent = COALESCE(:discount_percent, discount_percent),
-				max_usage = COALESCE(:max_usage, max_usage),
-				expires_at = COALESCE(:expires_at, expires_at),
-				is_active = COALESCE(:is_active, is_active)
-			WHERE c.id = :id AND EXISTS (SELECT 1 FROM status_check WHERE status_code = 2)
+				discount_percent = COALESCE($3, discount_percent),
+				max_usage = COALESCE($4, max_usage),
+				expires_at = COALESCE($5, expires_at),
+				is_active = COALESCE($6, is_active)
+			WHERE c.id = $1 AND EXISTS (SELECT 1 FROM status_check WHERE status_code = 2)
 			RETURNING c.id, c.code, c.course_id, c.discount_percent, c.max_usage, c.usage_count, c.expires_at, c.is_active, c.created_by, c.created_at
 		)
 		SELECT
@@ -238,7 +253,7 @@ func (r *CouponsRepository) UpdateRepository(id, userID string, req entities.Upd
 						'created_by', u.created_by,
 						'created_at', u.created_at,
 						'course', json_build_object(
-							'id', COALESCE(u.course_id, ''),
+							'id', COALESCE(u.course_id::text, ''),
 							'title', COALESCE(co.title, ''),
 							'thumbnail', co.image_url
 						)
@@ -248,27 +263,12 @@ func (r *CouponsRepository) UpdateRepository(id, userID string, req entities.Upd
 			) AS data_json
 		FROM status_check sc;`
 
-	args := map[string]interface{}{
-		"id":               id,
-		"user_id":          userID,
-		"discount_percent": req.DiscountPercent,
-		"max_usage":        req.MaxUsage,
-		"expires_at":       req.ExpiresAt,
-		"is_active":        req.IsActive,
-	}
-
-	stmt, err := r.DB.PrepareNamed(query)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-
 	var res struct {
 		StatusFlag int    `db:"status_flag"`
 		DataJSON   []byte `db:"data_json"`
 	}
 
-	if err := stmt.Get(&res, args); err != nil {
+	if err := r.DB.Get(&res, query, id, userID, req.DiscountPercent, req.MaxUsage, req.ExpiresAt, req.IsActive, string(scope)); err != nil {
 		return nil, err
 	}
 
@@ -286,18 +286,15 @@ func (r *CouponsRepository) UpdateRepository(id, userID string, req entities.Upd
 	}
 }
 
-func (r *CouponsRepository) DeleteRepository(id, userID string) (string, error) {
-	// Combined verification and execution tracking multi-tenant ownership metrics
+// DeleteRepository deletes a coupon. Admins may delete any coupon; tutors
+// may only delete coupons they personally created.
+func (r *CouponsRepository) DeleteRepository(id, userID string, scope generic.AuthScope) (string, error) {
 	query := `
 		WITH status_check AS (
 			SELECT
 				CASE
 					WHEN NOT EXISTS(SELECT 1 FROM coupons WHERE id = $1) THEN 0
-					WHEN EXISTS(
-						SELECT 1 FROM coupons cp
-						LEFT JOIN courses co ON cp.course_id = co.id
-						WHERE cp.id = $1 AND ((cp.course_id IS NOT NULL AND co.tutor_id != $2) OR (cp.course_id IS NULL AND cp.created_by != $2))
-					) THEN 1
+					WHEN $3 != 'admin' AND EXISTS(SELECT 1 FROM coupons WHERE id = $1 AND created_by != $2) THEN 1
 					ELSE 2
 				END as status_code
 		),
@@ -308,7 +305,7 @@ func (r *CouponsRepository) DeleteRepository(id, userID string) (string, error) 
 		)
 		SELECT
 			sc.status_code AS status_flag,
-			COALESCE((SELECT d.id FROM deleted d), '') AS deleted_id
+			COALESCE((SELECT d.id::text FROM deleted d), '') AS deleted_id
 		FROM status_check sc;`
 
 	var res struct {
@@ -316,7 +313,7 @@ func (r *CouponsRepository) DeleteRepository(id, userID string) (string, error) 
 		DeletedID  string `db:"deleted_id"`
 	}
 
-	if err := r.DB.Get(&res, query, id, userID); err != nil {
+	if err := r.DB.Get(&res, query, id, userID, string(scope)); err != nil {
 		return "", err
 	}
 
@@ -328,20 +325,4 @@ func (r *CouponsRepository) DeleteRepository(id, userID string) (string, error) 
 	default:
 		return res.DeletedID, nil
 	}
-}
-
-func (r *CouponsRepository) RecordUsageRepository(couponID, userID, courseID string) error {
-	// Atomically handle logging unique tracking and modifying primary counters
-	query := `
-		WITH inserted AS (
-			INSERT INTO coupon_usages (coupon_id, user_id, course_id)
-			VALUES ($1, $2, $3)
-			ON CONFLICT DO NOTHING
-			RETURNING coupon_id
-		)
-		UPDATE coupons SET usage_count = usage_count + 1
-		WHERE id = $1 AND EXISTS (SELECT 1 FROM inserted);`
-
-	_, err := r.DB.Exec(query, couponID, userID, courseID)
-	return err
 }

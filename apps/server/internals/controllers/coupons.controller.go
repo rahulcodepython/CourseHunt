@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -32,11 +33,12 @@ type couponListCacheData struct {
 func (ctrl *CouponsController) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	userID := utils.GetUserID(c)
+	scope := resolveScope(c)
 	status := c.Query("status")
 	isActive := c.Query("is_active")
 	code := c.Query("code")
 
-	cacheKey := fmt.Sprintf("coupons:list:p:%d:l:%d:u:%s:st:%s:ia:%s:c:%s", page, limit, userID, status, isActive, code)
+	cacheKey := fmt.Sprintf("coupons:list:p:%d:l:%d:u:%s:s:%v:st:%s:ia:%s:c:%s", page, limit, userID, scope, status, isActive, code)
 
 	var cached couponListCacheData
 	if hit, _ := ctrl.Repo.Cache.Get(c.Context(), cacheKey, &cached); hit {
@@ -45,7 +47,7 @@ func (ctrl *CouponsController) ListController(c *fiber.Ctx) error {
 		})
 	}
 
-	list, total, err := ctrl.Repo.ListRepository(page, limit, userID, status, isActive, code)
+	list, total, err := ctrl.Repo.ListRepository(page, limit, userID, scope, status, isActive, code)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch coupons.", err)
 	}
@@ -63,8 +65,19 @@ func (ctrl *CouponsController) CreateController(c *fiber.Ctx) error {
 		return err
 	}
 	userID := utils.GetUserID(c)
-	coupon, err := ctrl.Repo.CreateRepository(userID, req)
+	scope := resolveScope(c)
+
+	coupon, err := ctrl.Repo.CreateRepository(userID, scope, req)
 	if err != nil {
+		if errors.Is(err, generic.ErrCouponsCourseNotFound) {
+			return utils.NotFound(c, "Course not found.", err)
+		}
+		if errors.Is(err, generic.ErrCouponsUnauthorized) {
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
+		}
+		if errors.Is(err, generic.ErrCouponsCourseRequired) {
+			return utils.BadRequest(c, "Course is required for tutor-created coupons.", err)
+		}
 		return utils.InternalError(c, "Failed to create coupon.", err)
 	}
 
@@ -79,8 +92,16 @@ func (ctrl *CouponsController) UpdateController(c *fiber.Ctx) error {
 		return err
 	}
 	userID := utils.GetUserID(c)
-	coupon, err := ctrl.Repo.UpdateRepository(c.Params("id"), userID, req)
+	scope := resolveScope(c)
+
+	coupon, err := ctrl.Repo.UpdateRepository(c.Params("id"), userID, scope, req)
 	if err != nil {
+		if errors.Is(err, generic.ErrCouponNotFound) {
+			return utils.NotFound(c, "Coupon not found.", err)
+		}
+		if errors.Is(err, generic.ErrCouponsUnauthorized) {
+			return utils.Forbidden(c, "Access denied. You do not own this coupon.", err)
+		}
 		return utils.InternalError(c, "Failed to update coupon.", err)
 	}
 
@@ -91,8 +112,16 @@ func (ctrl *CouponsController) UpdateController(c *fiber.Ctx) error {
 
 func (ctrl *CouponsController) DeleteController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
-	id, err := ctrl.Repo.DeleteRepository(c.Params("id"), userID)
+	scope := resolveScope(c)
+
+	id, err := ctrl.Repo.DeleteRepository(c.Params("id"), userID, scope)
 	if err != nil {
+		if errors.Is(err, generic.ErrCouponNotFound) {
+			return utils.NotFound(c, "Coupon not found.", err)
+		}
+		if errors.Is(err, generic.ErrCouponsUnauthorized) {
+			return utils.Forbidden(c, "Access denied. You do not own this coupon.", err)
+		}
 		return utils.InternalError(c, "Failed to delete coupon.", err)
 	}
 

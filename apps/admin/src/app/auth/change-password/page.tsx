@@ -3,14 +3,12 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
-import { useChangePasswordMutation } from "@/query-hooks/auth.api";
+import { authClient, refreshSession } from "@/lib/auth-client";
 import { AuthCard } from "@/components/auth-card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { LoadingButton } from "@/components/loading-button";
 import { Label } from "@/components/ui/label";
-
+import { PasswordInput } from "@/components/password-input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,7 +31,6 @@ type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const changePasswordMutation = useChangePasswordMutation();
   const [isLoading, setIsLoading] = React.useState(false);
 
   const {
@@ -52,14 +49,19 @@ export default function ChangePasswordPage() {
   const onSubmit = async (data: ChangePasswordFormData) => {
     setIsLoading(true);
     try {
-      const result = await changePasswordMutation.mutateAsync({
+      const result = await authClient.changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
+        revokeOtherSessions: true,
       });
-      if (result?.error) {
-        toast.error("Failed to change password");
+      if (result.error) {
+        toast.error(result.error.message || "Failed to change password");
         return;
       }
+      await fetch("/api/auth/password-changed", { method: "POST", credentials: "include" });
+      // Refresh the HttpOnly JWT cookie so it carries password_changed: true
+      // and the middleware lets the user through on the next navigation.
+      await refreshSession();
       toast.success("Password changed successfully.");
       router.push("/");
     } catch {
@@ -79,9 +81,8 @@ export default function ChangePasswordPage() {
           <Label htmlFor="current" className="text-zinc-300">
             Current Password
           </Label>
-          <Input
+          <PasswordInput
             id="current"
-            type="password"
             placeholder="Enter current password"
             {...register("currentPassword")}
             className={inputClass}
@@ -95,9 +96,8 @@ export default function ChangePasswordPage() {
           <Label htmlFor="new" className="text-zinc-300">
             New Password
           </Label>
-          <Input
+          <PasswordInput
             id="new"
-            type="password"
             placeholder="Minimum 8 characters"
             {...register("newPassword")}
             className={inputClass}
@@ -111,9 +111,8 @@ export default function ChangePasswordPage() {
           <Label htmlFor="confirm" className="text-zinc-300">
             Confirm Password
           </Label>
-          <Input
+          <PasswordInput
             id="confirm"
-            type="password"
             placeholder="Re-enter new password"
             {...register("confirmPassword")}
             className={inputClass}
@@ -123,14 +122,13 @@ export default function ChangePasswordPage() {
             <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>
           )}
         </div>
-        <Button
+        <LoadingButton
           type="submit"
-          disabled={isLoading}
+          loading={isLoading}
           className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60"
         >
-          {isLoading && <Loader2 className="animate-spin size-4 mr-2" />}
           Change Password
-        </Button>
+        </LoadingButton>
       </form>
     </AuthCard>
   );

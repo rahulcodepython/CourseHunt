@@ -23,12 +23,21 @@ func (r *EnrollmentsRepository) RevokeRepository(userID, courseID string) error 
 	return err
 }
 
-func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, limit int, courseID, userID, tutorID, userName, userEmail, revoked string) ([]entities.ListEnrollmentResponse, int, error) {
+func (r *EnrollmentsRepository) RegainRepository(userID, courseID string) error {
+	_, err := r.DB.Exec(`UPDATE enrollments SET revoked = false WHERE user_id = NULLIF($1, '')::uuid AND course_id = NULLIF($2, '')::uuid`, userID, courseID)
+	return err
+}
+
+// ListRepository lists enrollments. Tutors are always scoped to a single
+// course they own (courseID + callerID ownership check). Everyone else
+// (admins) can filter by courseID ("who's enrolled in this course") and/or
+// targetUserID ("what has this user enrolled in") with no ownership check.
+func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, limit int, courseID, targetUserID, callerID, userName, userEmail, revoked string) ([]entities.ListEnrollmentResponse, int, error) {
 	offset := (page - 1) * limit
 
 	if scope == generic.ScopeTutor {
 		var where []string
-		args := []any{courseID, tutorID}
+		args := []any{courseID, callerID}
 		idx := 3
 
 		if userName != "" {
@@ -66,26 +75,28 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 			),
 			count_cte AS (
 				SELECT COUNT(*) AS total FROM enrollments e
-				LEFT JOIN "user" u ON e.user_id = u.id
+				LEFT JOIN "users" u ON e.user_id = u.id
 				CROSS JOIN auth a
 				WHERE e.course_id = NULLIF($1, '')::uuid AND a.is_owner = true%s
 			),
 			data_cte AS (
-				SELECT 
+				SELECT
 					e.id,
 					json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', COALESCE(u.image, '')) AS "user",
+					json_build_object('id', c.id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url) AS "course",
 					e.completion_percent,
 					e.completed,
 					e.revoked,
 					e.enrolled_at
 				FROM enrollments e
-				LEFT JOIN "user" u ON e.user_id = u.id
+				LEFT JOIN "users" u ON e.user_id = u.id
+				LEFT JOIN courses c ON c.id = e.course_id
 				CROSS JOIN auth a
 				WHERE e.course_id = NULLIF($1, '')::uuid AND a.is_owner = true%s
 				ORDER BY e.enrolled_at DESC
 				LIMIT $%d OFFSET $%d
 			)
-			SELECT 
+			SELECT
 				COALESCE((SELECT is_owner FROM auth), false) AS is_owner,
 				COALESCE((SELECT total FROM count_cte), 0) AS total,
 				COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
@@ -115,9 +126,10 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 		where = append(where, fmt.Sprintf("e.course_id = NULLIF($%d, '')::uuid", idx))
 		args = append(args, courseID)
 		idx++
-	} else {
-		where = append(where, fmt.Sprintf("c.tutor_id = NULLIF($%d, '')::uuid", idx))
-		args = append(args, userID)
+	}
+	if targetUserID != "" {
+		where = append(where, fmt.Sprintf("e.user_id = NULLIF($%d, '')::uuid", idx))
+		args = append(args, targetUserID)
 		idx++
 	}
 	if userName != "" {
@@ -136,7 +148,10 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 		where = append(where, "e.revoked = false")
 	}
 
-	whereClause := strings.Join(where, " AND ")
+	whereClause := "1=1"
+	if len(where) > 0 {
+		whereClause = strings.Join(where, " AND ")
+	}
 
 	var result struct {
 		Total int             `db:"total"`
@@ -146,26 +161,27 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 		WITH count_cte AS (
 			SELECT COUNT(*) AS total
 			FROM enrollments e
-			JOIN courses c ON c.id = e.course_id
-			LEFT JOIN "user" u ON e.user_id = u.id
+			LEFT JOIN courses c ON c.id = e.course_id
+			LEFT JOIN "users" u ON e.user_id = u.id
 			WHERE %s
 		),
 		data_cte AS (
-			SELECT 
+			SELECT
 				e.id,
 				json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', COALESCE(u.image, '')) AS "user",
+				json_build_object('id', c.id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url) AS "course",
 				e.completion_percent,
 				e.completed,
 				e.revoked,
 				e.enrolled_at
 			FROM enrollments e
-			JOIN courses c ON c.id = e.course_id
-			LEFT JOIN "user" u ON e.user_id = u.id
+			LEFT JOIN courses c ON c.id = e.course_id
+			LEFT JOIN "users" u ON e.user_id = u.id
 			WHERE %s
 			ORDER BY e.enrolled_at DESC
 			LIMIT $1 OFFSET $2
 		)
-		SELECT 
+		SELECT
 			COALESCE((SELECT total FROM count_cte), 0) AS total,
 			COALESCE((SELECT json_agg(data_cte) FROM data_cte), '[]'::json) AS data
 	`, whereClause, whereClause), args...)
@@ -180,14 +196,4 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 	}
 
 	return list, result.Total, nil
-}
-
-func (r *EnrollmentsRepository) EnrollRepository(userID, courseID string) error {
-	_, err := r.DB.Exec(`
-		INSERT INTO enrollments (user_id, course_id, revoked)
-		VALUES (NULLIF($1, '')::uuid, NULLIF($2, '')::uuid, false)
-		ON CONFLICT (user_id, course_id) DO UPDATE SET revoked = false`,
-		userID, courseID,
-	)
-	return err
 }

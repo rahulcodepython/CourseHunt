@@ -1,50 +1,48 @@
 "use client";
 
-import { useAuthMeQuery } from "@/query-hooks/auth.api";
+import { refreshSession } from "@/lib/auth-client";
 import { useSessionStore } from "@/store/session.store";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { ROUTES } from "@/lib/const";
+import { useEffect, useRef } from "react";
 
+// Runs once per full page load: hits /api/auth/session (which refreshes the
+// HttpOnly access_token cookie server-side) and stores user + roles +
+// permissions in zustand. SPA navigation never refetches — no polling, no
+// cookie reading, no duplicate session API calls.
 export function SessionProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
+    const hydratedRef = useRef(false);
 
-    const sessionUser = useSessionStore((s) => s.user);
-    const setSession = useSessionStore((s) => s.setSession);
-    const setPending = useSessionStore((s) => s.setPending);
+    const user = useSessionStore((s) => s.user);
+    const isPending = useSessionStore((s) => s.isPending);
 
-    const isAuthLogin = pathname.startsWith("/auth/login");
-    const isChangePassword = pathname.startsWith("/auth/change-password");
-    const hasUser = Boolean(sessionUser);
-
-    // Session-provider will fetch the user data if the session store is blank
-    const { data, isPending } = useAuthMeQuery({
-        enabled: !isAuthLogin && !hasUser,
-    });
+    const isAuthLogin = pathname.startsWith(ROUTES.LOGIN);
 
     useEffect(() => {
-        setPending(isPending);
+        if (hydratedRef.current) return;
+        hydratedRef.current = true;
+        refreshSession();
+    }, []);
 
-        // After fetching, set user data to the store if store is blank
-        if (!hasUser && data?.success && data?.data) {
-            setSession({ user: data.data, session: null });
-        }
+    // No session on a protected page -> login. An authenticated session on the
+    // login page -> change-password (first login) or home. Redirects never
+    // loop because refreshSession re-validates against the server every load.
+    useEffect(() => {
+        if (isPending) return;
 
-        const currentUser = sessionUser || (data?.success && data?.data ? data.data : null);
-
-        // If user has currentUser.passwordChangedAt === null || currentUser.passwordChangedAt === undefined
-        // then redirect to /auth/change-password, if not allow user to go to required page
-        if (currentUser) {
-            const needsPasswordChange =
-                currentUser.passwordChangedAt === null || currentUser.passwordChangedAt === undefined;
-
-            if (needsPasswordChange && !isChangePassword) {
-                router.push("/auth/change-password");
-            } else if (!needsPasswordChange && isChangePassword) {
-                router.push("/");
+        if (user) {
+            if (isAuthLogin) {
+                router.replace(user.passwordChangedAt ? ROUTES.HOME : ROUTES.CHANGE_PASSWORD);
             }
+            return;
         }
-    }, [data, isPending, pathname, router, setPending, setSession, sessionUser, hasUser, isChangePassword]);
+
+        if (!isAuthLogin) {
+            router.replace(ROUTES.LOGIN);
+        }
+    }, [user, isPending, isAuthLogin, pathname, router]);
 
     return children;
 }

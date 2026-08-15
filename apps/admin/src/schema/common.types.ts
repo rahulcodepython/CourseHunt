@@ -30,6 +30,7 @@ export const JwtPayloadZod = z.object({
     roles: z.array(z.string()).default([]),
     permissions: z.array(z.string()).default([]),
     banned: z.boolean().default(false),
+    password_changed: z.boolean().optional(),
     iat: z.number().optional(),
     exp: z.number().optional(),
 });

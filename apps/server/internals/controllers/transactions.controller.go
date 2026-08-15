@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"errors"
 	"log"
 	"strings"
 
 	"coursehunt/server/internals/config"
 	"coursehunt/server/internals/entities"
 	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/pkg/razorpay"
 	"coursehunt/server/internals/repositories"
 	"coursehunt/server/internals/services"
 	"coursehunt/server/internals/utils"
@@ -29,8 +31,15 @@ func (ctrl *TransactionsController) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	resp, err := ctrl.Svc.InitiateService(c.Context(), utils.GetUserID(c), req)
+
+	resp, err := ctrl.Svc.InitiateService(utils.GetUserID(c), req)
 	if err != nil {
+		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
+			return utils.NotFound(c, "Course not found.", err)
+		}
+		if errors.Is(err, generic.ErrTransactionsInvalidCoupon) {
+			return utils.BadRequest(c, "Invalid coupon.", err)
+		}
 		return utils.InternalError(c, "Failed to initiate transaction.", err)
 	}
 	return utils.Created(c, "Transaction initiated.", resp)
@@ -44,38 +53,23 @@ func (ctrl *TransactionsController) WebhookController(c *fiber.Ctx) error {
 
 	body := c.Body()
 
-	var payload struct {
-		Event   string `json:"event"`
-		Payload struct {
-			Payment struct {
-				Entity struct {
-					ID               string `json:"id"`
-					OrderID          string `json:"order_id"`
-					Status           string `json:"status"`
-					ErrorDescription string `json:"error_description"`
-				} `json:"entity"`
-			} `json:"payment"`
-		} `json:"payload"`
-	}
-
-	if err := c.BodyParser(&payload); err != nil {
+	var raw razorpay.WebhookPayload
+	if err := c.BodyParser(&raw); err != nil {
 		return utils.BadRequest(c, "invalid body", err)
 	}
 
-	eventID := c.Get("X-Razorpay-Event-Id")
-
 	webhookPayload := entities.WebhookPayload{
-		EventID:          eventID,
-		Event:            payload.Event,
-		OrderID:          payload.Payload.Payment.Entity.OrderID,
-		PaymentID:        payload.Payload.Payment.Entity.ID,
-		Status:           payload.Payload.Payment.Entity.Status,
-		ErrorDescription: payload.Payload.Payment.Entity.ErrorDescription,
+		EventID:          c.Get("X-Razorpay-Event-Id"),
+		Event:            raw.Event,
+		OrderID:          raw.Payload.Payment.Entity.OrderID,
+		PaymentID:        raw.Payload.Payment.Entity.ID,
+		Status:           raw.Payload.Payment.Entity.Status,
+		ErrorDescription: raw.Payload.Payment.Entity.ErrorDescription,
 	}
 
-	if err := ctrl.Svc.HandleWebhookService(c.Context(), body, signature, webhookPayload); err != nil {
+	if err := ctrl.Svc.HandleWebhookService(body, signature, webhookPayload); err != nil {
 		log.Printf("Webhook error: %v", err)
-		if err.Error() == "invalid signature" {
+		if errors.Is(err, generic.ErrTransactionsInvalidSignature) {
 			return utils.Unauthorized(c, "invalid signature", err)
 		}
 		return utils.InternalError(c, "Webhook processing failed", err)
@@ -85,7 +79,7 @@ func (ctrl *TransactionsController) WebhookController(c *fiber.Ctx) error {
 }
 
 func (ctrl *TransactionsController) StatusController(c *fiber.Ctx) error {
-	resp, err := ctrl.Repo.GetTransactionStatusRepository(c.Context(), c.Params("id"), utils.GetUserID(c))
+	resp, err := ctrl.Repo.GetTransactionStatusRepository(c.Params("id"), utils.GetUserID(c))
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch transaction status.", err)
 	}
@@ -94,7 +88,7 @@ func (ctrl *TransactionsController) StatusController(c *fiber.Ctx) error {
 
 func (ctrl *TransactionsController) CheckoutController(c *fiber.Ctx) error {
 	courseID := c.Params("courseId")
-	resp, err := ctrl.Repo.GetCheckoutCourseRepository(c.Context(), courseID)
+	resp, err := ctrl.Repo.GetCheckoutCourseRepository(courseID)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch checkout course info.", err)
 	}
@@ -106,7 +100,7 @@ func (ctrl *TransactionsController) ListController(c *fiber.Ctx) error {
 	permission, _ := c.Locals("permission").(string)
 
 	if strings.HasPrefix(permission, "admin:") {
-		list, total, err := ctrl.Repo.ListRepository(c.Context(), page, limit, c.Query("user_id"), "", c.Query("status"), c.Query("course_id"), c.Query("date_from"), c.Query("date_to"))
+		list, total, err := ctrl.Repo.ListRepository(page, limit, c.Query("user_id"), "", c.Query("status"), c.Query("course_id"), c.Query("date_from"), c.Query("date_to"))
 		if err != nil {
 			return utils.InternalError(c, "Failed to fetch transactions.", err)
 		}
@@ -115,7 +109,7 @@ func (ctrl *TransactionsController) ListController(c *fiber.Ctx) error {
 		})
 	}
 
-	list, total, err := ctrl.Repo.ListRepository(c.Context(), page, limit, utils.GetUserID(c), "", "", "", "", "")
+	list, total, err := ctrl.Repo.ListRepository(page, limit, utils.GetUserID(c), "", "", "", "", "")
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch your transactions.", err)
 	}

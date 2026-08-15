@@ -3,12 +3,18 @@
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import type { Feedback } from "@/schema/feedbacks.types";
 import { formatDate } from "@/lib/format";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icon";
+import { SortableColumnHeader } from "@/components/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/row-actions";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 
 const columnHelper = createColumnHelper<Feedback>();
+
+const pinStatusMap: Record<string, StatusBadgeEntry> = {
+  pinned: { label: "Pinned", variant: "secondary", className: "bg-blue-500/10 text-blue-500" },
+  normal: { label: "Normal", variant: "outline" },
+};
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -35,48 +41,18 @@ export const getColumns = (
 ): ColumnDef<Feedback, any>[] => [
   columnHelper.accessor((row) => row.user?.name || "Anonymous", {
     id: "user",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>User</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="User" />,
     cell: ({ getValue }) => <span className="font-medium">{getValue()}</span>,
   }),
   columnHelper.accessor((row) => row.course?.title ?? "Unknown", {
     id: "course",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Course</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Course" />,
     cell: ({ getValue }) => (
       <span className="text-muted-foreground">{getValue()}</span>
     ),
   }),
   columnHelper.accessor("rating", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Rating</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Rating" />,
     cell: ({ getValue }) => <StarRating rating={getValue() || 0} />,
   }),
   columnHelper.accessor("content", {
@@ -89,16 +65,9 @@ export const getColumns = (
   }),
   columnHelper.accessor("is_pinned", {
     header: "Status",
-    cell: ({ getValue }) => {
-      const isPinned = getValue();
-      return isPinned ? (
-        <Badge variant="secondary" className="bg-blue-500/10 text-blue-500">
-          Pinned
-        </Badge>
-      ) : (
-        <Badge variant="outline">Normal</Badge>
-      );
-    },
+    cell: ({ getValue }) => (
+      <StatusBadge status={getValue() ? "pinned" : "normal"} map={pinStatusMap} />
+    ),
     filterFn: (row, id, value) => {
       if (!value || value === "all") return true;
       if (value === "pinned") return row.getValue(id) === true;
@@ -107,17 +76,7 @@ export const getColumns = (
     },
   }),
   columnHelper.accessor("created_at", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Date</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Date" />,
     cell: ({ getValue }) => (
       <span className="text-muted-foreground">{formatDate(getValue())}</span>
     ),
@@ -128,29 +87,16 @@ export const getColumns = (
     cell: ({ row }) => {
       const fb = row.original;
       return (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className={cn("size-8", fb.is_pinned && "text-primary")}
+        <RowActions>
+          <RowActionButton
+            icon="pin"
+            label={fb.is_pinned ? "Unpin Feedback" : "Pin Feedback"}
             onClick={() => onPinToggle(fb)}
-            aria-label={fb.is_pinned ? "Unpin" : "Pin"}
-          >
-            <Icon
-              name="pin"
-              className={cn("size-4", fb.is_pinned && "rotate-45")}
-            />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8 text-destructive hover:text-destructive"
-            onClick={() => onDelete(fb)}
-            aria-label="Delete feedback"
-          >
-            <Icon name="trash" className="size-4" />
-          </Button>
-        </div>
+            className={cn(fb.is_pinned && "text-primary")}
+            iconClassName={cn(fb.is_pinned && "rotate-45")}
+          />
+          <RowActionButton icon="trash" label="Delete Feedback" onClick={() => onDelete(fb)} destructive />
+        </RowActions>
       );
     },
   }),

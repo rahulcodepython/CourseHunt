@@ -1,7 +1,6 @@
 "use client";
 
 import {
-    MutationCache,
     QueryCache,
     QueryClient,
     QueryClientProvider,
@@ -21,9 +20,9 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
                 queryCache: new QueryCache({
                     onError: showErrorToast,
                 }),
-                mutationCache: new MutationCache({
-                    onError: showErrorToast,
-                }),
+                // No MutationCache.onError here: shared mutation hooks in
+                // src/react-query/mutation.ts already toast every mutation
+                // error, so wiring it up again would show two error toasts.
                 defaultOptions: {
                     queries: {
                         refetchOnWindowFocus: false,

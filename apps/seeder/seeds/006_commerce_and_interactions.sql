@@ -162,3 +162,21 @@ SELECT gen_random_uuid(), u.id, c.id, v.amount, v.status, v.razorpay_order_id, v
 ) AS v(email, slug, amount, status, razorpay_order_id, razorpay_payment_id)
 JOIN users u ON u.email=v.email JOIN courses c ON c.slug=v.slug ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO updates (id, course_id, created_by, message, created_at)
+SELECT gen_random_uuid(), c.id, u.id, v.message, v.created_at FROM (VALUES
+    ('admin@example.com', 'go-golang-microservices-masterclass', 'Updated Chapter 3 with Go 1.24 Fiber v3 benchmarks and gRPC reflection examples.', CURRENT_TIMESTAMP - INTERVAL '2 days'),
+    ('admin@example.com', 'fullstack-nextjs-react-mastery', 'Added new Next.js 15 Server Actions & Optimistic UI tutorial videos.', CURRENT_TIMESTAMP - INTERVAL '3 days'),
+    ('john.doe@example.com', 'fullstack-nextjs-react-mastery', 'Released new source code repository with Tailwind v4 setup.', CURRENT_TIMESTAMP - INTERVAL '4 days'),
+    ('jane.smith@example.com', 'go-golang-microservices-masterclass', 'Added hands-on Kafka event streaming assignment in Chapter 4.', CURRENT_TIMESTAMP - INTERVAL '5 days'),
+    ('alex.rivers@example.com', 'system-design-distributed-systems', 'New interactive architecture diagram quiz attached to Lesson 2.', CURRENT_TIMESTAMP - INTERVAL '6 days'),
+    ('admin@example.com', NULL, 'Platform Maintenance Scheduled: Server upgrade on Sunday 2:00 AM UTC.', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+    ('admin@example.com', NULL, 'Welcome to CourseHunt v2.0! Enjoy faster video streaming and instant search.', CURRENT_TIMESTAMP - INTERVAL '7 days'),
+    ('sarah.connor@example.com', 'docker-kubernetes-modern-devops', 'Kubernetes 1.30 Helm charts updated in repository.', CURRENT_TIMESTAMP - INTERVAL '8 days'),
+    ('emily.watson@example.com', 'figma-ui-ux-design-system-mastery', 'Figma 2026 Variables & Tokens guide added to downloadable resources.', CURRENT_TIMESTAMP - INTERVAL '9 days'),
+    ('admin@example.com', NULL, 'New Coupon Released: Use WELCOME50 for 50% discount on all tech courses!', CURRENT_TIMESTAMP - INTERVAL '10 days')
+) AS v(email, slug, message, created_at)
+JOIN users u ON u.email=v.email
+LEFT JOIN courses c ON c.slug=v.slug
+ON CONFLICT (id) DO NOTHING;
+
+

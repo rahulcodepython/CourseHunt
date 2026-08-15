@@ -3,16 +3,17 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Transaction } from "@/schema/transactions.types";
 import { formatDateTime, formatINR, truncate } from "@/lib/format";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { SortableColumnHeader } from "@/components/sortable-column-header";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
 
 const columnHelper = createColumnHelper<Transaction>();
 
-const statusBadge: Record<string, "success" | "destructive" | "outline"> = {
-  confirmed: "success",
-  refunded: "destructive",
-  pending: "outline",
+const statusMap: Record<string, StatusBadgeEntry> = {
+  success: { variant: "success" },
+  confirmed: { variant: "success" },
+  failed: { variant: "destructive" },
+  refunded: { variant: "destructive" },
+  pending: { variant: "outline" },
 };
 
 export const columns = [
@@ -23,17 +24,7 @@ export const columns = [
     ),
   }),
   columnHelper.accessor("created_at", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Date</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Date" />,
     cell: ({ getValue }) => (
       <span className="text-muted-foreground">
         {formatDateTime(getValue())}
@@ -53,17 +44,7 @@ export const columns = [
     ),
   }),
   columnHelper.accessor("amount", {
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Amount</span>
-        <Icon name="arrow-up-down" className="ml-2 size-3.5" />
-      </Button>
-    ),
+    header: ({ column }) => <SortableColumnHeader column={column} label="Amount" />,
     cell: ({ getValue }) => (
       <span className="font-medium tabular-nums">
         {formatINR(getValue() || 0)}
@@ -72,17 +53,7 @@ export const columns = [
   }),
   columnHelper.accessor("status", {
     header: "Status",
-    cell: ({ getValue }) => {
-      const status = getValue();
-      return (
-        <Badge
-          variant={statusBadge[status] ?? "outline"}
-          className="capitalize"
-        >
-          {status}
-        </Badge>
-      );
-    },
+    cell: ({ getValue }) => <StatusBadge status={getValue()} map={statusMap} />,
     filterFn: (row, id, value) => {
       return value === "all" ? true : row.getValue(id) === value;
     },

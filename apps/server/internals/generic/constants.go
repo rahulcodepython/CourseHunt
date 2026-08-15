@@ -2,17 +2,19 @@ package generic
 
 import "errors"
 
+const (
+	JWKSRedisCacheKey = "jwks_keys_cache"
+)
+
 // Auth errors
 var (
-	ErrAuthInvalidCredentials     = errors.New("login failed: invalid email or password")
-	ErrAuthUserBanned             = errors.New("account is banned")
-	ErrAuthUserNotFound           = errors.New("user not found, please register")
-	ErrAuthNoEmailInToken         = errors.New("no email provided in token")
-	ErrAuthSessionExpired         = errors.New("session expired")
-	ErrAuthRoleNotFound           = errors.New("role not found")
-	ErrAuthFailedToCreateUser     = errors.New("failed to create user")
-	ErrAuthInvalidCurrentPassword = errors.New("invalid current password")
-	ErrAuthFailedToChangePassword = errors.New("failed to change password")
+	ErrAuthTokenMissing  = errors.New("authorization token missing or session expired")
+	ErrAuthEmptyJWKS     = errors.New("empty JWKS")
+	ErrAuthNoMatchingKey = errors.New("no matching JWKS key for token")
+	ErrAuthInvalidToken  = errors.New("invalid or expired token")
+	ErrAuthInvalidClaims = errors.New("invalid token claims")
+	ErrAuthUserBanned    = errors.New("account is banned")
+	ErrAuthNoUserContext = errors.New("user context not found")
 )
 
 // Courses errors
@@ -72,13 +74,21 @@ var (
 // Coupons errors
 var (
 	ErrCouponNotFound        = errors.New("coupon not found")
-	ErrCouponsUnauthorized   = errors.New("access denied: you are not the tutor of this course")
+	ErrCouponsUnauthorized   = errors.New("access denied: you do not own this coupon")
 	ErrCouponsCourseNotFound = errors.New("associated course not found")
+	ErrCouponsCourseRequired = errors.New("course is required for tutor-created coupons")
+)
+
+// Transactions errors
+var (
+	ErrTransactionsInvalidCoupon    = errors.New("invalid coupon")
+	ErrTransactionsInvalidSignature = errors.New("invalid webhook signature")
+	ErrTransactionsNotFound         = errors.New("transaction not found for this order")
 )
 
 // Feedbacks errors
 var (
-	ErrFeedbacksNotEnrolled    = errors.New("access denied: not enrolled in course")
+	ErrFeedbacksNotEnrolled      = errors.New("access denied: not enrolled in course")
 	ErrFeedbacksFeedbackNotFound = errors.New("feedback not found")
 )
 
