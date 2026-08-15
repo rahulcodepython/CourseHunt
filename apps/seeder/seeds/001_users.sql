@@ -65,21 +65,32 @@ FROM (VALUES
 JOIN "users" u ON u.email = v.email
 ON CONFLICT ("providerId", "accountId") DO NOTHING;
 
--- Map User Roles (users.role is authoritative: admin/tutor/user)
+-- Bootstrap admin access: plain data, no hardcoded "super admin" role
+-- concept. An "Admin" role holding every admin:* permission is created here
+-- directly from whatever's actually in the permissions table (so it never
+-- drifts from permissions.json), and assigned to the seeded admin accounts.
+-- Being a "super admin" is just the property of holding every admin
+-- permission — not a distinct role type. Tutor and plain user accounts get
+-- no roles_user row at all (tutor capabilities are modular, granted later
+-- via /roles; plain users don't participate in the permission system).
+INSERT INTO roles (name, description, is_system)
+VALUES ('Admin', 'Full administrative access — every admin:* permission.', true)
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT (SELECT id FROM roles WHERE name = 'Admin'), p.id
+FROM permissions p
+WHERE p.id LIKE 'admin:%'
+ON CONFLICT DO NOTHING;
+
 DELETE FROM roles_user WHERE user_id IN (
-    SELECT id FROM "users" WHERE email IN (
-        'admin@example.com', 'superadmin@example.com',
-        'tutor@example.com', 'sarah.smith@example.com', 'john.doe@example.com',
-        'user@example.com', 'alice@example.com', 'bob@example.com',
-        'charlie@example.com', 'david@example.com', 'eva@example.com', 'fiona@example.com'
-    )
+    SELECT id FROM "users" WHERE email IN ('admin@example.com', 'superadmin@example.com')
 );
 
 INSERT INTO roles_user (user_id, role_id)
-SELECT u.id, r.id
+SELECT u.id, (SELECT id FROM roles WHERE name = 'Admin')
 FROM "users" u
-JOIN roles r ON r.name = u.role
-WHERE u.role IN ('admin', 'tutor', 'user')
+WHERE u.role = 'admin'
 ON CONFLICT DO NOTHING;
 
 -- Insert User Profiles (Merged single `profiles` table)

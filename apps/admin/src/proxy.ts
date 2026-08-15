@@ -6,6 +6,7 @@ import navAdminGroups from "@/config/nav-admin.json";
 import type { NavGroup } from "@/components/app-sidebar";
 
 interface CustomJwtPayload extends Record<string, unknown> {
+    role?: string;
     roles?: string[];
     permissions?: string[];
     password_changed?: boolean;
@@ -37,6 +38,18 @@ export default function middleware(request: NextRequest) {
     // Force password change on first login (passwordChangedAt is NULL).
     if (pathname !== ROUTES.CHANGE_PASSWORD && payload && payload.password_changed === false) {
         return NextResponse.redirect(new URL(ROUTES.CHANGE_PASSWORD, request.url));
+    }
+
+    // Segment gate: this app is admin-only for now (tutor/user areas land in
+    // a separate unified app later) — any authenticated non-admin segment is
+    // signed out at the edge rather than left to hit routes with no
+    // permission requirement. Clears the session so this doesn't just bounce
+    // back to LOGIN's own "already authenticated -> HOME" redirect in a loop.
+    if (pathname !== ROUTES.LOGIN && payload && payload.role !== ROLES.ADMIN) {
+        const response = NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
+        response.cookies.delete(COOKIES.SESSION_TOKEN);
+        response.cookies.delete(COOKIES.ACCESS_TOKEN);
+        return response;
     }
 
     // Route authorization: only enforced once the JWT payload is available.

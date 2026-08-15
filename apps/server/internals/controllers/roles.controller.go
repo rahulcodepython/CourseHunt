@@ -45,7 +45,7 @@ func (ctrl *RolesController) CreateRoleController(c *fiber.Ctx) error {
 		return err
 	}
 
-	systemRoles := map[string]bool{"admin": true, "tutor": true, "user": true}
+	systemRoles := map[string]bool{generic.RoleAdmin: true, generic.RoleTutor: true, generic.RoleUser: true}
 	if systemRoles[req.Name] {
 		return utils.BadRequest(c, "Cannot create a role with a system role name.", nil)
 	}

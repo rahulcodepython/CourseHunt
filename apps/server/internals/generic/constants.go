@@ -6,6 +6,34 @@ const (
 	JWKSRedisCacheKey = "jwks_keys_cache"
 )
 
+// System Segments (stored in users.role column)
+const (
+	RoleAdmin = "admin"
+	RoleTutor = "tutor"
+	RoleUser  = "user"
+)
+
+// Course Statuses
+const (
+	CourseStatusDraft     = "draft"
+	CourseStatusPublished = "published"
+	CourseStatusArchived  = "archived"
+)
+
+// Lesson Content Types
+const (
+	LessonTypeVideo    = "video"
+	LessonTypeDocument = "document"
+	LessonTypeQuiz     = "quiz"
+)
+
+// Transaction Statuses
+const (
+	TransactionStatusPending = "pending"
+	TransactionStatusSuccess = "success"
+	TransactionStatusFailed  = "failed"
+)
+
 // Auth errors
 var (
 	ErrAuthTokenMissing  = errors.New("authorization token missing or session expired")

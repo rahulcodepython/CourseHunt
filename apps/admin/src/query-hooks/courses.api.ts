@@ -6,6 +6,7 @@ import { z } from "zod";
 import { useSimpleMutation, usePaginatedMutation, removeFromPaginated } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
+import { API_ENDPOINTS } from "@/lib/const";
 import { CreateCourseRequestZod, UpdateCourseRequestZod, CourseStudyResponseZod, CourseLandingResponseZod, CoursePublicResponseZod, EnrolledCourseResponseZod, CourseZod } from "@/schema/courses.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/schema/common.types";
 
@@ -17,7 +18,7 @@ export function useCoursesQuery(params?: { page?: number; limit?: number; search
 	if (params?.category_id) searchParams.set("category_id", params.category_id);
 	if (params?.level) searchParams.set("level", params.level);
 	const qs = searchParams.toString();
-	const url = qs ? `/api/v1/courses?${qs}` : "/api/v1/courses";
+	const url = qs ? `${API_ENDPOINTS.COURSES}?${qs}` : API_ENDPOINTS.COURSES;
 	return useAppQuery(queryKeys.courses(params), () =>
 		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CoursePublicResponseZod)),
 	);
@@ -25,19 +26,19 @@ export function useCoursesQuery(params?: { page?: number; limit?: number; search
 
 export function useCourseStudyQuery(id: string) {
 	return useAppQuery(queryKeys.courseStudy(id), () =>
-		apiRequest({ url: `/api/v1/courses/${id}/study`, method: "GET" }, CourseStudyResponseZod),
+		apiRequest({ url: `${API_ENDPOINTS.COURSES}/${id}/study`, method: "GET" }, CourseStudyResponseZod),
 	);
 }
 
 export function useCourseLandingQuery(slug: string) {
 	return useAppQuery(queryKeys.courseLanding(slug), () =>
-		apiRequest({ url: `/api/v1/courses/course/${slug}`, method: "GET" }, CourseLandingResponseZod),
+		apiRequest({ url: `${API_ENDPOINTS.COURSES}/course/${slug}`, method: "GET" }, CourseLandingResponseZod),
 	);
 }
 
 export function useEnrolledCoursesQuery() {
 	return useAppQuery(queryKeys.coursesEnrolled(), () =>
-		apiRequest({ url: "/api/v1/courses/enrolled", method: "GET" }, PaginatedResponseZod(EnrolledCourseResponseZod)),
+		apiRequest({ url: API_ENDPOINTS.COURSES_ENROLLED, method: "GET" }, PaginatedResponseZod(EnrolledCourseResponseZod)),
 	);
 }
 
@@ -51,7 +52,7 @@ export function useManageCoursesQuery(params?: { page?: number; limit?: number; 
 	if (params?.tutor_id) searchParams.set("tutor_id", params.tutor_id);
 	if (params?.status) searchParams.set("status", params.status);
 	const qs = searchParams.toString();
-	const url = qs ? `/api/v1/courses/manage?${qs}` : "/api/v1/courses/manage";
+	const url = qs ? `${API_ENDPOINTS.COURSES_MANAGE}?${qs}` : API_ENDPOINTS.COURSES_MANAGE;
 	return useAppQuery(queryKeys.coursesManage(params), () =>
 		apiRequest({ url, method: "GET" }, PaginatedResponseZod(CourseZod)),
 	);
@@ -60,7 +61,7 @@ export function useManageCoursesQuery(params?: { page?: number; limit?: number; 
 export function useCreateCourseMutation() {
 	return useSimpleMutation({
 		mutationFn: (data: z.infer<typeof CreateCourseRequestZod>) =>
-			apiRequest({ url: "/api/v1/courses", method: "POST", data }, CourseZod),
+			apiRequest({ url: API_ENDPOINTS.COURSES, method: "POST", data }, CourseZod),
 		invalidateKeys: [queryKeys.courses(), queryKeys.coursesManage()],
 		showToast: true,
 	});
@@ -69,7 +70,7 @@ export function useCreateCourseMutation() {
 export function useUpdateCourseMutation() {
 	return useSimpleMutation({
 		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateCourseRequestZod> }) =>
-			apiRequest({ url: `/api/v1/courses/${id}`, method: "PATCH", data }, CourseZod),
+			apiRequest({ url: `${API_ENDPOINTS.COURSES}/${id}`, method: "PATCH", data }, CourseZod),
 		invalidateKeys: [queryKeys.courses(), queryKeys.coursesManage()],
 		showToast: true,
 	});
@@ -78,7 +79,7 @@ export function useUpdateCourseMutation() {
 export function useDeleteCourseMutation() {
 	return usePaginatedMutation({
 		mutationFn: (id: string) =>
-			apiRequest({ url: `/api/v1/courses/${id}`, method: "DELETE" }, DeleteResponseZod),
+			apiRequest({ url: `${API_ENDPOINTS.COURSES}/${id}`, method: "DELETE" }, DeleteResponseZod),
 		queryKey: queryKeys.courses(),
 		invalidateKeys: [queryKeys.coursesManage()],
 		updater: (res) => removeFromPaginated(res.id),

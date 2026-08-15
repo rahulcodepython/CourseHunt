@@ -42,3 +42,79 @@ export const LOCALE_CONFIG = {
     CURRENCY_SYMBOL: "₹",
     ELLIPSIS: "…",
 } as const;
+
+export const PERMISSIONS = {
+    ADMIN_CATEGORIES_MANAGE: "admin:categories:manage",
+    ADMIN_COURSES_INSPECT: "admin:courses:inspect",
+    ADMIN_DISCUSSION_READ: "admin:discussion:read",
+    ADMIN_DISCUSSION_WRITE: "admin:discussion:write",
+    ADMIN_DISCUSSION_DELETE: "admin:discussion:delete",
+    ADMIN_ENROLLMENTS_INSPECT: "admin:enrollments:inspect",
+    ADMIN_COUPONS_MANAGE: "admin:coupons:manage",
+    ADMIN_UPDATES_MANAGE: "admin:updates:manage",
+    ADMIN_FEEDBACK_INSPECT: "admin:feedback:inspect",
+    ADMIN_TRANSACTIONS_READ_ALL: "admin:transactions:read_all",
+    ADMIN_USERS_LIST: "admin:users:list",
+    ADMIN_USERS_ROLE_ASSIGN: "admin:users:role:assign",
+    ADMIN_USERS_ROLE_REVOKE: "admin:users:role:revoke",
+    ADMIN_USERS_CREATE: "admin:users:create",
+    ADMIN_USERS_READ: "admin:users:read",
+    ADMIN_ROLES_CREATE: "admin:roles:create",
+    ADMIN_ROLES_READ: "admin:roles:read",
+    ADMIN_ROLES_UPDATE: "admin:roles:update",
+    ADMIN_ROLES_DELETE: "admin:roles:delete",
+    ADMIN_ROLES_ASSIGN: "admin:roles:assign",
+    ADMIN_PROFILE: "admin:profile",
+    ADMIN_REVOKE_COURSE: "admin:revoke:course",
+    TUTOR_COURSES_MANAGE: "tutor:courses:manage",
+    TUTOR_DISCUSSION_READ: "tutor:discussion:read",
+    TUTOR_DISCUSSION_WRITE: "tutor:discussion:write",
+    TUTOR_DISCUSSION_DELETE: "tutor:discussion:delete",
+    TUTOR_FEEDBACK_MANAGE: "tutor:feedback:manage",
+    TUTOR_QUIZ_MANAGE: "tutor:quiz:manage",
+    TUTOR_UPDATES_MANAGE: "tutor:updates:manage",
+    TUTOR_COUPONS_MANAGE: "tutor:coupons:manage",
+} as const;
+
+export const COURSE_STATUS = {
+    DRAFT: "draft",
+    PUBLISHED: "published",
+    ARCHIVED: "archived",
+} as const;
+
+export const LESSON_TYPE = {
+    VIDEO: "video",
+    DOCUMENT: "document",
+    QUIZ: "quiz",
+} as const;
+
+export const ENROLLMENT_STATUS = {
+    ACTIVE: "active",
+    REVOKED: "revoked",
+} as const;
+
+export const API_ENDPOINTS = {
+    COURSES: "/api/v1/courses",
+    COURSES_MANAGE: "/api/v1/courses/manage",
+    COURSES_ENROLLED: "/api/v1/courses/enrolled",
+    USERS: "/api/v1/users",
+    ROLES: "/api/v1/roles",
+    PERMISSIONS: "/api/v1/permissions",
+    CATEGORIES: "/api/v1/categories",
+    COUPONS: "/api/v1/coupons",
+    UPDATES: "/api/v1/updates",
+    UPDATES_FEED: "/api/v1/updates/feed",
+    FEEDBACKS: "/api/v1/feedbacks",
+    FEEDBACKS_PINNED: "/api/v1/feedbacks/pinned",
+    TRANSACTIONS: "/api/v1/transactions",
+    TRANSACTIONS_INITIATE: "/api/v1/transactions/initiate",
+    CERTIFICATES: "/api/v1/certificates",
+    DISCUSSIONS: "/api/v1/discussions",
+    DASHBOARD_ADMIN: "/api/v1/dashboard/admin",
+    DASHBOARD_TUTOR: "/api/v1/dashboard/tutor",
+    DASHBOARD_USER: "/api/v1/dashboard/user",
+    PROFILE_TUTOR: "/api/v1/profile/tutor",
+    PROFILE_USER: "/api/v1/profile/user",
+    PROFILE_ADMIN: "/api/v1/profile/admin",
+    WISHLIST: "/api/v1/wishlist",
+} as const;

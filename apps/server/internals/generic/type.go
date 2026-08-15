@@ -47,13 +47,17 @@ type CouponInfo struct {
 
 // UserContext holds the authenticated user's identity, extracted from the JWT.
 type UserContext struct {
-	UserID      string   `json:"user_id"`
+	UserID string `json:"user_id"`
+	// Role is the account's segment (admin/tutor/user) — the better-auth
+	// users.role field. Distinct from the plural Roles below.
+	Role        string   `json:"role"`
 	Roles       []string `json:"roles"`
 	Permissions map[string]struct{}
 }
 
 type UserClaims struct {
 	jwt.RegisteredClaims
+	Role        string   `json:"role"`
 	Roles       []string `json:"roles"`
 	Permissions []string `json:"permissions"`
 	Banned      bool     `json:"banned"`

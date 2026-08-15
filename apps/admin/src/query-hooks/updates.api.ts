@@ -6,12 +6,13 @@ import { z } from "zod";
 import { usePaginatedMutation, prependToPaginated, replaceInPaginated, removeFromPaginated } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
+import { API_ENDPOINTS } from "@/lib/const";
 import { CourseUpdateZod, CreateUpdateRequestZod, UpdateUpdateRequestZod, UpdateFeedResponseZod } from "@/schema/updates.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/schema/common.types";
 
 export function useUpdatesQuery() {
 	return useAppQuery(queryKeys.updates(), () =>
-		apiRequest({ url: "/api/v1/updates", method: "GET" }, PaginatedResponseZod(CourseUpdateZod)),
+		apiRequest({ url: API_ENDPOINTS.UPDATES, method: "GET" }, PaginatedResponseZod(CourseUpdateZod)),
 	);
 }
 
@@ -20,7 +21,7 @@ export function useUpdateFeedQuery(params?: { page?: number; limit?: number }) {
 	if (params?.page) searchParams.set("page", params.page.toString());
 	if (params?.limit) searchParams.set("limit", params.limit.toString());
 	const qs = searchParams.toString();
-	const url = qs ? `/api/v1/updates/feed?${qs}` : "/api/v1/updates/feed";
+	const url = qs ? `${API_ENDPOINTS.UPDATES_FEED}?${qs}` : API_ENDPOINTS.UPDATES_FEED;
 	return useAppQuery(queryKeys.updateFeed(params), () =>
 		apiRequest({ url, method: "GET" }, UpdateFeedResponseZod),
 	);
@@ -29,7 +30,7 @@ export function useUpdateFeedQuery(params?: { page?: number; limit?: number }) {
 export function useCreateUpdateMutation() {
 	return usePaginatedMutation({
 		mutationFn: (data: z.infer<typeof CreateUpdateRequestZod>) =>
-			apiRequest({ url: "/api/v1/updates", method: "POST", data }, CourseUpdateZod),
+			apiRequest({ url: API_ENDPOINTS.UPDATES, method: "POST", data }, CourseUpdateZod),
 		queryKey: queryKeys.updates(),
 		updater: (update) => prependToPaginated(update),
 		invalidateKeys: [queryKeys.updateFeed()],
@@ -40,7 +41,7 @@ export function useCreateUpdateMutation() {
 export function useDeleteUpdateMutation() {
 	return usePaginatedMutation({
 		mutationFn: (id: string) =>
-			apiRequest({ url: `/api/v1/updates/${id}`, method: "DELETE" }, DeleteResponseZod),
+			apiRequest({ url: `${API_ENDPOINTS.UPDATES}/${id}`, method: "DELETE" }, DeleteResponseZod),
 		queryKey: queryKeys.updates(),
 		updater: (res) => removeFromPaginated(res.id),
 		optimistic: (id) => removeFromPaginated(id),
@@ -52,7 +53,7 @@ export function useDeleteUpdateMutation() {
 export function useUpdateUpdateMutation() {
 	return usePaginatedMutation({
 		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateUpdateRequestZod> }) =>
-			apiRequest({ url: `/api/v1/updates/${id}`, method: "PATCH", data }, CourseUpdateZod),
+			apiRequest({ url: `${API_ENDPOINTS.UPDATES}/${id}`, method: "PATCH", data }, CourseUpdateZod),
 		queryKey: queryKeys.updates(),
 		updater: (update) => replaceInPaginated(update),
 		invalidateKeys: [queryKeys.updateFeed()],

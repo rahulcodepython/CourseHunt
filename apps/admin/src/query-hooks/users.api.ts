@@ -6,6 +6,7 @@ import { z } from "zod";
 import { useSimpleMutation, useObjectMutation } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
+import { API_ENDPOINTS } from "@/lib/const";
 import {
 	AssignRoleRequestZod,
 	UserListResponseZod,
@@ -19,14 +20,14 @@ import { PaginatedResponseZod } from "@/schema/common.types";
 
 export function useUsersQuery(params?: Record<string, string | number>) {
 	return useAppQuery(queryKeys.users(params), () =>
-		apiRequest({ url: "/api/v1/users", method: "GET", params }, PaginatedResponseZod(UserListResponseZod)),
+		apiRequest({ url: API_ENDPOINTS.USERS, method: "GET", params }, PaginatedResponseZod(UserListResponseZod)),
 	);
 }
 
 export function useAssignRoleMutation(opts?: { showToast?: boolean }) {
 	return useSimpleMutation({
 		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof AssignRoleRequestZod> }) =>
-			apiRequest({ url: `/api/v1/users/${id}/roles/assign`, method: "POST", data }, RoleAssignmentResponseZod),
+			apiRequest({ url: `${API_ENDPOINTS.USERS}/${id}/roles/assign`, method: "POST", data }, RoleAssignmentResponseZod),
 		invalidateKeys: [queryKeys.users()],
 		showToast: opts?.showToast ?? true,
 	});
@@ -35,7 +36,7 @@ export function useAssignRoleMutation(opts?: { showToast?: boolean }) {
 export function useRevokeRoleMutation() {
 	return useSimpleMutation({
 		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof AssignRoleRequestZod> }) =>
-			apiRequest({ url: `/api/v1/users/${id}/roles/revoke`, method: "POST", data }, RoleAssignmentResponseZod),
+			apiRequest({ url: `${API_ENDPOINTS.USERS}/${id}/roles/revoke`, method: "POST", data }, RoleAssignmentResponseZod),
 		invalidateKeys: [queryKeys.users()],
 		showToast: true,
 	});
@@ -44,7 +45,7 @@ export function useRevokeRoleMutation() {
 export function useCreateTutorProfileMutation() {
 	return useObjectMutation({
 		mutationFn: (data: z.infer<typeof UpdateProfileRequestZod>) =>
-			apiRequest({ url: "/api/v1/profile/tutor", method: "POST", data }, TutorProfileZod),
+			apiRequest({ url: API_ENDPOINTS.PROFILE_TUTOR, method: "POST", data }, TutorProfileZod),
 		queryKey: queryKeys.profileTutor(),
 		showToast: true,
 	});
@@ -52,20 +53,20 @@ export function useCreateTutorProfileMutation() {
 
 export function useTutorProfileQuery() {
 	return useAppQuery(queryKeys.profileTutor(), () =>
-		apiRequest({ url: "/api/v1/profile/tutor", method: "GET" }, TutorProfileZod),
+		apiRequest({ url: API_ENDPOINTS.PROFILE_TUTOR, method: "GET" }, TutorProfileZod),
 	);
 }
 
 export function useUserProfileQuery() {
 	return useAppQuery(queryKeys.profileUser(), () =>
-		apiRequest({ url: "/api/v1/profile/user", method: "GET" }, UserProfileZod),
+		apiRequest({ url: API_ENDPOINTS.PROFILE_USER, method: "GET" }, UserProfileZod),
 	);
 }
 
 export function useCreateUserProfileMutation() {
 	return useObjectMutation({
 		mutationFn: (data: z.infer<typeof UpdateProfileRequestZod>) =>
-			apiRequest({ url: "/api/v1/profile/user", method: "POST", data }, UserProfileZod),
+			apiRequest({ url: API_ENDPOINTS.PROFILE_USER, method: "POST", data }, UserProfileZod),
 		queryKey: queryKeys.profileUser(),
 		showToast: true,
 	});
@@ -73,6 +74,6 @@ export function useCreateUserProfileMutation() {
 
 export function useAdminProfilesQuery(params?: Record<string, string | number>) {
 	return useAppQuery(queryKeys.profilesAdmin(), () =>
-		apiRequest({ url: "/api/v1/profile/admin", method: "GET", params }, PaginatedResponseZod(AdminProfileItemZod)),
+		apiRequest({ url: API_ENDPOINTS.PROFILE_ADMIN, method: "GET", params }, PaginatedResponseZod(AdminProfileItemZod)),
 	);
 }

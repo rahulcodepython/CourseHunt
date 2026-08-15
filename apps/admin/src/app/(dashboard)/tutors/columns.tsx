@@ -1,16 +1,24 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import type { AdminProfileItem } from "@/schema/users.types";
+import type { AdminProfileItem, UserListResponse } from "@/schema/users.types";
 import { Icon } from "@/components/icon";
 import { SortableColumnHeader } from "@/components/sortable-column-header";
 import { RowActions, RowActionButton } from "@/components/row-actions";
 import { toast } from "sonner";
 import UserCell from "@/components/user-cell";
 
-const columnHelper = createColumnHelper<AdminProfileItem>();
+// /tutors sources rows from useUsersQuery (UserListResponse), not the
+// profiles endpoint — headline/total_students/rating_avg aren't actually
+// present on that response today, but the columns below already tolerate
+// their absence (fallback dashes), so this widened type just adds what the
+// "Manage Roles" action needs (id, roles) without touching that pre-existing
+// display gap.
+type TutorRow = UserListResponse & Partial<Pick<AdminProfileItem, "headline" | "total_students" | "rating_avg">>;
 
-export const columns = [
+const columnHelper = createColumnHelper<TutorRow>();
+
+export const getColumns = (onManage: (tutor: TutorRow) => void) => [
   columnHelper.accessor("name", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Tutor" />,
     cell: ({ row }) => <UserCell name={row.original.name} />,
@@ -58,6 +66,11 @@ export const columns = [
       const tutor = row.original;
       return (
         <RowActions>
+          <RowActionButton
+            icon="users"
+            label="Manage Roles"
+            onClick={() => onManage(tutor)}
+          />
           <RowActionButton
             icon="ban"
             label="Ban Tutor"

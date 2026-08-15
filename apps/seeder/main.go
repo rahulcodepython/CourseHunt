@@ -2,12 +2,9 @@ package main
 
 import (
 	"embed"
-	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -20,20 +17,47 @@ import (
 var seedFS embed.FS
 
 // PermissionFile mirrors the repo-root permissions.json (single source of
-// truth for the system RBAC catalog).
-type PermissionFile struct {
-	Roles []RoleSeed `json:"roles"`
-}
-
-type RoleSeed struct {
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Permissions []PermissionSeed `json:"permissions"`
-}
-
+// truth for the system RBAC catalog) — the flat catalog of every assignable
+// permission string. There is no bootstrap-role concept here on purpose:
+// roles are plain data, created either by seed SQL (seeds/001_users.sql, for
+// the initial admin bootstrap) or later through the /roles UI — never
+// modeled specially in this file or in Go code.
 type PermissionSeed struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID   string
+	Name string
+}
+
+var permissionsCatalog = []PermissionSeed{
+	{ID: "admin:categories:manage", Name: "Manage categories"},
+	{ID: "admin:courses:inspect", Name: "Inspect all courses"},
+	{ID: "admin:discussion:read", Name: "Read discussions"},
+	{ID: "admin:discussion:write", Name: "Write discussions"},
+	{ID: "admin:discussion:delete", Name: "Delete discussions"},
+	{ID: "admin:enrollments:inspect", Name: "Inspect enrollments"},
+	{ID: "admin:coupons:manage", Name: "Manage coupons"},
+	{ID: "admin:updates:manage", Name: "Manage updates"},
+	{ID: "admin:feedback:inspect", Name: "Inspect feedbacks"},
+	{ID: "admin:transactions:read_all", Name: "View all transactions"},
+	{ID: "admin:users:list", Name: "List all users"},
+	{ID: "admin:users:role:assign", Name: "Assign user roles"},
+	{ID: "admin:users:role:revoke", Name: "Revoke user roles"},
+	{ID: "admin:users:create", Name: "Create user accounts"},
+	{ID: "admin:users:read", Name: "Read user details"},
+	{ID: "admin:roles:create", Name: "Create custom roles"},
+	{ID: "admin:roles:read", Name: "List roles and permissions"},
+	{ID: "admin:roles:update", Name: "Update custom roles"},
+	{ID: "admin:roles:delete", Name: "Delete custom roles"},
+	{ID: "admin:roles:assign", Name: "Assign custom roles"},
+	{ID: "admin:profile", Name: "Access admin profiles"},
+	{ID: "admin:revoke:course", Name: "Revoke or regain a user's course access"},
+	{ID: "tutor:courses:manage", Name: "Manage own courses"},
+	{ID: "tutor:discussion:read", Name: "Read discussions"},
+	{ID: "tutor:discussion:write", Name: "Write discussions"},
+	{ID: "tutor:discussion:delete", Name: "Delete discussions"},
+	{ID: "tutor:feedback:manage", Name: "Manage feedbacks for own courses"},
+	{ID: "tutor:quiz:manage", Name: "Manage quizzes for own courses"},
+	{ID: "tutor:updates:manage", Name: "Manage updates for own courses"},
+	{ID: "tutor:coupons:manage", Name: "Manage own coupons"},
 }
 
 func main() {
@@ -44,9 +68,6 @@ func main() {
 	if dbURL == "" {
 		dbURL = "postgres://postgres:postgres@localhost:5432/coursehunt?sslmode=disable"
 	}
-
-	permsPath := flag.String("permissions", "", "path to permissions.json (default: nearest permissions.json walking up from cwd)")
-	flag.Parse()
 
 	log.Println("[seeder] Connecting to database...")
 	db, err := sqlx.Open("postgres", dbURL)
@@ -60,13 +81,7 @@ func main() {
 	}
 	log.Println("[seeder] Connected successfully!")
 
-	// Load the RBAC catalog from the root permissions.json.
-	permsFile, err := loadPermissionsFile(*permsPath)
-	if err != nil {
-		log.Fatalf("[seeder] Failed to load permissions: %v", err)
-	}
-	log.Printf("[seeder] Loaded %d roles and %d permissions from permissions.json",
-		len(permsFile.Roles), countPermissions(permsFile))
+	log.Printf("[seeder] Loaded %d permissions from catalog", len(permissionsCatalog))
 
 	// 1. Reset Database Table Data
 	log.Println("==================================================")
@@ -88,11 +103,11 @@ func main() {
 	}
 	log.Println("[seeder] All database tables truncated and reset successfully!")
 
-	// 2. Seed RBAC (roles, permissions, role_permissions) from permissions.json
+	// 2. Seed the permission catalog
 	log.Println("==================================================")
-	log.Println("[seeder] SEEDING ROLES, PERMISSIONS AND ROLE MAPPINGS...")
+	log.Println("[seeder] SEEDING PERMISSION CATALOG...")
 	log.Println("==================================================")
-	seedRbac(db, permsFile)
+	seedPermissions(db)
 
 	// 3. Run Seeds
 	log.Println("==================================================")
@@ -129,102 +144,18 @@ func main() {
 	log.Println("==================================================")
 }
 
-// loadPermissionsFile reads permissions.json, resolving a default path by
-// walking up from the working directory until the file is found.
-func loadPermissionsFile(path string) (*PermissionFile, error) {
-	if path == "" {
-		dir, err := os.Getwd()
-		if err != nil {
-			return nil, fmt.Errorf("getwd: %w", err)
-		}
-		for i := 0; i < 6; i++ {
-			candidate := filepath.Join(dir, "permissions.json")
-			if _, err := os.Stat(candidate); err == nil {
-				path = candidate
-				break
-			}
-			parent := filepath.Dir(dir)
-			if parent == dir {
-				break
-			}
-			dir = parent
-		}
-	}
-	if path == "" {
-		return nil, fmt.Errorf("permissions.json not found (walked up from cwd); pass -permissions explicitly")
-	}
-
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("read %s: %w", path, err)
-	}
-	var file PermissionFile
-	if err := json.Unmarshal(raw, &file); err != nil {
-		return nil, fmt.Errorf("parse %s: %w", path, err)
-	}
-	if len(file.Roles) == 0 {
-		return nil, fmt.Errorf("%s contains no roles", path)
-	}
-	return &file, nil
-}
-
-func countPermissions(file *PermissionFile) int {
-	total := 0
-	for _, role := range file.Roles {
-		total += len(role.Permissions)
-	}
-	return total
-}
-
-// seedRbac inserts the system roles, permissions, and role_permissions
-// mappings straight from permissions.json (replacing the old hardcoded SQL).
-func seedRbac(db *sqlx.DB, file *PermissionFile) {
-	for _, role := range file.Roles {
+// seedPermissions inserts the permission catalog straight from permissionsCatalog.
+func seedPermissions(db *sqlx.DB) {
+	for _, p := range permissionsCatalog {
 		if _, err := db.Exec(
-			`INSERT INTO roles (name, description, is_system) VALUES ($1, $2, true)
-			 ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description`,
-			role.Name, role.Description,
+			`INSERT INTO permissions (id, name) VALUES ($1, $2)
+			 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`,
+			p.ID, p.Name,
 		); err != nil {
-			log.Fatalf("[seeder] Failed to seed role %q: %v", role.Name, err)
+			log.Fatalf("[seeder] Failed to seed permission %q: %v", p.ID, err)
 		}
 	}
-
-	for _, role := range file.Roles {
-		for _, p := range role.Permissions {
-			if _, err := db.Exec(
-				`INSERT INTO permissions (id, name) VALUES ($1, $2)
-				 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`,
-				p.ID, p.Name,
-			); err != nil {
-				log.Fatalf("[seeder] Failed to seed permission %q: %v", p.ID, err)
-			}
-		}
-	}
-
-	// Reset system-role mappings to the exact set defined in permissions.json.
-	if _, err := db.Exec(
-		`DELETE FROM role_permissions WHERE role_id IN (SELECT id FROM roles WHERE is_system = true)`,
-	); err != nil {
-		log.Fatalf("[seeder] Failed to reset role_permissions: %v", err)
-	}
-
-	for _, role := range file.Roles {
-		for _, p := range role.Permissions {
-			if _, err := db.Exec(
-				`INSERT INTO role_permissions (role_id, permission_id)
-				 SELECT r.id, p.id FROM roles r CROSS JOIN permissions p
-				 WHERE r.name = $1 AND p.id = $2
-				 ON CONFLICT DO NOTHING`,
-				role.Name, p.ID,
-			); err != nil {
-				log.Fatalf("[seeder] Failed to map %q -> %q: %v", role.Name, p.ID, err)
-			}
-		}
-	}
-
-	for _, role := range file.Roles {
-		log.Printf("[seeder] ✓ role %q (%d permissions)", role.Name, len(role.Permissions))
-	}
+	log.Printf("[seeder] ✓ seeded %d permissions", len(permissionsCatalog))
 }
 
 func runEmbeddedSeeds(db *sqlx.DB) {

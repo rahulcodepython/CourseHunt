@@ -9,6 +9,7 @@ import UserCell from "@/components/user-cell";
 import { Icon } from "@/components/icon";
 import { RowActions, RowActionButton } from "@/components/row-actions";
 import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
+import { ENROLLMENT_STATUS } from "@/lib/const";
 
 const columnHelper = createColumnHelper<ListEnrollmentResponse>();
 
@@ -18,8 +19,8 @@ const progressStatusMap: Record<string, StatusBadgeEntry> = {
 };
 
 const accessStatusMap: Record<string, StatusBadgeEntry> = {
-  active: { label: "Active", variant: "secondary", className: "bg-emerald-500/10 text-emerald-500" },
-  revoked: { label: "Revoked", variant: "destructive" },
+  [ENROLLMENT_STATUS.ACTIVE]: { label: "Active", variant: "secondary", className: "bg-emerald-500/10 text-emerald-500" },
+  [ENROLLMENT_STATUS.REVOKED]: { label: "Revoked", variant: "destructive" },
 };
 
 /**
@@ -79,7 +80,7 @@ export function EnrollmentAccessTable({
     }),
     columnHelper.accessor("revoked", {
       header: "Access",
-      cell: ({ getValue }) => <StatusBadge status={getValue() ? "revoked" : "active"} map={accessStatusMap} />,
+      cell: ({ getValue }) => <StatusBadge status={getValue() ? ENROLLMENT_STATUS.REVOKED : ENROLLMENT_STATUS.ACTIVE} map={accessStatusMap} />,
     }),
     columnHelper.accessor("enrolled_at", {
       header: "Enrolled",

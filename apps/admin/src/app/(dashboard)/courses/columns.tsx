@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/icon";
 import { SortableColumnHeader } from "@/components/sortable-column-header";
 import { RowActions, RowActionButton } from "@/components/row-actions";
+import { COURSE_STATUS } from "@/lib/const";
 
 const columnHelper = createColumnHelper<Course>();
 
@@ -45,7 +46,7 @@ export const columns = [
             const status = getValue();
             return (
                 <Badge
-                    variant={status === "published" ? "default" : "secondary"}
+                    variant={status === COURSE_STATUS.PUBLISHED ? "default" : "secondary"}
                     className="capitalize"
                 >
                     {status}

@@ -17,24 +17,28 @@ func NewUsersRepository(db *sqlx.DB) *UsersRepository {
 	return &UsersRepository{DB: db}
 }
 
-// RolesAndPermissionsResult holds the current roles and permissions resolved
-// from the database for a given user.
+// RolesAndPermissionsResult holds the current segment, roles, and
+// permissions resolved from the database for a given user.
 type RolesAndPermissionsResult struct {
+	Role        string   `db:"role"`
 	Roles       []string `db:"roles"`
 	Permissions []string `db:"permissions"`
 }
 
-// GetRolesAndPermissions resolves the user's current roles and permissions
-// from the database. Unlike the JWT claims (a snapshot taken at token mint
-// time), this is always fresh, so permission changes apply immediately.
+// GetRolesAndPermissions resolves the user's current segment (users.role),
+// custom roles, and permissions from the database. Unlike the JWT claims (a
+// snapshot taken at token mint time), this is always fresh, so role/
+// permission changes apply immediately.
 func (r *UsersRepository) GetRolesAndPermissions(userID string) (RolesAndPermissionsResult, error) {
 	var result struct {
+		Role        string          `db:"role"`
 		Roles       json.RawMessage `db:"roles"`
 		Permissions json.RawMessage `db:"permissions"`
 	}
 
 	err := r.DB.Get(&result, `
 		SELECT
+			COALESCE(u.role, '') AS role,
 			COALESCE(
 				(SELECT json_agg(DISTINCT r.name)
 				 FROM roles_user ru
@@ -48,12 +52,14 @@ func (r *UsersRepository) GetRolesAndPermissions(userID string) (RolesAndPermiss
 				 JOIN permissions p ON p.id = rp.permission_id
 				 WHERE ru.user_id = $1), '[]'::json
 			) AS permissions
+		FROM "users" u
+		WHERE u.id = $1
 	`, userID)
 	if err != nil {
 		return RolesAndPermissionsResult{}, err
 	}
 
-	var out RolesAndPermissionsResult
+	out := RolesAndPermissionsResult{Role: result.Role}
 	if err := json.Unmarshal(result.Roles, &out.Roles); err != nil {
 		return RolesAndPermissionsResult{}, err
 	}

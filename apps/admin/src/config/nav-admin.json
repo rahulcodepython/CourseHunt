@@ -6,7 +6,7 @@
                 "title": "Dashboard",
                 "href": "/",
                 "icon": "dashboard",
-                "permission": "admin:dashboard"
+                "permission": null
             }
         ]
     },

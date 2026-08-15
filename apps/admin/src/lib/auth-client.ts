@@ -1,11 +1,23 @@
 import { createAuthClient } from "better-auth/react";
 import { adminClient } from "better-auth/client/plugins";
-import { AUTH_CONFIG } from "@/lib/const";
+import { adminAc, userAc } from "better-auth/plugins/admin/access";
+import { AUTH_CONFIG, ROLES } from "@/lib/const";
 import { useSessionStore, type SessionPayload } from "@/store/session.store";
 
 export const authClient = createAuthClient({
     baseURL: process.env.NEXT_PUBLIC_APP_URL ?? AUTH_CONFIG.DEFAULT_APP_URL,
-    plugins: [adminClient()],
+    // Mirrors the `roles` shape passed to the server's admin() plugin
+    // (src/lib/auth.ts) so createUser/setRole are typed for all three
+    // segments (admin/tutor/user), not just better-auth's admin/user default.
+    plugins: [
+        adminClient({
+            roles: {
+                [ROLES.ADMIN]: adminAc,
+                [ROLES.TUTOR]: userAc,
+                [ROLES.USER]: userAc,
+            },
+        }),
+    ],
 });
 
 // The single session endpoint: it validates the better-auth session, sets or

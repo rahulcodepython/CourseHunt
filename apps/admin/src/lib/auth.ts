@@ -3,6 +3,7 @@ import { sql } from "kysely";
 import { kyselyAdapter } from "@better-auth/kysely-adapter";
 import { betterAuth } from "better-auth";
 import { jwt, admin } from "better-auth/plugins";
+import { adminAc, userAc } from "better-auth/plugins/admin/access";
 import { ROLES } from "@/lib/const";
 
 const AUTH_SECRET = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
@@ -112,7 +113,19 @@ export const auth = betterAuth({
         }),
         admin({
             defaultRole: ROLES.USER,
-            adminRole: ROLES.ADMIN,
+            adminRoles: [ROLES.ADMIN],
+            // Declaring `roles` here only teaches better-auth's own plugin
+            // (createUser/setRole typing, banning, impersonation) about the
+            // three segments — `tutor` reuses the no-permissions `userAc`
+            // shape since it carries none of better-auth's own admin-plugin
+            // permissions. The real, modular RBAC (admin:*/tutor:*
+            // permissions, roles, roles_user) lives entirely in the backend
+            // Postgres tables, resolved separately below.
+            roles: {
+                [ROLES.ADMIN]: adminAc,
+                [ROLES.TUTOR]: userAc,
+                [ROLES.USER]: userAc,
+            },
         }),
     ],
 });

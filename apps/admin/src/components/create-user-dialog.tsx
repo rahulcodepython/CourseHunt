@@ -38,19 +38,19 @@ export type CreateUserFormData = z.infer<typeof createUserSchema>;
 export function CreateUserDialog({
     open,
     onOpenChange,
-    mode = "admin",
+    authRole,
     presetRoleName,
     title = "Create User",
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     /**
-     * "admin" creates a better-auth admin user directly.
-     * "custom" always creates a base better-auth "user" and attaches a
-     * custom role (from the backend roles table) via roles_user, so any
-     * role added later just shows up here without code changes.
+     * The account's segment — sets better-auth's users.role field directly
+     * (admin/tutor/user). Immutable after creation; there's no UI to change
+     * it later. Segment alone decides dashboard fallback, nothing else —
+     * actual capabilities come from the optional custom role below.
      */
-    mode?: "admin" | "custom";
+    authRole: "admin" | "tutor" | "user";
     presetRoleName?: string;
     title?: string;
 }) {
@@ -58,10 +58,14 @@ export function CreateUserDialog({
     const queryClient = useQueryClient();
     const assignRoleMutation = useAssignRoleMutation({ showToast: false });
 
+    // Custom-role assignment is only meaningful for admin/tutor segments —
+    // plain "user" accounts don't participate in the permission system.
+    const showRolePicker = authRole !== "user";
+
     const { data: rawRoles } = useRolesQuery();
     const assignableRoles = React.useMemo(
-        () => ((rawRoles?.data as { id: string; name: string }[] | null | undefined) ?? [])
-            .filter((r) => r.name !== "admin" && r.name !== "user"),
+        () => ((rawRoles?.data as { id: string; name: string; is_system?: boolean }[] | null | undefined) ?? [])
+            .filter((r) => !r.is_system),
         [rawRoles],
     );
 
@@ -97,7 +101,7 @@ export function CreateUserDialog({
                 email: data.email,
                 password: data.password,
                 name: data.name,
-                role: mode === "admin" ? "admin" : "user",
+                role: authRole,
             });
 
             if (res.error) {
@@ -106,18 +110,18 @@ export function CreateUserDialog({
             }
 
             const createdUserId = res.data?.user?.id;
-            const selectedRole = mode === "custom"
+            const selectedRole = showRolePicker
                 ? assignableRoles.find((r) => r.id === data.roleId)
                 : undefined;
 
-            if (mode === "custom" && selectedRole && createdUserId) {
+            if (showRolePicker && selectedRole && createdUserId) {
                 await assignRoleMutation.execute({
                     id: createdUserId,
                     data: { role_id: selectedRole.id },
                 });
             }
 
-            const roleLabel = mode === "admin" ? "admin" : (selectedRole?.name ?? "user");
+            const roleLabel = authRole;
             toast.success(`${roleLabel[0].toUpperCase()}${roleLabel.slice(1)} account created successfully! Credentials CSV downloaded.`);
             downloadCredentialsCSV(
                 { name: data.name, email: data.email, password: data.password, role: roleLabel },
@@ -178,7 +182,7 @@ export function CreateUserDialog({
                     )}
                 </div>
 
-                {mode === "custom" && (
+                {showRolePicker && (
                     <div className="space-y-1.5">
                         <Label>Role</Label>
                         <Controller

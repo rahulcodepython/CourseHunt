@@ -4,24 +4,36 @@ import * as React from "react";
 import { useUsersQuery } from "@/query-hooks/users.api";
 import { PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
-import { columns } from "./columns";
+import { getColumns } from "./columns";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icon";
 import { useSessionStore } from "@/store/session.store";
 import { hasPermission } from "@/lib/permissions";
 import { getPrimaryRole } from "@/lib/roles";
+import { ROLES, PERMISSIONS } from "@/lib/const";
 import { CreateUserDialog } from "@/components/create-user-dialog";
+import { ManageRolesDialog } from "@/components/manage-roles-dialog";
+import type { UserListResponse } from "@/schema/users.types";
 
 export default function TutorsPage() {
   const permissions = useSessionStore((s) => s.permissions);
-  const canCreateTutor = hasPermission(permissions, "admin:users:role:assign");
+  const canCreateTutor = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_ROLE_ASSIGN);
 
-  const { data: rawTutors, isLoading } = useUsersQuery({ role: "tutor" });
+  const { data: rawTutors, isLoading } = useUsersQuery({ role: ROLES.TUTOR });
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [selectedTutor, setSelectedTutor] = React.useState<UserListResponse | null>(null);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
 
-  const rawList: any[] = rawTutors?.data?.data ?? [];
-  const tutors = rawList.filter((u: any) => getPrimaryRole(u) === "tutor");
+  const rawList: UserListResponse[] = rawTutors?.data?.data ?? [];
+  const tutors = rawList.filter((u) => getPrimaryRole(u) === ROLES.TUTOR);
+
+  const handleManage = (tutor: UserListResponse) => {
+    setSelectedTutor(tutor);
+    setDialogOpen(true);
+  };
+
+  const columns = React.useMemo(() => getColumns(handleManage), []);
 
   return (
     <div className="space-y-6">
@@ -47,13 +59,20 @@ export default function TutorsPage() {
         loadingText="Loading tutors..."
       />
 
+      <ManageRolesDialog
+        userId={selectedTutor?.id ?? null}
+        userName={selectedTutor?.name}
+        currentRoles={selectedTutor?.roles ?? []}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
+
       {canCreateTutor && (
         <CreateUserDialog
           open={createOpen}
           onOpenChange={setCreateOpen}
           title="Create Tutor"
-          mode="custom"
-          presetRoleName="tutor"
+          authRole={ROLES.TUTOR}
         />
       )}
     </div>

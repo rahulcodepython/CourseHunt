@@ -175,7 +175,7 @@ func parseAndValidateJWT(ctx context.Context, cch *cache.Cache, cfg *config.Conf
 	return claims, nil
 }
 
-func setUserContext(c *fiber.Ctx, userID string, roles []string, permissions []string) {
+func setUserContext(c *fiber.Ctx, userID string, role string, roles []string, permissions []string) {
 	perms := make(map[string]struct{}, len(permissions))
 	for _, p := range permissions {
 		perms[p] = struct{}{}
@@ -183,6 +183,7 @@ func setUserContext(c *fiber.Ctx, userID string, roles []string, permissions []s
 
 	c.Locals("user", &generic.UserContext{
 		UserID:      userID,
+		Role:        role,
 		Roles:       roles,
 		Permissions: perms,
 	})
@@ -217,16 +218,18 @@ func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo *reposit
 		// and produce false 403s. Resolve the user's current roles/permissions
 		// from the database on every request, falling back to the token claims
 		// if the lookup fails so auth never breaks on a transient DB error.
+		role := claims.Role
 		roles := claims.Roles
 		permissions := claims.Permissions
 		if usersRepo != nil && claims.Subject != "" {
 			if fresh, err := usersRepo.GetRolesAndPermissions(claims.Subject); err == nil {
+				role = fresh.Role
 				roles = fresh.Roles
 				permissions = fresh.Permissions
 			}
 		}
 
-		setUserContext(c, claims.Subject, roles, permissions)
+		setUserContext(c, claims.Subject, role, roles, permissions)
 		return c.Next()
 	}
 }
@@ -246,5 +249,46 @@ func PermissionGuard(requiredPermissions ...string) fiber.Handler {
 		}
 
 		return utils.Forbidden(c, "Permission denied.", nil)
+	}
+}
+
+// RoleGuard restricts a route to a single account segment (admin/tutor/
+// user), independent of any granted permission — used for the guaranteed
+// per-segment dashboard fallback, which must never be revocable via a roles
+// mix-up.
+func RoleGuard(required string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user, ok := c.Locals("user").(*generic.UserContext)
+		if !ok || user == nil {
+			return utils.Unauthorized(c, "Unauthorized.", generic.ErrAuthNoUserContext)
+		}
+		if user.Role != required {
+			return utils.Forbidden(c, "Permission denied.", nil)
+		}
+		return c.Next()
+	}
+}
+
+// ScopeGuard is for routes that mix "any authenticated user, self-scoped"
+// with "elevated permission holder, sees everyone's data". It never blocks
+// the request (BaseAuthMiddleware already requires authentication) — it only
+// records the matched elevated permission, if any, in c.Locals("permission")
+// so resolveScope()/generic.ScopeFromPermission can tell the two cases apart.
+// With no match, resolveScope() already defaults to ScopeUser.
+func ScopeGuard(elevatedPermissions ...string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user, ok := c.Locals("user").(*generic.UserContext)
+		if !ok || user == nil {
+			return utils.Unauthorized(c, "Unauthorized.", generic.ErrAuthNoUserContext)
+		}
+
+		for _, perm := range elevatedPermissions {
+			if _, hasPerm := user.Permissions[perm]; hasPerm {
+				c.Locals("permission", perm)
+				break
+			}
+		}
+
+		return c.Next()
 	}
 }
