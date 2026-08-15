@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ROUTES } from "@/lib/const";
 
 import { Icon, type IconName } from "@/components/icon";
 import {
@@ -87,16 +88,20 @@ export function AppSidebar({
     brandLogo,
 }: AppSidebarProps) {
     const pathname = usePathname();
+    const defaultSubTitle = pathname.startsWith(ROUTES.TUTOR_DASHBOARD) ? "Tutor Portal" : "Admin Panel";
 
     const isLinkActive = (href?: string) => {
         if (!href) return false;
-        return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+        if (href === ROUTES.HOME || href === ROUTES.ADMIN_DASHBOARD || href === ROUTES.TUTOR_DASHBOARD) {
+            return pathname === href;
+        }
+        return pathname === href || pathname.startsWith(href + "/");
     };
 
     return (
         <Sidebar collapsible="icon">
             <SidebarHeader>
-                <Brand title={brandTitle} subTitle={brandSubTitle} logo={brandLogo} />
+                <Brand title={brandTitle} subTitle={brandSubTitle ?? defaultSubTitle} logo={brandLogo} />
             </SidebarHeader>
             <SidebarContent>
                 {

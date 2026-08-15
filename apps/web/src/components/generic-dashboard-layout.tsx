@@ -13,10 +13,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import navAdminGroups from "@/config/nav-admin.json";
 import { filterNavGroups } from "@/lib/permissions";
 import { useSessionStore } from "@/store/session.store";
-
 import { UserNav } from "@/components/user-nav";
 
 function ThemeToggle() {
@@ -42,15 +40,17 @@ function ThemeToggle() {
   );
 }
 
-export default function DashboardLayout({
+export function GenericDashboardLayout({
+  rawNavGroups,
   children,
 }: {
+  rawNavGroups: NavGroup[];
   children: React.ReactNode;
 }) {
   const permissions = useSessionStore((s) => s.permissions);
   const navGroups = React.useMemo(
-    () => filterNavGroups(navAdminGroups as NavGroup[], permissions),
-    [permissions],
+    () => filterNavGroups(rawNavGroups, permissions),
+    [rawNavGroups, permissions],
   );
 
   return (

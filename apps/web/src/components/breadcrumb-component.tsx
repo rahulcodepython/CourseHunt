@@ -10,10 +10,16 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { usePathname } from "next/navigation";
 import { useBreadcrumbStore } from "@/store/breadcrumb.store";
+import { ROUTES } from "@/lib/const";
 
 export default function BreadcrumbComponent() {
     const items = useBreadcrumbStore((s) => s.items);
+    const pathname = usePathname();
+    const rootHref = pathname.startsWith(ROUTES.TUTOR_DASHBOARD)
+        ? ROUTES.TUTOR_DASHBOARD
+        : ROUTES.ADMIN_DASHBOARD;
 
     return (
         <Breadcrumb>
@@ -22,7 +28,7 @@ export default function BreadcrumbComponent() {
                     {
                         items.length === 0 ? <BreadcrumbPage>Dashboard</BreadcrumbPage>
                             : <BreadcrumbLink asChild>
-                                <Link href="/">Dashboard</Link>
+                                <Link href={rootHref}>Dashboard</Link>
                             </BreadcrumbLink>
                     }
                 </BreadcrumbItem>

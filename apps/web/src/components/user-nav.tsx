@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 
 import { Icon } from "@/components/icon";
@@ -17,17 +17,22 @@ import {
 import { useSessionStore } from "@/store/session.store";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/const";
 
 export function UserNav() {
     const router = useRouter();
+    const pathname = usePathname();
     const user = useSessionStore((state) => state.user);
+    const profileHref = pathname.startsWith(ROUTES.TUTOR_DASHBOARD)
+        ? `${ROUTES.TUTOR_DASHBOARD}/profile`
+        : `${ROUTES.ADMIN_DASHBOARD}/profile`;
 
     const handleLogout = async () => {
         try {
             await authClient.signOut();
         } finally {
             toast.success("Signed out");
-            router.push("/auth/login");
+            router.push(ROUTES.LOGIN);
         }
     };
 
@@ -46,7 +51,7 @@ export function UserNav() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                    <Link href="/profile" className="cursor-pointer">
+                    <Link href={profileHref} className="cursor-pointer">
                         <Icon name="user" className="size-4 mr-2" />
                         Profile
                     </Link>

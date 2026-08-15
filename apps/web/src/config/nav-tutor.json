@@ -1,0 +1,58 @@
+[
+    {
+        "label": "Overview",
+        "items": [
+            {
+                "title": "Dashboard",
+                "href": "/tutor",
+                "icon": "dashboard",
+                "permission": null
+            }
+        ]
+    },
+    {
+        "label": "Teaching",
+        "items": [
+            {
+                "title": "My Courses",
+                "href": "/tutor/courses",
+                "icon": "category",
+                "permission": "tutor:courses:manage"
+            },
+            {
+                "title": "Course Updates",
+                "href": "/tutor/updates",
+                "icon": "world",
+                "permission": "tutor:updates:manage"
+            },
+            {
+                "title": "Reviews & Feedback",
+                "href": "/tutor/feedback",
+                "icon": "user-check",
+                "permission": "tutor:feedback:manage"
+            }
+        ]
+    },
+    {
+        "label": "Promotions",
+        "items": [
+            {
+                "title": "My Coupons",
+                "href": "/tutor/coupons",
+                "icon": "ticket",
+                "permission": "tutor:coupons:manage"
+            }
+        ]
+    },
+    {
+        "label": "Account",
+        "items": [
+            {
+                "title": "Tutor Profile",
+                "href": "/tutor/profile",
+                "icon": "lock",
+                "permission": null
+            }
+        ]
+    }
+]

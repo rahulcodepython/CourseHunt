@@ -1,8 +1,8 @@
 {
-  "name": "@coursehunt/admin",
+  "name": "@coursehunt/web",
   "version": "1.0.0",
   "private": true,
-  "description": "CourseHunt Admin Dashboard (UI-only, mock data)",
+  "description": "CourseHunt Web Application (Admin & Tutor Dashboards)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

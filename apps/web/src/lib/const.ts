@@ -27,6 +27,8 @@ export const ROLES = {
 
 export const ROUTES = {
     HOME: "/",
+    ADMIN_DASHBOARD: "/admin",
+    TUTOR_DASHBOARD: "/tutor",
     LOGIN: "/auth/login",
     CHANGE_PASSWORD: "/auth/change-password",
 } as const;
