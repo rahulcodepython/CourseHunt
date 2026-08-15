@@ -2,15 +2,17 @@ import { create } from "zustand";
 import type { SessionData, SessionUser } from "@/schema/session.schema";
 
 export interface SessionPayload {
-    user: SessionUser;
+    user: SessionUser | null;
     session: Record<string, unknown> | null;
     roles: string[];
     permissions: string[];
+    token: string | null;
 }
 
 interface SessionState {
     data: SessionData | null;
     user: SessionUser | null;
+    token: string | null;
     isPending: boolean;
     roles: string[];
     permissions: string[];
@@ -22,13 +24,15 @@ interface SessionState {
 export const useSessionStore = create<SessionState>((set) => ({
     data: null,
     user: null,
+    token: null,
     isPending: true,
     roles: [],
     permissions: [],
     setSessionPayload: (payload) =>
         set({
-            data: { user: payload.user, session: payload.session },
+            data: payload.user ? { user: payload.user, session: payload.session } : null,
             user: payload.user,
+            token: payload.token,
             roles: payload.roles,
             permissions: payload.permissions,
             isPending: false,
@@ -45,5 +49,5 @@ export const useSessionStore = create<SessionState>((set) => ({
                 user: updatedUser,
             };
         }),
-    clear: () => set({ data: null, user: null, isPending: false, roles: [], permissions: [] }),
+    clear: () => set({ data: null, user: null, token: null, isPending: false, roles: [], permissions: [] }),
 }));

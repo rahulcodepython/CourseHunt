@@ -13,14 +13,17 @@ const api: AxiosInstance = axios.create({
     withCredentials: true,
 });
 
-// No Authorization header: the browser sends the HttpOnly access_token cookie
-// automatically to api.coursehunt.localhost (same-site, Domain-scoped) and the
-// Go backend reads it via extractToken's cookie fallback.
+// Attach Authorization: Bearer <token> header from the Zustand session store.
+api.interceptors.request.use((config) => {
+    const token = useSessionStore.getState().token;
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
 // A 401 from the Go API means the JWT is missing/expired/invalid. Clear the
-// store and force the user back to the login page; the login page's
-// SessionProvider re-validates the server session and self-heals (fresh JWT +
-// bounce home, or cookie cleared) without a redirect loop.
+// store and force the user back to the login page.
 api.interceptors.response.use(
     (response) => response,
     (error) => {

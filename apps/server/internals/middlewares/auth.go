@@ -144,7 +144,7 @@ func parseAndValidateJWT(ctx context.Context, cch *cache.Cache, cfg *config.Conf
 		return nil, generic.ErrAuthEmptyJWKS
 	}
 
-	token, err := jwt.ParseWithClaims(tokenString, &generic.UserClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &generic.UserClaims{}, func(token *jwt.Token) (any, error) {
 		if token.Method != jwt.SigningMethodEdDSA {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -189,21 +189,19 @@ func setUserContext(c *fiber.Ctx, userID string, role string, roles []string, pe
 	})
 }
 
-// extractToken reads the JWT from the Authorization header first, falling
-// back to the configured auth cookie (both are populated by the admin app —
-// see apps/admin/src/lib/auth-client.ts).
-func extractToken(c *fiber.Ctx, cfg *config.Config) string {
+// extractToken reads the JWT strictly from the Authorization header.
+func extractToken(c *fiber.Ctx) string {
 	if auth := c.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
 		return strings.TrimPrefix(auth, "Bearer ")
 	}
-	return c.Cookies(cfg.AuthCookieName)
+	return ""
 }
 
 // ── Middleware ──
 
 func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo *repositories.UsersRepository) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		token := extractToken(c, cfg)
+		token := extractToken(c)
 		if token == "" {
 			return utils.Unauthorized(c, "Authorization token missing or session expired.", generic.ErrAuthTokenMissing)
 		}
@@ -234,11 +232,24 @@ func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo *reposit
 	}
 }
 
+// userFromContext reads the UserContext that BaseAuthMiddleware stores in
+// locals — shared by every guard below so each one only has to handle its
+// own authorization rule, not the "was auth even run" boilerplate.
+func userFromContext(c *fiber.Ctx) (*generic.UserContext, error) {
+	user, ok := c.Locals("user").(*generic.UserContext)
+	if !ok || user == nil {
+		return nil, generic.ErrAuthNoUserContext
+	}
+	return user, nil
+}
+
+// PermissionGuard restricts a route to callers holding at least one of the
+// required permissions.
 func PermissionGuard(requiredPermissions ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user, ok := c.Locals("user").(*generic.UserContext)
-		if !ok || user == nil {
-			return utils.Unauthorized(c, "Unauthorized.", generic.ErrAuthNoUserContext)
+		user, err := userFromContext(c)
+		if err != nil {
+			return utils.Unauthorized(c, "Unauthorized.", err)
 		}
 
 		for _, perm := range requiredPermissions {
@@ -258,9 +269,9 @@ func PermissionGuard(requiredPermissions ...string) fiber.Handler {
 // mix-up.
 func RoleGuard(required string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user, ok := c.Locals("user").(*generic.UserContext)
-		if !ok || user == nil {
-			return utils.Unauthorized(c, "Unauthorized.", generic.ErrAuthNoUserContext)
+		user, err := userFromContext(c)
+		if err != nil {
+			return utils.Unauthorized(c, "Unauthorized.", err)
 		}
 		if user.Role != required {
 			return utils.Forbidden(c, "Permission denied.", nil)
@@ -277,9 +288,9 @@ func RoleGuard(required string) fiber.Handler {
 // With no match, resolveScope() already defaults to ScopeUser.
 func ScopeGuard(elevatedPermissions ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user, ok := c.Locals("user").(*generic.UserContext)
-		if !ok || user == nil {
-			return utils.Unauthorized(c, "Unauthorized.", generic.ErrAuthNoUserContext)
+		user, err := userFromContext(c)
+		if err != nil {
+			return utils.Unauthorized(c, "Unauthorized.", err)
 		}
 
 		for _, perm := range elevatedPermissions {

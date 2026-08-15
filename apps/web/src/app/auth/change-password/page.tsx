@@ -52,16 +52,12 @@ export default function ChangePasswordPage() {
       const result = await authClient.changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
-        revokeOtherSessions: true,
+        revokeOtherSessions: false,
       });
       if (result.error) {
         toast.error(result.error.message || "Failed to change password");
         return;
       }
-      await fetch("/api/auth/password-changed", { method: "POST", credentials: "include" });
-      // Refresh the HttpOnly JWT cookie so it carries password_changed: true
-      // and the middleware lets the user through on the next navigation.
-      await refreshSession();
       toast.success("Password changed successfully.");
       router.push("/");
     } catch {

@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icon";
 import { useSessionStore } from "@/store/session.store";
 import { hasPermission } from "@/lib/permissions";
-import { getPrimaryRole } from "@/lib/roles";
 import { ROLES, PERMISSIONS } from "@/lib/const";
 import { CreateUserDialog } from "@/components/create-user-dialog";
 import { ManageRolesDialog } from "@/components/manage-roles-dialog";
@@ -25,8 +24,7 @@ export default function TutorsPage() {
   const [selectedTutor, setSelectedTutor] = React.useState<UserListResponse | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
-  const rawList: UserListResponse[] = rawTutors?.data?.data ?? [];
-  const tutors = rawList.filter((u) => getPrimaryRole(u) === ROLES.TUTOR);
+  const tutors: UserListResponse[] = rawTutors?.data?.data ?? [];
 
   const handleManage = (tutor: UserListResponse) => {
     setSelectedTutor(tutor);

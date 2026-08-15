@@ -6,10 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/const";
 import { useEffect, useRef } from "react";
 
-// Runs once per full page load: hits /api/auth/session (which refreshes the
-// HttpOnly access_token cookie server-side) and stores user + roles +
-// permissions in zustand. SPA navigation never refetches — no polling, no
-// cookie reading, no duplicate session API calls.
+// Runs on full page load if token is not in Zustand: hits /api/auth/get-session
+// and stores user + session + roles + permissions + token in zustand. SPA navigation
+// never refetches — no polling, no duplicate session API calls.
 export function SessionProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
@@ -23,7 +22,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (hydratedRef.current) return;
         hydratedRef.current = true;
-        refreshSession();
+        const token = useSessionStore.getState().token;
+        if (!token) {
+            refreshSession();
+        }
     }, []);
 
     // No session on a protected page -> login. An authenticated session on the

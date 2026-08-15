@@ -4,7 +4,6 @@ import * as React from "react";
 import { useUsersQuery } from "@/query-hooks/users.api";
 import { useSessionStore } from "@/store/session.store";
 import { hasPermission } from "@/lib/permissions";
-import { getPrimaryRole } from "@/lib/roles";
 import { ROLES, PERMISSIONS } from "@/lib/const";
 import { CreateUserDialog } from "@/components/create-user-dialog";
 import { ManageRolesDialog } from "@/components/manage-roles-dialog";
@@ -24,8 +23,7 @@ export default function AdminsPage() {
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [createOpen, setCreateOpen] = React.useState(false);
 
-    const rawList: UserListResponse[] = rawAdmins?.data?.data ?? [];
-    const admins: UserListResponse[] = rawList.filter((u) => getPrimaryRole(u) === ROLES.ADMIN);
+    const admins: UserListResponse[] = rawAdmins?.data?.data ?? [];
 
     const handleManage = (user: UserListResponse) => {
         setSelectedUser(user);
