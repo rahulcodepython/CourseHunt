@@ -42,20 +42,28 @@ type LessonResource struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
+// LessonFileCleanup carries pre-update file URLs out of a repository call so
+// the controller can delete whatever S3 object a lesson update just replaced
+// or cleared. Never serialized to a response.
+type LessonFileCleanup struct {
+	OldPreviewVideoURL *string
+	OldVideoURL        *string
+}
+
 // ── Lessons ──
 
 type CreateLessonRequest struct {
 	Title            string  `json:"title" validate:"required,min=2,max=200"`
-	LessonNo         int     `json:"lesson_no" validate:"required,min=1"`
 	LessonType       string  `json:"lesson_type" validate:"required,oneof=video document quiz"`
 	ShortDescription *string `json:"short_description"`
 	PreviewVideoURL  *string `json:"preview_video_url"`
 	DurationSeconds  int     `json:"duration_seconds" validate:"min=0"`
 }
 
+// lesson_no is auto-incremented server-side (next after the chapter's
+// highest existing lesson_no) — never client-settable.
 type UpdateLessonRequest struct {
 	Title            *string `json:"title" validate:"omitempty,min=2,max=200"`
-	LessonNo         *int    `json:"lesson_no" validate:"omitempty,min=1"`
 	ShortDescription *string `json:"short_description"`
 	PreviewVideoURL  *string `json:"preview_video_url"`
 	DurationSeconds  *int    `json:"duration_seconds" validate:"omitempty,min=0"`

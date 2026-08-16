@@ -12,14 +12,13 @@ export const ChapterZod = z.object({
 });
 export type Chapter = z.infer<typeof ChapterZod>;
 
+// chapter_no is auto-incremented server-side — never sent by the client.
 export const CreateChapterRequestZod = z.object({
     title: z.string(),
-    chapter_no: z.number(),
 });
 export type CreateChapterRequest = z.infer<typeof CreateChapterRequestZod>;
 
 export const UpdateChapterRequestZod = z.object({
     title: z.string().optional(),
-    chapter_no: z.number().optional(),
 });
 export type UpdateChapterRequest = z.infer<typeof UpdateChapterRequestZod>;

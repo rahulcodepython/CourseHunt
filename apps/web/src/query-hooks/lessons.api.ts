@@ -55,51 +55,78 @@ export function useCompleteLessonMutation(courseId: string) {
 	});
 }
 
+// Ownership-gated (not enrollment-gated) — for the tutor authoring flow,
+// which is the only caller of this hook. A tutor is never "enrolled" in
+// their own course, so the student-facing /content endpoint always 403s them.
 export function useLessonContentQuery(id: string) {
-	return useAppQuery(queryKeys.lessonContent(id), () =>
-		apiRequest({ url: `/api/v1/lessons/${id}/content`, method: "GET" }, AggregatedLessonContentResponseZod),
+	return useAppQuery(
+		queryKeys.lessonContent(id),
+		() => apiRequest({ url: `/api/v1/lessons/${id}/manage/content`, method: "GET" }, AggregatedLessonContentResponseZod),
+		{ enabled: !!id },
 	);
 }
 
-export function useAddVideoMutation(id: string) {
+// id is a runtime arg (not a hook param) so this can be called with a
+// lesson id that only becomes known partway through a single submit —
+// e.g. the lesson wizard's deferred create-then-attach-content flow.
+export function useAddVideoMutation() {
 	return useSimpleMutation({
-		mutationFn: (data: z.infer<typeof UpsertVideoContentRequestZod>) =>
+		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpsertVideoContentRequestZod> }) =>
 			apiRequest({ url: `/api/v1/lessons/${id}/video`, method: "POST", data }, LessonVideoContentZod),
-		invalidateKeys: [queryKeys.lessonContent(id)],
+		invalidateKeys: (_data, vars) => [queryKeys.lessonContent(vars.id)],
 		showToast: true,
 	});
 }
 
-export function useAddDocumentMutation(id: string) {
+export function useAddDocumentMutation() {
 	return useSimpleMutation({
-		mutationFn: (data: z.infer<typeof UpsertDocumentContentRequestZod>) =>
+		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpsertDocumentContentRequestZod> }) =>
 			apiRequest({ url: `/api/v1/lessons/${id}/document`, method: "POST", data }, LessonDocumentContentZod),
-		invalidateKeys: [queryKeys.lessonContent(id)],
+		invalidateKeys: (_data, vars) => [queryKeys.lessonContent(vars.id)],
 		showToast: true,
 	});
 }
 
 export function useAddResourceMutation(id: string) {
-	return useSimpleMutation({
+	return useArrayMutation<
+		z.infer<typeof LessonResourceZod>,
+		z.infer<typeof AddResourceRequestZod>,
+		z.infer<typeof LessonResourceZod>
+	>({
 		mutationFn: (data: z.infer<typeof AddResourceRequestZod>) =>
 			apiRequest({ url: `/api/v1/lessons/${id}/resources`, method: "POST", data }, LessonResourceZod),
-		invalidateKeys: [queryKeys.lessonContent(id)],
+		queryKey: ["lessons", id, "resources"],
+		updater: (resource) => (old) => {
+			const tempIndex = old.findIndex((r) => r.id.startsWith("temp-"));
+			if (tempIndex === -1) return [...old, resource];
+			const next = [...old];
+			next[tempIndex] = resource;
+			return next;
+		},
+		optimistic: (data) => appendToArray({ ...data, id: `temp-${Date.now()}` }),
 		showToast: true,
 	});
 }
 
 export function useDeleteResourceMutation(id: string) {
-	return useSimpleMutation({
+	return useArrayMutation<
+		z.infer<typeof DeleteResponseZod>,
+		string,
+		z.infer<typeof LessonResourceZod>
+	>({
 		mutationFn: (resourceId: string) =>
 			apiRequest({ url: `/api/v1/lessons/${id}/resources/${resourceId}`, method: "DELETE" }, DeleteResponseZod),
-		invalidateKeys: [queryKeys.lessonContent(id)],
+		queryKey: ["lessons", id, "resources"],
+		updater: (res) => removeFromArray(res.id),
+		optimistic: (resourceId) => removeFromArray(resourceId),
 		showToast: true,
 	});
 }
 
+// Ownership-gated — see useLessonContentQuery above for why.
 export function useLessonResourcesQuery(id: string) {
 	return useAppQuery(["lessons", id, "resources"], () =>
-		apiRequest({ url: `/api/v1/lessons/${id}/resources`, method: "GET" }, z.array(LessonResourceZod)),
+		apiRequest({ url: `/api/v1/lessons/${id}/manage/resources`, method: "GET" }, z.array(LessonResourceZod)),
 	);
 }
 

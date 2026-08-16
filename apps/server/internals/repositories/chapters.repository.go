@@ -105,10 +105,13 @@ func (r *ChaptersRepository) CreateRepository(userID, courseID string, req entit
 					ELSE 2
 				END as status_code
 		),
+		next_no AS (
+			SELECT COALESCE(MAX(chapter_no), 0) + 1 AS n FROM chapters WHERE course_id = $1
+		),
 		inserted AS (
 			INSERT INTO chapters (course_id, chapter_no, title)
-			SELECT $1, $3, $4
-			FROM status_check
+			SELECT $1, next_no.n, $3
+			FROM status_check, next_no
 			WHERE status_check.status_code = 2
 			RETURNING id, course_id, chapter_no, title, total_lectures, total_duration_seconds, created_at, updated_at
 		)
@@ -135,7 +138,7 @@ func (r *ChaptersRepository) CreateRepository(userID, courseID string, req entit
 		DataJSON   []byte `db:"data_json"`
 	}
 
-	if err := r.DB.Get(&res, query, courseID, userID, req.ChapterNo, req.Title); err != nil {
+	if err := r.DB.Get(&res, query, courseID, userID, req.Title); err != nil {
 		return nil, err
 	}
 
@@ -170,8 +173,7 @@ func (r *ChaptersRepository) UpdateRepository(id, userID string, req entities.Up
 		updated AS (
 			UPDATE chapters ch
 			SET
-				title = COALESCE(:title, title),
-				chapter_no = COALESCE(:chapter_no, chapter_no),
+				title = COALESCE(:title, ch.title),
 				updated_at = CURRENT_TIMESTAMP
 			FROM courses co
 			WHERE ch.course_id = co.id AND co.tutor_id = :user_id AND ch.id = :id
@@ -191,15 +193,14 @@ func (r *ChaptersRepository) UpdateRepository(id, userID string, req entities.Up
 						'created_at', u.created_at,
 						'updated_at', u.updated_at
 					) FROM updated u
-				), '{}'::json
+				), CAST('{}' AS json)
 			) AS data_json
 		FROM status_check sc;`
 
 	args := map[string]interface{}{
-		"id":         id,
-		"title":      req.Title,
-		"chapter_no": req.ChapterNo,
-		"user_id":    userID,
+		"id":      id,
+		"title":   req.Title,
+		"user_id": userID,
 	}
 
 	stmt, err := r.DB.PrepareNamed(query)

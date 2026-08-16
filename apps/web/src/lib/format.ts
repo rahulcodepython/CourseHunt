@@ -26,3 +26,13 @@ export function truncate(value: string, length: number): string {
     if (value.length <= length) return value;
     return value.slice(0, length) + LOCALE_CONFIG.ELLIPSIS;
 }
+
+/** "3m 45s" style duration, e.g. video/watch-time totals. */
+export function formatDuration(seconds: number): string {
+    if (!seconds) return "0m";
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) return `${hrs}h ${mins}m`;
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+}

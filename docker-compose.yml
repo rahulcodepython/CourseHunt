@@ -90,7 +90,9 @@ services:
     volumes:
       - miniodata:/data
     networks:
-      - coursehunt-network
+      coursehunt-network:
+        aliases:
+          - minio.coursehunt.localhost
     healthcheck:
       test: ["CMD-SHELL", "mc ready local || curl -f http://localhost:${MINIO_PORT:-9000}/minio/health/live || exit 1"]
       interval: 10s
@@ -108,7 +110,7 @@ services:
       - "${PORT:-8080}:8080"
     env_file:
       - .env
-    environment:
+    environment:  
       - PORT=${PORT:-8080}
       - DATABASE_URL=${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coursehunt}?sslmode=disable}
       - REDIS_HOST=${DOCKER_REDIS_HOST:-redis}

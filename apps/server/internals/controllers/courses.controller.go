@@ -8,6 +8,7 @@ import (
 	"coursehunt/server/internals/config"
 	"coursehunt/server/internals/entities"
 	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/pkg/minio"
 	"coursehunt/server/internals/repositories"
 	"coursehunt/server/internals/utils"
 
@@ -148,7 +149,7 @@ func (ctrl *CoursesController) UpdateController(c *fiber.Ctx) error {
 		return err
 	}
 	userID := utils.GetUserID(c)
-	course, err := ctrl.Repo.UpdateRepository(c.Params("id"), userID, req)
+	course, cleanup, err := ctrl.Repo.UpdateRepository(c.Params("id"), userID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
 			return utils.NotFound(c, "Course not found.", err)
@@ -157,6 +158,15 @@ func (ctrl *CoursesController) UpdateController(c *fiber.Ctx) error {
 			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
 		return utils.InternalError(c, "Failed to update course.", err)
+	}
+
+	if cleanup != nil {
+		if req.ImageURL != nil {
+			minio.MINIO.DeleteIfReplaced(c.Context(), cleanup.OldImageURL, *req.ImageURL)
+		}
+		if req.PreviewVideoURL != nil {
+			minio.MINIO.DeleteIfReplaced(c.Context(), cleanup.OldPreviewVideoURL, *req.PreviewVideoURL)
+		}
 	}
 
 	ctrl.Repo.Cache.InvalidateCourses(c.Context())

@@ -78,9 +78,18 @@ func (r *CoursesRepository) ListRepository(page, limit int, userID string, scope
 			       c.language, c.level, c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits, COALESCE(c.requirements, '{}') AS requirements,
 			       c.category_id, c.coupon_allowed, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
 			       COALESCE(ec.student_count, 0) AS student_count,
+			       CASE
+			       		WHEN t.id IS NOT NULL THEN json_build_object(
+			       			'id', t.id,
+			       			'name', COALESCE(t.name, ''),
+			       			'image', t.image
+			       		)
+			       		ELSE NULL
+			       END AS tutor,
 			       c.created_at, c.updated_at
 			FROM courses c
 			LEFT JOIN enrollment_counts ec ON ec.course_id = c.id
+			LEFT JOIN "users" t ON c.tutor_id = t.id
 			WHERE %s
 			ORDER BY c.created_at DESC
 			LIMIT $%d OFFSET $%d

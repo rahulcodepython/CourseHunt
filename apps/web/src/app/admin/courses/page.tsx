@@ -4,11 +4,18 @@ import * as React from "react";
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import { PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
-import { columns } from "./columns";
+import type { Course } from "@/schema/courses.types";
+import { getColumns } from "./columns";
+import { CourseDetailsModal } from "@/components/course-details-modal";
 
 export default function CoursesPage() {
   const { data: rawCourses, isLoading } = useManageCoursesQuery();
   const courses = (rawCourses?.data?.data as any) ?? [];
+  const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
+  const columns = React.useMemo(
+    () => getColumns({ onViewCourse: setSelectedCourse }),
+    [],
+  );
 
   return (
     <div className="space-y-6">
@@ -25,6 +32,14 @@ export default function CoursesPage() {
         emptyText="No courses found"
         isLoading={isLoading}
         loadingText="Loading courses..."
+      />
+
+      <CourseDetailsModal
+        course={selectedCourse}
+        open={selectedCourse !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedCourse(null);
+        }}
       />
     </div>
   );

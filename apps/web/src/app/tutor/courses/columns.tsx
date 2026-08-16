@@ -14,6 +14,8 @@ const columnHelper = createColumnHelper<Course>();
 export const getColumns = (
   onEdit: (course: Course) => void,
   onDelete: (course: Course) => void,
+  onViewCourse: (course: Course) => void,
+  onSetStatus: (course: Course) => void,
 ): ColumnDef<Course, any>[] => [
   columnHelper.accessor("title", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Course" />,
@@ -73,7 +75,7 @@ export const getColumns = (
       return (
         <div className="flex items-center gap-1">
           <Icon name="star" className="size-4 fill-yellow-500 text-yellow-500" />
-          <span className="tabular-nums">{rating ? rating.toFixed(1) : "—"}</span>
+          <span className="tabular-nums">{rating.toFixed(1)}</span>
         </div>
       );
     },
@@ -94,6 +96,7 @@ export const getColumns = (
       const course = row.original;
       return (
         <RowActions>
+          <RowActionButton icon="eye" label="View Details" onClick={() => onViewCourse(course)} />
           <RowActionButton
             icon="hierarchy"
             label="View Chapters"
@@ -105,6 +108,11 @@ export const getColumns = (
             href={`/tutor/courses/${course.id}/enrollments`}
           />
           <RowActionButton icon="pencil" label="Edit Course" onClick={() => onEdit(course)} />
+          <RowActionButton
+            icon="globe"
+            label="Set Status"
+            onClick={() => onSetStatus(course)}
+          />
           <RowActionButton
             icon="trash"
             label="Delete Course"

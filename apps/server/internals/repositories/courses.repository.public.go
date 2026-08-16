@@ -39,8 +39,7 @@ func (r *CoursesRepository) PublicSingleRepository(slug, userID string) (*entiti
 			'instructor', json_build_object(
 				'id', u.id,
 				'name', COALESCE(u.name, ''),
-				'image', u.image,
-				'headline', p.headline
+				'image', u.image
 			),
 			'chapters', (
 				SELECT COALESCE(json_agg(chapters_tree ORDER BY chapters_tree.chapter_no), '[]'::json)
@@ -63,7 +62,6 @@ func (r *CoursesRepository) PublicSingleRepository(slug, userID string) (*entiti
 		FROM courses c
 		LEFT JOIN categories cat ON c.category_id = cat.id
 		LEFT JOIN "users" u ON c.tutor_id = u.id
-		LEFT JOIN profiles p ON u.id = p.user_id
 		WHERE c.slug = $1 AND c.status = 'published'
 	`
 	err := r.DB.Get(&resultData, query, slug, userID)

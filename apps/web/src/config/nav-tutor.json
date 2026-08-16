@@ -37,16 +37,5 @@
                 "permission": "tutor:coupons:manage"
             }
         ]
-    },
-    {
-        "label": "Account",
-        "items": [
-            {
-                "title": "Tutor Profile",
-                "href": "/tutor/profile",
-                "icon": "lock",
-                "permission": null
-            }
-        ]
     }
 ]

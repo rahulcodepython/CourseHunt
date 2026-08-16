@@ -8,6 +8,7 @@ import (
 	"coursehunt/server/internals/config"
 	"coursehunt/server/internals/entities"
 	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/pkg/minio"
 	"coursehunt/server/internals/repositories"
 	"coursehunt/server/internals/utils"
 
@@ -85,7 +86,7 @@ func (ctrl *LessonsController) UpdateController(c *fiber.Ctx) error {
 		return err
 	}
 	userID := utils.GetUserID(c)
-	l, err := ctrl.Repo.UpdateRepository(c.Params("id"), userID, req)
+	l, cleanup, err := ctrl.Repo.UpdateRepository(c.Params("id"), userID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
 			return utils.NotFound(c, "Lesson not found.", err)
@@ -94,6 +95,10 @@ func (ctrl *LessonsController) UpdateController(c *fiber.Ctx) error {
 			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
 		return utils.InternalError(c, "Failed to update lesson.", err)
+	}
+
+	if cleanup != nil && req.PreviewVideoURL != nil {
+		minio.MINIO.DeleteIfReplaced(c.Context(), cleanup.OldPreviewVideoURL, *req.PreviewVideoURL)
 	}
 
 	ctrl.Repo.Cache.InvalidateLessons(c.Context())
@@ -125,7 +130,7 @@ func (ctrl *LessonsController) UpsertVideoContentController(c *fiber.Ctx) error 
 		return err
 	}
 	userID := utils.GetUserID(c)
-	vc, err := ctrl.Repo.UpsertVideoContentRepository(c.Params("id"), userID, req)
+	vc, cleanup, err := ctrl.Repo.UpsertVideoContentRepository(c.Params("id"), userID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
 			return utils.NotFound(c, "Lesson not found.", err)
@@ -134,6 +139,10 @@ func (ctrl *LessonsController) UpsertVideoContentController(c *fiber.Ctx) error 
 			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
 		}
 		return utils.InternalError(c, "Failed to update video content.", err)
+	}
+
+	if cleanup != nil {
+		minio.MINIO.DeleteIfReplaced(c.Context(), cleanup.OldVideoURL, req.VideoURL)
 	}
 
 	ctrl.Repo.Cache.InvalidateLessons(c.Context())
@@ -190,6 +199,28 @@ func (ctrl *LessonsController) ReadContentController(c *fiber.Ctx) error {
 	return utils.OK(c, "Lesson content fetched successfully.", resp)
 }
 
+// ReadContentForTutorController is the tutor-authoring counterpart to
+// ReadContentController — gated by course ownership (PermTutorCoursesManage
+// route guard + ownership check in the repository) instead of enrollment, so
+// a tutor can view their own lesson's content while editing it.
+func (ctrl *LessonsController) ReadContentForTutorController(c *fiber.Ctx) error {
+	lessonID := c.Params("id")
+	userID := utils.GetUserID(c)
+
+	resp, err := ctrl.Repo.ReadContentForTutorRepository(lessonID, userID)
+	if err != nil {
+		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
+			return utils.NotFound(c, "Lesson not found.", err)
+		}
+		if errors.Is(err, generic.ErrLessonsAccessDenied) {
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
+		}
+		return utils.InternalError(c, "Failed to fetch lesson content.", err)
+	}
+
+	return utils.OK(c, "Lesson content fetched successfully.", resp)
+}
+
 func (ctrl *LessonsController) UpdateCompleteController(c *fiber.Ctx) error {
 	if err := ctrl.Repo.MarkLessonCompleteRepository(utils.GetUserID(c), c.Params("id")); err != nil {
 		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
@@ -230,7 +261,7 @@ func (ctrl *LessonsController) CreateResourceController(c *fiber.Ctx) error {
 
 func (ctrl *LessonsController) DeleteResourceController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
-	id, err := ctrl.Repo.DeleteResourceRepository(c.Params("resourceID"), userID)
+	id, fileURL, err := ctrl.Repo.DeleteResourceRepository(c.Params("resourceID"), userID)
 	if err != nil {
 		if errors.Is(err, generic.ErrLessonsResourceNotFound) {
 			return utils.NotFound(c, "Resource not found.", err)
@@ -241,9 +272,31 @@ func (ctrl *LessonsController) DeleteResourceController(c *fiber.Ctx) error {
 		return utils.InternalError(c, "Failed to delete resource.", err)
 	}
 
+	minio.MINIO.DeleteIfReplaced(c.Context(), &fileURL, "")
+
 	ctrl.Repo.Cache.InvalidateLessons(c.Context())
 
 	return utils.OK(c, "Resource deleted successfully.", generic.DeleteResponse{ID: id})
+}
+
+// ReadResourcesForTutorController is the tutor-authoring counterpart to
+// ReadResourcesController — gated by course ownership instead of enrollment.
+func (ctrl *LessonsController) ReadResourcesForTutorController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	lessonID := c.Params("id")
+
+	resources, err := ctrl.Repo.ReadResourcesForTutorRepository(lessonID, userID)
+	if err != nil {
+		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
+			return utils.NotFound(c, "Lesson not found.", err)
+		}
+		if errors.Is(err, generic.ErrLessonsAccessDenied) {
+			return utils.Forbidden(c, "Access denied. You do not own this course.", err)
+		}
+		return utils.InternalError(c, "Failed to fetch resources.", err)
+	}
+
+	return utils.OK(c, "Resources fetched successfully.", resources)
 }
 
 func (ctrl *LessonsController) ReadResourcesController(c *fiber.Ctx) error {

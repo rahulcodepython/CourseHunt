@@ -4,7 +4,6 @@ import React, { useEffect } from "react";
 
 import { useCreateQuizMutation } from "@/query-hooks/quiz.api";
 import type { QuizMetadata } from "@/schema/quiz.types";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/loading-button";
@@ -27,9 +26,11 @@ type SettingsFormData = z.infer<typeof settingsSchema>;
 export function QuizSettingsForm({
   lessonId,
   metadata,
+  onSuccess,
 }: {
   lessonId: string;
   metadata: QuizMetadata | null;
+  onSuccess?: () => void;
 }) {
   const createMutation = useCreateQuizMutation();
 
@@ -56,7 +57,7 @@ export function QuizSettingsForm({
   }, [metadata, reset]);
 
   const onSubmit = async (data: SettingsFormData) => {
-    await createMutation.execute({
+    const res = await createMutation.execute({
       lessonId,
       data: {
         title: data.title.trim(),
@@ -64,11 +65,12 @@ export function QuizSettingsForm({
         pass_score_percent: data.pass_score_percent,
       },
     });
+    if (res?.success) onSuccess?.();
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div className="space-y-1.5 sm:col-span-1">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-1.5">
         <Label htmlFor="quiz-title">Quiz Title</Label>
         <Input id="quiz-title" placeholder="e.g. Chapter 1 Assessment" {...register("title")} />
         {errors.title && <p className="text-xs text-red-400">{errors.title.message}</p>}
@@ -96,13 +98,10 @@ export function QuizSettingsForm({
           <p className="text-xs text-red-400">{errors.pass_score_percent.message}</p>
         )}
       </div>
-      <div className="sm:col-span-3">
-        <Button type="submit" size="sm">
+      <div className="flex justify-end">
+        <LoadingButton type="submit" loading={createMutation.isPending}>
           {metadata ? "Update Quiz Settings" : "Create Quiz"}
-        </Button>
-        {createMutation.isPending && (
-          <LoadingButton className="ml-2" size="sm" loading />
-        )}
+        </LoadingButton>
       </div>
     </form>
   );

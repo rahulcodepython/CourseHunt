@@ -7,30 +7,31 @@ import (
 )
 
 type Course struct {
-	ID                   string    `json:"id" db:"id"`
-	TutorID              string    `json:"tutor_id,omitempty" db:"tutor_id"`
-	Slug                 string    `json:"slug" db:"slug"`
-	Title                string    `json:"title" db:"title"`
-	ShortDescription     *string   `json:"short_description,omitempty" db:"short_description"`
-	LongDescription      *string   `json:"long_description,omitempty" db:"long_description"`
-	ImageURL             *string   `json:"image_url,omitempty" db:"image_url"`
-	PreviewVideoURL      *string   `json:"preview_video_url,omitempty" db:"preview_video_url"`
-	Language             string    `json:"language" db:"language"`
-	Level                string    `json:"level" db:"level"`
-	ActualPrice          float64   `json:"actual_price" db:"actual_price"`
-	FinalPrice           float64   `json:"final_price" db:"final_price"`
-	Benefits             []string  `json:"benefits" db:"benefits"`
-	Requirements         []string  `json:"requirements" db:"requirements"`
-	CategoryID           *string   `json:"-" db:"category_id"`
-	CouponAllowed        bool      `json:"coupon_allowed" db:"coupon_allowed"`
-	TotalLectures        int       `json:"total_lectures" db:"total_lectures"`
-	TotalDurationSeconds int       `json:"total_duration_seconds" db:"total_duration_seconds"`
-	RatingAvg            float64   `json:"rating_avg" db:"rating_avg"`
-	FeedbackCount        int       `json:"feedback_count" db:"feedback_count"`
-	StudentCount         int       `json:"student_count" db:"student_count"`
-	Status               string    `json:"status" db:"status"`
-	CreatedAt            time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt            time.Time `json:"updated_at" db:"updated_at"`
+	ID                   string                  `json:"id" db:"id"`
+	TutorID              string                  `json:"tutor_id,omitempty" db:"tutor_id"`
+	Slug                 string                  `json:"slug" db:"slug"`
+	Title                string                  `json:"title" db:"title"`
+	ShortDescription     *string                 `json:"short_description,omitempty" db:"short_description"`
+	LongDescription      *string                 `json:"long_description,omitempty" db:"long_description"`
+	ImageURL             *string                 `json:"image_url,omitempty" db:"image_url"`
+	PreviewVideoURL      *string                 `json:"preview_video_url,omitempty" db:"preview_video_url"`
+	Language             string                  `json:"language" db:"language"`
+	Level                string                  `json:"level" db:"level"`
+	ActualPrice          float64                 `json:"actual_price" db:"actual_price"`
+	FinalPrice           float64                 `json:"final_price" db:"final_price"`
+	Benefits             []string                `json:"benefits" db:"benefits"`
+	Requirements         []string                `json:"requirements" db:"requirements"`
+	CategoryID           *string                 `json:"-" db:"category_id"`
+	CouponAllowed        bool                    `json:"coupon_allowed" db:"coupon_allowed"`
+	TotalLectures        int                     `json:"total_lectures" db:"total_lectures"`
+	TotalDurationSeconds int                     `json:"total_duration_seconds" db:"total_duration_seconds"`
+	RatingAvg            float64                 `json:"rating_avg" db:"rating_avg"`
+	FeedbackCount        int                     `json:"feedback_count" db:"feedback_count"`
+	StudentCount         int                     `json:"student_count" db:"student_count"`
+	Status               string                  `json:"status" db:"status"`
+	Tutor                *generic.InstructorInfo `json:"tutor,omitempty" db:"tutor"`
+	CreatedAt            time.Time               `json:"created_at" db:"created_at"`
+	UpdatedAt            time.Time               `json:"updated_at" db:"updated_at"`
 }
 
 type StudyLessonItem struct {
@@ -57,13 +58,30 @@ type StudyChapterItem struct {
 	Lessons              []StudyLessonItem   `json:"lessons"`
 }
 
+// Status is always "draft" on create — never client-settable here. Tutors
+// change it afterward via the dedicated status action (UpdateCourseRequest).
 type CreateCourseRequest struct {
-	Title            string  `json:"title" validate:"required,min=3,max=200"`
-	ShortDescription *string `json:"short_description"`
-	CategoryID       *string `json:"category_id"`
-	Language         string  `json:"language"`
-	Level            string  `json:"level" validate:"omitempty,oneof=beginner intermediate advanced all"`
-	Status           string  `json:"status" validate:"omitempty,oneof=draft published archived"`
+	Title            string   `json:"title" validate:"required,min=3,max=200"`
+	ShortDescription *string  `json:"short_description"`
+	LongDescription  *string  `json:"long_description"`
+	ImageURL         *string  `json:"image_url"`
+	PreviewVideoURL  *string  `json:"preview_video_url"`
+	CategoryID       *string  `json:"category_id"`
+	Language         string   `json:"language"`
+	Level            string   `json:"level" validate:"omitempty,oneof=beginner intermediate advanced all"`
+	ActualPrice      float64  `json:"actual_price" validate:"omitempty,min=0"`
+	FinalPrice       float64  `json:"final_price" validate:"omitempty,min=0,ltefield=ActualPrice"`
+	Benefits         []string `json:"benefits"`
+	Requirements     []string `json:"requirements"`
+	CouponAllowed    bool     `json:"coupon_allowed"`
+}
+
+// CourseFileCleanup carries the pre-update file URLs out of
+// CoursesRepository.UpdateRepository so the controller can delete any object
+// a course update just replaced or cleared. Never serialized to a response.
+type CourseFileCleanup struct {
+	OldImageURL        *string
+	OldPreviewVideoURL *string
 }
 
 type UpdateCourseRequest struct {
@@ -84,17 +102,17 @@ type UpdateCourseRequest struct {
 }
 
 type CoursePublicResponse struct {
-	ID               string                `json:"id" db:"id"`
-	Slug             string                `json:"slug" db:"slug"`
-	Title            string                `json:"title" db:"title"`
-	ShortDescription *string               `json:"short_description" db:"short_description"`
-	ImageURL         *string               `json:"image_url" db:"image_url"`
-	ActualPrice      float64               `json:"actual_price" db:"actual_price"`
-	FinalPrice       float64               `json:"final_price" db:"final_price"`
-	Benefits         []string              `json:"benefits" db:"benefits"`
-	Level            string                `json:"level" db:"level"`
-	RatingAvg        float64               `json:"rating_avg" db:"rating_avg"`
-	FeedbackCount    int                   `json:"feedback_count" db:"feedback_count"`
+	ID               string                 `json:"id" db:"id"`
+	Slug             string                 `json:"slug" db:"slug"`
+	Title            string                 `json:"title" db:"title"`
+	ShortDescription *string                `json:"short_description" db:"short_description"`
+	ImageURL         *string                `json:"image_url" db:"image_url"`
+	ActualPrice      float64                `json:"actual_price" db:"actual_price"`
+	FinalPrice       float64                `json:"final_price" db:"final_price"`
+	Benefits         []string               `json:"benefits" db:"benefits"`
+	Level            string                 `json:"level" db:"level"`
+	RatingAvg        float64                `json:"rating_avg" db:"rating_avg"`
+	FeedbackCount    int                    `json:"feedback_count" db:"feedback_count"`
 	Category         *generic.CategoryInfo  `json:"category"`
 	Instructor       generic.InstructorInfo `json:"instructor" db:"instructor"`
 }
@@ -119,27 +137,27 @@ type ChapterResponse struct {
 }
 
 type CourseLandingResponse struct {
-	ID                   string                `json:"id"`
-	Slug                 string                `json:"slug"`
-	Title                string                `json:"title"`
-	ShortDescription     *string               `json:"short_description"`
-	LongDescription      *string               `json:"long_description"`
-	ImageURL             *string               `json:"image_url"`
-	PreviewVideoURL      *string               `json:"preview_video_url"`
-	Language             string                `json:"language"`
-	Level                string                `json:"level"`
-	ActualPrice          float64               `json:"actual_price"`
-	FinalPrice           float64               `json:"final_price"`
-	Benefits             []string              `json:"benefits"`
-	Requirements         []string              `json:"requirements"`
+	ID                   string                 `json:"id"`
+	Slug                 string                 `json:"slug"`
+	Title                string                 `json:"title"`
+	ShortDescription     *string                `json:"short_description"`
+	LongDescription      *string                `json:"long_description"`
+	ImageURL             *string                `json:"image_url"`
+	PreviewVideoURL      *string                `json:"preview_video_url"`
+	Language             string                 `json:"language"`
+	Level                string                 `json:"level"`
+	ActualPrice          float64                `json:"actual_price"`
+	FinalPrice           float64                `json:"final_price"`
+	Benefits             []string               `json:"benefits"`
+	Requirements         []string               `json:"requirements"`
 	Category             *generic.CategoryInfo  `json:"category"`
 	Instructor           generic.InstructorInfo `json:"instructor"`
-	TotalLectures        int                   `json:"total_lectures"`
-	TotalDurationSeconds int                   `json:"total_duration_seconds"`
-	RatingAvg            float64               `json:"rating_avg"`
-	FeedbackCount        int                   `json:"feedback_count"`
-	IsEnrolled           bool                  `json:"is_enrolled"`
-	Chapters             []ChapterResponse     `json:"chapters"`
+	TotalLectures        int                    `json:"total_lectures"`
+	TotalDurationSeconds int                    `json:"total_duration_seconds"`
+	RatingAvg            float64                `json:"rating_avg"`
+	FeedbackCount        int                    `json:"feedback_count"`
+	IsEnrolled           bool                   `json:"is_enrolled"`
+	Chapters             []ChapterResponse      `json:"chapters"`
 }
 
 type EnrolledCourseResponse struct {
@@ -152,8 +170,8 @@ type EnrolledCourseResponse struct {
 }
 
 type CourseStudyResponse struct {
-	Course            generic.CourseInfo  `json:"course" db:"course"`
-	CompletionPercent float64             `json:"completion_percent"`
-	Completed         bool                `json:"completed"`
-	Chapters          []StudyChapterItem  `json:"chapters"`
+	Course            generic.CourseInfo `json:"course" db:"course"`
+	CompletionPercent float64            `json:"completion_percent"`
+	Completed         bool               `json:"completed"`
+	Chapters          []StudyChapterItem `json:"chapters"`
 }

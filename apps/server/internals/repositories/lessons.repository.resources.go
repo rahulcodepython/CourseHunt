@@ -53,10 +53,11 @@ func (r *LessonsRepository) CreateResourceRepository(lessonID, tutorID string, r
 	return &res, nil
 }
 
-func (r *LessonsRepository) DeleteResourceRepository(resourceID, tutorID string) (string, error) {
+func (r *LessonsRepository) DeleteResourceRepository(resourceID, tutorID string) (string, string, error) {
 	var result struct {
 		CourseTutorID *string `db:"course_tutor_id"`
 		DeletedID     *string `db:"deleted_id"`
+		DeletedFile   *string `db:"deleted_file_url"`
 	}
 
 	query := `
@@ -71,25 +72,82 @@ func (r *LessonsRepository) DeleteResourceRepository(resourceID, tutorID string)
 		deleted AS (
 			DELETE FROM lesson_resources
 			WHERE id = $1 AND EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $2)
-			RETURNING id
+			RETURNING id, file_url
 		)
-		SELECT 
+		SELECT
 			(SELECT tutor_id FROM auth) AS course_tutor_id,
-			(SELECT id FROM deleted) AS deleted_id
+			(SELECT id FROM deleted) AS deleted_id,
+			(SELECT file_url FROM deleted) AS deleted_file_url
 	`
 	err := r.DB.Get(&result, query, resourceID, tutorID)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	switch {
 	case result.CourseTutorID == nil:
-		return "", generic.ErrLessonsResourceNotFound
+		return "", "", generic.ErrLessonsResourceNotFound
 	case result.DeletedID == nil:
-		return "", generic.ErrLessonsAccessDenied
+		return "", "", generic.ErrLessonsAccessDenied
 	}
 
-	return *result.DeletedID, nil
+	fileURL := ""
+	if result.DeletedFile != nil {
+		fileURL = *result.DeletedFile
+	}
+	return *result.DeletedID, fileURL, nil
+}
+
+// ReadResourcesForTutorRepository is the tutor-authoring counterpart to
+// ReadResourcesRepository: gated by course ownership instead of enrollment.
+func (r *LessonsRepository) ReadResourcesForTutorRepository(lessonID, tutorID string) ([]entities.LessonResource, error) {
+	var result struct {
+		LessonExists bool             `db:"lesson_exists"`
+		IsOwner      bool             `db:"is_owner"`
+		Resources    *json.RawMessage `db:"resources"`
+	}
+
+	query := `
+		WITH lesson_info AS (
+			SELECT l.id AS lesson_id, c.tutor_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE l.id = $1
+		),
+		resources_cte AS (
+			SELECT lr.id, lr.lesson_id, lr.title, lr.file_url, lr.file_type
+			FROM lesson_resources lr
+			JOIN lesson_info li ON li.lesson_id = lr.lesson_id
+			WHERE li.tutor_id = $2
+		)
+		SELECT
+			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
+			EXISTS(SELECT 1 FROM lesson_info WHERE tutor_id = $2) AS is_owner,
+			(SELECT json_agg(resources_cte) FROM resources_cte) AS resources
+	`
+	err := r.DB.Get(&result, query, lessonID, tutorID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case !result.LessonExists:
+		return nil, generic.ErrLessonsLessonNotFound
+	case !result.IsOwner:
+		return nil, generic.ErrLessonsAccessDenied
+	}
+
+	var list []entities.LessonResource
+	if result.Resources != nil {
+		if err := json.Unmarshal(*result.Resources, &list); err != nil {
+			return nil, err
+		}
+	} else {
+		list = []entities.LessonResource{}
+	}
+
+	return list, nil
 }
 
 func (r *LessonsRepository) ReadResourcesRepository(lessonID, userID string, scope generic.AuthScope) ([]entities.LessonResource, error) {

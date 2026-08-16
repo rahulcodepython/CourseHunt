@@ -52,6 +52,12 @@ var (
 	ErrCoursesAccessDenied   = errors.New("access denied")
 )
 
+// Updates errors
+var (
+	ErrUpdatesNotFound     = errors.New("update not found")
+	ErrUpdatesAccessDenied = errors.New("access denied")
+)
+
 // Users errors
 var (
 	ErrUsersNotVerified = errors.New("access denied: email is not verified")

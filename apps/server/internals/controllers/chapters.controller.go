@@ -59,7 +59,11 @@ func (ctrl *ChaptersController) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	ch, err := ctrl.Repo.CreateRepository(utils.GetUserID(c), req.CourseID, req)
+	courseID := c.Query("course_id")
+	if courseID == "" {
+		return utils.BadRequest(c, "Course ID query param required.", nil)
+	}
+	ch, err := ctrl.Repo.CreateRepository(utils.GetUserID(c), courseID, req)
 	if err != nil {
 		return utils.InternalError(c, "Failed to create chapter.", err)
 	}

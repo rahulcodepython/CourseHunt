@@ -122,14 +122,112 @@ func (r *LessonsRepository) ReadContentRepository(lessonID, userID string, scope
 	return &resp, nil
 }
 
+// ReadContentForTutorRepository is the tutor-authoring counterpart to
+// ReadContentRepository: gated by course ownership instead of enrollment, so
+// a tutor can see their own lesson's content while editing it (they're never
+// "enrolled" in their own course).
+func (r *LessonsRepository) ReadContentForTutorRepository(lessonID, tutorID string) (*entities.AggregatedLessonContentResponse, error) {
+	var result struct {
+		LessonExists bool             `db:"lesson_exists"`
+		IsOwner      bool             `db:"is_owner"`
+		ContentData  *json.RawMessage `db:"content_data"`
+	}
+
+	query := `
+		WITH lesson_info AS (
+			SELECT l.id AS lesson_id, l.lesson_type, c.tutor_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE l.id = $1
+		),
+		content_cte AS (
+			SELECT
+				li.lesson_type,
+				CASE
+					WHEN li.lesson_type = 'video' THEN (
+						SELECT json_build_object(
+							'lesson_id', vc.lesson_id,
+							'video_url', vc.video_url,
+							'written_content', vc.written_content,
+							'created_at', vc.created_at,
+							'updated_at', vc.updated_at
+						)
+						FROM lesson_video_content vc
+						WHERE vc.lesson_id = li.lesson_id
+					)
+					ELSE NULL
+				END AS video_content,
+				CASE
+					WHEN li.lesson_type = 'document' THEN (
+						SELECT json_build_object(
+							'lesson_id', dc.lesson_id,
+							'content', dc.content,
+							'created_at', dc.created_at,
+							'updated_at', dc.updated_at
+						)
+						FROM lesson_document_content dc
+						WHERE dc.lesson_id = li.lesson_id
+					)
+					ELSE NULL
+				END AS document_content,
+				CASE
+					WHEN li.lesson_type = 'quiz' THEN (
+						SELECT json_build_object(
+							'id', qm.id,
+							'lesson_id', qm.lesson_id,
+							'title', qm.title,
+							'time_limit_seconds', qm.time_limit_seconds,
+							'total_questions', qm.total_questions,
+							'pass_score_percent', qm.pass_score_percent,
+							'created_at', qm.created_at,
+							'updated_at', qm.updated_at
+						)
+						FROM quiz_metadata qm
+						WHERE qm.lesson_id = li.lesson_id
+					)
+					ELSE NULL
+				END AS quiz_content
+			FROM lesson_info li
+			WHERE li.tutor_id = $2
+		)
+		SELECT
+			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
+			EXISTS(SELECT 1 FROM lesson_info WHERE tutor_id = $2) AS is_owner,
+			(SELECT row_to_json(content_cte.*) FROM content_cte) AS content_data
+	`
+	err := r.DB.Get(&result, query, lessonID, tutorID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case !result.LessonExists:
+		return nil, generic.ErrLessonsLessonNotFound
+	case !result.IsOwner:
+		return nil, generic.ErrLessonsAccessDenied
+	case result.ContentData == nil:
+		return nil, errors.New("failed to retrieve content")
+	}
+
+	var resp entities.AggregatedLessonContentResponse
+	if err := json.Unmarshal(*result.ContentData, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
 // ── Video Content ──
 
-func (r *LessonsRepository) UpsertVideoContentRepository(lessonID, tutorID string, req entities.UpsertVideoContentRequest) (*entities.LessonVideoContent, error) {
+func (r *LessonsRepository) UpsertVideoContentRepository(lessonID, tutorID string, req entities.UpsertVideoContentRequest) (*entities.LessonVideoContent, *entities.LessonFileCleanup, error) {
 	var result struct {
 		CourseTutorID *string          `db:"course_tutor_id"`
+		OldVideoURL   *string          `db:"old_video_url"`
 		InsertedData  *json.RawMessage `db:"inserted_data"`
 	}
 
+	// before captures the pre-upsert video_url (if any row already existed)
+	// so the controller can delete the superseded S3 object on replace.
 	query := `
 		WITH auth AS (
 			SELECT c.tutor_id
@@ -138,6 +236,9 @@ func (r *LessonsRepository) UpsertVideoContentRepository(lessonID, tutorID strin
 			JOIN courses c ON c.id = ch.course_id
 			WHERE l.id = $1
 		),
+		before AS (
+			SELECT video_url FROM lesson_video_content WHERE lesson_id = $1
+		),
 		inserted AS (
 			INSERT INTO lesson_video_content (lesson_id, video_url, written_content, updated_at)
 			SELECT $1, $2, $3, CURRENT_TIMESTAMP
@@ -145,29 +246,31 @@ func (r *LessonsRepository) UpsertVideoContentRepository(lessonID, tutorID strin
 			ON CONFLICT (lesson_id) DO UPDATE SET video_url = $2, written_content = $3, updated_at = CURRENT_TIMESTAMP
 			RETURNING lesson_id, video_url, written_content, created_at, updated_at
 		)
-		SELECT 
+		SELECT
 			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			(SELECT video_url FROM before) AS old_video_url,
 			row_to_json(inserted.*) AS inserted_data
 		FROM (SELECT 1) dummy
 		LEFT JOIN inserted ON true
 	`
 	err := r.DB.Get(&result, query, lessonID, req.VideoURL, req.WrittenContent, tutorID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	switch {
 	case result.CourseTutorID == nil:
-		return nil, generic.ErrLessonsLessonNotFound
+		return nil, nil, generic.ErrLessonsLessonNotFound
 	case result.InsertedData == nil:
-		return nil, generic.ErrLessonsAccessDenied
+		return nil, nil, generic.ErrLessonsAccessDenied
 	}
 
 	var vc entities.LessonVideoContent
 	if err := json.Unmarshal(*result.InsertedData, &vc); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &vc, nil
+	cleanup := &entities.LessonFileCleanup{OldVideoURL: result.OldVideoURL}
+	return &vc, cleanup, nil
 }
 
 // ── Document Content ──

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -32,8 +33,11 @@ func (ctrl *UpdatesController) CreateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	u, err := ctrl.Repo.CreateRepository(utils.GetUserID(c), req)
+	u, err := ctrl.Repo.CreateRepository(utils.GetUserID(c), req, resolveScope(c))
 	if err != nil {
+		if errors.Is(err, generic.ErrUpdatesAccessDenied) {
+			return utils.Forbidden(c, "Access denied. You can only create updates for your own courses.", err)
+		}
 		return utils.InternalError(c, "Failed to create update.", err)
 	}
 
@@ -47,8 +51,14 @@ func (ctrl *UpdatesController) UpdateController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	u, err := ctrl.Repo.UpdateRepository(c.Params("id"), req.Message)
+	u, err := ctrl.Repo.UpdateRepository(c.Params("id"), req.Message, utils.GetUserID(c), resolveScope(c))
 	if err != nil {
+		if errors.Is(err, generic.ErrUpdatesNotFound) {
+			return utils.NotFound(c, "Update not found.", err)
+		}
+		if errors.Is(err, generic.ErrUpdatesAccessDenied) {
+			return utils.Forbidden(c, "Access denied. You can only modify updates for your own courses.", err)
+		}
 		return utils.InternalError(c, "Failed to modify update.", err)
 	}
 
@@ -58,8 +68,14 @@ func (ctrl *UpdatesController) UpdateController(c *fiber.Ctx) error {
 }
 
 func (ctrl *UpdatesController) DeleteController(c *fiber.Ctx) error {
-	id, err := ctrl.Repo.DeleteRepository(c.Params("id"))
+	id, err := ctrl.Repo.DeleteRepository(c.Params("id"), utils.GetUserID(c), resolveScope(c))
 	if err != nil {
+		if errors.Is(err, generic.ErrUpdatesNotFound) {
+			return utils.NotFound(c, "Update not found.", err)
+		}
+		if errors.Is(err, generic.ErrUpdatesAccessDenied) {
+			return utils.Forbidden(c, "Access denied. You can only delete updates for your own courses.", err)
+		}
 		return utils.InternalError(c, "Failed to delete update.", err)
 	}
 
@@ -90,7 +106,9 @@ func (ctrl *UpdatesController) FeedController(c *fiber.Ctx) error {
 
 func (ctrl *UpdatesController) ListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	cacheKey := fmt.Sprintf("updates:list:p:%d:l:%d", page, limit)
+	scope := resolveScope(c)
+	userID := utils.GetUserID(c)
+	cacheKey := fmt.Sprintf("updates:list:s:%s:u:%s:p:%d:l:%d", scope, userID, page, limit)
 
 	var cached updatesListCacheData
 	if hit, _ := ctrl.Repo.Cache.Get(c.Context(), cacheKey, &cached); hit {
@@ -99,7 +117,7 @@ func (ctrl *UpdatesController) ListController(c *fiber.Ctx) error {
 		})
 	}
 
-	list, total, err := ctrl.Repo.ListRepository(page, limit)
+	list, total, err := ctrl.Repo.ListRepository(page, limit, userID, scope)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch updates.", err)
 	}

@@ -1,13 +1,22 @@
 import { z } from 'zod';
 import { CategoryInfoZod, InstructorInfoZod } from "@/schema/common.types";
 
+// status isn't part of this request — a course always starts in "draft" and
+// is changed afterward via UpdateCourseRequest's dedicated status action.
 export const CreateCourseRequestZod = z.object({
     title: z.string(),
     short_description: z.string().nullable().optional(),
+    long_description: z.string().nullable().optional(),
+    image_url: z.string().nullable().optional(),
+    preview_video_url: z.string().nullable().optional(),
     category_id: z.string().nullable().optional(),
     language: z.string(),
     level: z.string(),
-    status: z.string(),
+    actual_price: z.number().optional(),
+    final_price: z.number().optional(),
+    benefits: z.array(z.string()).optional(),
+    requirements: z.array(z.string()).optional(),
+    coupon_allowed: z.boolean().optional(),
 });
 export type CreateCourseRequest = z.infer<typeof CreateCourseRequestZod>;
 
@@ -134,6 +143,14 @@ export const CourseZod = z.object({
     feedback_count: z.number(),
     student_count: z.number(),
     status: z.string(),
+    tutor: z
+        .object({
+            id: z.string(),
+            name: z.string(),
+            image: z.string().nullable().optional(),
+        })
+        .nullable()
+        .optional(),
     created_at: z.string(),
     updated_at: z.string(),
 });

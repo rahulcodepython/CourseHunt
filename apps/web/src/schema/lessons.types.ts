@@ -53,9 +53,9 @@ export const AggregatedLessonContentResponseZod = z.object({
 });
 export type AggregatedLessonContentResponse = z.infer<typeof AggregatedLessonContentResponseZod>;
 
+// lesson_no is auto-incremented server-side — never sent by the client.
 export const CreateLessonRequestZod = z.object({
     title: z.string(),
-    lesson_no: z.number(),
     lesson_type: z.string(),
     short_description: z.string().nullable().optional(),
     preview_video_url: z.string().nullable().optional(),
@@ -65,7 +65,6 @@ export type CreateLessonRequest = z.infer<typeof CreateLessonRequestZod>;
 
 export const UpdateLessonRequestZod = z.object({
     title: z.string().optional(),
-    lesson_no: z.number().optional(),
     short_description: z.string().nullable().optional(),
     preview_video_url: z.string().nullable().optional(),
     duration_seconds: z.number().optional(),

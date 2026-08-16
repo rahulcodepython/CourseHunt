@@ -123,6 +123,30 @@ func (ctrl *QuizController) CreateQuestionController(c *fiber.Ctx) error {
 	return utils.Created(c, "Question added successfully.", q)
 }
 
+func (ctrl *QuizController) UpdateQuestionController(c *fiber.Ctx) error {
+	var req entities.CreateQuestionRequest
+	if ok, err := utils.Validate(c, &req); !ok {
+		return err
+	}
+	questionID := c.Params("id")
+	tutorID := utils.GetUserID(c)
+	q, err := ctrl.Repo.UpdateQuestionRepository(questionID, tutorID, req)
+	if err != nil {
+		switch {
+		case errors.Is(err, generic.ErrQuizQuestionNotFound):
+			return utils.NotFound(c, "Question not found.", err)
+		case errors.Is(err, generic.ErrQuizAccessDenied):
+			return utils.Forbidden(c, "Access denied. You do not own the course this quiz belongs to.", err)
+		default:
+			return utils.InternalError(c, "Failed to update question.", err)
+		}
+	}
+
+	ctrl.Repo.Cache.InvalidateQuiz(c.Context())
+
+	return utils.OK(c, "Question updated successfully.", q)
+}
+
 func (ctrl *QuizController) DeleteQuestionController(c *fiber.Ctx) error {
 	tutorID := utils.GetUserID(c)
 	id, err := ctrl.Repo.DeleteQuestionRepository(c.Params("id"), tutorID)

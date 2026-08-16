@@ -1,6 +1,6 @@
 "use client";
 
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import type { Course } from "@/schema/courses.types";
 import { formatINR } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,11 @@ import { COURSE_STATUS } from "@/lib/const";
 
 const columnHelper = createColumnHelper<Course>();
 
-export const columns = [
+export const getColumns = ({
+    onViewCourse,
+}: {
+    onViewCourse: (course: Course) => void;
+}): ColumnDef<Course, any>[] => [
     columnHelper.accessor("title", {
         header: ({ column }) => <SortableColumnHeader column={column} label="Course" />,
         cell: ({ row }) => {
@@ -57,6 +61,31 @@ export const columns = [
             return value === "all" ? true : row.getValue(id) === value;
         },
     }),
+    columnHelper.accessor("tutor", {
+        header: ({ column }) => <SortableColumnHeader column={column} label="Tutor" />,
+        cell: ({ getValue }) => {
+            const tutor = getValue();
+            return (
+                <div className="flex items-center gap-2">
+                    {tutor?.image ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                            src={tutor.image}
+                            alt={tutor.name}
+                            className="size-7 shrink-0 rounded-full object-cover"
+                        />
+                    ) : (
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">
+                            <Icon name="user" className="size-4 text-muted-foreground" />
+                        </div>
+                    )}
+                    <span className="truncate">
+                        {tutor?.name || "—"}
+                    </span>
+                </div>
+            );
+        },
+    }),
     columnHelper.accessor("final_price", {
         header: ({ column }) => <SortableColumnHeader column={column} label="Price" />,
         cell: ({ getValue }) => (
@@ -74,7 +103,7 @@ export const columns = [
                         className="size-4 fill-yellow-500 text-yellow-500"
                     />
                     <span className="tabular-nums">
-                        {rating ? rating.toFixed(1) : "—"}
+                        {rating.toFixed(1)}
                     </span>
                 </div>
             );
@@ -98,6 +127,7 @@ export const columns = [
             const course = row.original;
             return (
                 <RowActions>
+                    <RowActionButton icon="eye" label="View Details" onClick={() => onViewCourse(course)} />
                     <RowActionButton icon="hierarchy" label="View Chapters" href={`/admin/courses/${course.id}/chapters`} />
                     <RowActionButton icon="users" label="View Enrolled Users" href={`/admin/courses/${course.id}/enrollments`} />
                     <RowActionButton icon="chart-bar" label="View Analytics" href={`/admin/courses/overview/${course.id}`} />

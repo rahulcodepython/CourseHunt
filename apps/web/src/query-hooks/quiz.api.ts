@@ -14,8 +14,10 @@ import {
 import { DeleteResponseZod } from "@/schema/common.types";
 
 export function useQuizMetadataQuery(lessonId: string) {
-	return useAppQuery(queryKeys.quizMetadata(lessonId), () =>
-		apiRequest({ url: `/api/v1/quiz/metadata?lesson_id=${lessonId}`, method: "GET" }, QuizMetadataZod),
+	return useAppQuery(
+		queryKeys.quizMetadata(lessonId),
+		() => apiRequest({ url: `/api/v1/quiz/metadata?lesson_id=${lessonId}`, method: "GET" }, QuizMetadataZod),
+		{ enabled: !!lessonId },
 	);
 }
 
@@ -38,6 +40,15 @@ export function useCreateQuestionMutation() {
 	return useSimpleMutation({
 		mutationFn: ({ quizId, data }: { quizId: string; data: z.infer<typeof CreateQuestionRequestZod> }) =>
 			apiRequest({ url: `/api/v1/quiz/questions?quiz_id=${quizId}`, method: "POST", data }, QuizQuestionZod),
+		invalidateKeys: (_data, vars) => [queryKeys.quizQuestions(vars.quizId)],
+		showToast: true,
+	});
+}
+
+export function useUpdateQuestionMutation() {
+	return useSimpleMutation({
+		mutationFn: ({ quizId, questionId, data }: { quizId: string; questionId: string; data: z.infer<typeof CreateQuestionRequestZod> }) =>
+			apiRequest({ url: `/api/v1/quiz/questions/${questionId}`, method: "PATCH", data }, QuizQuestionZod),
 		invalidateKeys: (_data, vars) => [queryKeys.quizQuestions(vars.quizId)],
 		showToast: true,
 	});

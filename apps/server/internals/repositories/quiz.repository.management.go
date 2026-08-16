@@ -287,6 +287,87 @@ func (r *QuizRepository) CreateQuestionRepository(quizID, tutorID string, req en
 	return &q, nil
 }
 
+// UpdateQuestionRepository replaces a question's full content (text/type/
+// points/hint, plus its options/arrange-items/fill-answers) in one
+// transaction — simpler and safer than diffing the child rows, and mirrors
+// RolesRepository.SetRolePermissionsRepository's delete-then-reinsert shape.
+func (r *QuizRepository) UpdateQuestionRepository(questionID, tutorID string, req entities.CreateQuestionRequest) (*entities.QuizQuestion, error) {
+	tx, err := r.DB.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	var auth struct {
+		QuestionExists bool `db:"question_exists"`
+		IsOwner        bool `db:"is_owner"`
+	}
+	if err := tx.Get(&auth, `
+		SELECT
+			EXISTS(SELECT 1 FROM quiz_questions WHERE id = $1) AS question_exists,
+			EXISTS(
+				SELECT 1 FROM quiz_questions qq
+				JOIN quiz_metadata qm ON qm.id = qq.quiz_id
+				JOIN lessons l ON l.id = qm.lesson_id
+				JOIN chapters ch ON ch.id = l.chapter_id
+				JOIN courses c ON c.id = ch.course_id
+				WHERE qq.id = $1 AND c.tutor_id = $2
+			) AS is_owner`, questionID, tutorID); err != nil {
+		return nil, err
+	}
+	switch {
+	case !auth.QuestionExists:
+		return nil, generic.ErrQuizQuestionNotFound
+	case !auth.IsOwner:
+		return nil, generic.ErrQuizAccessDenied
+	}
+
+	var question entities.QuizQuestion
+	if err := tx.Get(&question, `
+		UPDATE quiz_questions
+		SET question_type = $2, question_text = $3, points = $4, fill_blank_hint = $5, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1
+		RETURNING *`,
+		questionID, req.QuestionType, req.QuestionText, req.Points, req.FillBlankHint,
+	); err != nil {
+		return nil, err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM quiz_options WHERE question_id = $1`, questionID); err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(`DELETE FROM quiz_arrange_items WHERE question_id = $1`, questionID); err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(`DELETE FROM quiz_fill_blank_answers WHERE question_id = $1`, questionID); err != nil {
+		return nil, err
+	}
+
+	for _, o := range req.Options {
+		if _, err := tx.Exec(`INSERT INTO quiz_options (question_id, option_text, is_correct) VALUES ($1, $2, $3)`,
+			questionID, o.OptionText, o.IsCorrect); err != nil {
+			return nil, err
+		}
+	}
+	for _, a := range req.ArrangeItems {
+		if _, err := tx.Exec(`INSERT INTO quiz_arrange_items (question_id, item_text, correct_order) VALUES ($1, $2, $3)`,
+			questionID, a.ItemText, a.CorrectOrder); err != nil {
+			return nil, err
+		}
+	}
+	for _, ans := range req.FillAnswers {
+		if _, err := tx.Exec(`INSERT INTO quiz_fill_blank_answers (question_id, answer) VALUES ($1, $2)`,
+			questionID, ans); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return &question, nil
+}
+
 func (r *QuizRepository) DeleteQuestionRepository(id, tutorID string) (string, error) {
 	var result struct {
 		QuestionExists bool    `db:"question_exists"`

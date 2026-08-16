@@ -68,7 +68,10 @@ function CorrectAnswers({ question }: { question: QuizQuestionDetail }) {
   return <span className="text-muted-foreground">—</span>;
 }
 
-export const getColumns = (onDelete: (question: QuizQuestionDetail) => void) => [
+export const getColumns = (
+  onEdit: (question: QuizQuestionDetail) => void,
+  onDelete: (question: QuizQuestionDetail) => void,
+) => [
   columnHelper.accessor("question_text", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Question" />,
     cell: ({ getValue }) => (
@@ -99,6 +102,11 @@ export const getColumns = (onDelete: (question: QuizQuestionDetail) => void) => 
       const question = row.original;
       return (
         <RowActions>
+          <RowActionButton
+            icon="pencil"
+            label="Edit Question"
+            onClick={() => onEdit(question)}
+          />
           <RowActionButton
             icon="trash"
             label="Delete Question"

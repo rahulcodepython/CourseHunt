@@ -106,12 +106,19 @@ export const getColumns = (
       const basePath = `/tutor/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`;
       return (
         <RowActions>
-          {lesson.lesson_type === "quiz" && (
+          {lesson.lesson_type === "quiz" ? (
             <RowActionButton
               icon="list"
               label="Manage Quiz"
               href={`${basePath}/quiz`}
               iconClassName="text-amber-500"
+            />
+          ) : (
+            <RowActionButton
+              icon="file-text"
+              label="Manage Resources"
+              href={`${basePath}/resources`}
+              iconClassName="text-blue-500"
             />
           )}
           <RowActionButton

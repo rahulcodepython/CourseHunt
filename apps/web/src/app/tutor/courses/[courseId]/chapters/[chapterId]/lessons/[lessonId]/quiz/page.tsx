@@ -12,7 +12,6 @@ import { DataTable } from "@/components/data-table";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { FormDialog } from "@/components/form-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
@@ -54,7 +53,9 @@ export default function TutorLessonQuizPage() {
   const metadata: QuizMetadata | null = rawMetadata?.success ? rawMetadata.data ?? null : null;
 
   const deleteMutation = useDeleteQuestionMutation();
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [adding, setAdding] = React.useState(false);
+  const [editingQuestion, setEditingQuestion] = React.useState<QuizQuestionDetail | null>(null);
   const [deleting, setDeleting] = React.useState<QuizQuestionDetail | null>(null);
 
   const { data: rawQuestions, isLoading: questionsLoading } = useQuizQuestionsQuery(
@@ -69,7 +70,7 @@ export default function TutorLessonQuizPage() {
     }
   };
 
-  const columns = getColumns(setDeleting);
+  const columns = getColumns(setEditingQuestion, setDeleting);
 
   return (
     <div className="space-y-6">
@@ -85,68 +86,79 @@ export default function TutorLessonQuizPage() {
         <PageHeader
           title={metadata ? metadata.title : "Configure Quiz"}
           subtitle="Manage the quiz settings and its questions"
+          actions={
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setSettingsOpen(true)}>
+                <Icon name="settings" className="size-4" />
+                Settings
+              </Button>
+              <Button onClick={() => setAdding(true)} disabled={!metadata}>
+                <Icon name="plus" className="size-4" />
+                Add Question
+              </Button>
+            </div>
+          }
         />
       </div>
 
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">Quiz Settings</CardTitle>
-          <CardDescription>
-            {metadata ? "Update the quiz title, time limit and pass score" : "Set up the quiz for this lesson"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <QuizSettingsForm lessonId={lessonId} metadata={metadata} />
-        </CardContent>
-      </Card>
+      {metadata && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant="secondary">{metadata.total_questions} total</Badge>
+          <Badge variant="outline">{formatTime(metadata.time_limit_seconds)}</Badge>
+          <Badge variant="outline">Pass {metadata.pass_score_percent}%</Badge>
+        </div>
+      )}
 
       {metadataLoading ? (
-        <Card className="shadow-sm">
-          <CardContent className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-            Loading quiz...
-          </CardContent>
-        </Card>
+        <p className="text-sm text-muted-foreground">Loading quiz...</p>
       ) : metadata ? (
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-3">
-            <CardTitle className="text-base font-semibold">
-              Questions ({questions.length})
-              <span className="ml-2 inline-flex gap-1.5 align-middle">
-                <Badge variant="secondary">{metadata.total_questions} total</Badge>
-                <Badge variant="outline">{formatTime(metadata.time_limit_seconds)}</Badge>
-                <Badge variant="outline">Pass {metadata.pass_score_percent}%</Badge>
-              </span>
-            </CardTitle>
-            <Button size="sm" onClick={() => setAdding(true)}>
-              <Icon name="plus" className="size-4" />
-              Add Question
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={columns}
-              data={questions}
-              searchPlaceholder="Search questions..."
-              showColumnToggle={false}
-              showPagination={questions.length > 10}
-              emptyIcon="list"
-              emptyText="No questions yet — add the first one"
-              isLoading={questionsLoading}
-              loadingText="Loading questions..."
-            />
-          </CardContent>
-        </Card>
-      ) : null}
+        <DataTable
+          columns={columns}
+          data={questions}
+          searchPlaceholder="Search questions..."
+          showColumnToggle={false}
+          showPagination={questions.length > 10}
+          emptyIcon="list"
+          emptyText="No questions yet — add the first one"
+          isLoading={questionsLoading}
+          loadingText="Loading questions..."
+        />
+      ) : (
+        <p className="rounded-lg border border-dashed px-3 py-8 text-center text-sm text-muted-foreground">
+          Configure the quiz settings before adding questions.
+        </p>
+      )}
 
       <FormDialog
-        open={adding}
-        onOpenChange={setAdding}
-        title="Add Question"
-        description="Create a new question for this quiz"
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        title="Quiz Settings"
+        description={metadata ? "Update the quiz title, time limit and pass score" : "Set up the quiz for this lesson"}
+      >
+        <QuizSettingsForm lessonId={lessonId} metadata={metadata} onSuccess={() => setSettingsOpen(false)} />
+      </FormDialog>
+
+      <FormDialog
+        open={adding || !!editingQuestion}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAdding(false);
+            setEditingQuestion(null);
+          }
+        }}
+        title={editingQuestion ? "Edit Question" : "Add Question"}
+        description={editingQuestion ? "Update this question" : "Create a new question for this quiz"}
         className="max-h-[90vh] overflow-y-auto"
       >
         {metadata && (
-          <QuestionForm quizId={metadata.id} onSuccess={() => setAdding(false)} />
+          <QuestionForm
+            quizId={metadata.id}
+            editingQuestion={editingQuestion}
+            onSuccess={() => {
+              setAdding(false);
+              setEditingQuestion(null);
+            }}
+          />
         )}
       </FormDialog>
 

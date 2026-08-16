@@ -219,6 +219,7 @@ func (r *Router) SetUp() {
 	protected.Get("/quiz/metadata", middlewares.PermissionGuard(generic.PermTutorQuizManage, generic.PermAdminCoursesInspect), r.Quiz.ReadMetadataController)
 	protected.Post("/quiz/questions", middlewares.PermissionGuard(generic.PermTutorQuizManage), r.Quiz.CreateQuestionController)
 	protected.Get("/quiz/questions", middlewares.PermissionGuard(generic.PermTutorQuizManage, generic.PermAdminCoursesInspect), r.Quiz.ListQuestionsController)
+	protected.Patch("/quiz/questions/:id", middlewares.PermissionGuard(generic.PermTutorQuizManage), r.Quiz.UpdateQuestionController)
 	protected.Delete("/quiz/questions/:id", middlewares.PermissionGuard(generic.PermTutorQuizManage), r.Quiz.DeleteQuestionController)
 	protected.Post("/quiz/question", r.Quiz.GetQuestionController)
 	protected.Post("/quiz/submit", r.Quiz.CreateSubmitController)
@@ -239,6 +240,10 @@ func (r *Router) SetUp() {
 	protected.Get("/lessons/:id/content", middlewares.ScopeGuard(generic.PermAdminCoursesInspect), r.Lessons.ReadContentController)
 	protected.Post("/lessons/:id/complete", r.Lessons.UpdateCompleteController)
 	protected.Get("/lessons/:id/resources", middlewares.ScopeGuard(generic.PermAdminCoursesInspect), r.Lessons.ReadResourcesController)
+	// Tutor-authoring reads: ownership-gated, not enrollment-gated — a tutor
+	// is never "enrolled" in their own course.
+	protected.Get("/lessons/:id/manage/content", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Lessons.ReadContentForTutorController)
+	protected.Get("/lessons/:id/manage/resources", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Lessons.ReadResourcesForTutorController)
 	protected.Post("/lessons/:id/video", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Lessons.UpsertVideoContentController)
 	protected.Post("/lessons/:id/document", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Lessons.UpsertDocumentContentController)
 	protected.Post("/lessons/:id/resources", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Lessons.CreateResourceController)

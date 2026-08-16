@@ -35,7 +35,6 @@ export const InstructorInfoZod = z.object({
     id: z.string(),
     name: z.string(),
     image: z.string().nullable().optional(),
-    headline: z.string().nullable().optional(),
 });
 
 export const CategoryInfoZod = z.object({

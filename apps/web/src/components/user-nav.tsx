@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSessionStore } from "@/store/session.store";
 import { Button } from "@/components/ui/button";
-import { ROUTES } from "@/lib/const";
+import { ROUTES, ROLES } from "@/lib/const";
 import useSession from "@/hooks/use-session";
 
 export function UserNav() {
@@ -24,6 +24,7 @@ export function UserNav() {
     const pathname = usePathname();
     const { signOut } = useSession();
     const user = useSessionStore((state) => state.user);
+    const isAdminOrTutor = user?.role === ROLES.ADMIN || user?.role === ROLES.TUTOR;
     const profileHref = pathname.startsWith(ROUTES.TUTOR_DASHBOARD)
         ? `${ROUTES.TUTOR_DASHBOARD}/profile`
         : `${ROUTES.ADMIN_DASHBOARD}/profile`;
@@ -57,6 +58,17 @@ export function UserNav() {
                         Profile
                     </Link>
                 </DropdownMenuItem>
+                {isAdminOrTutor && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                            <Link href={ROUTES.CHANGE_PASSWORD} className="cursor-pointer">
+                                <Icon name="lock" className="size-4 mr-2" />
+                                Change Password
+                            </Link>
+                        </DropdownMenuItem>
+                    </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive" onClick={handleLogout} className="cursor-pointer">
                     <Icon name="logout" className="size-4 mr-2" />

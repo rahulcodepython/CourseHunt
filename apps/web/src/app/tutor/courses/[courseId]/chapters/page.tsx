@@ -26,7 +26,6 @@ import { getColumns } from "./columns";
 
 const chapterSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  chapter_no: z.number().min(1, "Chapter number is required"),
 });
 
 type ChapterFormData = z.infer<typeof chapterSchema>;
@@ -52,15 +51,12 @@ function ChapterDialog({
     formState: { errors },
   } = useForm<ChapterFormData>({
     resolver: zodResolver(chapterSchema),
-    defaultValues: { title: "", chapter_no: 1 },
+    defaultValues: { title: "" },
   });
 
   React.useEffect(() => {
     if (open) {
-      reset({
-        title: editing?.title ?? "",
-        chapter_no: editing?.chapter_no ?? 1,
-      });
+      reset({ title: editing?.title ?? "" });
     }
   }, [open, editing, reset]);
 
@@ -85,16 +81,6 @@ function ChapterDialog({
           <Label htmlFor="chapter-title">Title</Label>
           <Input id="chapter-title" placeholder="e.g. Getting Started" {...register("title")} />
           {errors.title && <p className="text-xs text-red-400">{errors.title.message}</p>}
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="chapter-no">Chapter No.</Label>
-          <Input
-            id="chapter-no"
-            type="number"
-            min={1}
-            {...register("chapter_no", { valueAsNumber: true })}
-          />
-          {errors.chapter_no && <p className="text-xs text-red-400">{errors.chapter_no.message}</p>}
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

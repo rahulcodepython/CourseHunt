@@ -19,10 +19,9 @@ type UserInfo struct {
 
 // InstructorInfo represents instructor details used across modules.
 type InstructorInfo struct {
-	ID       string  `json:"id" db:"id"`
-	Name     string  `json:"name" db:"name"`
-	Image    *string `json:"image" db:"image"`
-	Headline *string `json:"headline,omitempty" db:"headline"`
+	ID    string  `json:"id" db:"id"`
+	Name  string  `json:"name" db:"name"`
+	Image *string `json:"image" db:"image"`
 }
 
 // CategoryInfo represents basic category/subcategory details.

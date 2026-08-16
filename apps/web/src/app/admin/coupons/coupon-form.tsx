@@ -28,7 +28,7 @@ const NO_COURSE = "none";
 const couponSchema = z.object({
     code: z.string().min(3, "Coupon code must be at least 3 characters"),
     discount_percent: z.number().min(1, "Discount must be at least 1%").max(100, "Discount cannot exceed 100%"),
-    expires_at: z.string().optional(),
+    expires_at: z.string().min(1, "Expiry date is required"),
     max_usage: z.number().min(0),
     is_active: z.boolean(),
     courseId: z.string(),
@@ -77,7 +77,7 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
         const data = {
             code: form.code.toUpperCase().replace(/\s+/g, ""),
             discount_percent: form.discount_percent,
-            expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : "",
+            expires_at: new Date(form.expires_at).toISOString(),
             max_usage: form.max_usage || 0,
             is_active: form.is_active,
             ...(form.courseId !== NO_COURSE ? { course_id: form.courseId } : {}),
@@ -151,8 +151,12 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
                     <Input
                         id="coupon-expiry"
                         type="date"
+                        required
                         {...register("expires_at")}
                     />
+                    {errors.expires_at && (
+                        <p className="text-xs text-red-400">{errors.expires_at.message}</p>
+                    )}
                 </div>
                 {editingCoupon && (
                     <div className="space-y-1.5">

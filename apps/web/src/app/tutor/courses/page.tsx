@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 import { CourseModal } from "./course-modal";
+import { CourseStatusDialog } from "./course-status-dialog";
+import { CourseDetailsModal } from "@/components/course-details-modal";
 
 export default function TutorCoursesPage() {
   const { data: rawCourses, isLoading } = useManageCoursesQuery();
@@ -30,7 +32,12 @@ export default function TutorCoursesPage() {
     confirmDelete,
   } = useCrudDialogState<Course>();
 
-  const columns = getColumns(openEdit, requestDelete);
+  const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
+  const [statusCourse, setStatusCourse] = React.useState<Course | null>(null);
+  const columns = React.useMemo(
+    () => getColumns(openEdit, requestDelete, setSelectedCourse, setStatusCourse),
+    [openEdit, requestDelete],
+  );
 
   return (
     <div className="space-y-6">
@@ -59,6 +66,22 @@ export default function TutorCoursesPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         editingCourse={editing}
+      />
+
+      <CourseStatusDialog
+        course={statusCourse}
+        open={statusCourse !== null}
+        onOpenChange={(open) => {
+          if (!open) setStatusCourse(null);
+        }}
+      />
+
+      <CourseDetailsModal
+        course={selectedCourse}
+        open={selectedCourse !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedCourse(null);
+        }}
       />
 
       <ConfirmDeleteDialog

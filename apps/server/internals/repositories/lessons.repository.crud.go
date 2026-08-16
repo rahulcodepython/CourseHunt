@@ -95,14 +95,17 @@ func (r *LessonsRepository) CreateRepository(tutorID, chapterID string, req enti
 			JOIN courses c ON c.id = ch.course_id
 			WHERE ch.id = $1
 		),
+		next_no AS (
+			SELECT COALESCE(MAX(lesson_no), 0) + 1 AS n FROM lessons WHERE chapter_id = $1
+		),
 		inserted AS (
 			INSERT INTO lessons (chapter_id, lesson_no, title, lesson_type, short_description, preview_video_url, duration_seconds)
-			SELECT $1, $2, $3, $4, $5, $6, $7
-			FROM auth
-			WHERE auth.tutor_id = $8
+			SELECT $1, next_no.n, $2, $3, $4, NULLIF($5, ''), $6
+			FROM auth, next_no
+			WHERE auth.tutor_id = $7
 			RETURNING *
 		)
-		SELECT 
+		SELECT
 			(SELECT tutor_id FROM auth) AS course_tutor_id,
 			(SELECT id FROM auth) AS course_id,
 			row_to_json(inserted.*) AS inserted_data
@@ -110,7 +113,7 @@ func (r *LessonsRepository) CreateRepository(tutorID, chapterID string, req enti
 		LEFT JOIN inserted ON true
 	`
 	err := r.DB.Get(&result, query,
-		chapterID, req.LessonNo, req.Title, req.LessonType, req.ShortDescription, req.PreviewVideoURL, req.DurationSeconds,
+		chapterID, req.Title, req.LessonType, req.ShortDescription, req.PreviewVideoURL, req.DurationSeconds,
 		tutorID,
 	)
 	if err != nil {
@@ -131,20 +134,24 @@ func (r *LessonsRepository) CreateRepository(tutorID, chapterID string, req enti
 	return &l, nil
 }
 
-func (r *LessonsRepository) UpdateRepository(id, tutorID string, req entities.UpdateLessonRequest) (*entities.Lesson, error) {
+func (r *LessonsRepository) UpdateRepository(id, tutorID string, req entities.UpdateLessonRequest) (*entities.Lesson, *entities.LessonFileCleanup, error) {
 	args := map[string]interface{}{
 		"id":                id,
 		"user_id":           tutorID,
 		"title":             req.Title,
-		"lesson_no":         req.LessonNo,
 		"short_description": req.ShortDescription,
 		"preview_video_url": req.PreviewVideoURL,
 		"duration_seconds":  req.DurationSeconds,
 	}
 
+	// preview_video_url uses a three-way CASE rather than COALESCE: a JSON
+	// null (nil pointer) still means "leave untouched", but an explicit
+	// empty string now means "clear this file" — see the identical pattern
+	// (and rationale, including the CAST(... AS text) requirement) in
+	// CoursesRepository.UpdateRepository.
 	query := `
 		WITH auth AS (
-			SELECT c.tutor_id
+			SELECT c.tutor_id, l.preview_video_url AS old_preview_video_url
 			FROM lessons l
 			JOIN chapters ch ON ch.id = l.chapter_id
 			JOIN courses c ON c.id = ch.course_id
@@ -153,16 +160,16 @@ func (r *LessonsRepository) UpdateRepository(id, tutorID string, req entities.Up
 		updated AS (
 			UPDATE lessons SET
 				title = COALESCE(:title, title),
-				lesson_no = COALESCE(:lesson_no, lesson_no),
 				short_description = COALESCE(:short_description, short_description),
-				preview_video_url = COALESCE(:preview_video_url, preview_video_url),
+				preview_video_url = CASE WHEN CAST(:preview_video_url AS text) IS NULL THEN preview_video_url WHEN CAST(:preview_video_url AS text) = '' THEN NULL ELSE CAST(:preview_video_url AS text) END,
 				duration_seconds = COALESCE(:duration_seconds, duration_seconds),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id AND EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = :user_id)
 			RETURNING *
 		)
-		SELECT 
+		SELECT
 			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			(SELECT old_preview_video_url FROM auth) AS old_preview_video_url,
 			row_to_json(updated.*) AS updated_data
 		FROM (SELECT 1) dummy
 		LEFT JOIN updated ON true
@@ -170,31 +177,33 @@ func (r *LessonsRepository) UpdateRepository(id, tutorID string, req entities.Up
 
 	stmt, err := r.DB.PrepareNamed(query)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer stmt.Close()
 
 	var result struct {
-		CourseTutorID *string          `db:"course_tutor_id"`
-		UpdatedData   *json.RawMessage `db:"updated_data"`
+		CourseTutorID      *string          `db:"course_tutor_id"`
+		OldPreviewVideoURL *string          `db:"old_preview_video_url"`
+		UpdatedData        *json.RawMessage `db:"updated_data"`
 	}
 
 	if err := stmt.Get(&result, args); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	switch {
 	case result.CourseTutorID == nil:
-		return nil, generic.ErrLessonsLessonNotFound
+		return nil, nil, generic.ErrLessonsLessonNotFound
 	case result.UpdatedData == nil:
-		return nil, generic.ErrLessonsAccessDenied
+		return nil, nil, generic.ErrLessonsAccessDenied
 	}
 
 	var l entities.Lesson
 	if err := json.Unmarshal(*result.UpdatedData, &l); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &l, nil
+	cleanup := &entities.LessonFileCleanup{OldPreviewVideoURL: result.OldPreviewVideoURL}
+	return &l, cleanup, nil
 }
 
 func (r *LessonsRepository) DeleteRepository(id, tutorID string) (string, error) {
