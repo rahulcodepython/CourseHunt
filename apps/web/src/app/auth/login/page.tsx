@@ -1,22 +1,20 @@
 "use client";
 
 import React, { Suspense } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { AuthCard } from "@/components/auth-card";
 import authClient from "@/lib/auth-client";
-import { ROUTES, getDashboardURI } from "@/lib/const";
-import useSession, { buildSessionPayload } from "@/hooks/use-session";
-import { type SessionPayload } from "@/store/session.store";
-import { jwtDecode } from "jwt-decode";
+import useSession from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/password-input";
 import { Separator } from "@/components/ui/separator";
+import { ROUTES, ROLES, getDashboardURI } from "@/lib/const";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,8 +31,8 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+    const { refreshSession } = useSession();
     const router = useRouter();
-    const { setSessionPayload } = useSession();
     const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
     const [isEmailLoading, setIsEmailLoading] = React.useState(false);
 
@@ -67,31 +65,35 @@ export default function LoginPage() {
     const handleEmailLogin = async (data: LoginFormData) => {
         setIsEmailLoading(true);
         try {
-            let jwtToken: string | null = null;
             const response = await authClient.signIn.email({
                 email: data.email,
                 password: data.password,
-                fetchOptions: {
-                    onResponse: (ctx) => {
-                        jwtToken = ctx.response.headers.get("set-auth-jwt");
-                    },
-                },
             });
             if (response.error || !response.data) {
                 toast.error(response.error?.message || "Failed to sign in. Please check credentials.");
                 return;
             }
-            const payload = buildSessionPayload({
-                user: response.data.user,
-                session: (response.data as Record<string, unknown>).session,
-                jwtToken,
-            });
-            const targetUrl = payload.mustChangePassword
-                ? ROUTES.CHANGE_PASSWORD
-                : getDashboardURI(payload.user?.role);
 
-            setSessionPayload(payload);
-            router.push(targetUrl);
+            const user = response.data.user as typeof response.data.user & { passwordChangedAt?: string | null };
+            // Compute mustChangePassword from the sign-in response so we can
+            // redirect correctly. Then call refreshSession() which fetches the
+            // full JWT (roles, permissions, must_change_password) and commits it
+            // to the Zustand store BEFORE we navigate. This is necessary: if we
+            // navigate first, dashboard API calls fire before the background
+            // hydration completes, the backend sees no JWT and returns 401.
+            const mustChangePassword =
+                (user.role === ROLES.ADMIN || user.role === ROLES.TUTOR) &&
+                !user.passwordChangedAt;
+
+            const payload = await refreshSession();
+            if (!payload?.user) {
+                toast.error("Failed to load session after login.");
+                return;
+            }
+
+            router.push(
+                mustChangePassword ? ROUTES.CHANGE_PASSWORD : getDashboardURI(user.role)
+            );
         } catch (error) {
             console.error("Login failed:", error);
             toast.error("Failed to sign in. Please check credentials.");

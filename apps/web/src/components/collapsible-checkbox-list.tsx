@@ -11,16 +11,20 @@ export interface CollapsibleCheckboxListItem {
     label: string;
 }
 
+export interface CollapsibleCheckboxListGroup {
+    groupName: string;
+    items: CollapsibleCheckboxListItem[];
+}
+
 /**
- * Generic collapsible, scrollable multi-checkbox list — a card-header
- * trigger showing the title and selected count, expanding into a vertical
- * checkbox list capped at `maxHeight` (scrolls beyond that). Used anywhere a
- * flat set of checkable items needs picking: role selection, permission
- * assignment, etc. Only the title/data/maxHeight differ per use site.
+ * Generic collapsible, scrollable multi-checkbox list — supporting both flat item
+ * sets and grouped sections with legends. Used anywhere a set of checkable items
+ * needs picking: role selection, permission assignment, etc.
  */
 export function CollapsibleCheckboxList({
     title,
     items,
+    groups,
     selected,
     onChange,
     maxHeight = "16rem",
@@ -30,7 +34,8 @@ export function CollapsibleCheckboxList({
     className,
 }: {
     title: string;
-    items: CollapsibleCheckboxListItem[];
+    items?: CollapsibleCheckboxListItem[];
+    groups?: CollapsibleCheckboxListGroup[];
     selected: string[];
     onChange: (selected: string[]) => void;
     /** CSS max-height of the scrollable content area once expanded. */
@@ -49,6 +54,15 @@ export function CollapsibleCheckboxList({
         );
     };
 
+    const allFlatItems = React.useMemo(() => {
+        if (groups) {
+            return groups.flatMap((g) => g.items);
+        }
+        return items ?? [];
+    }, [items, groups]);
+
+    const totalSelected = allFlatItems.filter((item) => selected.includes(item.id)).length;
+
     return (
         <div className={className}>
             <Collapsible open={open} onOpenChange={setOpen} className="rounded-md border">
@@ -56,7 +70,7 @@ export function CollapsibleCheckboxList({
                     <span>{title}</span>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <span className="text-xs font-normal">
-                            {selected.length} selected
+                            {totalSelected} of {allFlatItems.length} selected
                         </span>
                         <Icon
                             name="chevron-down"
@@ -68,25 +82,51 @@ export function CollapsibleCheckboxList({
                     className="overflow-y-auto border-t"
                     style={{ maxHeight }}
                 >
-                    <div className="flex flex-col gap-0.5 p-2">
-                        {items.length === 0 ? (
-                            <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+                    <div className="flex flex-col gap-1 p-2">
+                        {
+                            allFlatItems.length === 0 ? <p className="px-2 py-4 text-center text-sm text-muted-foreground">
                                 {emptyMessage}
-                            </p>
-                        ) : (
-                            items.map((item) => (
-                                <label
-                                    key={item.id}
-                                    className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                                >
-                                    <Checkbox
-                                        checked={selected.includes(item.id)}
-                                        onCheckedChange={() => toggle(item.id)}
-                                    />
-                                    <span>{item.label}</span>
-                                </label>
-                            ))
-                        )}
+                            </p> : groups && groups.length > 0 ?
+                                groups.map((group) => {
+                                    const groupSelectedCount = group.items.filter((i) =>
+                                        selected.includes(i.id),
+                                    ).length;
+
+                                    return <div key={group.groupName} className="space-y-1 py-1">
+                                        <div className="flex items-center justify-between px-2 pt-1.5 pb-0.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            <span>{group.groupName}</span>
+                                            <span className="font-mono text-[10px] font-normal">
+                                                {groupSelectedCount} of {group.items.length} selected
+                                            </span>
+                                        </div>
+                                        <div className="ml-2 flex flex-col gap-0.5 border-l border-zinc-800/80 pl-3">
+                                            {group.items.map((item) => (
+                                                <label
+                                                    key={item.id}
+                                                    className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                                                >
+                                                    <Checkbox
+                                                        checked={selected.includes(item.id)}
+                                                        onCheckedChange={() => toggle(item.id)}
+                                                    />
+                                                    <span className="font-mono text-xs">{item.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                }) : items && items.map((item) => (
+                                    <label
+                                        key={item.id}
+                                        className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                                    >
+                                        <Checkbox
+                                            checked={selected.includes(item.id)}
+                                            onCheckedChange={() => toggle(item.id)}
+                                        />
+                                        <span>{item.label}</span>
+                                    </label>
+                                ))
+                        }
                     </div>
                 </CollapsibleContent>
             </Collapsible>

@@ -8,9 +8,10 @@ export default function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     if (!isAuthenticated) {
-        return pathname === ROUTES.LOGIN
-            ? NextResponse.next()
-            : NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
+        if (pathname === ROUTES.LOGIN || pathname === ROUTES.CHANGE_PASSWORD) {
+            return NextResponse.next();
+        }
+        return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
     }
 
     return NextResponse.next();
