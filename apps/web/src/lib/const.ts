@@ -33,6 +33,19 @@ export const ROUTES = {
     CHANGE_PASSWORD: "/auth/change-password",
 } as const;
 
+// Resolve the post-login landing page for a given account role. Falls back to
+// the root route for roles without a dedicated dashboard (handled client-side).
+export function getDashboardURI(role?: string | null): string {
+    switch (role) {
+        case ROLES.ADMIN:
+            return ROUTES.ADMIN_DASHBOARD;
+        case ROLES.TUTOR:
+            return ROUTES.TUTOR_DASHBOARD;
+        default:
+            return ROUTES.HOME;
+    }
+}
+
 export const CSV_CONFIG = {
     CREDENTIALS_HEADERS: ["Name", "Email", "Password", "Role", "Platform URL"],
     MIME_TYPE: "text/csv;charset=utf-8;",
@@ -61,6 +74,7 @@ export const PERMISSIONS = {
     ADMIN_USERS_ROLE_REVOKE: "admin:users:role:revoke",
     ADMIN_USERS_CREATE: "admin:users:create",
     ADMIN_USERS_READ: "admin:users:read",
+    ADMIN_USERS_BAN: "admin:users:ban",
     ADMIN_ROLES_CREATE: "admin:roles:create",
     ADMIN_ROLES_READ: "admin:roles:read",
     ADMIN_ROLES_UPDATE: "admin:roles:update",

@@ -72,6 +72,133 @@ func (r *QuizRepository) CreateMetadataRepository(lessonID, tutorID string, req 
 	return &qm, nil
 }
 
+func (r *QuizRepository) ReadMetadataRepository(lessonID, userID string, scope generic.AuthScope) (*entities.QuizMetadata, error) {
+	var result struct {
+		LessonExists bool             `db:"lesson_exists"`
+		IsOwner      bool             `db:"is_owner"`
+		Data         *json.RawMessage `db:"data"`
+	}
+
+	query := `
+		WITH lesson_auth AS (
+			SELECT c.tutor_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE l.id = $1
+		)
+		SELECT 
+			EXISTS(SELECT 1 FROM lesson_auth) AS lesson_exists,
+			CASE WHEN $2::text = 'admin' THEN true ELSE EXISTS(SELECT 1 FROM lesson_auth WHERE tutor_id = $3) END AS is_owner,
+			(SELECT row_to_json(qm.*) FROM quiz_metadata qm WHERE qm.lesson_id = $1) AS data
+	`
+	err := r.DB.Get(&result, query, lessonID, scope, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case !result.LessonExists:
+		return nil, generic.ErrQuizLessonNotFound
+	case !result.IsOwner:
+		return nil, generic.ErrQuizAccessDenied
+	case result.Data == nil:
+		return nil, generic.ErrQuizNotFound
+	}
+
+	var qm entities.QuizMetadata
+	if err := json.Unmarshal(*result.Data, &qm); err != nil {
+		return nil, err
+	}
+	return &qm, nil
+}
+
+func (r *QuizRepository) ListQuestionsRepository(quizID, userID string, scope generic.AuthScope) ([]entities.QuizQuestionDetail, error) {
+	var result struct {
+		QuizExists bool             `db:"quiz_exists"`
+		IsOwner    bool             `db:"is_owner"`
+		Data       *json.RawMessage `db:"data"`
+	}
+
+	query := `
+		WITH quiz_auth AS (
+			SELECT c.tutor_id
+			FROM quiz_metadata qm
+			JOIN lessons l ON l.id = qm.lesson_id
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE qm.id = $1
+		)
+		SELECT 
+			EXISTS(SELECT 1 FROM quiz_auth) AS quiz_exists,
+			CASE WHEN $2::text = 'admin' THEN true ELSE EXISTS(SELECT 1 FROM quiz_auth WHERE tutor_id = $3) END AS is_owner,
+			COALESCE((
+				SELECT json_agg(
+					json_build_object(
+						'id', q.id,
+						'quiz_id', q.quiz_id,
+						'question_type', q.question_type,
+						'question_text', q.question_text,
+						'points', q.points,
+						'fill_blank_hint', q.fill_blank_hint,
+						'created_at', q.created_at,
+						'updated_at', q.updated_at,
+						'options', COALESCE((
+							SELECT json_agg(json_build_object(
+								'id', o.id,
+								'question_id', o.question_id,
+								'option_text', o.option_text,
+								'is_correct', o.is_correct,
+								'sort_order', o.sort_order,
+								'created_at', o.created_at
+							) ORDER BY o.sort_order)
+							FROM quiz_options o WHERE o.question_id = q.id
+						), '[]'::json),
+						'arrange_items', COALESCE((
+							SELECT json_agg(json_build_object(
+								'id', ai.id,
+								'question_id', ai.question_id,
+								'item_text', ai.item_text,
+								'correct_order', ai.correct_order,
+								'created_at', ai.created_at
+							) ORDER BY ai.correct_order)
+							FROM quiz_arrange_items ai WHERE ai.question_id = q.id
+						), '[]'::json),
+						'fill_answers', COALESCE((
+							SELECT json_agg(json_build_object(
+								'id', fba.id,
+								'question_id', fba.question_id,
+								'answer', fba.answer,
+								'created_at', fba.created_at
+							))
+							FROM quiz_fill_blank_answers fba WHERE fba.question_id = q.id
+						), '[]'::json)
+					) ORDER BY q.created_at, q.id
+				)
+				FROM quiz_questions q WHERE q.quiz_id = $1
+			), '[]'::json) AS data
+	`
+	err := r.DB.Get(&result, query, quizID, scope, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case !result.QuizExists:
+		return nil, generic.ErrQuizNotFound
+	case !result.IsOwner:
+		return nil, generic.ErrQuizAccessDenied
+	}
+
+	var questions []entities.QuizQuestionDetail
+	if result.Data != nil {
+		if err := json.Unmarshal(*result.Data, &questions); err != nil {
+			return nil, err
+		}
+	}
+	return questions, nil
+}
+
 func (r *QuizRepository) CreateQuestionRepository(quizID, tutorID string, req entities.CreateQuestionRequest) (*entities.QuizQuestion, error) {
 	var optTexts []string
 	var optCorrects []bool

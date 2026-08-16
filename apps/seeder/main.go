@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -43,6 +44,7 @@ var permissionsCatalog = []PermissionSeed{
 	{ID: "admin:users:role:revoke", Name: "Revoke user roles"},
 	{ID: "admin:users:create", Name: "Create user accounts"},
 	{ID: "admin:users:read", Name: "Read user details"},
+	{ID: "admin:users:ban", Name: "Ban or unban user accounts"},
 	{ID: "admin:roles:create", Name: "Create custom roles"},
 	{ID: "admin:roles:read", Name: "List roles and permissions"},
 	{ID: "admin:roles:update", Name: "Update custom roles"},
@@ -82,6 +84,13 @@ func main() {
 	log.Println("[seeder] Connected successfully!")
 
 	log.Printf("[seeder] Loaded %d permissions from catalog", len(permissionsCatalog))
+
+	// 0. Bootstrap the schema if the database has no tables yet. Migrations are
+	// normally applied by docker-compose (mounted into docker-entrypoint-initdb.d
+	// on a fresh Postgres volume); when running the seeder standalone against an
+	// empty database we apply the same migration files first so TRUNCATE below
+	// doesn't fail on missing relations.
+	runMigrationsIfNeeded(db)
 
 	// 1. Reset Database Table Data
 	log.Println("==================================================")
@@ -142,6 +151,52 @@ func main() {
 	log.Println("==================================================")
 	log.Println("🚀 [seeder] SUCCESS: Database reset and seed complete!")
 	log.Println("==================================================")
+}
+
+// runMigrationsIfNeeded applies the server migration SQL files when the
+// database has no tables yet, mirroring the docker-entrypoint-initdb.d flow.
+func runMigrationsIfNeeded(db *sqlx.DB) {
+	var exists bool
+	if err := db.Get(&exists, `SELECT EXISTS (
+		SELECT 1 FROM information_schema.tables
+		WHERE table_schema = current_schema() AND table_name = 'users'
+	)`); err != nil {
+		log.Fatalf("[seeder] Failed to check for existing schema: %v", err)
+	}
+	if exists {
+		log.Println("[seeder] Schema already present, skipping migrations")
+		return
+	}
+
+	dir := os.Getenv("MIGRATIONS_DIR")
+	if dir == "" {
+		dir = filepath.Join("..", "server", "internals", "migrations")
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		log.Fatalf("[seeder] Failed to read migrations directory %q: %v", dir, err)
+	}
+
+	var files []string
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".sql") {
+			files = append(files, entry.Name())
+		}
+	}
+	sort.Strings(files)
+
+	log.Printf("[seeder] Applying %d migrations from %s ...", len(files), dir)
+	for _, fileName := range files {
+		content, err := os.ReadFile(filepath.Join(dir, fileName))
+		if err != nil {
+			log.Fatalf("[seeder] Failed to read migration %s: %v", fileName, err)
+		}
+		if _, err := db.Exec(string(content)); err != nil {
+			log.Fatalf("[seeder] ERROR applying migration %s: %v", fileName, err)
+		}
+		log.Printf("[seeder] ✓ Applied migration %s", fileName)
+	}
+	log.Println("[seeder] Schema migration complete")
 }
 
 // seedPermissions inserts the permission catalog straight from permissionsCatalog.

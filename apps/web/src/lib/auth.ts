@@ -4,7 +4,7 @@ import { betterAuth } from "better-auth";
 import { jwt, admin } from "better-auth/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
 import { ROLES } from "@/lib/const";
-import { getRolesAndPermissions } from "@/lib/auth-db";
+import { getRolesAndPermissions, markPasswordChanged } from "@/lib/auth-db";
 import type { AuthUser } from "@/lib/auth.types";
 
 const AUTH_SECRET = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
@@ -29,15 +29,11 @@ export const auth = betterAuth({
         },
     },
     databaseHooks: {
-        user: {
+        account: {
             update: {
-                before: async (user) => {
-                    return {
-                        data: {
-                            ...user,
-                            passwordChangedAt: new Date(),
-                        },
-                    };
+                after: async (account) => {
+                    if (account.providerId !== "credential" || !account.password) return;
+                    await markPasswordChanged(account.userId as string);
                 },
             },
         },
@@ -59,17 +55,23 @@ export const auth = betterAuth({
     plugins: [
         jwt({
             jwt: {
-                // Matches the 7-day session lifetime so the JWT survives between page loads.
-                // Each full page load refreshes it via /api/auth/get-session.
                 expirationTime: "7d",
                 definePayload: async ({ user }: { user: AuthUser }) => {
                     let roles: string[] = [];
                     let permissions: string[] = [];
+                    let mustChangePassword = false;
 
                     if (user?.id) {
-                        const dbRoles = await getRolesAndPermissions(user.id);
-                        roles = dbRoles.roles;
-                        permissions = dbRoles.permissions;
+                        const authData = await getRolesAndPermissions(user.id);
+                        roles = authData.roles;
+                        permissions = authData.permissions;
+
+                        if (
+                            (user.role === ROLES.ADMIN || user.role === ROLES.TUTOR) &&
+                            !user.passwordChangedAt
+                        ) {
+                            mustChangePassword = authData.hasCredentialAccount;
+                        }
                     }
 
                     return {
@@ -79,7 +81,7 @@ export const auth = betterAuth({
                         roles,
                         permissions,
                         banned: Boolean(user?.banned),
-                        password_changed: Boolean(user?.passwordChangedAt),
+                        must_change_password: mustChangePassword,
                     };
                 },
             },

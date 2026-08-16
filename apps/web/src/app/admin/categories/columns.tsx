@@ -4,8 +4,10 @@ import { createColumnHelper } from "@tanstack/react-table";
 import type { Category } from "@/schema/category.types";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/icon";
 import { SortableColumnHeader } from "@/components/sortable-column-header";
 import { RowActions, RowActionButton } from "@/components/row-actions";
+import { cn } from "@/lib/utils";
 
 const columnHelper = createColumnHelper<Category>();
 
@@ -16,7 +18,26 @@ export const getColumns = (
 ) => [
   columnHelper.accessor("name", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Category Name" />,
-    cell: ({ getValue }) => <span className="font-semibold">{getValue()}</span>,
+    cell: ({ getValue, row }) => (
+      <div className="flex items-center gap-1.5">
+        {row.getCanExpand() ? (
+          <button
+            type="button"
+            onClick={row.getToggleExpandedHandler()}
+            aria-label={row.getIsExpanded() ? "Collapse subcategories" : "Expand subcategories"}
+            className="flex size-5 shrink-0 items-center justify-center rounded hover:bg-muted"
+          >
+            <Icon
+              name="chevron-right"
+              className={cn("size-4 transition-transform", row.getIsExpanded() && "rotate-90")}
+            />
+          </button>
+        ) : (
+          <span className="size-5 shrink-0" />
+        )}
+        <span className="font-semibold">{getValue()}</span>
+      </div>
+    ),
   }),
   columnHelper.accessor("created_at", {
     header: "Created Date",

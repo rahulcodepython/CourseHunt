@@ -24,6 +24,20 @@ type QuizQuestion struct {
 	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }
 
+type QuizQuestionDetail struct {
+	ID            string                `json:"id" db:"id"`
+	QuizID        string                `json:"quiz_id" db:"quiz_id"`
+	QuestionType  string                `json:"question_type" db:"question_type"`
+	QuestionText  string                `json:"question_text" db:"question_text"`
+	Points        int                   `json:"points" db:"points"`
+	FillBlankHint *string               `json:"fill_blank_hint" db:"fill_blank_hint"`
+	CreatedAt     time.Time             `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time             `json:"updated_at" db:"updated_at"`
+	Options       []QuizOption          `json:"options"`
+	ArrangeItems  []QuizArrangeItem     `json:"arrange_items"`
+	FillAnswers   []QuizFillBlankAnswer `json:"fill_answers"`
+}
+
 type QuizOption struct {
 	ID         string    `json:"id" db:"id"`
 	QuestionID string    `json:"question_id" db:"question_id"`

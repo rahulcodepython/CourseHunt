@@ -7,11 +7,13 @@ import {
     getSortedRowModel,
     getFilteredRowModel,
     getPaginationRowModel,
+    getExpandedRowModel,
     flexRender,
     type ColumnDef,
     type SortingState,
     type ColumnFiltersState,
     type VisibilityState,
+    type ExpandedState,
 } from "@tanstack/react-table";
 import {
     Table,
@@ -31,6 +33,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon, type IconName } from "@/components/icon";
 import { DataTablePagination } from "@/components/data-table-pagination";
+import { CopyableCell } from "@/components/copyable-cell";
+import { ExportTableButton } from "@/components/export-table-button";
 import { useDebounce } from "@/hooks/use-debounce";
 
 export interface DataTableProps<TData> {
@@ -47,6 +51,10 @@ export interface DataTableProps<TData> {
     isLoading?: boolean;
     loadingText?: string;
     toolbarActions?: React.ReactNode;
+    /** Base filename (no extension) used by the Export button's CSV/XLSX download. */
+    exportFilename?: string;
+    /** When provided, rows expand to reveal nested children (e.g. category -> subcategories) instead of a flat list. */
+    getSubRows?: (row: TData) => TData[] | undefined;
 }
 
 export function DataTable<TData>({
@@ -62,12 +70,16 @@ export function DataTable<TData>({
     isLoading = false,
     loadingText = "Loading...",
     toolbarActions,
+    exportFilename = "export",
+    getSubRows,
 }: DataTableProps<TData>) {
+    const tableContainerRef = React.useRef<HTMLDivElement>(null);
     const resolvedEmptyText = isLoading ? loadingText : emptyText;
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [globalFilter, setGlobalFilter] = React.useState("");
+    const [expanded, setExpanded] = React.useState<ExpandedState>({});
 
     // The input updates instantly; the table's filter state (which drives
     // the actual re-filter/re-render) only picks up the debounced value.
@@ -82,14 +94,19 @@ export function DataTable<TData>({
             columnFilters,
             columnVisibility,
             globalFilter,
+            expanded,
         },
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onColumnVisibilityChange: setColumnVisibility,
         onGlobalFilterChange: setGlobalFilter,
+        onExpandedChange: setExpanded,
+        getSubRows,
+        paginateExpandedRows: false,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
+        getExpandedRowModel: getExpandedRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         initialState: {
             pagination: {
@@ -107,8 +124,18 @@ export function DataTable<TData>({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedSearch, searchColumnKey]);
 
+    // Cumulative "Load More" reveal instead of a page switcher: every row up
+    // through the current page is rendered at once, so pageIndex/pageSize
+    // stay the source of truth (sorting/filtering untouched) while the
+    // visible slice only grows.
+    const { pageIndex, pageSize: currentPageSize } = table.getState().pagination;
+    const filteredRows = table.getPrePaginationRowModel().rows;
+    const visibleCount = Math.min((pageIndex + 1) * currentPageSize, filteredRows.length);
+    const visibleRows = filteredRows.slice(0, visibleCount);
+    const hasMore = visibleCount < filteredRows.length;
+
     const showSearch = Boolean(searchPlaceholder || searchColumnKey);
-    const showHeaderBar = showSearch || showColumnToggle || toolbarActions;
+    const showHeaderBar = showSearch || showColumnToggle || toolbarActions || hasMore;
 
     return (
         <div className="space-y-4">
@@ -131,6 +158,18 @@ export function DataTable<TData>({
 
                     <div className="flex items-center gap-2 ml-auto">
                         {toolbarActions}
+                        <ExportTableButton containerRef={tableContainerRef} filename={exportFilename} />
+                        {hasMore && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex gap-2"
+                                onClick={() => table.setPageIndex(pageIndex + 1)}
+                            >
+                                <Icon name="chevron-down" className="size-4" />
+                                <span>Load More</span>
+                            </Button>
+                        )}
                         {showColumnToggle && <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="flex gap-2">
@@ -160,7 +199,7 @@ export function DataTable<TData>({
                 </div>
             }
 
-            <div className="rounded-md border">
+            <div className="rounded-md border" ref={tableContainerRef}>
                 <Table>
                     <TableHeader>
                         {
@@ -180,15 +219,20 @@ export function DataTable<TData>({
                     </TableHeader>
                     <TableBody>
                         {
-                            table.getRowModel().rows?.length ?
-                                table.getRowModel().rows.map((row) => <TableRow
+                            visibleRows.length ?
+                                visibleRows.map((row) => <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
                                     className="hover:bg-muted/40 transition-colors"
                                 >
                                     {
-                                        row.getVisibleCells().map((cell) => <TableCell key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        row.getVisibleCells().map((cell, cellIndex) => <TableCell
+                                            key={cell.id}
+                                            style={cellIndex === 0 && row.depth > 0 ? { paddingLeft: `${row.depth * 1.5 + 1}rem` } : undefined}
+                                        >
+                                            <CopyableCell>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </CopyableCell>
                                         </TableCell>
                                         )
                                     }
@@ -207,7 +251,7 @@ export function DataTable<TData>({
                 </Table>
             </div>
 
-            {showPagination && <DataTablePagination table={table} />}
+            {showPagination && <DataTablePagination table={table} visibleCount={visibleCount} />}
         </div>
     );
 }

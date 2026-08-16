@@ -17,12 +17,12 @@ import { LoadingButton } from "@/components/loading-button";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { FormDialog } from "@/components/form-dialog";
 import { DataTable } from "@/components/data-table";
+import { CollapsibleCheckboxList } from "@/components/collapsible-checkbox-list";
 import { Icon } from "@/components/icon";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -49,52 +49,22 @@ function PermissionsGrid({
     setDirty(false);
   }, [rolePermissions]);
 
-  const toggle = (permissionId: string) => {
-    setSelected((prev) =>
-      prev.includes(permissionId)
-        ? prev.filter((id) => id !== permissionId)
-        : [...prev, permissionId],
-    );
-    setDirty(true);
-  };
-
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Permissions Matrix
-      </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-        {(allPermissions?.data ?? []).map((permission: Permission) => {
-          const isSelected = selected.includes(permission.id);
-          return (
-            <button
-              key={permission.id}
-              type="button"
-              onClick={() => toggle(permission.id)}
-              className={cn(
-                "flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors cursor-pointer",
-                isSelected
-                  ? "border-primary bg-primary/10 text-primary font-medium"
-                  : "border-border hover:border-muted-foreground/50",
-              )}
-            >
-              <span
-                className={cn(
-                  "flex size-4 shrink-0 items-center justify-center rounded border",
-                  isSelected
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-muted-foreground/40",
-                )}
-              >
-                {isSelected && <Icon name="check" className="size-3" />}
-              </span>
-              <span className="truncate font-mono text-xs">
-                {permission.name}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <CollapsibleCheckboxList
+        title="Select Permissions"
+        items={(allPermissions?.data ?? []).map((permission: Permission) => ({
+          id: permission.id,
+          label: permission.name,
+        }))}
+        selected={selected}
+        onChange={(next) => {
+          setSelected(next);
+          setDirty(true);
+        }}
+        maxHeight="20rem"
+        emptyMessage="No permissions available"
+      />
       <div className="flex justify-end pt-1">
         <LoadingButton
           size="sm"

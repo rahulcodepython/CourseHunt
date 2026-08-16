@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { useUserProfileQuery, useCreateUserProfileMutation } from "@/query-hooks/users.api";
 import { useUploadMediaMutation } from "@/query-hooks/upload.api";
-import { authClient } from "@/lib/auth-client";
+import authClient from "@/lib/auth-client";
 import { useSessionStore } from "@/store/session.store";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 

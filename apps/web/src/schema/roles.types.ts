@@ -5,6 +5,7 @@ export const RoleZod = z.object({
     name: z.string(),
     description: z.string().nullable().optional(),
     is_system: z.boolean().optional(),
+    permissions_count: z.number().optional(),
 });
 export type Role = z.infer<typeof RoleZod>;
 

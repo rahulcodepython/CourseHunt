@@ -8,7 +8,7 @@ type UserRole struct {
 }
 
 type AssignRoleRequest struct {
-	RoleID string `json:"role_id" validate:"required"`
+	RoleIDs []string `json:"role_ids" validate:"required"`
 }
 
 type UserListResponse struct {
@@ -23,6 +23,6 @@ type UserListResponse struct {
 }
 
 type RoleAssignmentResponse struct {
-	UserID string `json:"user_id"`
-	RoleID string `json:"role_id"`
+	UserID  string   `json:"user_id"`
+	RoleIDs []string `json:"role_ids"`
 }

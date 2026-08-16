@@ -6,8 +6,11 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { AuthCard } from "@/components/auth-card";
-import { authClient, refreshSession } from "@/lib/auth-client";
-import { ROUTES } from "@/lib/const";
+import authClient from "@/lib/auth-client";
+import { ROUTES, getDashboardURI } from "@/lib/const";
+import useSession, { buildSessionPayload } from "@/hooks/use-session";
+import { type SessionPayload } from "@/store/session.store";
+import { jwtDecode } from "jwt-decode";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/loading-button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +34,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
     const router = useRouter();
+    const { setSessionPayload } = useSession();
     const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
     const [isEmailLoading, setIsEmailLoading] = React.useState(false);
 
@@ -63,26 +67,31 @@ export default function LoginPage() {
     const handleEmailLogin = async (data: LoginFormData) => {
         setIsEmailLoading(true);
         try {
+            let jwtToken: string | null = null;
             const response = await authClient.signIn.email({
                 email: data.email,
                 password: data.password,
+                fetchOptions: {
+                    onResponse: (ctx) => {
+                        jwtToken = ctx.response.headers.get("set-auth-jwt");
+                    },
+                },
             });
-            if (response.error) {
-                toast.error(response.error.message || "Failed to sign in. Please check credentials.");
+            if (response.error || !response.data) {
+                toast.error(response.error?.message || "Failed to sign in. Please check credentials.");
                 return;
             }
-            // Single session load: sets the HttpOnly access_token cookie
-            // server-side and populates the store with user + roles + permissions.
-            const payload = await refreshSession();
-            if (!payload?.user) {
-                toast.error("Failed to load session. Please try again.");
-                return;
-            }
-            if (!payload.user.passwordChangedAt) {
-                router.push(ROUTES.CHANGE_PASSWORD);
-                return;
-            }
-            router.push(ROUTES.HOME);
+            const payload = buildSessionPayload({
+                user: response.data.user,
+                session: (response.data as Record<string, unknown>).session,
+                jwtToken,
+            });
+            const targetUrl = payload.mustChangePassword
+                ? ROUTES.CHANGE_PASSWORD
+                : getDashboardURI(payload.user?.role);
+
+            setSessionPayload(payload);
+            router.push(targetUrl);
         } catch (error) {
             console.error("Login failed:", error);
             toast.error("Failed to sign in. Please check credentials.");

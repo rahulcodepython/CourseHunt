@@ -7,6 +7,7 @@ import { hasPermission } from "@/lib/permissions";
 import { ROLES, PERMISSIONS } from "@/lib/const";
 import { CreateUserDialog } from "@/components/create-user-dialog";
 import { ManageRolesDialog } from "@/components/manage-roles-dialog";
+import { useUserBanActions } from "@/hooks/use-user-ban-actions";
 import type { UserListResponse } from "@/schema/users.types";
 import { PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
@@ -17,6 +18,7 @@ import { getColumns } from "./columns";
 export default function AdminsPage() {
     const permissions = useSessionStore((s) => s.permissions);
     const canCreateAdmin = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_ROLE_ASSIGN);
+    const { canBan, currentUserId, handleBanToggle } = useUserBanActions();
 
     const { data: rawAdmins, isLoading } = useUsersQuery({ role: ROLES.ADMIN });
     const [selectedUser, setSelectedUser] = React.useState<UserListResponse | null>(null);
@@ -30,7 +32,10 @@ export default function AdminsPage() {
         setDialogOpen(true);
     };
 
-    const columns = React.useMemo(() => getColumns(handleManage), []);
+    const columns = React.useMemo(
+        () => getColumns(handleManage, handleBanToggle, { canBan, currentUserId }),
+        [canBan, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps
+    );
 
     return (
         <div className="space-y-6">
@@ -49,6 +54,9 @@ export default function AdminsPage() {
             <DataTable
                 columns={columns}
                 data={admins}
+                searchPlaceholder="Search by name..."
+                searchColumnKey="name"
+                exportFilename="admins"
                 emptyIcon="user-check"
                 emptyText="No admin users found"
                 isLoading={isLoading}

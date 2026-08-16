@@ -43,6 +43,18 @@ export const columns = [
       <span className="text-muted-foreground">{getValue()}</span>
     ),
   }),
+  columnHelper.accessor((row) => row.coupon?.code || "—", {
+    id: "coupon",
+    header: "Coupon",
+    cell: ({ getValue }) => {
+      const code = getValue();
+      return code === "—" ? (
+        <span className="text-muted-foreground">—</span>
+      ) : (
+        <span className="font-mono text-xs">{code}</span>
+      );
+    },
+  }),
   columnHelper.accessor("amount", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Amount" />,
     cell: ({ getValue }) => (

@@ -37,6 +37,28 @@ export const QuizArrangeItemZod = z.object({
 });
 export type QuizArrangeItem = z.infer<typeof QuizArrangeItemZod>;
 
+export const QuizFillBlankAnswerZod = z.object({
+    id: z.string(),
+    question_id: z.string(),
+    answer: z.string(),
+});
+export type QuizFillBlankAnswer = z.infer<typeof QuizFillBlankAnswerZod>;
+
+export const QuizQuestionDetailZod = z.object({
+    id: z.string(),
+    quiz_id: z.string(),
+    question_type: z.string(),
+    question_text: z.string(),
+    points: z.number(),
+    fill_blank_hint: z.string().nullable().optional(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    options: z.array(QuizOptionZod).nullable().optional(),
+    arrange_items: z.array(QuizArrangeItemZod).nullable().optional(),
+    fill_answers: z.array(QuizFillBlankAnswerZod).nullable().optional(),
+});
+export type QuizQuestionDetail = z.infer<typeof QuizQuestionDetailZod>;
+
 export const QuestionValidationZod = z.object({
     id: z.string(),
     question_type: z.string(),

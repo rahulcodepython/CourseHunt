@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
     reactStrictMode: false,
-    allowedDevOrigins: ['coursehunt.localhost', 'admin.coursehunt.localhost'],
+    allowedDevOrigins: ['coursehunt.localhost'],
     images: {
         remotePatterns: [
             { protocol: "https", hostname: "ik.imagekit.io", port: "", pathname: "/egg4kxv60/**" },

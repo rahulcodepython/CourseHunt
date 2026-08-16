@@ -68,7 +68,7 @@ export default function LessonFeedbackPage() {
     <div className="space-y-6">
       <div>
         <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
-          <Link href={`/courses/${courseId}/chapters/${chapterId}/lessons`}>
+          <Link href={`/admin/courses/${courseId}/chapters/${chapterId}/lessons`}>
             <span className="flex items-center gap-1.5">
               <Icon name="arrow-left" className="size-4" />
               Back to Lessons

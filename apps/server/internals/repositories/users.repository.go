@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type UsersRepository struct {
@@ -69,13 +70,16 @@ func (r *UsersRepository) GetRolesAndPermissions(userID string) (RolesAndPermiss
 	return out, nil
 }
 
-func (r *UsersRepository) AssignRoleRepository(userID string, roleID string) error {
-	_, err := r.DB.Exec(`INSERT INTO roles_user (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, userID, roleID)
+func (r *UsersRepository) AssignRoleRepository(userID string, roleIDs []string) error {
+	_, err := r.DB.Exec(`
+		INSERT INTO roles_user (user_id, role_id)
+		SELECT $1, unnest($2::uuid[])
+		ON CONFLICT DO NOTHING`, userID, pq.Array(roleIDs))
 	return err
 }
 
-func (r *UsersRepository) DeleteRoleRepository(userID string, roleID string) error {
-	_, err := r.DB.Exec(`DELETE FROM roles_user WHERE user_id = $1 AND role_id = $2`, userID, roleID)
+func (r *UsersRepository) DeleteRoleRepository(userID string, roleIDs []string) error {
+	_, err := r.DB.Exec(`DELETE FROM roles_user WHERE user_id = $1 AND role_id = ANY($2::uuid[])`, userID, pq.Array(roleIDs))
 	return err
 }
 

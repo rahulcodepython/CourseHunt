@@ -31,22 +31,22 @@ DELETE FROM permissions WHERE id IN ('admin:dashboard', 'tutor:dashboard', 'user
 DELETE FROM permissions WHERE id LIKE 'user:%';
 
 -- ============================================================
--- 2. Bootstrap a plain "Admin" role from whatever admin:* permissions
+-- 2. Bootstrap a plain "Super Admin" role from whatever admin:* permissions
 --    actually exist right now, assigned to every existing admin-segment
 --    account so no currently-working admin gets locked out.
 -- ============================================================
 INSERT INTO roles (name, description, is_system)
-VALUES ('Admin', 'Full administrative access — every admin:* permission.', true)
+VALUES ('Super Admin', 'Full administrative access — every admin:* permission.', true)
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT (SELECT id FROM roles WHERE name = 'Admin'), p.id
+SELECT (SELECT id FROM roles WHERE name = 'Super Admin'), p.id
 FROM permissions p
 WHERE p.id LIKE 'admin:%'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO roles_user (user_id, role_id)
-SELECT u.id, (SELECT id FROM roles WHERE name = 'Admin')
+SELECT u.id, (SELECT id FROM roles WHERE name = 'Super Admin')
 FROM "users" u
 WHERE u.role = 'admin'
 ON CONFLICT DO NOTHING;

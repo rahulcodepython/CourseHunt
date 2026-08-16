@@ -4,9 +4,11 @@ import { useTutorDashboardQuery } from "@/query-hooks/dashboard.api";
 import type { TutorDashboard } from "@/schema/dashboard.types";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
+import { DataTable } from "@/components/data-table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatINR } from "@/lib/format";
+import { courseStatsColumns } from "./columns-course-stats";
 
 export default function TutorDashboardPage() {
   const { data: raw, isLoading } = useTutorDashboardQuery();
@@ -27,6 +29,10 @@ export default function TutorDashboardPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-40 w-full rounded-md" />
         </div>
       </div>
     );
@@ -65,6 +71,18 @@ export default function TutorDashboardPage() {
           value={d.rating_avg ? d.rating_avg.toFixed(1) : "N/A"}
           icon="user-check"
           description="Student feedback score"
+        />
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold tracking-tight">Per-Course Performance</h3>
+        <DataTable
+          columns={courseStatsColumns}
+          data={d.course_stats ?? []}
+          showColumnToggle={false}
+          showPagination={false}
+          emptyText="No course stats yet"
+          emptyIcon="book"
         />
       </div>
     </div>

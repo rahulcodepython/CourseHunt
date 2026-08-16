@@ -1,4 +1,4 @@
--- 001_users.sql: Seed Users, Credentials, Roles Mapping, and Profiles
+-- 001_users.sql: Seed Users, Better-Auth Credential Accounts, Roles Mapping, and Profiles
 -- Roles, permissions, and role_permissions are seeded programmatically by
 -- main.go from the repo-root `permissions.json` (see scripts/sync-permissions.mjs).
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -23,26 +23,6 @@ ON CONFLICT (email) DO UPDATE SET
     image = EXCLUDED.image,
     role = EXCLUDED.role,
     "passwordChangedAt" = NULL;
-
--- Insert Credentials (Passwords: admin123456, tutor123456, user123456 / password123)
-INSERT INTO credentials (user_id, password_hash, password_changed_at)
-SELECT u.id, crypt(v.password, gen_salt('bf', 10)), CURRENT_TIMESTAMP
-FROM (VALUES
-    ('admin@example.com', 'admin123456', CURRENT_TIMESTAMP),
-    ('superadmin@example.com', 'admin123456', CURRENT_TIMESTAMP),
-    ('tutor@example.com', 'tutor123456', CURRENT_TIMESTAMP),
-    ('sarah.smith@example.com', 'tutor123456', CURRENT_TIMESTAMP),
-    ('john.doe@example.com', 'tutor123456', CURRENT_TIMESTAMP),
-    ('user@example.com', 'user123456', CURRENT_TIMESTAMP),
-    ('alice@example.com', 'password123', CURRENT_TIMESTAMP),
-    ('bob@example.com', 'password123', NULL),
-    ('charlie@example.com', 'password123', NULL),
-    ('david@example.com', 'password123', NULL),
-    ('eva@example.com', 'password123', NULL),
-    ('fiona@example.com', 'password123', NULL)
-) AS v(email, password, password_changed_at)
-JOIN users u ON u.email = v.email
-ON CONFLICT (user_id) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- Insert Better-Auth Credential Accounts (scrypt hashes, format `<salt>:<key>`)
 -- Password hashes match Better-Auth's scrypt params: N=16384, r=16, p=1, dkLen=64
@@ -74,11 +54,11 @@ ON CONFLICT ("providerId", "accountId") DO NOTHING;
 -- no roles_user row at all (tutor capabilities are modular, granted later
 -- via /roles; plain users don't participate in the permission system).
 INSERT INTO roles (name, description, is_system)
-VALUES ('Admin', 'Full administrative access — every admin:* permission.', true)
+VALUES ('Super Admin', 'Full administrative access — every admin:* permission.', true)
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT (SELECT id FROM roles WHERE name = 'Admin'), p.id
+SELECT (SELECT id FROM roles WHERE name = 'Super Admin'), p.id
 FROM permissions p
 WHERE p.id LIKE 'admin:%'
 ON CONFLICT DO NOTHING;
@@ -88,7 +68,7 @@ DELETE FROM roles_user WHERE user_id IN (
 );
 
 INSERT INTO roles_user (user_id, role_id)
-SELECT u.id, (SELECT id FROM roles WHERE name = 'Admin')
+SELECT u.id, (SELECT id FROM roles WHERE name = 'Super Admin')
 FROM "users" u
 WHERE u.role = 'admin'
 ON CONFLICT DO NOTHING;

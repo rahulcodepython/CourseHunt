@@ -20,7 +20,18 @@ func NewRolesRepository(db *sqlx.DB, cache *cache.Cache) *RolesRepository {
 
 func (r *RolesRepository) ListRolesRepository() ([]entities.Role, error) {
 	var roles []entities.Role
-	err := r.DB.Select(&roles, `SELECT id, name, description, is_system FROM roles ORDER BY name`)
+	err := r.DB.Select(&roles, `
+		SELECT 
+			r.id, 
+			r.name, 
+			r.description, 
+			r.is_system,
+			COUNT(rp.permission_id) AS permissions_count
+		FROM roles r
+		LEFT JOIN role_permissions rp ON rp.role_id = r.id
+		GROUP BY r.id, r.name, r.description, r.is_system
+		ORDER BY r.name
+	`)
 	return roles, err
 }
 
@@ -81,6 +92,15 @@ func (r *RolesRepository) UpdateRoleRepository(roleID string, req entities.Updat
 		return nil, err
 	}
 	return &role, nil
+}
+
+// CountRoleAssignmentsRepository returns how many users currently hold this
+// role — the caller uses it to block deletion instead of silently cascading
+// the role away from every assigned account.
+func (r *RolesRepository) CountRoleAssignmentsRepository(roleID string) (int, error) {
+	var count int
+	err := r.DB.Get(&count, `SELECT COUNT(*) FROM roles_user WHERE role_id = $1`, roleID)
+	return count, err
 }
 
 func (r *RolesRepository) DeleteRoleRepository(roleID string) (string, error) {

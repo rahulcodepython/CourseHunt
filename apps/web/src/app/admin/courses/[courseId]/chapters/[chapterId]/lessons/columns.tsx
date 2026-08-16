@@ -65,7 +65,7 @@ export const getColumns = (courseId: string, chapterId: string) => [
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => {
       const lesson = row.original;
-      const basePath = `/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`;
+      const basePath = `/admin/courses/${courseId}/chapters/${chapterId}/lessons/${lesson.id}`;
       return (
         <RowActions>
           <RowActionButton

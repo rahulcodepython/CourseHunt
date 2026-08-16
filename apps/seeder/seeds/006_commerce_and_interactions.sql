@@ -162,6 +162,17 @@ SELECT gen_random_uuid(), u.id, c.id, v.amount, v.status, v.razorpay_order_id, v
 ) AS v(email, slug, amount, status, razorpay_order_id, razorpay_payment_id)
 JOIN users u ON u.email=v.email JOIN courses c ON c.slug=v.slug ON CONFLICT (id) DO NOTHING;
 
+-- A subset of the transactions above were paid with a coupon applied.
+INSERT INTO transactions_coupons (transaction_id, coupon_id)
+SELECT t.id, cp.id FROM (VALUES
+    ('order_K1a2b3c4d5', 'WELCOME50'),
+    ('order_K3a2b3c4d5', 'NEXTJS20'),
+    ('order_K6a2b3c4d5', 'DATASCIENCE')
+) AS v(razorpay_order_id, code)
+JOIN transactions t ON t.razorpay_order_id = v.razorpay_order_id
+JOIN coupons cp ON cp.code = v.code
+ON CONFLICT (transaction_id) DO NOTHING;
+
 INSERT INTO updates (id, course_id, created_by, message, created_at)
 SELECT gen_random_uuid(), c.id, u.id, v.message, v.created_at FROM (VALUES
     ('admin@example.com', 'go-golang-microservices-masterclass', 'Updated Chapter 3 with Go 1.24 Fiber v3 benchmarks and gRPC reflection examples.', CURRENT_TIMESTAMP - INTERVAL '2 days'),

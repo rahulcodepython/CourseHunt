@@ -14,8 +14,8 @@ services:
   #     - coursehunt-network
 
   postgres:
-    image: postgres:latest
-    container_name: coursehunt-postgres
+    image: ${POSTGRES_IMAGE:-postgres:latest}
+    container_name: ${POSTGRES_CONTAINER_NAME:-coursehunt-postgres}
     env_file:
       - .env
     environment:
@@ -38,8 +38,8 @@ services:
       start_period: 10s
 
   redis:
-    image: redis:7-alpine
-    container_name: coursehunt-redis
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    container_name: ${REDIS_CONTAINER_NAME:-coursehunt-redis}
     env_file:
       - .env
     ports:
@@ -60,8 +60,10 @@ services:
   # GUI OPTION 1: WhoDB (Postgres + Redis) - Sleek & Minimal
   # --------------------------------------------------------
   whodb:
-    image: clidey/whodb:latest
-    container_name: coursehunt-whodb
+    image: ${WHODB_IMAGE:-clidey/whodb:latest}
+    container_name: ${WHODB_CONTAINER_NAME:-coursehunt-whodb}
+    env_file:
+      - .env
     restart: unless-stopped
     ports:
       - "${WHODB_PORT:-8085}:8080"
@@ -74,8 +76,11 @@ services:
       - coursehunt-network
 
   minio:
-    image: minio/minio
-    command: server /data --console-address ":9001"
+    image: ${MINIO_IMAGE:-minio/minio:latest}
+    container_name: ${MINIO_CONTAINER_NAME:-coursehunt-minio}
+    env_file:
+      - .env
+    command: server /data --console-address ":${MINIO_CONSOLE_PORT:-9001}"
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
@@ -87,7 +92,7 @@ services:
     networks:
       - coursehunt-network
     healthcheck:
-      test: ["CMD-SHELL", "mc ready local || curl -f http://localhost:9000/minio/health/live || exit 1"]
+      test: ["CMD-SHELL", "mc ready local || curl -f http://localhost:${MINIO_PORT:-9000}/minio/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -97,7 +102,7 @@ services:
     build:
       context: .
       dockerfile: ./apps/server/Dockerfile
-    container_name: coursehunt-backend
+    container_name: ${BACKEND_CONTAINER_NAME:-coursehunt-backend}
     restart: unless-stopped
     ports:
       - "${PORT:-8080}:8080"
@@ -105,12 +110,17 @@ services:
       - .env
     environment:
       - PORT=${PORT:-8080}
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coursehunt}?sslmode=disable
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - MINIO_ENDPOINT=minio:9000
-      # The admin app runs on the host in local dev; reach it via host-gateway
-      - JWKS_URL=http://host.docker.internal:3000/api/auth/jwks
+      - DATABASE_URL=${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coursehunt}?sslmode=disable}
+      - REDIS_HOST=${DOCKER_REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - MINIO_ENDPOINT=${DOCKER_MINIO_ENDPOINT:-minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - MINIO_BUCKET=${MINIO_BUCKET:-coursehunt}
+      - MINIO_BASE_URL=${MINIO_BASE_URL:-http://localhost:9000/coursehunt}
+      - MINIO_SECURE=${MINIO_SECURE:-false}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://coursehunt.localhost:3000,http://admin.coursehunt.localhost:3000,http://api.coursehunt.localhost:8080}
+      - JWKS_URL=${DOCKER_JWKS_URL:-${JWKS_URL:-http://host.docker.internal:3000/api/auth/jwks}}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -123,7 +133,7 @@ services:
     networks:
       - coursehunt-network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/api/v1/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-8080}/api/v1/health || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 3

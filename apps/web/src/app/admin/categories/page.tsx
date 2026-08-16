@@ -189,7 +189,9 @@ export default function CategoriesPage() {
       <DataTable
         columns={columns}
         data={categories}
+        getSubRows={(category) => category.subcategories}
         searchPlaceholder="Search categories..."
+        exportFilename="categories"
         emptyIcon="folder"
         emptyText="No categories found"
       />

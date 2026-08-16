@@ -40,7 +40,7 @@ export default function ChapterLessonsPage() {
     <div className="space-y-6">
       <div>
         <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
-          <Link href={`/courses/${courseId}/chapters`}>
+          <Link href={`/admin/courses/${courseId}/chapters`}>
             <span className="flex items-center gap-1.5">
               <Icon name="arrow-left" className="size-4" />
               Back to Chapters

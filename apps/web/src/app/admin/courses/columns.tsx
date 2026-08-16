@@ -98,9 +98,9 @@ export const columns = [
             const course = row.original;
             return (
                 <RowActions>
-                    <RowActionButton icon="hierarchy" label="View Chapters" href={`/courses/${course.id}/chapters`} />
-                    <RowActionButton icon="users" label="View Enrolled Users" href={`/courses/${course.id}/enrollments`} />
-                    <RowActionButton icon="chart-bar" label="View Analytics" href={`/courses/overview/${course.id}`} />
+                    <RowActionButton icon="hierarchy" label="View Chapters" href={`/admin/courses/${course.id}/chapters`} />
+                    <RowActionButton icon="users" label="View Enrolled Users" href={`/admin/courses/${course.id}/enrollments`} />
+                    <RowActionButton icon="chart-bar" label="View Analytics" href={`/admin/courses/overview/${course.id}`} />
                 </RowActions>
             );
         },

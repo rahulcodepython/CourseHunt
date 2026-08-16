@@ -7,12 +7,14 @@ export interface SessionPayload {
     roles: string[];
     permissions: string[];
     token: string | null;
+    mustChangePassword: boolean;
 }
 
 interface SessionState {
     data: SessionData | null;
     user: SessionUser | null;
     token: string | null;
+    mustChangePassword: boolean;
     isPending: boolean;
     roles: string[];
     permissions: string[];
@@ -25,6 +27,7 @@ export const useSessionStore = create<SessionState>((set) => ({
     data: null,
     user: null,
     token: null,
+    mustChangePassword: false,
     isPending: true,
     roles: [],
     permissions: [],
@@ -33,6 +36,7 @@ export const useSessionStore = create<SessionState>((set) => ({
             data: payload.user ? { user: payload.user, session: payload.session } : null,
             user: payload.user,
             token: payload.token,
+            mustChangePassword: payload.mustChangePassword,
             roles: payload.roles,
             permissions: payload.permissions,
             isPending: false,
@@ -49,5 +53,14 @@ export const useSessionStore = create<SessionState>((set) => ({
                 user: updatedUser,
             };
         }),
-    clear: () => set({ data: null, user: null, token: null, isPending: false, roles: [], permissions: [] }),
+    clear: () =>
+        set({
+            data: null,
+            user: null,
+            token: null,
+            mustChangePassword: false,
+            isPending: false,
+            roles: [],
+            permissions: [],
+        }),
 }));

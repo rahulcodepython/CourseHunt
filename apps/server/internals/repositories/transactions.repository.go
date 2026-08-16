@@ -23,20 +23,29 @@ func NewTransactionsRepository(db *sqlx.DB) *TransactionsRepository {
 
 // CreateRepository writes the transaction row ONCE, fully formed: the
 // service creates the Razorpay order first, and only reaches here once that
-// succeeds, so there's no "pending, no order id" row to reconcile later.
+// succeeds, so there's no "pending, no order id" row to reconcile later. The
+// applied coupon (if any) is recorded as a separate transactions_coupons row
+// in the same statement via a CTE.
 func (r *TransactionsRepository) CreateRepository(id, userID, courseID string, couponID *string, razorpayOrderID string, amount float64) (*entities.Transaction, error) {
 	var t entities.Transaction
 	err := r.DB.Get(&t, `
-		INSERT INTO transactions (id, user_id, course_id, coupon_id, razorpay_order_id, amount, currency, status)
-		VALUES ($1, $2, $3, $4, $5, $6, 'INR', 'pending')
-		RETURNING
+		WITH inserted_tx AS (
+			INSERT INTO transactions (id, user_id, course_id, razorpay_order_id, amount, currency, status)
+			VALUES ($1, $2, $3, $4, $5, 'INR', 'pending')
+			RETURNING id
+		),
+		coupon_mapped AS (
+			INSERT INTO transactions_coupons (transaction_id, coupon_id)
+			SELECT id, $6::uuid FROM inserted_tx WHERE $6::uuid IS NOT NULL
+		)
+		SELECT
 			id,
 			COALESCE(user_id::text, '') AS "user.id",
 			COALESCE(course_id::text, '') AS "course.id",
-			COALESCE(coupon_id::text, '') AS "coupon.id",
 			razorpay_order_id, razorpay_payment_id, amount, currency, status,
-			error_description, confirmed_at, created_at`,
-		id, userID, courseID, couponID, razorpayOrderID, amount,
+			error_description, confirmed_at, created_at
+		FROM transactions WHERE id = (SELECT id FROM inserted_tx)`,
+		id, userID, courseID, razorpayOrderID, amount, couponID,
 	)
 	if err != nil {
 		return nil, err
@@ -57,14 +66,18 @@ func (r *TransactionsRepository) MarkPaymentCapturedRepository(razorpayPaymentID
 			UPDATE transactions
 			SET status = 'success', razorpay_payment_id = $1, confirmed_at = CURRENT_TIMESTAMP
 			WHERE razorpay_order_id = $2
-			RETURNING id, user_id, course_id, coupon_id
+			RETURNING id, user_id, course_id
 		),
 		webhook_marked AS (
 			UPDATE webhook_events SET processed = true WHERE razorpay_event_id = $3
 		),
+		applied_coupon AS (
+			SELECT tc.coupon_id FROM updated_tx utx
+			JOIN transactions_coupons tc ON tc.transaction_id = utx.id
+		),
 		coupon_used AS (
 			INSERT INTO coupon_usages (coupon_id, user_id, course_id)
-			SELECT coupon_id, user_id, course_id FROM updated_tx WHERE coupon_id IS NOT NULL
+			SELECT ac.coupon_id, utx.user_id, utx.course_id FROM updated_tx utx, applied_coupon ac
 			ON CONFLICT DO NOTHING
 			RETURNING coupon_id
 		),
@@ -172,13 +185,14 @@ func (r *TransactionsRepository) ListRepository(page, limit int, userID, tutorID
 				'created_at', t.created_at,
 				'user', json_build_object('id', t.user_id, 'name', COALESCE(u.name, ''), 'image', u.image),
 				'course', json_build_object('id', t.course_id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url),
-				'coupon', CASE WHEN t.coupon_id IS NOT NULL THEN json_build_object('id', t.coupon_id, 'code', COALESCE(cp.code, ''), 'discount_percent', COALESCE(cp.discount_percent, 0)) ELSE json_build_object('id', '', 'code', '', 'discount_percent', 0) END
+				'coupon', CASE WHEN tc.coupon_id IS NOT NULL THEN json_build_object('id', tc.coupon_id, 'code', COALESCE(cp.code, ''), 'discount_value', COALESCE(cp.discount_percent, 0)) ELSE json_build_object('id', '', 'code', '', 'discount_value', 0) END
 			) AS data,
 			COUNT(*) OVER() AS total_count
 		FROM transactions t
 		LEFT JOIN "users" u ON u.id = t.user_id
 		LEFT JOIN courses c ON c.id = t.course_id
-		LEFT JOIN coupons cp ON cp.id = t.coupon_id
+		LEFT JOIN transactions_coupons tc ON tc.transaction_id = t.id
+		LEFT JOIN coupons cp ON cp.id = tc.coupon_id
 		` + whereClause + `
 		ORDER BY t.created_at DESC
 		LIMIT $` + fmt.Sprint(len(args)+1) + ` OFFSET $` + fmt.Sprint(len(args)+2)

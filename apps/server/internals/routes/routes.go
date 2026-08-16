@@ -216,7 +216,9 @@ func (r *Router) SetUp() {
 	protected.Get("/coupons/check", r.Coupons.CheckController)
 
 	protected.Post("/quiz/metadata", middlewares.PermissionGuard(generic.PermTutorQuizManage), r.Quiz.CreateMetadataController)
+	protected.Get("/quiz/metadata", middlewares.PermissionGuard(generic.PermTutorQuizManage, generic.PermAdminCoursesInspect), r.Quiz.ReadMetadataController)
 	protected.Post("/quiz/questions", middlewares.PermissionGuard(generic.PermTutorQuizManage), r.Quiz.CreateQuestionController)
+	protected.Get("/quiz/questions", middlewares.PermissionGuard(generic.PermTutorQuizManage, generic.PermAdminCoursesInspect), r.Quiz.ListQuestionsController)
 	protected.Delete("/quiz/questions/:id", middlewares.PermissionGuard(generic.PermTutorQuizManage), r.Quiz.DeleteQuestionController)
 	protected.Post("/quiz/question", r.Quiz.GetQuestionController)
 	protected.Post("/quiz/submit", r.Quiz.CreateSubmitController)

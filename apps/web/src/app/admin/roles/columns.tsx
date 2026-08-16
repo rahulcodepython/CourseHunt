@@ -43,6 +43,17 @@ export const getColumns = (
       );
     },
   }),
+  columnHelper.accessor("permissions_count", {
+    header: ({ column }) => <SortableColumnHeader column={column} label="Permissions" />,
+    cell: ({ getValue }) => {
+      const count = getValue() ?? 0;
+      return (
+        <Badge variant="outline" className="font-mono text-xs text-zinc-300">
+          {count} {count === 1 ? "permission" : "permissions"}
+        </Badge>
+      );
+    },
+  }),
   columnHelper.display({
     id: "actions",
     header: () => <div className="text-right">Actions</div>,

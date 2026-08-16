@@ -487,7 +487,6 @@ function SidebarMenuButton({
       data-active={isActive}
       className={cn(
         "text-sidebar-foreground group-has-data-[variant=outline]/menu-button:shadow-sidebar-ring group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>svg]:text-sidebar-foreground/70 peer relative flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-hidden transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[variant=outline]/menu-button:bg-background group-has-data-[variant=outline]/menu-button:border group-has-data-[variant=outline]/menu-button:border-sidebar-border group-has-badge/data-[slot=menu-indicator]:pr-10 data-[active=true]:bg-sidebar-primary data-[active=true]:font-semibold data-[active=true]:text-sidebar-primary-foreground data-[active=true]:[&>svg]:text-sidebar-primary-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "group-data-[collapsible=icon]:hidden",
         sidebarMenuButtonVariants.variant[variant],
         sidebarMenuButtonVariants.size[size],
         className,

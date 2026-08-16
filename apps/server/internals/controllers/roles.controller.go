@@ -103,6 +103,14 @@ func (ctrl *RolesController) DeleteRoleController(c *fiber.Ctx) error {
 		return utils.Forbidden(c, "Cannot delete system roles.", nil)
 	}
 
+	assignedCount, err := ctrl.Repo.CountRoleAssignmentsRepository(roleID)
+	if err != nil {
+		return utils.InternalError(c, "Failed to check role assignments.", err)
+	}
+	if assignedCount > 0 {
+		return utils.UnprocessableEntity(c, "Unable to delete: this role is currently assigned to one or more users.", nil)
+	}
+
 	roleIDStr, err := ctrl.Repo.DeleteRoleRepository(roleID)
 	if err != nil {
 		return utils.InternalError(c, "Failed to delete role.", err)

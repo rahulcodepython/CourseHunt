@@ -24,12 +24,6 @@
                 "href": "/tutor/updates",
                 "icon": "world",
                 "permission": "tutor:updates:manage"
-            },
-            {
-                "title": "Reviews & Feedback",
-                "href": "/tutor/feedback",
-                "icon": "user-check",
-                "permission": "tutor:feedback:manage"
             }
         ]
     },

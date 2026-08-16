@@ -5,20 +5,25 @@ import type { AdminProfileItem, UserListResponse } from "@/schema/users.types";
 import { Icon } from "@/components/icon";
 import { SortableColumnHeader } from "@/components/sortable-column-header";
 import { RowActions, RowActionButton } from "@/components/row-actions";
-import { toast } from "sonner";
+import { RolesCell } from "@/components/roles-cell";
+import { StatusBadge } from "@/components/status-badge";
+import { bannedStatusMap } from "@/lib/user-status";
 import UserCell from "@/components/user-cell";
 
 // /tutors sources rows from useUsersQuery (UserListResponse), not the
-// profiles endpoint — headline/total_students/rating_avg aren't actually
-// present on that response today, but the columns below already tolerate
-// their absence (fallback dashes), so this widened type just adds what the
-// "Manage Roles" action needs (id, roles) without touching that pre-existing
-// display gap.
-type TutorRow = UserListResponse & Partial<Pick<AdminProfileItem, "headline" | "total_students" | "rating_avg">>;
+// profiles endpoint — total_students/rating_avg aren't actually present on
+// that response today, but the columns below already tolerate their absence
+// (fallback dashes), so this widened type just adds what those columns need
+// without touching that pre-existing display gap.
+type TutorRow = UserListResponse & Partial<Pick<AdminProfileItem, "total_students" | "rating_avg">>;
 
 const columnHelper = createColumnHelper<TutorRow>();
 
-export const getColumns = (onManage: (tutor: TutorRow) => void) => [
+export const getColumns = (
+  onManage: (tutor: TutorRow) => void,
+  onBanToggle: (tutor: TutorRow) => void,
+  { canBan, currentUserId }: { canBan: boolean; currentUserId?: string },
+) => [
   columnHelper.accessor("name", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Tutor" />,
     cell: ({ row }) => <UserCell name={row.original.name} />,
@@ -29,12 +34,14 @@ export const getColumns = (onManage: (tutor: TutorRow) => void) => [
       <span className="text-muted-foreground">{getValue()}</span>
     ),
   }),
-  columnHelper.accessor("headline", {
-    header: "Headline",
-    cell: ({ getValue }) => (
-      <span className="block max-w-48 truncate text-muted-foreground">
-        {getValue() || "—"}
-      </span>
+  columnHelper.accessor("roles", {
+    header: "Roles",
+    cell: ({ getValue, row }) => (
+      <RolesCell
+        roles={getValue()}
+        fallbackRole={row.original.role ?? "tutor"}
+        variantFor={(name) => (name === "tutor" ? "default" : "secondary")}
+      />
     ),
   }),
   columnHelper.accessor("total_students", {
@@ -59,6 +66,12 @@ export const getColumns = (onManage: (tutor: TutorRow) => void) => [
       );
     },
   }),
+  columnHelper.accessor("banned", {
+    header: ({ column }) => <SortableColumnHeader column={column} label="Status" />,
+    cell: ({ getValue }) => (
+      <StatusBadge status={getValue() ? "banned" : "active"} map={bannedStatusMap} />
+    ),
+  }),
   columnHelper.display({
     id: "actions",
     header: () => <div className="text-right">Actions</div>,
@@ -71,12 +84,14 @@ export const getColumns = (onManage: (tutor: TutorRow) => void) => [
             label="Manage Roles"
             onClick={() => onManage(tutor)}
           />
-          <RowActionButton
-            icon="ban"
-            label="Ban Tutor"
-            onClick={() => toast.error(`${tutor.name} has been banned`)}
-            destructive
-          />
+          {canBan && tutor.id !== currentUserId && (
+            <RowActionButton
+              icon="ban"
+              label={tutor.banned ? "Unban Tutor" : "Ban Tutor"}
+              onClick={() => onBanToggle(tutor)}
+              destructive={!tutor.banned}
+            />
+          )}
         </RowActions>
       );
     },

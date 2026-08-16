@@ -3,11 +3,11 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import type { UserListResponse } from "@/schema/users.types";
 import { formatDate } from "@/lib/format";
+import { bannedStatusMap } from "@/lib/user-status";
 import { SortableColumnHeader } from "@/components/sortable-column-header";
 import { RowActions, RowActionButton } from "@/components/row-actions";
 import { RolesCell } from "@/components/roles-cell";
-import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
-import { toast } from "sonner";
+import { StatusBadge } from "@/components/status-badge";
 import UserCell from "@/components/user-cell";
 
 const columnHelper = createColumnHelper<UserListResponse>();
@@ -18,12 +18,10 @@ const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
   student: "outline",
 };
 
-const bannedStatusMap: Record<string, StatusBadgeEntry> = {
-  banned: { label: "Banned", variant: "destructive" },
-  active: { label: "Active", variant: "secondary", className: "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20" },
-};
-
-export const columns = [
+export const getColumns = (
+  onBanToggle: (user: UserListResponse) => void,
+  { canBan, currentUserId }: { canBan: boolean; currentUserId?: string },
+) => [
   columnHelper.accessor("name", {
     header: ({ column }) => <SortableColumnHeader column={column} label="User" />,
     cell: ({ row }) => <UserCell name={row.original.name} image={row.original.image} />,
@@ -64,13 +62,15 @@ export const columns = [
       const user = row.original;
       return (
         <RowActions>
-          <RowActionButton icon="book" label="View Courses" href={`/users/${user.id}/courses`} />
-          <RowActionButton
-            icon="ban"
-            label="Toggle Status"
-            onClick={() => toast.error(`${user.name} status toggled`)}
-            destructive
-          />
+          <RowActionButton icon="book" label="View Courses" href={`/admin/users/${user.id}/courses`} />
+          {canBan && user.id !== currentUserId && (
+            <RowActionButton
+              icon="ban"
+              label={user.banned ? "Unban User" : "Ban User"}
+              onClick={() => onBanToggle(user)}
+              destructive={!user.banned}
+            />
+          )}
         </RowActions>
       );
     },

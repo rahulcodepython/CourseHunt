@@ -15,13 +15,14 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSessionStore } from "@/store/session.store";
-import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/const";
+import useSession from "@/hooks/use-session";
 
 export function UserNav() {
     const router = useRouter();
     const pathname = usePathname();
+    const { signOut } = useSession();
     const user = useSessionStore((state) => state.user);
     const profileHref = pathname.startsWith(ROUTES.TUTOR_DASHBOARD)
         ? `${ROUTES.TUTOR_DASHBOARD}/profile`
@@ -29,7 +30,7 @@ export function UserNav() {
 
     const handleLogout = async () => {
         try {
-            await authClient.signOut();
+            await signOut();
         } finally {
             toast.success("Signed out");
             router.push(ROUTES.LOGIN);

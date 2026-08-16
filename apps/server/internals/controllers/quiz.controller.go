@@ -52,6 +52,50 @@ func (ctrl *QuizController) CreateMetadataController(c *fiber.Ctx) error {
 	return utils.OK(c, "Quiz saved successfully.", qm)
 }
 
+func (ctrl *QuizController) ReadMetadataController(c *fiber.Ctx) error {
+	lessonID := c.Query("lesson_id")
+	if lessonID == "" {
+		return utils.BadRequest(c, "Lesson ID query param required.", nil)
+	}
+	userID := utils.GetUserID(c)
+	scope := resolveScope(c)
+	qm, err := ctrl.Repo.ReadMetadataRepository(lessonID, userID, scope)
+	if err != nil {
+		switch {
+		case errors.Is(err, generic.ErrQuizLessonNotFound):
+			return utils.NotFound(c, "Lesson not found.", err)
+		case errors.Is(err, generic.ErrQuizAccessDenied):
+			return utils.Forbidden(c, "Access denied. You do not own the course this lesson belongs to.", err)
+		case errors.Is(err, generic.ErrQuizNotFound):
+			return utils.NotFound(c, "Quiz not found.", err)
+		default:
+			return utils.InternalError(c, "Failed to fetch quiz metadata.", err)
+		}
+	}
+	return utils.OK(c, "Quiz metadata fetched.", qm)
+}
+
+func (ctrl *QuizController) ListQuestionsController(c *fiber.Ctx) error {
+	quizID := c.Query("quiz_id")
+	if quizID == "" {
+		return utils.BadRequest(c, "Quiz ID query param required.", nil)
+	}
+	userID := utils.GetUserID(c)
+	scope := resolveScope(c)
+	questions, err := ctrl.Repo.ListQuestionsRepository(quizID, userID, scope)
+	if err != nil {
+		switch {
+		case errors.Is(err, generic.ErrQuizNotFound):
+			return utils.NotFound(c, "Quiz not found.", err)
+		case errors.Is(err, generic.ErrQuizAccessDenied):
+			return utils.Forbidden(c, "Access denied. You do not own the course this quiz belongs to.", err)
+		default:
+			return utils.InternalError(c, "Failed to fetch questions.", err)
+		}
+	}
+	return utils.OK(c, "Questions fetched.", questions)
+}
+
 func (ctrl *QuizController) CreateQuestionController(c *fiber.Ctx) error {
 	var req entities.CreateQuestionRequest
 	if ok, err := utils.Validate(c, &req); !ok {

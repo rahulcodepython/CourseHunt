@@ -118,7 +118,7 @@ export function AppSidebar({
                                                 <SidebarMenuButton asChild isActive={isLinkActive(item.href)} tooltip={item.title}>
                                                     <Link href={item.href}>
                                                         <Icon name={item.icon} className="size-4" />
-                                                        <span>{item.title}</span>
+                                                        <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
                                                     </Link>
                                                 </SidebarMenuButton>
                                             </SidebarMenuItem>
@@ -133,8 +133,8 @@ export function AppSidebar({
                                                 <CollapsibleTrigger asChild>
                                                     <SidebarMenuButton tooltip={item.title}>
                                                         <Icon name={item.icon} className="size-4" />
-                                                        <span>{item.title}</span>
-                                                        <Icon name="chevron-right" className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                        <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+                                                        <Icon name="chevron-right" className="ml-auto size-4 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
                                                     </SidebarMenuButton>
                                                 </CollapsibleTrigger>
                                                 <CollapsibleContent>

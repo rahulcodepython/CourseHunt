@@ -36,7 +36,7 @@ export const getColumns = (courseId: string) => [
           <RowActionButton
             icon="book"
             label="View Lessons"
-            href={`/courses/${courseId}/chapters/${chapter.id}/lessons`}
+            href={`/admin/courses/${courseId}/chapters/${chapter.id}/lessons`}
           />
         </RowActions>
       );

@@ -3,6 +3,7 @@
 import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
+import { banUserAction, unbanUserAction } from "@/lib/actions/users";
 import { useSimpleMutation, useObjectMutation } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
@@ -37,6 +38,22 @@ export function useRevokeRoleMutation() {
 	return useSimpleMutation({
 		mutationFn: ({ id, data }: { id: string; data: z.infer<typeof AssignRoleRequestZod> }) =>
 			apiRequest({ url: `${API_ENDPOINTS.USERS}/${id}/roles/revoke`, method: "POST", data }, RoleAssignmentResponseZod),
+		invalidateKeys: [queryKeys.users()],
+		showToast: true,
+	});
+}
+
+export function useBanUserMutation() {
+	return useSimpleMutation({
+		mutationFn: (vars: { userId: string; banReason?: string }) => banUserAction(vars.userId, vars.banReason),
+		invalidateKeys: [queryKeys.users()],
+		showToast: true,
+	});
+}
+
+export function useUnbanUserMutation() {
+	return useSimpleMutation({
+		mutationFn: (vars: { userId: string }) => unbanUserAction(vars.userId),
 		invalidateKeys: [queryKeys.users()],
 		showToast: true,
 	});

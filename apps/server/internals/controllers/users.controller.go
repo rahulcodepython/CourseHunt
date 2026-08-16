@@ -24,10 +24,10 @@ func (ctrl *UsersController) AssignRoleController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	if err := ctrl.Repo.AssignRoleRepository(c.Params("id"), req.RoleID); err != nil {
-		return utils.InternalError(c, "Failed to assign role.", err)
+	if err := ctrl.Repo.AssignRoleRepository(c.Params("id"), req.RoleIDs); err != nil {
+		return utils.InternalError(c, "Failed to assign roles.", err)
 	}
-	return utils.OK(c, "Role assigned.", entities.RoleAssignmentResponse{UserID: c.Params("id"), RoleID: req.RoleID})
+	return utils.OK(c, "Roles assigned.", entities.RoleAssignmentResponse{UserID: c.Params("id"), RoleIDs: req.RoleIDs})
 }
 
 func (ctrl *UsersController) DeleteRoleController(c *fiber.Ctx) error {
@@ -35,10 +35,10 @@ func (ctrl *UsersController) DeleteRoleController(c *fiber.Ctx) error {
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
 	}
-	if err := ctrl.Repo.DeleteRoleRepository(c.Params("id"), req.RoleID); err != nil {
-		return utils.InternalError(c, "Failed to revoke role.", err)
+	if err := ctrl.Repo.DeleteRoleRepository(c.Params("id"), req.RoleIDs); err != nil {
+		return utils.InternalError(c, "Failed to revoke roles.", err)
 	}
-	return utils.OK(c, "Role revoked.", entities.RoleAssignmentResponse{UserID: c.Params("id"), RoleID: req.RoleID})
+	return utils.OK(c, "Roles revoked.", entities.RoleAssignmentResponse{UserID: c.Params("id"), RoleIDs: req.RoleIDs})
 }
 
 func (ctrl *UsersController) ListController(c *fiber.Ctx) error {

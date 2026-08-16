@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS transactions (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id             UUID REFERENCES "users"(id) ON DELETE SET NULL,
     course_id           UUID REFERENCES courses(id) ON DELETE SET NULL,
-    coupon_id           UUID REFERENCES coupons(id) ON DELETE SET NULL,
     razorpay_order_id   TEXT UNIQUE,
     razorpay_payment_id TEXT,
     amount              DECIMAL(10,2) NOT NULL CONSTRAINT transactions_amount_check CHECK (amount >= 0),

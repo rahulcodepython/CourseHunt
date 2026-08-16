@@ -1,10 +1,11 @@
 package entities
 
 type Role struct {
-	ID          string  `json:"id" db:"id"`
-	Name        string  `json:"name" db:"name"`
-	Description *string `json:"description,omitempty" db:"description"`
-	IsSystem    bool    `json:"is_system" db:"is_system"`
+	ID               string  `json:"id" db:"id"`
+	Name             string  `json:"name" db:"name"`
+	Description      *string `json:"description,omitempty" db:"description"`
+	IsSystem         bool    `json:"is_system" db:"is_system"`
+	PermissionsCount int     `json:"permissions_count" db:"permissions_count"`
 }
 
 type Permission struct {

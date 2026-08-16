@@ -1,26 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 
-import { authClient } from "@/lib/auth-client";
+import authClient from "@/lib/auth-client";
 import { downloadCredentialsCSV } from "@/lib/csv";
 import { FormDialog } from "@/components/form-dialog";
 import { LoadingButton } from "@/components/loading-button";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { CollapsibleCheckboxList } from "@/components/collapsible-checkbox-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/react-query/query-keys";
 import { useRolesQuery } from "@/query-hooks/roles.api";
@@ -30,7 +25,6 @@ const createUserSchema = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.string().min(1, "Email is required").email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
-    roleId: z.string().optional(),
 });
 
 export type CreateUserFormData = z.infer<typeof createUserSchema>;
@@ -69,10 +63,12 @@ export function CreateUserDialog({
         [rawRoles],
     );
 
+    const [roleIds, setRoleIds] = React.useState<string[]>([]);
+    const [roleError, setRoleError] = React.useState<string | null>(null);
+
     const {
         register,
         handleSubmit,
-        control,
         reset,
         formState: { errors },
     } = useForm<CreateUserFormData>({
@@ -81,20 +77,26 @@ export function CreateUserDialog({
             name: "",
             email: "",
             password: "",
-            roleId: "",
         },
     });
 
     React.useEffect(() => {
         if (!open) return;
         const preset = presetRoleName
-            ? assignableRoles.find((r) => r.name === presetRoleName)?.id ?? ""
-            : "";
-        reset({ name: "", email: "", password: "", roleId: preset });
+            ? assignableRoles.find((r) => r.name === presetRoleName)?.id
+            : undefined;
+        reset({ name: "", email: "", password: "" });
+        setRoleIds(preset ? [preset] : []);
+        setRoleError(null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, presetRoleName, assignableRoles.length]);
 
     const onSubmit = async (data: CreateUserFormData) => {
+        if (showRolePicker && roleIds.length === 0) {
+            setRoleError("Select at least one role.");
+            return;
+        }
+
         setIsCreating(true);
         try {
             const res = await authClient.admin.createUser({
@@ -110,14 +112,11 @@ export function CreateUserDialog({
             }
 
             const createdUserId = res.data?.user?.id;
-            const selectedRole = showRolePicker
-                ? assignableRoles.find((r) => r.id === data.roleId)
-                : undefined;
 
-            if (showRolePicker && selectedRole && createdUserId) {
+            if (showRolePicker && roleIds.length > 0 && createdUserId) {
                 await assignRoleMutation.execute({
                     id: createdUserId,
-                    data: { role_id: selectedRole.id },
+                    data: { role_ids: roleIds },
                 });
             }
 
@@ -171,10 +170,10 @@ export function CreateUserDialog({
 
                 <div className="space-y-1.5">
                     <Label htmlFor="create-user-password">Initial Password</Label>
-                    <Input
+                    <PasswordInput
                         id="create-user-password"
-                        type="password"
                         placeholder="••••••••"
+                        autoComplete="new-password"
                         {...register("password")}
                     />
                     {errors.password && (
@@ -183,33 +182,18 @@ export function CreateUserDialog({
                 </div>
 
                 {showRolePicker && (
-                    <div className="space-y-1.5">
-                        <Label>Role</Label>
-                        <Controller
-                            control={control}
-                            name="roleId"
-                            render={({ field }) => (
-                                <Select value={field.value} onValueChange={field.onChange}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select a role" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {assignableRoles.length > 0 ? (
-                                            assignableRoles.map((role) => (
-                                                <SelectItem key={role.id} value={role.id} className="capitalize">
-                                                    {role.name}
-                                                </SelectItem>
-                                            ))
-                                        ) : (
-                                            <div className="p-3 text-center text-xs text-muted-foreground">
-                                                No custom roles available
-                                            </div>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        />
-                    </div>
+                    <CollapsibleCheckboxList
+                        title="Select Role"
+                        items={assignableRoles.map((role) => ({ id: role.id, label: role.name }))}
+                        selected={roleIds}
+                        onChange={(next) => {
+                            setRoleIds(next);
+                            if (next.length > 0) setRoleError(null);
+                        }}
+                        maxHeight="12rem"
+                        error={roleError ?? undefined}
+                        emptyMessage="No custom roles available"
+                    />
                 )}
 
                 <DialogFooter>

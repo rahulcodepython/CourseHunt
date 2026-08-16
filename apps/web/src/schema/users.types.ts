@@ -7,7 +7,7 @@ export const RoleZod = z.object({
 export type Role = z.infer<typeof RoleZod>;
 
 export const AssignRoleRequestZod = z.object({
-    role_id: z.string(),
+    role_ids: z.array(z.string()).min(1),
 });
 export type AssignRoleRequest = z.infer<typeof AssignRoleRequestZod>;
 
@@ -36,7 +36,7 @@ export type UserListResponse = z.infer<typeof UserListResponseZod>;
 
 export const RoleAssignmentResponseZod = z.object({
     user_id: z.string(),
-    role_id: z.string(),
+    role_ids: z.array(z.string()),
 });
 export type RoleAssignmentResponse = z.infer<typeof RoleAssignmentResponseZod>;
 

@@ -1,10 +1,9 @@
--- 012: RBAC refactor + forced password change
+-- 012: RBAC refactor
 --
--- 1. users.passwordChangedAt  -> NULL means the user must change password on next login
--- 2. permissions table        -> id = machine key ("admin:users:list"), name = human-readable
--- 3. enrolled:* permissions   -> merged into user:* (and dropped from the user role's view)
--- 4. 'enrolled' role          -> removed (its permissions are absorbed by the 'user' role)
--- 5. user_roles               -> renamed to roles_user
+-- 1. permissions table        -> id = machine key ("admin:users:list"), name = human-readable
+-- 2. enrolled:* permissions   -> merged into user:* (and dropped from the user role's view)
+-- 3. 'enrolled' role          -> removed (its permissions are absorbed by the 'user' role)
+-- 4. user_roles               -> renamed to roles_user
 --
 -- Guards make this safe both on fresh databases (001_rbac_* already at final shape)
 -- and on existing databases (legacy shape).
@@ -12,12 +11,7 @@
 BEGIN;
 
 -- ============================================================
--- 1. users.passwordChangedAt
--- ============================================================
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "passwordChangedAt" TIMESTAMPTZ;
-
--- ============================================================
--- 2. permissions table -> id (TEXT key) + name (human readable)
+-- 1. permissions table -> id (TEXT key) + name (human readable)
 --    Only runs when the legacy uuid+description shape is detected.
 -- ============================================================
 DO $$
@@ -67,7 +61,7 @@ BEGIN
 END $$;
 
 -- ============================================================
--- 4. Remove the 'enrolled' role, absorbing its permissions into 'user'
+-- 3. Remove the 'enrolled' role, absorbing its permissions into 'user'
 -- ============================================================
 DO $$
 BEGIN
@@ -91,12 +85,12 @@ DROP TRIGGER IF EXISTS trg_assign_enrolled_role ON enrollments;
 DROP FUNCTION IF EXISTS assign_enrolled_role();
 
 -- ============================================================
--- 5. user_roles -> roles_user
+-- 4. user_roles -> roles_user
 -- ============================================================
 ALTER TABLE IF EXISTS user_roles RENAME TO roles_user;
 
 -- ============================================================
--- 6. Unique mappings (fixes duplicate rows from re-runs and makes
+-- 5. Unique mappings (fixes duplicate rows from re-runs and makes
 --    the seeder's ON CONFLICT DO NOTHING meaningful)
 -- ============================================================
 DO $$

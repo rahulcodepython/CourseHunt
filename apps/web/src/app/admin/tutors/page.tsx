@@ -13,11 +13,13 @@ import { hasPermission } from "@/lib/permissions";
 import { ROLES, PERMISSIONS } from "@/lib/const";
 import { CreateUserDialog } from "@/components/create-user-dialog";
 import { ManageRolesDialog } from "@/components/manage-roles-dialog";
+import { useUserBanActions } from "@/hooks/use-user-ban-actions";
 import type { UserListResponse } from "@/schema/users.types";
 
 export default function TutorsPage() {
   const permissions = useSessionStore((s) => s.permissions);
   const canCreateTutor = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_ROLE_ASSIGN);
+  const { canBan, currentUserId, handleBanToggle } = useUserBanActions();
 
   const { data: rawTutors, isLoading } = useUsersQuery({ role: ROLES.TUTOR });
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -31,7 +33,10 @@ export default function TutorsPage() {
     setDialogOpen(true);
   };
 
-  const columns = React.useMemo(() => getColumns(handleManage), []);
+  const columns = React.useMemo(
+    () => getColumns(handleManage, handleBanToggle, { canBan, currentUserId }),
+    [canBan, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   return (
     <div className="space-y-6">
@@ -51,6 +56,9 @@ export default function TutorsPage() {
       <DataTable
         columns={columns}
         data={tutors}
+        searchPlaceholder="Search by name..."
+        searchColumnKey="name"
+        exportFilename="tutors"
         emptyIcon="book"
         emptyText="No tutors found"
         isLoading={isLoading}
