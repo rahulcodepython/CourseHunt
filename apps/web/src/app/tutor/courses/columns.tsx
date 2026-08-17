@@ -107,6 +107,11 @@ export const getColumns = (
             label="View Enrolled Users"
             href={`/tutor/courses/${course.id}/enrollments`}
           />
+          <RowActionButton
+            icon="help-circle"
+            label="Manage FAQs"
+            href={`/tutor/courses/${course.id}/faqs`}
+          />
           <RowActionButton icon="pencil" label="Edit Course" onClick={() => onEdit(course)} />
           <RowActionButton
             icon="globe"

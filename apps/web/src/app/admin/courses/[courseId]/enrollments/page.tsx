@@ -7,17 +7,17 @@ import { Icon } from "@/components/icon";
 import { Button } from "@/components/ui/button";
 import { EnrollmentAccessTable } from "@/components/enrollment-access-table";
 
-import { useCourseLandingQuery } from "@/query-hooks/courses.api";
+import { useManageCourseQuery } from "@/query-hooks/courses.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 
 export default function CourseEnrollmentsPage() {
   const params = useParams<{ courseId: string }>();
   const courseId = params.courseId as string;
 
-  const { data: courseData } = useCourseLandingQuery(courseId);
+  const { data: courseData } = useManageCourseQuery(courseId);
   useSetBreadcrumbs([
-    { label: "Courses", href: "/courses" },
-    { label: courseData?.data?.title || "Course", href: `/courses/overview/${courseId}` },
+    { label: "Courses", href: "/admin/courses" },
+    { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "Enrolled Users" },
   ]);
 

@@ -23,6 +23,7 @@ type Config struct {
 	RazorpaySecret        string `env:"RAZORPAY_SECRET"`
 	RazorpayWebhookSecret string `env:"RAZORPAY_WEBHOOK_SECRET"`
 	RazorpayBaseURL       string `env:"RAZORPAY_BASE_URL" envDefault:"https://api.razorpay.com/v1"`
+	TaxPercent            float64 `env:"TAX_PERCENT" envDefault:"18"`
 	RedisHost             string `env:"REDIS_HOST" envDefault:"localhost"`
 	RedisPort             string `env:"REDIS_PORT" envDefault:"6379"`
 	RedisPassword         string `env:"REDIS_PASSWORD" envDefault:""`

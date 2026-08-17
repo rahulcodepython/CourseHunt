@@ -104,8 +104,8 @@ export default function LoginPage() {
 
     return (
         <AuthCard
-            title="Admin Portal"
-            subtitle="Sign in to manage the platform"
+            title="Welcome Back"
+            subtitle="Sign in to continue to CourseHunt"
         >
             <form onSubmit={handleSubmit(handleEmailLogin)} className="space-y-4">
                 <div className="space-y-1.5">
@@ -115,7 +115,7 @@ export default function LoginPage() {
                     <Input
                         id="email"
                         type="email"
-                        placeholder="admin@example.com"
+                        placeholder="you@example.com"
                         {...register("email")}
                         className={inputClass}
                         autoComplete="email"
@@ -188,9 +188,8 @@ export default function LoginPage() {
             </Button>
 
             <div className="mt-8 border-t border-zinc-800 pt-4 text-center">
-                <p className="text-xs text-zinc-500">Admin Access Only</p>
-                <p className="mt-1 text-xs text-zinc-600">
-                    Contact super administrator for access
+                <p className="text-xs text-zinc-500">
+                    New here? Sign in with Google to create a student account instantly.
                 </p>
             </div>
         </AuthCard>

@@ -119,11 +119,11 @@ export default function FileUpload({ label, onChange, field, accept, value, clas
 	const showExisting = !selectedFile && !!value.url;
 
 	return (
-		<div className={`space-y-2 ${className || ""}`}>
+		<div className={cn("min-w-0 w-full overflow-hidden space-y-2", className)}>
 			<Label>{label}</Label>
 
 			{selectedFile ? (
-				<div className="flex items-center gap-3 rounded-lg border bg-card p-3">
+				<div className="flex min-w-0 items-center gap-3 rounded-lg border bg-card p-3">
 					{accept === "image" && previewUrl ? (
 						/* eslint-disable-next-line @next/next/no-img-element */
 						<img src={previewUrl} alt={selectedFile.name} className="size-12 shrink-0 rounded-md object-cover" />
@@ -132,9 +132,9 @@ export default function FileUpload({ label, onChange, field, accept, value, clas
 							<Icon name={ACCEPT_ICON[accept]} className="size-5 text-muted-foreground" />
 						</div>
 					)}
-					<div className="min-w-0 flex-1">
+					<div className="min-w-0 flex-1 overflow-hidden">
 						<p className="truncate text-sm font-medium">{selectedFile.name}</p>
-						<p className="text-xs text-muted-foreground">
+						<p className="truncate text-xs text-muted-foreground">
 							{formatFileSize(selectedFile.size)}
 							{isResolving && " · preparing upload…"}
 						</p>
@@ -152,7 +152,7 @@ export default function FileUpload({ label, onChange, field, accept, value, clas
 					</Button>
 				</div>
 			) : showExisting ? (
-				<div className="flex items-center gap-3 rounded-lg border bg-card p-3">
+				<div className="flex min-w-0 items-center gap-3 rounded-lg border bg-card p-3">
 					{accept === "image" && value.url ? (
 						/* eslint-disable-next-line @next/next/no-img-element */
 						<img src={value.url} alt={fileNameFromUrl(value.url)} className="size-12 shrink-0 rounded-md object-cover" />
@@ -161,9 +161,9 @@ export default function FileUpload({ label, onChange, field, accept, value, clas
 							<Icon name={ACCEPT_ICON[accept]} className="size-5 text-muted-foreground" />
 						</div>
 					)}
-					<div className="min-w-0 flex-1">
+					<div className="min-w-0 flex-1 overflow-hidden">
 						<p className="truncate text-sm font-medium">{fileNameFromUrl(value.url)}</p>
-						<p className="text-xs text-muted-foreground">Uploaded file</p>
+						<p className="truncate text-xs text-muted-foreground">Uploaded file</p>
 					</div>
 					<Button
 						type="button"

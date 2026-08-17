@@ -30,9 +30,12 @@ type CategoryInfo struct {
 	Name string `json:"name"`
 }
 
-// CourseInfo represents basic course details used across modules.
+// CourseInfo represents basic course details used across modules. Slug is
+// only populated by queries that actually select it (e.g. wishlist, for
+// linking back to the public course page) — everywhere else it's left "".
 type CourseInfo struct {
 	ID        string  `json:"id" db:"id"`
+	Slug      string  `json:"slug,omitempty" db:"slug"`
 	Title     string  `json:"title" db:"title"`
 	Thumbnail *string `json:"thumbnail" db:"thumbnail"`
 }

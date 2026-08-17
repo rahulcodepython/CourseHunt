@@ -104,6 +104,10 @@ export function useAddResourceMutation(id: string) {
 			return next;
 		},
 		optimistic: (data) => appendToArray({ ...data, id: `temp-${Date.now()}` }),
+		// Safety net: the direct cache write above silently no-ops when this
+		// is the lesson's first-ever resource (no cache entry exists yet to
+		// write into) — invalidating forces a real fetch regardless.
+		invalidateKeys: [["lessons", id, "resources"]],
 		showToast: true,
 	});
 }
@@ -119,6 +123,7 @@ export function useDeleteResourceMutation(id: string) {
 		queryKey: ["lessons", id, "resources"],
 		updater: (res) => removeFromArray(res.id),
 		optimistic: (resourceId) => removeFromArray(resourceId),
+		invalidateKeys: [["lessons", id, "resources"]],
 		showToast: true,
 	});
 }
@@ -130,5 +135,23 @@ export function useLessonResourcesQuery(id: string) {
 	);
 }
 
+// Enrollment-gated student-facing content read — distinct from
+// useLessonContentQuery above, which is the tutor's ownership-gated
+// authoring view and 403s for an enrolled student.
+export function useStudyLessonContentQuery(id: string) {
+	return useAppQuery(
+		queryKeys.studyLessonContent(id),
+		() => apiRequest({ url: `/api/v1/lessons/${id}/content`, method: "GET" }, AggregatedLessonContentResponseZod),
+		{ enabled: !!id },
+	);
+}
 
+// Enrollment-gated student-facing resources read — see useStudyLessonContentQuery above.
+export function useStudyLessonResourcesQuery(id: string) {
+	return useAppQuery(
+		queryKeys.studyLessonResources(id),
+		() => apiRequest({ url: `/api/v1/lessons/${id}/resources`, method: "GET" }, z.array(LessonResourceZod)),
+		{ enabled: !!id },
+	);
+}
 

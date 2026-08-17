@@ -23,6 +23,7 @@ type Course struct {
 	Requirements         []string                `json:"requirements" db:"requirements"`
 	CategoryID           *string                 `json:"-" db:"category_id"`
 	CouponAllowed        bool                    `json:"coupon_allowed" db:"coupon_allowed"`
+	IsFree               bool                    `json:"is_free" db:"is_free"`
 	TotalLectures        int                     `json:"total_lectures" db:"total_lectures"`
 	TotalDurationSeconds int                     `json:"total_duration_seconds" db:"total_duration_seconds"`
 	RatingAvg            float64                 `json:"rating_avg" db:"rating_avg"`
@@ -74,6 +75,7 @@ type CreateCourseRequest struct {
 	Benefits         []string `json:"benefits"`
 	Requirements     []string `json:"requirements"`
 	CouponAllowed    bool     `json:"coupon_allowed"`
+	IsFree           bool     `json:"is_free"`
 }
 
 // CourseFileCleanup carries the pre-update file URLs out of
@@ -98,6 +100,7 @@ type UpdateCourseRequest struct {
 	Requirements     *[]string `json:"requirements"`
 	CategoryID       *string   `json:"category_id"`
 	CouponAllowed    *bool     `json:"coupon_allowed"`
+	IsFree           *bool     `json:"is_free"`
 	Status           *string   `json:"status" validate:"omitempty,oneof=draft published archived"`
 }
 
@@ -109,6 +112,7 @@ type CoursePublicResponse struct {
 	ImageURL         *string                `json:"image_url" db:"image_url"`
 	ActualPrice      float64                `json:"actual_price" db:"actual_price"`
 	FinalPrice       float64                `json:"final_price" db:"final_price"`
+	IsFree           bool                   `json:"is_free" db:"is_free"`
 	Benefits         []string               `json:"benefits" db:"benefits"`
 	Level            string                 `json:"level" db:"level"`
 	RatingAvg        float64                `json:"rating_avg" db:"rating_avg"`
@@ -148,6 +152,7 @@ type CourseLandingResponse struct {
 	Level                string                 `json:"level"`
 	ActualPrice          float64                `json:"actual_price"`
 	FinalPrice           float64                `json:"final_price"`
+	IsFree               bool                   `json:"is_free"`
 	Benefits             []string               `json:"benefits"`
 	Requirements         []string               `json:"requirements"`
 	Category             *generic.CategoryInfo  `json:"category"`

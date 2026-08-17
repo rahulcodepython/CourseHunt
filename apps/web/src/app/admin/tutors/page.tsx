@@ -13,18 +13,21 @@ import { hasPermission } from "@/lib/permissions";
 import { ROLES, PERMISSIONS } from "@/lib/const";
 import { CreateUserDialog } from "@/components/create-user-dialog";
 import { ManageRolesDialog } from "@/components/manage-roles-dialog";
+import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { useUserBanActions } from "@/hooks/use-user-ban-actions";
 import type { UserListResponse } from "@/schema/users.types";
 
 export default function TutorsPage() {
   const permissions = useSessionStore((s) => s.permissions);
   const canCreateTutor = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_ROLE_ASSIGN);
+  const canChangePassword = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_PASSWORD_RESET);
   const { canBan, currentUserId, handleBanToggle } = useUserBanActions();
 
   const { data: rawTutors, isLoading } = useUsersQuery({ role: ROLES.TUTOR });
   const [createOpen, setCreateOpen] = React.useState(false);
   const [selectedTutor, setSelectedTutor] = React.useState<UserListResponse | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [passwordTutor, setPasswordTutor] = React.useState<UserListResponse | null>(null);
 
   const tutors: UserListResponse[] = rawTutors?.data?.data ?? [];
 
@@ -34,8 +37,8 @@ export default function TutorsPage() {
   };
 
   const columns = React.useMemo(
-    () => getColumns(handleManage, handleBanToggle, { canBan, currentUserId }),
-    [canBan, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps
+    () => getColumns(handleManage, handleBanToggle, setPasswordTutor, { canBan, canChangePassword, currentUserId }),
+    [canBan, canChangePassword, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return (
@@ -81,6 +84,15 @@ export default function TutorsPage() {
           authRole={ROLES.TUTOR}
         />
       )}
+
+      <ChangePasswordDialog
+        open={!!passwordTutor}
+        onOpenChange={(open) => !open && setPasswordTutor(null)}
+        userId={passwordTutor?.id ?? null}
+        userName={passwordTutor?.name}
+        userEmail={passwordTutor?.email}
+        role={ROLES.TUTOR}
+      />
     </div>
   );
 }

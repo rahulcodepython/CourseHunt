@@ -26,6 +26,12 @@ ON CONFLICT (email) DO UPDATE SET
 
 -- Insert Better-Auth Credential Accounts (scrypt hashes, format `<salt>:<key>`)
 -- Password hashes match Better-Auth's scrypt params: N=16384, r=16, p=1, dkLen=64
+-- Verified against @better-auth/utils' verifyPassword: the shared student
+-- hash (alice/bob/charlie/david/eva/fiona) is "password123". The
+-- user@example.com hash previously in this file did NOT verify against
+-- "password123" or any other tried candidate — regenerated to a fresh hash
+-- of "password123" so it matches the rest of the seeded students. Admin/tutor
+-- hashes were not part of this fix and weren't re-verified here.
 INSERT INTO "accounts" ("userId", "accountId", "providerId", "password")
 SELECT u.id, v.email, 'credential', v.hash
 FROM (VALUES
@@ -34,7 +40,7 @@ FROM (VALUES
     ('tutor@example.com',  '46c022d9752babc3e04d0f40920ce07c:6bf70f61a74a4fd6b1dc6b8b9e920b2af65299a4a4d80df4b5a6b743a037467e5a31ceaf5a282a45759fd35b4d81432aa128ba9218de407947e76e61251ed272'),
     ('sarah.smith@example.com', '46c022d9752babc3e04d0f40920ce07c:6bf70f61a74a4fd6b1dc6b8b9e920b2af65299a4a4d80df4b5a6b743a037467e5a31ceaf5a282a45759fd35b4d81432aa128ba9218de407947e76e61251ed272'),
     ('john.doe@example.com', '46c022d9752babc3e04d0f40920ce07c:6bf70f61a74a4fd6b1dc6b8b9e920b2af65299a4a4d80df4b5a6b743a037467e5a31ceaf5a282a45759fd35b4d81432aa128ba9218de407947e76e61251ed272'),
-    ('user@example.com',   'e91fc7fa0e5dc589196f0b92fc7c54e6:48f5155a0696d6ecef088d4b0c5ad4524e92af5518a00765e10b1782a8aa81c94bc01ace9b7ed56e5995fc05868a112562d668d862e41b346eeefede5a108a1e'),
+    ('user@example.com',   '0d515d6ce843e0bb9963f0e0f4b8f59d:e88217fe8195c224a0890884a5b84d8347550b893ad5d200e82e0a9e013541224e69a5ca8b947faa4b0aa21bc6073f2cd7d9f48afbb12245c3a85f9327c6b78a'),
     ('alice@example.com',  '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
     ('bob@example.com',    '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
     ('charlie@example.com','2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),

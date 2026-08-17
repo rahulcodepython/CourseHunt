@@ -17,6 +17,7 @@ export const CreateCourseRequestZod = z.object({
     benefits: z.array(z.string()).optional(),
     requirements: z.array(z.string()).optional(),
     coupon_allowed: z.boolean().optional(),
+    is_free: z.boolean().optional(),
 });
 export type CreateCourseRequest = z.infer<typeof CreateCourseRequestZod>;
 
@@ -34,6 +35,7 @@ export const UpdateCourseRequestZod = z.object({
     requirements: z.array(z.string()).optional(),
     category_id: z.string().nullable().optional(),
     coupon_allowed: z.boolean().optional(),
+    is_free: z.boolean().optional(),
     status: z.string().optional(),
 });
 export type UpdateCourseRequest = z.infer<typeof UpdateCourseRequestZod>;
@@ -98,6 +100,7 @@ export const CourseLandingResponseZod = z.object({
     level: z.string(),
     actual_price: z.number(),
     final_price: z.number(),
+    is_free: z.boolean(),
     benefits: z.array(z.string()),
     requirements: z.array(z.string()),
     category: CategoryInfoZod.nullable().optional(),
@@ -137,6 +140,7 @@ export const CourseZod = z.object({
     benefits: z.array(z.string()),
     requirements: z.array(z.string()),
     coupon_allowed: z.boolean(),
+    is_free: z.boolean(),
     total_lectures: z.number(),
     total_duration_seconds: z.number(),
     rating_avg: z.number(),
@@ -172,6 +176,7 @@ export const CoursePublicResponseZod = z.object({
     image_url: z.string().nullable().optional(),
     actual_price: z.number(),
     final_price: z.number(),
+    is_free: z.boolean(),
     benefits: z.array(z.string()),
     level: z.string(),
     rating_avg: z.number(),

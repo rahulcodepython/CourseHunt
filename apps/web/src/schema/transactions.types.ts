@@ -9,6 +9,10 @@ export const TransactionZod = z.object({
     razorpay_order_id: z.string().nullable().optional(),
     razorpay_payment_id: z.string().nullable().optional(),
     amount: z.number(),
+    actual_price: z.number(),
+    offered_price: z.number(),
+    tax_percent: z.number(),
+    discount_amount: z.number(),
     currency: z.string(),
     status: z.string(),
     error_description: z.string().nullable().optional(),
@@ -48,5 +52,7 @@ export const CheckoutCourseResponseZod = z.object({
     instructor: InstructorInfoZod,
     actual_price: z.number(),
     final_price: z.number(),
+    is_free: z.boolean(),
+    tax_percent: z.number(),
 });
 export type CheckoutCourseResponse = z.infer<typeof CheckoutCourseResponseZod>;

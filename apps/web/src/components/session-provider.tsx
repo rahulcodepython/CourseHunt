@@ -4,16 +4,21 @@ import useSession from "@/hooks/use-session";
 import { Loader2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ROUTES, ROLES, getDashboardURI } from "@/lib/const";
+import { ROUTES, getDashboardURI } from "@/lib/const";
 import { buildRoutePermissionMap, isRouteAllowed } from "@/lib/permissions";
+import { isPublicPath } from "@/lib/public-routes";
 import navAdminGroups from "@/config/nav-admin.json";
 import navTutorGroups from "@/config/nav-tutor.json";
+import navStudentGroups from "@/config/nav-student.json";
 import type { NavGroup } from "@/components/app-sidebar";
 
 const routePermissionMap = {
     ...buildRoutePermissionMap(navAdminGroups as NavGroup[]),
     ...buildRoutePermissionMap(navTutorGroups as NavGroup[]),
+    ...buildRoutePermissionMap(navStudentGroups as NavGroup[]),
 };
+
+const DASHBOARD_PREFIXES = [ROUTES.ADMIN_DASHBOARD, ROUTES.TUTOR_DASHBOARD, ROUTES.STUDENT_DASHBOARD] as const;
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -22,18 +27,22 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     const isAuthRoute = pathname.startsWith("/auth");
     const isChangePassword = pathname.startsWith(ROUTES.CHANGE_PASSWORD);
+    const isPublic = isPublicPath(pathname);
     const roleHome = getDashboardURI(user?.role ?? null);
 
-    const isCrossSegment =
-        (user?.role === ROLES.ADMIN && pathname.startsWith(ROUTES.TUTOR_DASHBOARD)) ||
-        (user?.role === ROLES.TUTOR && pathname.startsWith(ROUTES.ADMIN_DASHBOARD));
+    // A role visiting another role's dashboard prefix (e.g. a student on /admin,
+    // or an admin on /student) bounces to its own dashboard home.
+    const isCrossSegment = DASHBOARD_PREFIXES.some(
+        (prefix) => prefix !== roleHome && pathname.startsWith(prefix),
+    );
 
     let shouldRedirect: string | null = null;
 
     if (!isPending) {
         if (!user) {
-            // Unauthenticated: allow only /auth/login; redirect everything else to login.
-            if (!pathname.startsWith(ROUTES.LOGIN)) shouldRedirect = ROUTES.LOGIN;
+            // Unauthenticated: public pages (landing/courses/checkout) and
+            // /auth/* are visible; redirect everything else to login.
+            if (!isPublic && !pathname.startsWith(ROUTES.LOGIN)) shouldRedirect = ROUTES.LOGIN;
         } else if (mustChangePassword && !isChangePassword) {
             // First-login password change enforced on all routes except the change-password page.
             shouldRedirect = ROUTES.CHANGE_PASSWORD;
@@ -53,7 +62,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         router.replace(shouldRedirect);
     }, [shouldRedirect, pathname, router]);
 
-    if (isPending) {
+    // Public pages render immediately rather than blocking on the session
+    // check — an anonymous visitor on the landing page has no session to
+    // wait for, and shouldn't see a full-screen spinner before it loads.
+    if (isPending && !isPublic) {
         return (
             <div className="flex min-h-screen items-center justify-center">
                 <Loader2 className="size-8 animate-spin text-emerald-500" />

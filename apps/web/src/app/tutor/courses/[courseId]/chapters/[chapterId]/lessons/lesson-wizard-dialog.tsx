@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownContent } from "@/components/markdown-content";
 import { LoadingButton } from "@/components/loading-button";
 import { Icon } from "@/components/icon";
 import FileUpload from "@/components/file-upload";
@@ -91,6 +92,8 @@ export function LessonWizardDialog({
 
   const [step, setStep] = React.useState<1 | 2>(1);
   const [measuredDuration, setMeasuredDuration] = React.useState<number | null>(null);
+  const [previewingWritten, setPreviewingWritten] = React.useState(false);
+  const [previewingDocument, setPreviewingDocument] = React.useState(false);
 
   const {
     register,
@@ -340,26 +343,58 @@ export function LessonWizardDialog({
               </p>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="video-written-content">Written Content (optional)</Label>
-              <Textarea
-                id="video-written-content"
-                rows={5}
-                placeholder="Notes, transcript, or supplementary text for this video"
-                {...register("written_content")}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="video-written-content">Written Content (optional, Markdown)</Label>
+                <Button type="button" variant="outline" size="sm" onClick={() => setPreviewingWritten((v) => !v)}>
+                  <Icon name={previewingWritten ? "pencil" : "eye"} className="size-3.5" />
+                  {previewingWritten ? "Write" : "Preview"}
+                </Button>
+              </div>
+              {previewingWritten ? (
+                <div className="min-h-32 rounded-md border p-4">
+                  {watch("written_content")?.trim() ? (
+                    <MarkdownContent content={watch("written_content") ?? ""} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Nothing to preview yet.</p>
+                  )}
+                </div>
+              ) : (
+                <Textarea
+                  id="video-written-content"
+                  rows={5}
+                  placeholder="Notes, transcript, or supplementary text for this video"
+                  {...register("written_content")}
+                />
+              )}
             </div>
           </div>
         )}
 
         {step === 2 && lessonType === "document" && (
           <div className="space-y-1.5">
-            <Label htmlFor="document-content">Content</Label>
-            <Textarea
-              id="document-content"
-              rows={12}
-              placeholder="Write the lesson content here..."
-              {...register("document_content")}
-            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="document-content">Content (Markdown)</Label>
+              <Button type="button" variant="outline" size="sm" onClick={() => setPreviewingDocument((v) => !v)}>
+                <Icon name={previewingDocument ? "pencil" : "eye"} className="size-3.5" />
+                {previewingDocument ? "Write" : "Preview"}
+              </Button>
+            </div>
+            {previewingDocument ? (
+              <div className="min-h-64 rounded-md border p-4">
+                {watch("document_content")?.trim() ? (
+                  <MarkdownContent content={watch("document_content") ?? ""} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nothing to preview yet.</p>
+                )}
+              </div>
+            ) : (
+              <Textarea
+                id="document-content"
+                rows={12}
+                placeholder="Write the lesson content here..."
+                {...register("document_content")}
+              />
+            )}
           </div>
         )}
 

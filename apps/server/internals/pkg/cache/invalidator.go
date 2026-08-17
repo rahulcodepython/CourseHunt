@@ -33,6 +33,12 @@ func (c *Cache) InvalidateLessons(ctx context.Context) {
 	_ = c.DeleteByPattern(ctx, "courses:*")
 }
 
+// InvalidateFaqs purges FAQ-related cache entries.
+func (c *Cache) InvalidateFaqs(ctx context.Context) {
+	log.Println("[InvalidatorService] Invalidating FAQs cache...")
+	_ = c.DeleteByPattern(ctx, "faqs:*")
+}
+
 // InvalidateCoupons purges coupon-related cache entries.
 func (c *Cache) InvalidateCoupons(ctx context.Context) {
 	log.Println("[InvalidatorService] Invalidating coupons cache...")

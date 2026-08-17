@@ -15,7 +15,8 @@ const columnHelper = createColumnHelper<UserListResponse>();
 export const getColumns = (
     onManage: (user: UserListResponse) => void,
     onBanToggle: (user: UserListResponse) => void,
-    { canBan, currentUserId }: { canBan: boolean; currentUserId?: string },
+    onChangePassword: (user: UserListResponse) => void,
+    { canBan, canChangePassword, currentUserId }: { canBan: boolean; canChangePassword: boolean; currentUserId?: string },
 ) => [
     columnHelper.accessor("name", {
         header: ({ column }) => <SortableColumnHeader column={column} label="Name" />,
@@ -57,6 +58,9 @@ export const getColumns = (
             return (
                 <RowActions>
                     <RowActionButton icon="users" label="Manage Roles" onClick={() => onManage(admin)} />
+                    {canChangePassword && (
+                        <RowActionButton icon="lock" label="Change Password" onClick={() => onChangePassword(admin)} />
+                    )}
                     {canBan && admin.id !== currentUserId && (
                         <RowActionButton
                             icon="ban"

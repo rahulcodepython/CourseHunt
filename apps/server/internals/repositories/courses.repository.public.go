@@ -25,6 +25,7 @@ func (r *CoursesRepository) PublicSingleRepository(slug, userID string) (*entiti
 			'level', c.level,
 			'actual_price', c.actual_price,
 			'final_price', c.final_price,
+			'is_free', c.is_free,
 			'benefits', COALESCE(c.benefits, '{}'),
 			'requirements', COALESCE(c.requirements, '{}'),
 			'total_lectures', c.total_lectures,
@@ -122,7 +123,7 @@ func (r *CoursesRepository) PublicListRepository(page, limit int, categoryID, su
 		),
 		data_cte AS (
 			SELECT c.id, c.slug, c.title, c.short_description, c.image_url,
-			       c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits,
+			       c.actual_price, c.final_price, c.is_free, COALESCE(c.benefits, '{}') AS benefits,
 			       c.level, c.rating_avg, c.feedback_count,
 			       CASE WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name) ELSE NULL END AS category,
 			       json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', u.image) AS instructor

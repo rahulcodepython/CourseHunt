@@ -45,6 +45,7 @@ var permissionsCatalog = []PermissionSeed{
 	{ID: "admin:users:create", Name: "Create user accounts"},
 	{ID: "admin:users:read", Name: "Read user details"},
 	{ID: "admin:users:ban", Name: "Ban or unban user accounts"},
+	{ID: "admin:users:password:reset", Name: "Change any admin/tutor's password"},
 	{ID: "admin:roles:create", Name: "Create custom roles"},
 	{ID: "admin:roles:read", Name: "List roles and permissions"},
 	{ID: "admin:roles:update", Name: "Update custom roles"},

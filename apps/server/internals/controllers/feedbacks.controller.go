@@ -80,7 +80,8 @@ func (ctrl *FeedbacksController) ListController(c *fiber.Ctx) error {
 
 func (ctrl *FeedbacksController) ListPinnedController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	cacheKey := fmt.Sprintf("feedbacks:pinned:p:%d:l:%d", page, limit)
+	courseID := c.Query("course_id")
+	cacheKey := fmt.Sprintf("feedbacks:pinned:p:%d:l:%d:c:%s", page, limit, courseID)
 
 	var cached feedbacksListCacheData
 	if hit, _ := ctrl.Repo.Cache.Get(c.Context(), cacheKey, &cached); hit {
@@ -89,7 +90,7 @@ func (ctrl *FeedbacksController) ListPinnedController(c *fiber.Ctx) error {
 		})
 	}
 
-	list, total, err := ctrl.Repo.ListRepository(generic.ScopeAdmin, "", page, limit, "true", "", "", "")
+	list, total, err := ctrl.Repo.ListRepository(generic.ScopeAdmin, "", page, limit, "true", "", "", courseID)
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch pinned feedbacks.", err)
 	}

@@ -7,6 +7,7 @@ import { hasPermission } from "@/lib/permissions";
 import { ROLES, PERMISSIONS } from "@/lib/const";
 import { CreateUserDialog } from "@/components/create-user-dialog";
 import { ManageRolesDialog } from "@/components/manage-roles-dialog";
+import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { useUserBanActions } from "@/hooks/use-user-ban-actions";
 import type { UserListResponse } from "@/schema/users.types";
 import { PageHeader } from "@/components/page-header";
@@ -18,12 +19,14 @@ import { getColumns } from "./columns";
 export default function AdminsPage() {
     const permissions = useSessionStore((s) => s.permissions);
     const canCreateAdmin = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_ROLE_ASSIGN);
+    const canChangePassword = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_PASSWORD_RESET);
     const { canBan, currentUserId, handleBanToggle } = useUserBanActions();
 
     const { data: rawAdmins, isLoading } = useUsersQuery({ role: ROLES.ADMIN });
     const [selectedUser, setSelectedUser] = React.useState<UserListResponse | null>(null);
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [createOpen, setCreateOpen] = React.useState(false);
+    const [passwordUser, setPasswordUser] = React.useState<UserListResponse | null>(null);
 
     const admins: UserListResponse[] = rawAdmins?.data?.data ?? [];
 
@@ -33,8 +36,8 @@ export default function AdminsPage() {
     };
 
     const columns = React.useMemo(
-        () => getColumns(handleManage, handleBanToggle, { canBan, currentUserId }),
-        [canBan, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps
+        () => getColumns(handleManage, handleBanToggle, setPasswordUser, { canBan, canChangePassword, currentUserId }),
+        [canBan, canChangePassword, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps
     );
 
     return (
@@ -79,6 +82,15 @@ export default function AdminsPage() {
                     authRole={ROLES.ADMIN}
                 />
             )}
+
+            <ChangePasswordDialog
+                open={!!passwordUser}
+                onOpenChange={(open) => !open && setPasswordUser(null)}
+                userId={passwordUser?.id ?? null}
+                userName={passwordUser?.name}
+                userEmail={passwordUser?.email}
+                role={ROLES.ADMIN}
+            />
         </div>
     );
 }

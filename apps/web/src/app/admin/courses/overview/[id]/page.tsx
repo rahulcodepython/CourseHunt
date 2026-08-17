@@ -15,7 +15,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { useCourseLandingQuery } from "@/query-hooks/courses.api";
+import { useManageCourseQuery } from "@/query-hooks/courses.api";
 import { PageHeader } from "@/components/page-header";
 import { Loading } from "@/components/loading";
 import { StatCard } from "@/components/stat-card";
@@ -66,11 +66,11 @@ import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 export default function CourseOverviewPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id as string;
-  const { data: raw, isLoading } = useCourseLandingQuery(courseId);
+  const { data: raw, isLoading } = useManageCourseQuery(courseId);
   const course = raw?.data;
 
   useSetBreadcrumbs([
-    { label: "Courses", href: "/courses" },
+    { label: "Courses", href: "/admin/courses" },
     { label: course?.title || "Course Details" },
   ]);
 
@@ -91,10 +91,10 @@ export default function CourseOverviewPage() {
         </Button>
         <PageHeader
           title={course.title}
-          subtitle={`Instructor: ${course.instructor?.name || "Unknown"}`}
+          subtitle={`Instructor: ${course.tutor?.name || "Unknown"}`}
           actions={
-            <Badge variant={(course as any).status === "published" ? "default" : "secondary"}>
-              {(course as any).status || "active"}
+            <Badge variant={course.status === "published" ? "default" : "secondary"}>
+              {course.status || "active"}
             </Badge>
           }
         />

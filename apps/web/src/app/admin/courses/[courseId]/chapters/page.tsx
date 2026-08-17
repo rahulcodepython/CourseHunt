@@ -10,17 +10,17 @@ import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { getColumns } from "./columns";
 
-import { useCourseLandingQuery } from "@/query-hooks/courses.api";
+import { useManageCourseQuery } from "@/query-hooks/courses.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 
 export default function CourseChaptersPage() {
   const params = useParams<{ courseId: string }>();
   const courseId = params.courseId as string;
 
-  const { data: courseData } = useCourseLandingQuery(courseId);
+  const { data: courseData } = useManageCourseQuery(courseId);
   useSetBreadcrumbs([
-    { label: "Courses", href: "/courses" },
-    { label: courseData?.data?.title || "Course", href: `/courses/overview/${courseId}` },
+    { label: "Courses", href: "/admin/courses" },
+    { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "Chapters" },
   ]);
 

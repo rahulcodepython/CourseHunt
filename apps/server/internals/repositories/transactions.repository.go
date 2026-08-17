@@ -26,12 +26,12 @@ func NewTransactionsRepository(db *sqlx.DB) *TransactionsRepository {
 // succeeds, so there's no "pending, no order id" row to reconcile later. The
 // applied coupon (if any) is recorded as a separate transactions_coupons row
 // in the same statement via a CTE.
-func (r *TransactionsRepository) CreateRepository(id, userID, courseID string, couponID *string, razorpayOrderID string, amount float64) (*entities.Transaction, error) {
+func (r *TransactionsRepository) CreateRepository(id, userID, courseID string, couponID *string, razorpayOrderID string, amount, actualPrice, offeredPrice, taxPercent, discountAmount float64) (*entities.Transaction, error) {
 	var t entities.Transaction
 	err := r.DB.Get(&t, `
 		WITH inserted_tx AS (
-			INSERT INTO transactions (id, user_id, course_id, razorpay_order_id, amount, currency, status)
-			VALUES ($1, $2, $3, $4, $5, 'INR', 'pending')
+			INSERT INTO transactions (id, user_id, course_id, razorpay_order_id, amount, actual_price, offered_price, tax_percent, discount_amount, currency, status)
+			VALUES ($1, $2, $3, $4, $5, $7, $8, $9, $10, 'INR', 'pending')
 			RETURNING id
 		),
 		coupon_mapped AS (
@@ -42,10 +42,10 @@ func (r *TransactionsRepository) CreateRepository(id, userID, courseID string, c
 			id,
 			COALESCE(user_id::text, '') AS "user.id",
 			COALESCE(course_id::text, '') AS "course.id",
-			razorpay_order_id, razorpay_payment_id, amount, currency, status,
+			razorpay_order_id, razorpay_payment_id, amount, actual_price, offered_price, tax_percent, discount_amount, currency, status,
 			error_description, confirmed_at, created_at
 		FROM transactions WHERE id = (SELECT id FROM inserted_tx)`,
-		id, userID, courseID, razorpayOrderID, amount, couponID,
+		id, userID, courseID, razorpayOrderID, amount, couponID, actualPrice, offeredPrice, taxPercent, discountAmount,
 	)
 	if err != nil {
 		return nil, err
@@ -176,6 +176,10 @@ func (r *TransactionsRepository) ListRepository(page, limit int, userID, tutorID
 			json_build_object(
 				'id', t.id,
 				'amount', t.amount,
+				'actual_price', t.actual_price,
+				'offered_price', t.offered_price,
+				'tax_percent', t.tax_percent,
+				'discount_amount', t.discount_amount,
 				'currency', t.currency,
 				'status', t.status,
 				'razorpay_order_id', t.razorpay_order_id,
@@ -220,10 +224,18 @@ func (r *TransactionsRepository) ListRepository(page, limit int, userID, tutorID
 	return list, total, nil
 }
 
-func (r *TransactionsRepository) GetCoursePriceRepository(courseID string) (float64, error) {
-	var price float64
-	err := r.DB.Get(&price, `SELECT final_price FROM courses WHERE id = $1`, courseID)
-	return price, err
+type CoursePricing struct {
+	ActualPrice float64 `db:"actual_price"`
+	FinalPrice  float64 `db:"final_price"`
+}
+
+func (r *TransactionsRepository) GetCoursePricingRepository(courseID string) (*CoursePricing, error) {
+	var pricing CoursePricing
+	err := r.DB.Get(&pricing, `SELECT actual_price, final_price FROM courses WHERE id = $1`, courseID)
+	if err != nil {
+		return nil, err
+	}
+	return &pricing, nil
 }
 
 func (r *TransactionsRepository) GetTransactionStatusRepository(txID, userID string) (*entities.TransactionStatusResponse, error) {
@@ -247,7 +259,7 @@ func (r *TransactionsRepository) GetCheckoutCourseRepository(courseID string) (*
 	var resp entities.CheckoutCourseResponse
 	err := r.DB.Get(&resp, `
 		SELECT
-			c.id, c.title, c.image_url, c.actual_price, c.final_price,
+			c.id, c.title, c.image_url, c.actual_price, c.final_price, c.is_free,
 			u.id AS "instructor.id",
 			COALESCE(u.name, '') AS "instructor.name",
 			u.image AS "instructor.image"

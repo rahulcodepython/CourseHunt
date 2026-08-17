@@ -179,9 +179,9 @@ export type NextQuestionResponse = z.infer<typeof NextQuestionResponseZod>;
 export const QuizResultItemZod = z.object({
     question_id: z.string(),
     is_correct: z.boolean(),
-    correct_option_ids: z.array(z.string()).optional(),
-    correct_arrange_order: z.array(z.number()).optional(),
-    correct_fill_answers: z.array(z.string()).optional(),
+    correct_option_ids: z.array(z.string()).nullable().optional(),
+    correct_arrange_order: z.array(z.number()).nullable().optional(),
+    correct_fill_answers: z.array(z.string()).nullable().optional(),
 });
 export type QuizResultItem = z.infer<typeof QuizResultItemZod>;
 
@@ -195,3 +195,55 @@ export const SubmitQuizResponseZod = z.object({
     results: z.array(QuizResultItemZod).nullable().optional(),
 });
 export type SubmitQuizResponse = z.infer<typeof SubmitQuizResponseZod>;
+
+export const QuizAttemptSummaryZod = z.object({
+    id: z.string(),
+    started_at: z.string(),
+    submitted_at: z.string().nullable().optional(),
+    total_score: z.number(),
+    passed: z.boolean(),
+    correct_count: z.number(),
+    incorrect_count: z.number(),
+    skipped_count: z.number(),
+});
+export type QuizAttemptSummary = z.infer<typeof QuizAttemptSummaryZod>;
+
+export const QuizAttemptOptionBreakdownZod = z.object({
+    option_id: z.string(),
+    option_text: z.string(),
+    is_correct: z.boolean(),
+    is_selected: z.boolean(),
+});
+export type QuizAttemptOptionBreakdown = z.infer<typeof QuizAttemptOptionBreakdownZod>;
+
+export const QuizAttemptArrangeBreakdownZod = z.object({
+    item_id: z.string(),
+    item_text: z.string(),
+    correct_order: z.number(),
+    submitted_order: z.number().nullable(),
+});
+export type QuizAttemptArrangeBreakdown = z.infer<typeof QuizAttemptArrangeBreakdownZod>;
+
+export const QuizAttemptQuestionBreakdownZod = z.object({
+    question_id: z.string(),
+    question_type: z.string(),
+    question_text: z.string(),
+    points: z.number(),
+    is_correct: z.boolean(),
+    is_skipped: z.boolean(),
+    your_answer: z.string(),
+    correct_answer: z.string(),
+    options: z.array(QuizAttemptOptionBreakdownZod),
+    arrange_items: z.array(QuizAttemptArrangeBreakdownZod),
+    fill_answers: z.array(z.string()),
+});
+export type QuizAttemptQuestionBreakdown = z.infer<typeof QuizAttemptQuestionBreakdownZod>;
+
+export const QuizAttemptDetailZod = z.object({
+    attempt_id: z.string(),
+    quiz_title: z.string(),
+    total_score: z.number(),
+    passed: z.boolean(),
+    questions: z.array(QuizAttemptQuestionBreakdownZod),
+});
+export type QuizAttemptDetail = z.infer<typeof QuizAttemptDetailZod>;

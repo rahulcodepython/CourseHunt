@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
-	"time"
 
 	"coursehunt/server/internals/config"
 	"coursehunt/server/internals/entities"
@@ -176,13 +174,11 @@ func (ctrl *QuizController) GetQuestionController(c *fiber.Ctx) error {
 		return utils.BadRequest(c, "Quiz ID query param required.", nil)
 	}
 	userID := utils.GetUserID(c)
-	cacheKey := fmt.Sprintf("quiz:question:q:%s:u:%s:fq:%v", quizID, userID, req.FetchedQuestionIDs)
 
-	var cached entities.NextQuestionResponse
-	if hit, _ := ctrl.Repo.Cache.Get(c.Context(), cacheKey, &cached); hit {
-		return utils.OK(c, "Question fetched.", cached)
-	}
-
+	// Not cached: this picks a random not-yet-fetched question per call, so
+	// caching by (quiz, user, fetched_ids) doesn't cache a stable answer —
+	// it just risks serving a stale/empty result (e.g. a transient "no
+	// question" response) on every retry for the cache's TTL.
 	resp, err := ctrl.Repo.GetQuestionRepository(quizID, userID, req)
 	if err != nil {
 		switch {
@@ -194,8 +190,6 @@ func (ctrl *QuizController) GetQuestionController(c *fiber.Ctx) error {
 			return utils.InternalError(c, "Failed to get question.", err)
 		}
 	}
-
-	_ = ctrl.Repo.Cache.Set(c.Context(), cacheKey, resp, 5*time.Minute)
 
 	return utils.OK(c, "Question fetched.", resp)
 }
@@ -225,4 +219,29 @@ func (ctrl *QuizController) CreateSubmitController(c *fiber.Ctx) error {
 	ctrl.Repo.Cache.InvalidateQuiz(c.Context())
 
 	return utils.OK(c, "Quiz submitted successfully.", resp)
+}
+
+func (ctrl *QuizController) ListAttemptsController(c *fiber.Ctx) error {
+	quizID := c.Query("quiz_id")
+	if quizID == "" {
+		return utils.BadRequest(c, "Quiz ID query param required.", nil)
+	}
+	userID := utils.GetUserID(c)
+	attempts, err := ctrl.Repo.ListAttemptsRepository(quizID, userID)
+	if err != nil {
+		return utils.InternalError(c, "Failed to fetch quiz attempts.", err)
+	}
+	return utils.OK(c, "Quiz attempts fetched.", attempts)
+}
+
+func (ctrl *QuizController) GetAttemptDetailController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	detail, err := ctrl.Repo.GetAttemptDetailRepository(c.Params("id"), userID)
+	if err != nil {
+		if errors.Is(err, generic.ErrQuizAttemptNotFound) {
+			return utils.NotFound(c, "Quiz attempt not found.", err)
+		}
+		return utils.InternalError(c, "Failed to fetch quiz attempt.", err)
+	}
+	return utils.OK(c, "Quiz attempt fetched.", detail)
 }

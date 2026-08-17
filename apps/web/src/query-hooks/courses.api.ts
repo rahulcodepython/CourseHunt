@@ -25,8 +25,10 @@ export function useCoursesQuery(params?: { page?: number; limit?: number; search
 }
 
 export function useCourseStudyQuery(id: string) {
-	return useAppQuery(queryKeys.courseStudy(id), () =>
-		apiRequest({ url: `${API_ENDPOINTS.COURSES}/${id}/study`, method: "GET" }, CourseStudyResponseZod),
+	return useAppQuery(
+		queryKeys.courseStudy(id),
+		() => apiRequest({ url: `${API_ENDPOINTS.COURSES}/${id}/study`, method: "GET" }, CourseStudyResponseZod),
+		{ staleTime: 1000 * 60 * 5 },
 	);
 }
 
@@ -36,10 +38,25 @@ export function useCourseLandingQuery(slug: string) {
 	);
 }
 
+export function useManageCourseQuery(id: string) {
+	return useAppQuery(queryKeys.courseById(id), () =>
+		apiRequest({ url: `${API_ENDPOINTS.COURSES}/${id}`, method: "GET" }, CourseZod),
+	);
+}
+
 export function useEnrolledCoursesQuery() {
 	return useAppQuery(queryKeys.coursesEnrolled(), () =>
 		apiRequest({ url: API_ENDPOINTS.COURSES_ENROLLED, method: "GET" }, PaginatedResponseZod(EnrolledCourseResponseZod)),
 	);
+}
+
+export function useEnrollFreeMutation() {
+	return useSimpleMutation({
+		mutationFn: (courseId: string) =>
+			apiRequest({ url: `${API_ENDPOINTS.COURSES}/${courseId}/enroll`, method: "POST" }, z.null()),
+		invalidateKeys: [queryKeys.coursesEnrolled(), queryKeys.transactions()],
+		showToast: true,
+	});
 }
 
 export function useManageCoursesQuery(params?: { page?: number; limit?: number; search?: string; category_id?: string; level?: string; tutor_id?: string; status?: string }) {

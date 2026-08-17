@@ -25,12 +25,21 @@ func NewTransactionsService(repos *repositories.TransactionsRepository, cfg *con
 	return &TransactionsService{Repos: repos, Cfg: cfg, Rzp: rzp, CouponsS: couponsS}
 }
 
+// InitiateService is the sole place the paid amount is ever computed — the
+// client never supplies (or can influence) it. Order: start from the
+// course's final_price, apply the coupon discount (if any and valid) on top
+// of that, then apply tax on the discounted amount. This same computation is
+// what gets sent to Razorpay and snapshotted onto the transaction row, so an
+// invoice generated later reflects exactly what was charged even if the
+// course's price or the platform's tax rate changes afterward.
 func (s *TransactionsService) InitiateService(userID string, req entities.InitiateTransactionRequest) (*entities.InitiateTransactionResponse, error) {
-	amount, err := s.Repos.GetCoursePriceRepository(req.CourseID)
+	pricing, err := s.Repos.GetCoursePricingRepository(req.CourseID)
 	if err != nil {
 		return nil, generic.ErrCoursesCourseNotFound
 	}
 
+	discountedAmount := pricing.FinalPrice
+	discountAmount := 0.0
 	var couponID *string
 	if req.CouponCode != nil && *req.CouponCode != "" {
 		check, coupon, err := s.CouponsS.ValidateAndFetchCouponService(*req.CouponCode, req.CourseID)
@@ -45,14 +54,18 @@ func (s *TransactionsService) InitiateService(userID string, req entities.Initia
 			return nil, fmt.Errorf("%w: %s", generic.ErrTransactionsInvalidCoupon, reason)
 		}
 		if coupon != nil {
-			discount := amount * check.DiscountPercent / 100
-			amount -= discount
-			if amount < 0 {
-				amount = 0
+			discountAmount = discountedAmount * check.DiscountPercent / 100
+			discountedAmount -= discountAmount
+			if discountedAmount < 0 {
+				discountAmount += discountedAmount // shrink the recorded discount to match what was actually applied
+				discountedAmount = 0
 			}
 			couponID = &coupon.ID
 		}
 	}
+
+	taxAmount := discountedAmount * s.Cfg.TaxPercent / 100
+	amount := discountedAmount + taxAmount
 
 	amountPaise := int64(math.Round(amount * 100))
 	if amountPaise < 100 {
@@ -66,7 +79,7 @@ func (s *TransactionsService) InitiateService(userID string, req entities.Initia
 		return nil, fmt.Errorf("failed to create payment order: %w", err)
 	}
 
-	tx, err := s.Repos.CreateRepository(txID, userID, req.CourseID, couponID, order.ID, amount)
+	tx, err := s.Repos.CreateRepository(txID, userID, req.CourseID, couponID, order.ID, amount, pricing.ActualPrice, pricing.FinalPrice, s.Cfg.TaxPercent, discountAmount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to persist transaction: %w", err)
 	}

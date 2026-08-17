@@ -19,7 +19,9 @@ export default function BreadcrumbComponent() {
     const pathname = usePathname();
     const rootHref = pathname.startsWith(ROUTES.TUTOR_DASHBOARD)
         ? ROUTES.TUTOR_DASHBOARD
-        : ROUTES.ADMIN_DASHBOARD;
+        : pathname.startsWith(ROUTES.STUDENT_DASHBOARD)
+            ? ROUTES.STUDENT_DASHBOARD
+            : ROUTES.ADMIN_DASHBOARD;
 
     return (
         <Breadcrumb>
@@ -39,10 +41,17 @@ export default function BreadcrumbComponent() {
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
                                 {
-                                    isLast || !item.href ? <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                                        : <BreadcrumbLink asChild>
-                                            <Link href={item.href}>{item.label}</Link>
+                                    isLast || !item.href ? (
+                                        <BreadcrumbPage className="max-w-37.5 truncate sm:max-w-75">
+                                            {item.label}
+                                        </BreadcrumbPage>
+                                    ) : (
+                                        <BreadcrumbLink asChild>
+                                            <Link href={item.href} className="max-w-37.5 truncate sm:max-w-75">
+                                                {item.label}
+                                            </Link>
                                         </BreadcrumbLink>
+                                    )
                                 }
                             </BreadcrumbItem>
                         </React.Fragment>

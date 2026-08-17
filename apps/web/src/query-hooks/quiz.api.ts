@@ -9,7 +9,8 @@ import { queryKeys } from "@/react-query/query-keys";
 import {
 	CreateQuizRequestZod, NextQuestionRequestZod,
 	SubmitQuizRequestZod, CreateQuestionRequestZod, NextQuestionResponseZod,
-	SubmitQuizResponseZod, QuizMetadataZod, QuizQuestionZod, QuizQuestionDetailZod
+	SubmitQuizResponseZod, QuizMetadataZod, QuizQuestionZod, QuizQuestionDetailZod,
+	QuizAttemptSummaryZod, QuizAttemptDetailZod
 } from "@/schema/quiz.types";
 import { DeleteResponseZod } from "@/schema/common.types";
 
@@ -74,6 +75,23 @@ export function useSubmitQuizMutation() {
 	return useSimpleMutation({
 		mutationFn: ({ quizId, data }: { quizId: string; data: z.infer<typeof SubmitQuizRequestZod> }) =>
 			apiRequest({ url: `/api/v1/quiz/submit?quiz_id=${quizId}`, method: "POST", data }, SubmitQuizResponseZod),
+		invalidateKeys: (_data, vars) => [queryKeys.quizAttempts(vars.quizId)],
 		showToast: true,
 	});
+}
+
+export function useQuizAttemptsQuery(quizId: string) {
+	return useAppQuery(
+		queryKeys.quizAttempts(quizId),
+		() => apiRequest({ url: `/api/v1/quiz/attempts?quiz_id=${quizId}`, method: "GET" }, z.array(QuizAttemptSummaryZod)),
+		{ enabled: !!quizId },
+	);
+}
+
+export function useQuizAttemptDetailQuery(attemptId: string | null) {
+	return useAppQuery(
+		queryKeys.quizAttemptDetail(attemptId ?? ""),
+		() => apiRequest({ url: `/api/v1/quiz/attempts/${attemptId}`, method: "GET" }, QuizAttemptDetailZod),
+		{ enabled: !!attemptId },
+	);
 }

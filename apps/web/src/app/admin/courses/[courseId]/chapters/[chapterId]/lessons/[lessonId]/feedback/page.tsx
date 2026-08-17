@@ -12,7 +12,7 @@ import { Icon } from "@/components/icon";
 import { Button } from "@/components/ui/button";
 import { getColumns } from "./columns";
 
-import { useCourseLandingQuery } from "@/query-hooks/courses.api";
+import { useManageCourseQuery } from "@/query-hooks/courses.api";
 import { useChaptersQuery } from "@/query-hooks/chapters.api";
 import { useLessonsQuery } from "@/query-hooks/lessons.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
@@ -25,7 +25,7 @@ export default function LessonFeedbackPage() {
   }>();
   const { courseId, chapterId, lessonId } = params;
 
-  const { data: courseData } = useCourseLandingQuery(courseId);
+  const { data: courseData } = useManageCourseQuery(courseId);
   const { data: chaptersData } = useChaptersQuery(courseId);
   const { data: lessonsData } = useLessonsQuery(chapterId);
 
@@ -33,10 +33,10 @@ export default function LessonFeedbackPage() {
   const currentLesson = (lessonsData?.data as any[])?.find((l: any) => l.id === lessonId);
 
   useSetBreadcrumbs([
-    { label: "Courses", href: "/courses" },
-    { label: courseData?.data?.title || "Course", href: `/courses/overview/${courseId}` },
-    { label: "Chapters", href: `/courses/${courseId}/chapters` },
-    { label: currentChapter?.title || "Chapter", href: `/courses/${courseId}/chapters/${chapterId}/lessons` },
+    { label: "Courses", href: "/admin/courses" },
+    { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
+    { label: "Chapters", href: `/admin/courses/${courseId}/chapters` },
+    { label: currentChapter?.title || "Chapter", href: `/admin/courses/${courseId}/chapters/${chapterId}/lessons` },
     { label: currentLesson?.title || "Lesson" },
     { label: "Feedbacks" },
   ]);

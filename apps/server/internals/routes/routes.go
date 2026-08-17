@@ -38,6 +38,7 @@ type Router struct {
 	Quiz         *controllers.QuizController
 	Enrollments  *controllers.EnrollmentsController
 	Chapters     *controllers.ChaptersController
+	Faqs         *controllers.FaqsController
 	Lessons      *controllers.LessonsController
 	Courses      *controllers.CoursesController
 	Transactions *controllers.TransactionsController
@@ -66,6 +67,7 @@ func NewRouter(app *fiber.App, db *sqlx.DB, rdb *redis.Client, cfg *config.Confi
 	couponsRepo := repositories.NewCouponsRepository(db, coursesRepo, cch)
 	quizRepo := repositories.NewQuizRepository(db, enrollmentsRepo, coursesRepo, cch)
 	chaptersRepo := repositories.NewChaptersRepository(db, coursesRepo, cch)
+	faqsRepo := repositories.NewFaqsRepository(db, cch)
 	lessonsRepo := repositories.NewLessonsRepository(db, coursesRepo, cch)
 	rolesRepo := repositories.NewRolesRepository(db, cch)
 
@@ -92,6 +94,7 @@ func NewRouter(app *fiber.App, db *sqlx.DB, rdb *redis.Client, cfg *config.Confi
 		Quiz:         controllers.NewQuizController(quizSvc, quizRepo, cfg),
 		Enrollments:  controllers.NewEnrollmentsController(enrollmentsRepo, cfg),
 		Chapters:     controllers.NewChaptersController(chaptersRepo, cfg),
+		Faqs:         controllers.NewFaqsController(faqsRepo, cfg),
 		Lessons:      controllers.NewLessonsController(lessonsRepo, cfg),
 		Courses:      controllers.NewCoursesController(coursesRepo, cfg),
 		Transactions: controllers.NewTransactionsController(transactionsSvc, transactionsRepo, cfg),
@@ -133,6 +136,8 @@ func (r *Router) SetUp() {
 	public.Get("/courses", r.Courses.PublicListController)
 	public.Get("/courses/course/:slug", r.Courses.PublicSingleController)
 	public.Get("/feedbacks/pinned", r.Feedbacks.ListPinnedController)
+	public.Get("/faqs/public", r.Faqs.PublicListController)
+	public.Get("/certificates/verify/:id", r.Certificates.VerifyController)
 	public.Post("/transactions/webhook", r.Transactions.WebhookController)
 
 	// ============================================================
@@ -223,6 +228,8 @@ func (r *Router) SetUp() {
 	protected.Delete("/quiz/questions/:id", middlewares.PermissionGuard(generic.PermTutorQuizManage), r.Quiz.DeleteQuestionController)
 	protected.Post("/quiz/question", r.Quiz.GetQuestionController)
 	protected.Post("/quiz/submit", r.Quiz.CreateSubmitController)
+	protected.Get("/quiz/attempts", r.Quiz.ListAttemptsController)
+	protected.Get("/quiz/attempts/:id", r.Quiz.GetAttemptDetailController)
 
 	protected.Get("/enrollments", middlewares.ScopeGuard(generic.PermAdminEnrollmentsInspect), r.Enrollments.ListController)
 	protected.Post("/enrollments/:userId/:courseId/revoke", middlewares.PermissionGuard(generic.PermAdminRevokeCourse), r.Enrollments.RevokeController)
@@ -232,6 +239,11 @@ func (r *Router) SetUp() {
 	protected.Post("/chapters", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Chapters.CreateController)
 	protected.Patch("/chapters/:id", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Chapters.UpdateController)
 	protected.Delete("/chapters/:id", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Chapters.DeleteController)
+
+	protected.Get("/faqs", middlewares.PermissionGuard(generic.PermTutorCoursesManage, generic.PermAdminCoursesInspect), r.Faqs.ListController)
+	protected.Post("/faqs", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Faqs.CreateController)
+	protected.Patch("/faqs/:id", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Faqs.UpdateController)
+	protected.Delete("/faqs/:id", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Faqs.DeleteController)
 
 	protected.Get("/lessons", middlewares.PermissionGuard(generic.PermTutorCoursesManage, generic.PermAdminCoursesInspect), r.Lessons.ListController)
 	protected.Post("/lessons", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Lessons.CreateController)
@@ -251,7 +263,9 @@ func (r *Router) SetUp() {
 
 	protected.Get("/courses/:id/study", r.Courses.StudyController)
 	protected.Get("/courses/enrolled", r.Courses.EnrolledListController)
+	protected.Post("/courses/:id/enroll", r.Courses.EnrollFreeController)
 	protected.Get("/courses/manage", middlewares.PermissionGuard(generic.PermTutorCoursesManage, generic.PermAdminCoursesInspect), r.Courses.ManageListController)
+	protected.Get("/courses/:id", middlewares.PermissionGuard(generic.PermTutorCoursesManage, generic.PermAdminCoursesInspect), r.Courses.GetByIDController)
 	protected.Post("/courses", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Courses.CreateController)
 	protected.Patch("/courses/:id", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Courses.UpdateController)
 	protected.Delete("/courses/:id", middlewares.PermissionGuard(generic.PermTutorCoursesManage), r.Courses.DeleteController)

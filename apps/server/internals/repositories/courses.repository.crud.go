@@ -34,18 +34,18 @@ func (r *CoursesRepository) CreateRepository(tutorID string, req entities.Create
 		WITH inserted AS (
 			INSERT INTO courses (
 				tutor_id, slug, title, short_description, long_description, image_url, preview_video_url,
-				category_id, language, level, status, actual_price, final_price, benefits, requirements, coupon_allowed
+				category_id, language, level, status, actual_price, final_price, benefits, requirements, coupon_allowed, is_free
 			)
 			VALUES (
 				$1, $2, $3, $4, $5, NULLIF($6, ''), NULLIF($7, ''),
-				$8, $9, COALESCE(NULLIF($10, ''), 'all'), 'draft', $11, $12, $13, $14, $15
+				$8, $9, COALESCE(NULLIF($10, ''), 'all'), 'draft', $11, $12, $13, $14, $15, $16
 			)
 			RETURNING *
 		)
 		SELECT row_to_json(inserted)::jsonb || jsonb_build_object('student_count', 0) FROM inserted`,
 		tutorID, slug, req.Title, req.ShortDescription, req.LongDescription, req.ImageURL, req.PreviewVideoURL,
 		req.CategoryID, req.Language, req.Level, req.ActualPrice, req.FinalPrice,
-		pq.Array(req.Benefits), pq.Array(req.Requirements), req.CouponAllowed)
+		pq.Array(req.Benefits), pq.Array(req.Requirements), req.CouponAllowed, req.IsFree)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +81,7 @@ func (r *CoursesRepository) UpdateRepository(id, tutorID string, req entities.Up
 		"requirements":      requirements,
 		"category_id":       req.CategoryID,
 		"coupon_allowed":    req.CouponAllowed,
+		"is_free":           req.IsFree,
 		"status":            req.Status,
 	}
 
@@ -114,6 +115,7 @@ func (r *CoursesRepository) UpdateRepository(id, tutorID string, req entities.Up
 				requirements = COALESCE(:requirements, requirements),
 				category_id = COALESCE(:category_id, category_id),
 				coupon_allowed = COALESCE(:coupon_allowed, coupon_allowed),
+				is_free = COALESCE(:is_free, is_free),
 				status = COALESCE(:status, status),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id AND tutor_id = :user_id

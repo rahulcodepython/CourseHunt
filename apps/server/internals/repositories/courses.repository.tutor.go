@@ -3,7 +3,9 @@ package repositories
 import (
 	"coursehunt/server/internals/entities"
 	"coursehunt/server/internals/generic"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -76,7 +78,7 @@ func (r *CoursesRepository) ListRepository(page, limit int, userID string, scope
 		data_cte AS (
 			SELECT c.id, c.tutor_id, c.slug, c.title, c.short_description, c.long_description, c.image_url, c.preview_video_url,
 			       c.language, c.level, c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits, COALESCE(c.requirements, '{}') AS requirements,
-			       c.category_id, c.coupon_allowed, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
+			       c.category_id, c.coupon_allowed, c.is_free, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
 			       COALESCE(ec.student_count, 0) AS student_count,
 			       CASE
 			       		WHEN t.id IS NOT NULL THEN json_build_object(
@@ -108,4 +110,58 @@ func (r *CoursesRepository) ListRepository(page, limit int, userID string, scope
 		return nil, 0, err
 	}
 	return list, result.Total, nil
+}
+
+// GetByIDRepository fetches a single course by ID, honoring the caller's
+// scope (tutor may only read their own courses; admin may read any).
+func (r *CoursesRepository) GetByIDRepository(id, userID string, scope generic.AuthScope) (*entities.Course, error) {
+	var resultData json.RawMessage
+
+	query := `
+		WITH enrollment_counts AS (
+			SELECT e.course_id, COUNT(*) AS student_count
+			FROM enrollments e
+			WHERE e.revoked = false
+			GROUP BY e.course_id
+		)
+		SELECT row_to_json(data) AS data
+		FROM (
+			SELECT c.id, c.tutor_id, c.slug, c.title, c.short_description, c.long_description, c.image_url, c.preview_video_url,
+			       c.language, c.level, c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits, COALESCE(c.requirements, '{}') AS requirements,
+			       c.category_id, c.coupon_allowed, c.is_free, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
+			       COALESCE(ec.student_count, 0) AS student_count,
+			       CASE
+			       		WHEN t.id IS NOT NULL THEN json_build_object(
+			       			'id', t.id,
+			       			'name', COALESCE(t.name, ''),
+			       			'image', t.image
+			       		)
+			       		ELSE NULL
+			       END AS tutor,
+			       c.created_at, c.updated_at
+			FROM courses c
+			LEFT JOIN enrollment_counts ec ON ec.course_id = c.id
+			LEFT JOIN "users" t ON c.tutor_id = t.id
+			WHERE c.id = $1
+				AND (NULLIF($2, '') IS NULL OR c.tutor_id = NULLIF($2, '')::uuid)
+		) data
+	`
+	ownerID := ""
+	if scope == generic.ScopeTutor {
+		ownerID = userID
+	}
+	if err := r.DB.Get(&resultData, query, id, ownerID); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, generic.ErrCoursesCourseNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	var resp entities.Course
+	if err := json.Unmarshal(resultData, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }

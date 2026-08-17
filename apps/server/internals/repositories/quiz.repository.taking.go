@@ -10,11 +10,14 @@ import (
 
 func (r *QuizRepository) ReadNextQuestionUnifiedRepository(quizID, userID string, fetchedIDs []string) (*entities.QuizQuestion, []entities.QuizOption, []entities.QuizArrangeItem, int, error) {
 	exclude := ""
+	args := []any{quizID, userID}
+	countParam := "$3"
 	if len(fetchedIDs) > 0 {
 		exclude = " AND qq.id != ALL($3)"
-	} else {
-		fetchedIDs = []string{} // ensure it's not nil for pq.Array
+		args = append(args, pq.Array(fetchedIDs))
+		countParam = "$4"
 	}
+	args = append(args, len(fetchedIDs))
 
 	query := `
 		WITH quiz_info AS (
@@ -44,7 +47,7 @@ func (r *QuizRepository) ReadNextQuestionUnifiedRepository(quizID, userID string
 		SELECT 
 			EXISTS(SELECT 1 FROM quiz_info) AS quiz_exists,
 			COALESCE((SELECT is_enrolled FROM enrollment_auth), false) AS is_enrolled,
-			(SELECT total FROM metadata) - $4::int AS remaining_count,
+			(SELECT total FROM metadata) - ` + countParam + `::int AS remaining_count,
 			(
 				SELECT json_build_object(
 					'question', sq.*,
@@ -67,7 +70,7 @@ func (r *QuizRepository) ReadNextQuestionUnifiedRepository(quizID, userID string
 		QuestionJSON   *json.RawMessage `db:"question_json"`
 	}
 
-	err := r.DB.Get(&result, query, quizID, userID, pq.Array(fetchedIDs), len(fetchedIDs))
+	err := r.DB.Get(&result, query, args...)
 	if err != nil {
 		return nil, nil, nil, 0, err
 	}
@@ -90,6 +93,26 @@ func (r *QuizRepository) ReadNextQuestionUnifiedRepository(quizID, userID string
 		return nil, nil, nil, 0, err
 	}
 	return &parser.Question, parser.Options, parser.ArrangeItems, result.RemainingCount, nil
+}
+
+// deconflictArrangeOrder guards against the query's ORDER BY RANDOM() shuffle
+// landing on the already-correct sequence by chance — swapping the first two
+// items whenever that happens so an arrange question never starts pre-solved.
+func deconflictArrangeOrder(items []entities.QuizArrangeItem) []entities.QuizArrangeItem {
+	if len(items) < 2 {
+		return items
+	}
+	alreadySorted := true
+	for i := 1; i < len(items); i++ {
+		if items[i-1].CorrectOrder > items[i].CorrectOrder {
+			alreadySorted = false
+			break
+		}
+	}
+	if alreadySorted {
+		items[0], items[1] = items[1], items[0]
+	}
+	return items
 }
 
 func (r *QuizRepository) GetQuestionRepository(quizID, userID string, req entities.NextQuestionRequest) (*entities.NextQuestionResponse, error) {
@@ -115,7 +138,7 @@ func (r *QuizRepository) GetQuestionRepository(quizID, userID string, req entiti
 		for _, o := range opts {
 			qResp.Options = append(qResp.Options, entities.QuizOptionPublic{ID: o.ID, OptionText: o.OptionText})
 		}
-		for _, it := range items {
+		for _, it := range deconflictArrangeOrder(items) {
 			qResp.ArrangeItems = append(qResp.ArrangeItems, entities.QuizArrangeItemPublic{ID: it.ID, ItemText: it.ItemText})
 		}
 		resp.Question = qResp
@@ -217,6 +240,175 @@ func (r *QuizRepository) GetQuizForEvaluationRepository(quizID, userID string) (
 	return &entities.QuizEvaluationData{
 		PassScorePercent: validation.PassScorePercent,
 		Questions:        qMap,
+	}, nil
+}
+
+// ListAttemptsRepository returns every past attempt the caller has made on
+// this quiz, newest first. Scoped by user_id in the WHERE clause — no
+// separate ownership check needed, an arbitrary quiz_id just yields an empty
+// list rather than leaking another user's attempts.
+func (r *QuizRepository) ListAttemptsRepository(quizID, userID string) ([]entities.QuizAttemptSummary, error) {
+	var attempts []entities.QuizAttemptSummary
+	err := r.DB.Select(&attempts, `
+		SELECT id, started_at, submitted_at, total_score, passed, correct_count, incorrect_count, skipped_count
+		FROM quiz_attempts
+		WHERE quiz_id = $1 AND user_id = $2
+		ORDER BY started_at DESC`,
+		quizID, userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return attempts, nil
+}
+
+// GetAttemptDetailRepository returns the full per-question breakdown of one
+// past attempt: the question text/points, whether it was answered correctly,
+// and both the student's answer and the correct answer as display strings —
+// resolved per question type (single/multi choice, arrange, fill blank) from
+// the already-persisted quiz_attempt_*_answers tables.
+func (r *QuizRepository) GetAttemptDetailRepository(attemptID, userID string) (*entities.QuizAttemptDetail, error) {
+	query := `
+		WITH attempt_check AS (
+			SELECT qa.id AS attempt_id, qa.quiz_id, qm.title AS quiz_title, qa.total_score, qa.passed
+			FROM quiz_attempts qa
+			JOIN quiz_metadata qm ON qm.id = qa.quiz_id
+			WHERE qa.id = $1 AND qa.user_id = $2
+		),
+		single_rows AS (
+			SELECT sa.question_id, sa.is_correct, sa.is_skipped,
+			       COALESCE(so.option_text, '') AS your_answer,
+			       COALESCE((SELECT co.option_text FROM quiz_options co WHERE co.question_id = sa.question_id AND co.is_correct = true LIMIT 1), '') AS correct_answer,
+			       COALESCE((
+			       	SELECT json_agg(json_build_object(
+			       		'option_id', o.id,
+			       		'option_text', o.option_text,
+			       		'is_correct', o.is_correct,
+			       		'is_selected', o.id = sa.selected_option_id
+			       	) ORDER BY o.sort_order)
+			       	FROM quiz_options o WHERE o.question_id = sa.question_id
+			       ), '[]'::json) AS options,
+			       '[]'::json AS arrange_items,
+			       '[]'::json AS fill_answers
+			FROM quiz_attempt_single_answers sa
+			JOIN attempt_check ac ON ac.attempt_id = sa.attempt_id
+			LEFT JOIN quiz_options so ON so.id = sa.selected_option_id
+		),
+		multi_rows AS (
+			SELECT ma.question_id, ma.is_correct, ma.is_skipped,
+			       COALESCE((SELECT string_agg(mo.option_text, ', ') FROM quiz_attempt_multi_answer_options mao JOIN quiz_options mo ON mo.id = mao.selected_option_id WHERE mao.multi_answer_id = ma.id), '') AS your_answer,
+			       COALESCE((SELECT string_agg(co.option_text, ', ') FROM quiz_options co WHERE co.question_id = ma.question_id AND co.is_correct = true), '') AS correct_answer,
+			       COALESCE((
+			       	SELECT json_agg(json_build_object(
+			       		'option_id', o.id,
+			       		'option_text', o.option_text,
+			       		'is_correct', o.is_correct,
+			       		'is_selected', EXISTS (
+			       			SELECT 1 FROM quiz_attempt_multi_answer_options mao
+			       			WHERE mao.multi_answer_id = ma.id AND mao.selected_option_id = o.id
+			       		)
+			       	) ORDER BY o.sort_order)
+			       	FROM quiz_options o WHERE o.question_id = ma.question_id
+			       ), '[]'::json) AS options,
+			       '[]'::json AS arrange_items,
+			       '[]'::json AS fill_answers
+			FROM quiz_attempt_multi_answers ma
+			JOIN attempt_check ac ON ac.attempt_id = ma.attempt_id
+		),
+		arrange_rows AS (
+			SELECT aa.question_id,
+			       bool_and(aa.is_correct) AS is_correct,
+			       bool_and(aa.is_skipped) AS is_skipped,
+			       string_agg(ai.item_text, ' -> ' ORDER BY aa.submitted_order) AS your_answer,
+			       (SELECT string_agg(ai2.item_text, ' -> ' ORDER BY ai2.correct_order) FROM quiz_arrange_items ai2 WHERE ai2.question_id = aa.question_id) AS correct_answer,
+			       '[]'::json AS options,
+			       COALESCE((
+			       	SELECT json_agg(json_build_object(
+			       		'item_id', ai3.id,
+			       		'item_text', ai3.item_text,
+			       		'correct_order', ai3.correct_order,
+			       		'submitted_order', aa3.submitted_order
+			       	) ORDER BY ai3.correct_order)
+			       	FROM quiz_arrange_items ai3
+			       	LEFT JOIN quiz_attempt_arrange_answers aa3
+			       	  ON aa3.arrange_item_id = ai3.id AND aa3.attempt_id = aa.attempt_id
+			       	WHERE ai3.question_id = aa.question_id
+			       ), '[]'::json) AS arrange_items,
+			       '[]'::json AS fill_answers
+			FROM quiz_attempt_arrange_answers aa
+			JOIN attempt_check ac ON ac.attempt_id = aa.attempt_id
+			JOIN quiz_arrange_items ai ON ai.id = aa.arrange_item_id
+			GROUP BY aa.question_id, aa.attempt_id
+		),
+		fill_rows AS (
+			SELECT fa.question_id, fa.is_correct, fa.is_skipped,
+			       fa.fill_text AS your_answer,
+			       COALESCE((SELECT string_agg(fba.answer, ' / ') FROM quiz_fill_blank_answers fba WHERE fba.question_id = fa.question_id), '') AS correct_answer,
+			       '[]'::json AS options,
+			       '[]'::json AS arrange_items,
+			       COALESCE((
+			       	SELECT json_agg(fba2.answer)
+			       	FROM quiz_fill_blank_answers fba2 WHERE fba2.question_id = fa.question_id
+			       ), '[]'::json) AS fill_answers
+			FROM quiz_attempt_fill_answers fa
+			JOIN attempt_check ac ON ac.attempt_id = fa.attempt_id
+		),
+		all_rows AS (
+			SELECT * FROM single_rows
+			UNION ALL SELECT * FROM multi_rows
+			UNION ALL SELECT * FROM arrange_rows
+			UNION ALL SELECT * FROM fill_rows
+		)
+		SELECT
+			EXISTS(SELECT 1 FROM attempt_check) AS attempt_exists,
+			COALESCE((SELECT quiz_title FROM attempt_check), '') AS quiz_title,
+			COALESCE((SELECT total_score FROM attempt_check), 0) AS total_score,
+			COALESCE((SELECT passed FROM attempt_check), false) AS passed,
+			COALESCE(
+				json_agg(
+					json_build_object(
+						'question_id', ar.question_id,
+						'question_type', qq.question_type,
+						'question_text', qq.question_text,
+						'points', qq.points,
+						'is_correct', ar.is_correct,
+						'is_skipped', ar.is_skipped,
+						'your_answer', ar.your_answer,
+						'correct_answer', ar.correct_answer,
+						'options', ar.options,
+						'arrange_items', ar.arrange_items,
+						'fill_answers', ar.fill_answers
+					) ORDER BY qq.created_at
+				) FILTER (WHERE ar.question_id IS NOT NULL), '[]'::json
+			) AS questions
+		FROM all_rows ar
+		JOIN quiz_questions qq ON qq.id = ar.question_id`
+
+	var result struct {
+		AttemptExists bool            `db:"attempt_exists"`
+		QuizTitle     string          `db:"quiz_title"`
+		TotalScore    float64         `db:"total_score"`
+		Passed        bool            `db:"passed"`
+		Questions     json.RawMessage `db:"questions"`
+	}
+	if err := r.DB.Get(&result, query, attemptID, userID); err != nil {
+		return nil, err
+	}
+	if !result.AttemptExists {
+		return nil, generic.ErrQuizAttemptNotFound
+	}
+
+	var questions []entities.QuizAttemptQuestionBreakdown
+	if err := json.Unmarshal(result.Questions, &questions); err != nil {
+		return nil, err
+	}
+
+	return &entities.QuizAttemptDetail{
+		AttemptID:  attemptID,
+		QuizTitle:  result.QuizTitle,
+		TotalScore: result.TotalScore,
+		Passed:     result.Passed,
+		Questions:  questions,
 	}, nil
 }
 

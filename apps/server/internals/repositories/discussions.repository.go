@@ -44,13 +44,13 @@ func buildAuthCTE(scope generic.AuthScope) string {
 	case generic.ScopeAdmin:
 		return `
 		auth AS (
-			SELECT true AS is_authorized
+			SELECT ($3::text IS NOT NULL OR true) AS is_authorized
 		),`
 	default:
 		// ScopeUser — user access
 		return `
 		auth AS (
-			SELECT true AS is_authorized
+			SELECT ($3::text IS NOT NULL OR true) AS is_authorized
 		),`
 	}
 }
@@ -78,7 +78,10 @@ func buildCreateAuthCTE(scope generic.AuthScope) (string, bool) {
 			) AS is_authorized
 		),`, true
 	default:
-		return "", false
+		return `
+		auth AS (
+			SELECT ($3::text IS NOT NULL OR true) AS is_authorized
+		),`, false
 	}
 }
 
@@ -110,7 +113,7 @@ func buildUpdateAuthCTE(scope generic.AuthScope) string {
 			) AS is_authorized
 		),`
 	default:
-		return `auth AS (SELECT true AS is_authorized),`
+		return `auth AS (SELECT ($2::text IS NOT NULL OR true) AS is_authorized),`
 	}
 }
 
@@ -180,11 +183,11 @@ func (r *DiscussionsRepository) ListRepository(lessonID, parentID, userID string
 			SELECT l.id AS target_id, ch.course_id
 			FROM lessons l
 			JOIN chapters ch ON ch.id = l.chapter_id
-			WHERE l.id = $1 AND $1 != ''
+			WHERE l.id = NULLIF($1, '')::uuid AND $1 != ''
 			UNION ALL
 			SELECT d.id AS target_id, d.course_id
 			FROM discussions d
-			WHERE d.id = $2 AND $2 != ''
+			WHERE d.id = NULLIF($2, '')::uuid AND $2 != ''
 		),
 		%s
 		count_cte AS (
@@ -192,8 +195,8 @@ func (r *DiscussionsRepository) ListRepository(lessonID, parentID, userID string
 			FROM discussions d
 			CROSS JOIN auth a
 			WHERE 
-				(($1 != '' AND d.lesson_id = $1 AND d.parent_id IS NULL) OR
-				($2 != '' AND d.parent_id = $2))
+				(($1 != '' AND d.lesson_id = NULLIF($1, '')::uuid AND d.parent_id IS NULL) OR
+				($2 != '' AND d.parent_id = NULLIF($2, '')::uuid))
 				AND a.is_authorized = true
 		),
 		data_cte AS (
@@ -203,8 +206,8 @@ func (r *DiscussionsRepository) ListRepository(lessonID, parentID, userID string
 			JOIN "users" u ON u.id = d.user_id
 			CROSS JOIN auth a
 			WHERE 
-				(($1 != '' AND d.lesson_id = $1 AND d.parent_id IS NULL) OR
-				($2 != '' AND d.parent_id = $2))
+				(($1 != '' AND d.lesson_id = NULLIF($1, '')::uuid AND d.parent_id IS NULL) OR
+				($2 != '' AND d.parent_id = NULLIF($2, '')::uuid))
 				AND a.is_authorized = true
 			ORDER BY 
 				CASE WHEN $1 != '' THEN d.created_at END DESC,
@@ -255,22 +258,22 @@ func (r *DiscussionsRepository) CreateRepository(userID string, req entities.Cre
 			SELECT l.id AS lesson_id, ch.course_id
 			FROM lessons l
 			JOIN chapters ch ON ch.id = l.chapter_id
-			WHERE l.id = $1
+			WHERE l.id = NULLIF($1, '')::uuid
 		),
 		parent_info AS (
-			SELECT id, lesson_id FROM discussions WHERE id = $2
+			SELECT id, lesson_id FROM discussions WHERE id = NULLIF($2, '')::uuid AND $2 != ''
 		),
 		%s
 		parent_validation AS (
 			SELECT 
 				CASE 
-					WHEN $2::text IS NULL THEN true
-					ELSE EXISTS(SELECT 1 FROM parent_info WHERE lesson_id = $1)
+					WHEN $2::text IS NULL OR $2::text = '' THEN true
+					ELSE EXISTS(SELECT 1 FROM parent_info WHERE lesson_id = NULLIF($1, '')::uuid)
 				END AS is_valid
 		),
 		inserted AS (
 			INSERT INTO discussions (lesson_id, course_id, user_id, parent_id, content)
-			SELECT $1, li.course_id, $3, $2, $4
+			SELECT NULLIF($1, '')::uuid, li.course_id, $3::uuid, NULLIF($2, '')::uuid, $4
 			FROM lesson_info li
 			CROSS JOIN auth a
 			CROSS JOIN parent_validation pv
@@ -287,7 +290,7 @@ func (r *DiscussionsRepository) CreateRepository(userID string, req entities.Cre
 			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
 			%s AS is_authorized,
 			CASE 
-				WHEN $2::text IS NULL THEN true
+				WHEN $2::text IS NULL OR $2::text = '' THEN true
 				ELSE EXISTS(SELECT 1 FROM parent_info)
 			END AS parent_exists,
 			COALESCE((SELECT is_valid FROM parent_validation), false) AS parent_valid,
@@ -335,7 +338,7 @@ func (r *DiscussionsRepository) UpdateRepository(id, userID string, content stri
 
 	query := fmt.Sprintf(`
 		WITH discussion_info AS (
-			SELECT id, user_id, course_id FROM discussions WHERE id = $1
+			SELECT id, user_id, course_id FROM discussions WHERE id = NULLIF($1, '')::uuid
 		),
 		%s
 		updated AS (
@@ -343,7 +346,7 @@ func (r *DiscussionsRepository) UpdateRepository(id, userID string, content stri
 			SET content = $3, updated_at = CURRENT_TIMESTAMP
 			FROM discussion_info di
 			CROSS JOIN auth a
-			WHERE discussions.id = $1 AND a.is_authorized = true %s
+			WHERE discussions.id = NULLIF($1, '')::uuid AND a.is_authorized = true %s
 			RETURNING discussions.id, discussions.lesson_id, discussions.course_id, discussions.parent_id, discussions.content, discussions.reply_count, discussions.created_at, discussions.updated_at, discussions.user_id
 		),
 		updated_with_user AS (
@@ -358,7 +361,7 @@ func (r *DiscussionsRepository) UpdateRepository(id, userID string, content stri
 			%s AS is_authorized,
 			(SELECT row_to_json(updated_with_user.*) FROM updated_with_user) AS updated_data
 	`, authCTE, ownerClause,
-		map[bool]string{true: "EXISTS(SELECT 1 FROM discussion_info WHERE user_id = $2)", false: "true"}[checkOwner],
+		map[bool]string{true: "EXISTS(SELECT 1 FROM discussion_info WHERE user_id = NULLIF($2, '')::uuid)", false: "true"}[checkOwner],
 		map[bool]string{true: "COALESCE((SELECT is_authorized FROM auth), false)", false: "true"}[hasAuth])
 
 	err := r.DB.Get(&result, query, id, userID, content)

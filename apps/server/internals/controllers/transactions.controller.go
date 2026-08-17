@@ -92,6 +92,9 @@ func (ctrl *TransactionsController) CheckoutController(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.InternalError(c, "Failed to fetch checkout course info.", err)
 	}
+	// Informational only — the authoritative amount (and tax) is always
+	// (re)computed server-side in InitiateService, never trusted from here.
+	resp.TaxPercent = ctrl.Cfg.TaxPercent
 	return utils.OK(c, "Checkout course info fetched.", resp)
 }
 

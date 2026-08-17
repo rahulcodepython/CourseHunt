@@ -6,12 +6,14 @@ import { z } from "zod";
 import { useSimpleMutation } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { UserNoteZod, UpsertNoteRequestZod, NoteResponseZod } from "@/schema/notes.types";
+import { UpsertNoteRequestZod, NoteResponseZod } from "@/schema/notes.types";
 import { DeleteResponseZod } from "@/schema/common.types";
 
+// Returns success:false (data: null) when the lesson has no note yet — the
+// backend 404s in that case, which apiRequest already normalizes for us.
 export function useNotesQuery(lessonId: string) {
 	return useAppQuery(queryKeys.notes(lessonId), () =>
-		apiRequest({ url: `/api/v1/notes?lesson_id=${lessonId}`, method: "GET" }, UserNoteZod),
+		apiRequest({ url: `/api/v1/notes?lesson_id=${lessonId}`, method: "GET" }, NoteResponseZod),
 	);
 }
 

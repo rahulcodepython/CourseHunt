@@ -29,6 +29,7 @@ export const ROUTES = {
     HOME: "/",
     ADMIN_DASHBOARD: "/admin",
     TUTOR_DASHBOARD: "/tutor",
+    STUDENT_DASHBOARD: "/student",
     LOGIN: "/auth/login",
     CHANGE_PASSWORD: "/auth/change-password",
 } as const;
@@ -41,6 +42,8 @@ export function getDashboardURI(role?: string | null): string {
             return ROUTES.ADMIN_DASHBOARD;
         case ROLES.TUTOR:
             return ROUTES.TUTOR_DASHBOARD;
+        case ROLES.USER:
+            return ROUTES.STUDENT_DASHBOARD;
         default:
             return ROUTES.HOME;
     }
@@ -75,6 +78,7 @@ export const PERMISSIONS = {
     ADMIN_USERS_CREATE: "admin:users:create",
     ADMIN_USERS_READ: "admin:users:read",
     ADMIN_USERS_BAN: "admin:users:ban",
+    ADMIN_USERS_PASSWORD_RESET: "admin:users:password:reset",
     ADMIN_ROLES_CREATE: "admin:roles:create",
     ADMIN_ROLES_READ: "admin:roles:read",
     ADMIN_ROLES_UPDATE: "admin:roles:update",
@@ -109,6 +113,13 @@ export const ENROLLMENT_STATUS = {
     REVOKED: "revoked",
 } as const;
 
+export const QUESTION_TYPE = {
+    SINGLE_CHOICE: "single_choice",
+    MULTI_CHOICE: "multi_choice",
+    ARRANGE: "arrange",
+    FILL_BLANK: "fill_blank",
+} as const;
+
 export const API_ENDPOINTS = {
     COURSES: "/api/v1/courses",
     COURSES_MANAGE: "/api/v1/courses/manage",
@@ -134,3 +145,10 @@ export const API_ENDPOINTS = {
     PROFILE_ADMIN: "/api/v1/profile/admin",
     WISHLIST: "/api/v1/wishlist",
 } as const;
+
+export const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js"
+
+// Filename of the generic placeholder signature image, expected at
+// `apps/web/public/<this file>` — swap the actual file in later without
+// touching any code that references this const.
+export const CERTIFICATE_SIGNATURE_FILENAME = "certificate-signature.png";

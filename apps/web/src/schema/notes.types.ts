@@ -1,15 +1,5 @@
 import { z } from 'zod';
 
-export const UserNoteZod = z.object({
-    id: z.string(),
-    user_id: z.string(),
-    lesson_id: z.string(),
-    course_id: z.string(),
-    content: z.string(),
-    updated_at: z.string(),
-});
-export type UserNote = z.infer<typeof UserNoteZod>;
-
 export const UpsertNoteRequestZod = z.object({
     content: z.string(),
 });

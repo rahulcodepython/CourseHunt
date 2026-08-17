@@ -18,9 +18,10 @@ export function useFeedbacksQuery() {
 	);
 }
 
-export function usePinnedFeedbacksQuery() {
-	return useAppQuery(queryKeys.feedbacksPinned(), () =>
-		apiRequest({ url: API_ENDPOINTS.FEEDBACKS_PINNED, method: "GET" }, PaginatedResponseZod(FeedbackZod)),
+export function usePinnedFeedbacksQuery(courseId?: string) {
+	const url = courseId ? `${API_ENDPOINTS.FEEDBACKS_PINNED}?course_id=${courseId}` : API_ENDPOINTS.FEEDBACKS_PINNED;
+	return useAppQuery([...queryKeys.feedbacksPinned(), courseId ?? "all"], () =>
+		apiRequest({ url, method: "GET" }, PaginatedResponseZod(FeedbackZod)),
 	);
 }
 

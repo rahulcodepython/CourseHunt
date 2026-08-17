@@ -88,11 +88,15 @@ export function AppSidebar({
     brandLogo,
 }: AppSidebarProps) {
     const pathname = usePathname();
-    const defaultSubTitle = pathname.startsWith(ROUTES.TUTOR_DASHBOARD) ? "Tutor Portal" : "Admin Panel";
+    const defaultSubTitle = pathname.startsWith(ROUTES.TUTOR_DASHBOARD)
+        ? "Tutor Portal"
+        : pathname.startsWith(ROUTES.STUDENT_DASHBOARD)
+            ? "Student Portal"
+            : "Admin Panel";
 
     const isLinkActive = (href?: string) => {
         if (!href) return false;
-        if (href === ROUTES.HOME || href === ROUTES.ADMIN_DASHBOARD || href === ROUTES.TUTOR_DASHBOARD) {
+        if (href === ROUTES.HOME || href === ROUTES.ADMIN_DASHBOARD || href === ROUTES.TUTOR_DASHBOARD || href === ROUTES.STUDENT_DASHBOARD) {
             return pathname === href;
         }
         return pathname === href || pathname.startsWith(href + "/");

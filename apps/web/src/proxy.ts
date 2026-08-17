@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { COOKIES, ROUTES } from "@/lib/const";
+import { isPublicPath } from "@/lib/public-routes";
 
 export default function middleware(request: NextRequest) {
     const sessionCookie = request.cookies.get(COOKIES.SESSION_TOKEN)?.value;
@@ -7,10 +8,7 @@ export default function middleware(request: NextRequest) {
     const isAuthenticated = Boolean(sessionCookie);
     const { pathname } = request.nextUrl;
 
-    if (!isAuthenticated) {
-        if (pathname === ROUTES.LOGIN || pathname === ROUTES.CHANGE_PASSWORD) {
-            return NextResponse.next();
-        }
+    if (!isAuthenticated && !isPublicPath(pathname)) {
         return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
     }
 

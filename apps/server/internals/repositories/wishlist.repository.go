@@ -49,6 +49,7 @@ func (r *WishlistRepository) ListRepository(userID string, page, limit int) ([]e
 			SELECT w.id, w.user_id, w.added_at,
 				   json_build_object(
 				   		'id', COALESCE(w.course_id::text, ''),
+				   		'slug', COALESCE(c.slug, ''),
 				   		'title', COALESCE(c.title, ''),
 				   		'thumbnail', c.image_url
 				   ) AS course

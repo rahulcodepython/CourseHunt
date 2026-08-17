@@ -44,6 +44,7 @@ export const CategoryInfoZod = z.object({
 
 export const CourseInfoZod = z.object({
     id: z.string(),
+    slug: z.string().optional(),
     title: z.string(),
     thumbnail: z.string().nullable().optional(),
 });

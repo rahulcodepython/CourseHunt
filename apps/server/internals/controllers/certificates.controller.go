@@ -49,3 +49,14 @@ func (ctrl *CertificatesController) ListController(c *fiber.Ctx) error {
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
+
+// VerifyController is public and unauthenticated — reached by scanning a
+// certificate's QR code. Always 200s; legitimacy is carried in the
+// `valid` field of the response body, not the HTTP status.
+func (ctrl *CertificatesController) VerifyController(c *fiber.Ctx) error {
+	verification, err := ctrl.Repo.VerifyRepository(c.Params("id"))
+	if err != nil {
+		return utils.InternalError(c, "Failed to verify certificate.", err)
+	}
+	return utils.OK(c, "Certificate verification checked.", verification)
+}

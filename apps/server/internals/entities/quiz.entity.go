@@ -234,3 +234,52 @@ type QuizEvaluationData struct {
 	PassScorePercent int
 	Questions        map[string]QuestionValidation
 }
+
+// ── Quiz Attempts (history & breakdown) ──
+
+type QuizAttemptSummary struct {
+	ID             string     `json:"id" db:"id"`
+	StartedAt      time.Time  `json:"started_at" db:"started_at"`
+	SubmittedAt    *time.Time `json:"submitted_at" db:"submitted_at"`
+	TotalScore     float64    `json:"total_score" db:"total_score"`
+	Passed         bool       `json:"passed" db:"passed"`
+	CorrectCount   int        `json:"correct_count" db:"correct_count"`
+	IncorrectCount int        `json:"incorrect_count" db:"incorrect_count"`
+	SkippedCount   int        `json:"skipped_count" db:"skipped_count"`
+}
+
+type QuizAttemptOptionBreakdown struct {
+	OptionID   string `json:"option_id"`
+	OptionText string `json:"option_text"`
+	IsCorrect  bool   `json:"is_correct"`
+	IsSelected bool   `json:"is_selected"`
+}
+
+type QuizAttemptArrangeBreakdown struct {
+	ItemID         string `json:"item_id"`
+	ItemText       string `json:"item_text"`
+	CorrectOrder   int    `json:"correct_order"`
+	SubmittedOrder int    `json:"submitted_order"`
+}
+
+type QuizAttemptQuestionBreakdown struct {
+	QuestionID    string                        `json:"question_id" db:"question_id"`
+	QuestionType  string                        `json:"question_type" db:"question_type"`
+	QuestionText  string                        `json:"question_text" db:"question_text"`
+	Points        int                           `json:"points" db:"points"`
+	IsCorrect     bool                          `json:"is_correct" db:"is_correct"`
+	IsSkipped     bool                          `json:"is_skipped" db:"is_skipped"`
+	YourAnswer    string                        `json:"your_answer" db:"your_answer"`
+	CorrectAnswer string                        `json:"correct_answer" db:"correct_answer"`
+	Options       []QuizAttemptOptionBreakdown  `json:"options"`
+	ArrangeItems  []QuizAttemptArrangeBreakdown `json:"arrange_items"`
+	FillAnswers   []string                      `json:"fill_answers"`
+}
+
+type QuizAttemptDetail struct {
+	AttemptID  string                         `json:"attempt_id"`
+	QuizTitle  string                         `json:"quiz_title"`
+	TotalScore float64                        `json:"total_score"`
+	Passed     bool                           `json:"passed"`
+	Questions  []QuizAttemptQuestionBreakdown `json:"questions"`
+}

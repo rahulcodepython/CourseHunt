@@ -5,6 +5,7 @@ import {
     IconAdjustmentsHorizontal,
     IconArrowBackUp,
     IconArrowLeft,
+    IconArrowRight,
     IconBan,
     IconBell,
     IconBook,
@@ -17,6 +18,7 @@ import {
     IconChevronLeft,
     IconChevronRight,
     IconChevronUp,
+    IconCircle,
     IconClock,
     IconCopy,
     IconCpu,
@@ -32,6 +34,7 @@ import {
     IconFilter,
     IconFolder,
     IconGlobe,
+    IconHelpCircle,
     IconHierarchy,
     IconHistory,
     IconHome,
@@ -56,6 +59,7 @@ import {
     IconRefresh,
     IconSearch,
     IconSelector,
+    IconSend,
     IconServer,
     IconSettings,
     IconShield,
@@ -69,6 +73,7 @@ import {
     IconUser,
     IconUserCheck,
     IconUsers,
+    IconVideo,
     IconWallet,
     IconWorld,
     IconX,
@@ -81,6 +86,7 @@ export type IconName =
     | "adjustments-horizontal"
     | "arrow-back-up"
     | "arrow-left"
+    | "arrow-right"
     | "arrow-up-down"
     | "ban"
     | "bell"
@@ -94,6 +100,7 @@ export type IconName =
     | "chevron-left"
     | "chevron-right"
     | "chevron-up"
+    | "circle"
     | "clock"
     | "copy"
     | "cpu"
@@ -110,6 +117,7 @@ export type IconName =
     | "globe"
     | "hard-drive"
     | "heart"
+    | "help-circle"
     | "hierarchy"
     | "history"
     | "home"
@@ -133,6 +141,7 @@ export type IconName =
     | "receipt-refund"
     | "refresh"
     | "search"
+    | "send"
     | "server"
     | "settings"
     | "shield"
@@ -145,6 +154,7 @@ export type IconName =
     | "user"
     | "user-check"
     | "users"
+    | "video"
     | "wallet"
     | "world"
     | "x";
@@ -155,6 +165,7 @@ const iconRegistry: Record<IconName, React.ComponentType<IconProps>> = {
     "adjustments-horizontal": IconAdjustmentsHorizontal,
     "arrow-back-up": IconArrowBackUp,
     "arrow-left": IconArrowLeft,
+    "arrow-right": IconArrowRight,
     "arrow-up-down": IconSelector,
     ban: IconBan,
     bell: IconBell,
@@ -168,6 +179,7 @@ const iconRegistry: Record<IconName, React.ComponentType<IconProps>> = {
     "chevron-left": IconChevronLeft,
     "chevron-right": IconChevronRight,
     "chevron-up": IconChevronUp,
+    circle: IconCircle,
     clock: IconClock,
     copy: IconCopy,
     cpu: IconCpu,
@@ -184,6 +196,7 @@ const iconRegistry: Record<IconName, React.ComponentType<IconProps>> = {
     globe: IconGlobe,
     "hard-drive": IconDeviceFloppy,
     heart: IconHeart,
+    "help-circle": IconHelpCircle,
     hierarchy: IconHierarchy,
     history: IconHistory,
     home: IconHome,
@@ -207,6 +220,7 @@ const iconRegistry: Record<IconName, React.ComponentType<IconProps>> = {
     "receipt-refund": IconReceiptRefund,
     refresh: IconRefresh,
     search: IconSearch,
+    send: IconSend,
     server: IconServer,
     settings: IconSettings,
     shield: IconShield,
@@ -219,6 +233,7 @@ const iconRegistry: Record<IconName, React.ComponentType<IconProps>> = {
     user: IconUser,
     "user-check": IconUserCheck,
     users: IconUsers,
+    video: IconVideo,
     wallet: IconWallet,
     world: IconWorld,
     x: IconX,

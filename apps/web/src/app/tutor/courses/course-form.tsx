@@ -46,6 +46,7 @@ const courseSchema = z
     image_url: z.string().optional(),
     preview_video_url: z.string().optional(),
     coupon_allowed: z.boolean(),
+    is_free: z.boolean(),
   })
   .refine(
     (data) =>
@@ -88,6 +89,7 @@ export function CourseForm({
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
@@ -105,8 +107,11 @@ export function CourseForm({
       image_url: "",
       preview_video_url: "",
       coupon_allowed: true,
+      is_free: false,
     },
   });
+
+  const isFree = watch("is_free");
 
   useEffect(() => {
     if (editingCourse) {
@@ -127,6 +132,7 @@ export function CourseForm({
         image_url: editingCourse.image_url ?? "",
         preview_video_url: editingCourse.preview_video_url ?? "",
         coupon_allowed: editingCourse.coupon_allowed ?? true,
+        is_free: editingCourse.is_free ?? false,
       });
     }
   }, [editingCourse, reset]);
@@ -148,7 +154,10 @@ export function CourseForm({
       // a file actually take effect.
       image_url: (form.image_url ?? "").trim(),
       preview_video_url: (form.preview_video_url ?? "").trim(),
-      coupon_allowed: form.coupon_allowed,
+      // A free course never accepts coupons — the backend also enforces
+      // this, but reflect it here too so the payload isn't misleading.
+      coupon_allowed: form.is_free ? false : form.coupon_allowed,
+      is_free: form.is_free,
     };
 
     if (editingCourse) {
@@ -261,6 +270,7 @@ export function CourseForm({
             min={0}
             step="0.01"
             placeholder="0.00"
+            disabled={isFree}
             {...register("actual_price")}
           />
         </div>
@@ -272,6 +282,7 @@ export function CourseForm({
             min={0}
             step="0.01"
             placeholder="0.00"
+            disabled={isFree}
             {...register("final_price")}
           />
           {errors.final_price && (
@@ -327,6 +338,19 @@ export function CourseForm({
       </div>
       <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
         <div>
+          <p className="text-sm font-medium">Free Course</p>
+          <p className="text-xs text-muted-foreground">Students enroll instantly at no cost — price and coupons are disabled</p>
+        </div>
+        <Controller
+          control={control}
+          name="is_free"
+          render={({ field }) => (
+            <Switch checked={field.value} onCheckedChange={field.onChange} />
+          )}
+        />
+      </div>
+      <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+        <div>
           <p className="text-sm font-medium">Coupon Allowed</p>
           <p className="text-xs text-muted-foreground">Coupons can be applied to this course</p>
         </div>
@@ -334,7 +358,7 @@ export function CourseForm({
           control={control}
           name="coupon_allowed"
           render={({ field }) => (
-            <Switch checked={field.value} onCheckedChange={field.onChange} />
+            <Switch checked={!isFree && field.value} disabled={isFree} onCheckedChange={field.onChange} />
           )}
         />
       </div>

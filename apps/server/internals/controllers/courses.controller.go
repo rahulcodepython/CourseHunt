@@ -95,6 +95,22 @@ func (ctrl *CoursesController) StudyController(c *fiber.Ctx) error {
 	return utils.OK(c, "Study page fetched successfully.", resp)
 }
 
+// EnrollFreeController enrolls the caller directly into a course marked
+// is_free, bypassing the Razorpay flow entirely.
+func (ctrl *CoursesController) EnrollFreeController(c *fiber.Ctx) error {
+	userID := utils.GetUserID(c)
+	if err := ctrl.Repo.EnrollFreeRepository(userID, c.Params("id")); err != nil {
+		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
+			return utils.NotFound(c, "Course not found.", err)
+		}
+		if errors.Is(err, generic.ErrCoursesNotFree) {
+			return utils.BadRequest(c, "This course is not free.", err)
+		}
+		return utils.InternalError(c, "Failed to enroll in course.", err)
+	}
+	return utils.OK[any](c, "Enrolled successfully.", nil)
+}
+
 func (ctrl *CoursesController) EnrolledListController(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	list, total, err := ctrl.Repo.EnrolledCoursesRepository(utils.GetUserID(c), page, limit)
@@ -128,10 +144,29 @@ func (ctrl *CoursesController) ManageListController(c *fiber.Ctx) error {
 	})
 }
 
+func (ctrl *CoursesController) GetByIDController(c *fiber.Ctx) error {
+	scope := resolveScope(c)
+	userID := utils.GetUserID(c)
+	course, err := ctrl.Repo.GetByIDRepository(c.Params("id"), userID, scope)
+	if err != nil {
+		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
+			return utils.NotFound(c, "Course not found.", err)
+		}
+		return utils.InternalError(c, "Failed to fetch course.", err)
+	}
+	return utils.OK(c, "Course fetched successfully.", course)
+}
+
 func (ctrl *CoursesController) CreateController(c *fiber.Ctx) error {
 	var req entities.CreateCourseRequest
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
+	}
+	// A free course has no price and never accepts coupons — enforced
+	// server-side, not just left to the client UI to respect.
+	if req.IsFree {
+		req.FinalPrice = 0
+		req.CouponAllowed = false
 	}
 	resp, err := ctrl.Repo.CreateRepository(utils.GetUserID(c), req)
 	if err != nil {
@@ -147,6 +182,14 @@ func (ctrl *CoursesController) UpdateController(c *fiber.Ctx) error {
 	var req entities.UpdateCourseRequest
 	if ok, err := utils.Validate(c, &req); !ok {
 		return err
+	}
+	// A free course has no price and never accepts coupons — enforced
+	// server-side, not just left to the client UI to respect.
+	if req.IsFree != nil && *req.IsFree {
+		zero := 0.0
+		req.FinalPrice = &zero
+		notAllowed := false
+		req.CouponAllowed = &notAllowed
 	}
 	userID := utils.GetUserID(c)
 	course, cleanup, err := ctrl.Repo.UpdateRepository(c.Params("id"), userID, req)

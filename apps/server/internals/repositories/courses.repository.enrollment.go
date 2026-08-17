@@ -89,6 +89,54 @@ func (r *CoursesRepository) StudyMetadataRepository(courseID, userID string) (*e
 	return &resp, nil
 }
 
+// EnrollFreeRepository enrolls a user directly in a course marked is_free,
+// skipping the payment flow entirely. A ₹0 "success" transaction is recorded
+// alongside the enrollment so free courses show up in Transactions/Invoices
+// exactly like a paid purchase. Idempotent: re-calling for an already-active
+// enrollment is a no-op (no duplicate transaction row).
+func (r *CoursesRepository) EnrollFreeRepository(userID, courseID string) error {
+	var statusCode int
+	query := `
+		WITH target_course AS (
+			SELECT id, is_free FROM courses WHERE id = $1
+		),
+		existing_enrollment AS (
+			SELECT id FROM enrollments WHERE user_id = $2 AND course_id = $1 AND revoked = false
+		),
+		status_check AS (
+			SELECT
+				CASE
+					WHEN NOT EXISTS (SELECT 1 FROM target_course) THEN 0
+					WHEN NOT (SELECT is_free FROM target_course) THEN 1
+					WHEN EXISTS (SELECT 1 FROM existing_enrollment) THEN 2
+					ELSE 3
+				END AS status_code
+		),
+		enrolled AS (
+			INSERT INTO enrollments (user_id, course_id, revoked)
+			SELECT $2, $1, false FROM status_check WHERE status_check.status_code = 3
+			ON CONFLICT (user_id, course_id) DO UPDATE SET revoked = false
+		),
+		txn AS (
+			INSERT INTO transactions (user_id, course_id, amount, currency, status, confirmed_at)
+			SELECT $2, $1, 0, 'INR', 'success', CURRENT_TIMESTAMP
+			FROM status_check WHERE status_check.status_code = 3
+		)
+		SELECT status_code FROM status_check`
+	if err := r.DB.Get(&statusCode, query, courseID, userID); err != nil {
+		return err
+	}
+
+	switch statusCode {
+	case 0:
+		return generic.ErrCoursesCourseNotFound
+	case 1:
+		return generic.ErrCoursesNotFree
+	default:
+		return nil
+	}
+}
+
 func (r *CoursesRepository) EnrolledCoursesRepository(userID string, page, limit int) ([]entities.EnrolledCourseResponse, int, error) {
 	offset := (page - 1) * limit
 

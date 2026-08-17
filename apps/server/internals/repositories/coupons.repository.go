@@ -23,6 +23,17 @@ func NewCouponsRepository(db *sqlx.DB, coursesRepo *CoursesRepository, cache *ca
 
 // Explicit, granular domain errors
 
+// CourseAllowsCouponRepository reports whether the given course currently
+// accepts coupons at all (free courses always force this to false — see the
+// is_free enforcement in CoursesController).
+func (r *CouponsRepository) CourseAllowsCouponRepository(courseID string) (bool, error) {
+	var allowed bool
+	if err := r.DB.Get(&allowed, `SELECT coupon_allowed FROM courses WHERE id = $1`, courseID); err != nil {
+		return false, generic.ErrCoursesCourseNotFound
+	}
+	return allowed, nil
+}
+
 func (r *CouponsRepository) ReadByCodeRepository(code string) (*entities.Coupon, error) {
 	// Dot-notation mapping handles nested CourseInfo structural assignments automatically
 	var c entities.Coupon

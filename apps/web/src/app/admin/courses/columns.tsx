@@ -129,6 +129,7 @@ export const getColumns = ({
                 <RowActions>
                     <RowActionButton icon="eye" label="View Details" onClick={() => onViewCourse(course)} />
                     <RowActionButton icon="hierarchy" label="View Chapters" href={`/admin/courses/${course.id}/chapters`} />
+                    <RowActionButton icon="help-circle" label="View FAQs" href={`/admin/courses/${course.id}/faqs`} />
                     <RowActionButton icon="users" label="View Enrolled Users" href={`/admin/courses/${course.id}/enrollments`} />
                     <RowActionButton icon="chart-bar" label="View Analytics" href={`/admin/courses/overview/${course.id}`} />
                 </RowActions>

@@ -27,6 +27,8 @@ export function UserNav() {
     const isAdminOrTutor = user?.role === ROLES.ADMIN || user?.role === ROLES.TUTOR;
     const profileHref = pathname.startsWith(ROUTES.TUTOR_DASHBOARD)
         ? `${ROUTES.TUTOR_DASHBOARD}/profile`
+        : pathname.startsWith(ROUTES.STUDENT_DASHBOARD)
+        ? `${ROUTES.STUDENT_DASHBOARD}/profile`
         : `${ROUTES.ADMIN_DASHBOARD}/profile`;
 
     const handleLogout = async () => {

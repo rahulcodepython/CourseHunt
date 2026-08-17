@@ -16,9 +16,11 @@ export function useCouponsQuery() {
 	);
 }
 
-export function useCheckCouponQuery(code: string) {
-	return useAppQuery(queryKeys.couponCheck(), () =>
-		apiRequest({ url: `${API_ENDPOINTS.COUPONS}/check?code=${code}`, method: "GET" }, CouponCheckResponseZod),
+export function useCheckCouponQuery(code: string, courseId: string, enabled: boolean) {
+	return useAppQuery(
+		queryKeys.couponCheck(code, courseId),
+		() => apiRequest({ url: `${API_ENDPOINTS.COUPONS}/check?code=${encodeURIComponent(code)}&course_id=${courseId}`, method: "GET" }, CouponCheckResponseZod),
+		{ enabled },
 	);
 }
 

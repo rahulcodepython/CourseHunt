@@ -39,5 +39,10 @@ func (s *CouponsService) ValidateAndFetchCouponService(code, courseID string) (e
 	if c.Course.ID != "" && c.Course.ID != courseID {
 		return entities.CouponCheckResponse{Valid: false, DiscountPercent: c.DiscountPercent, Reason: reasonPtr("not_applicable")}, c, nil
 	}
+	// Free courses (and any course a tutor/admin has explicitly opted out of
+	// coupons for) never accept a coupon, regardless of which coupon it is.
+	if allowed, err := s.Repo.CourseAllowsCouponRepository(courseID); err != nil || !allowed {
+		return entities.CouponCheckResponse{Valid: false, DiscountPercent: c.DiscountPercent, Reason: reasonPtr("coupons_not_allowed")}, c, nil
+	}
 	return entities.CouponCheckResponse{Valid: true, DiscountPercent: c.DiscountPercent}, c, nil
 }

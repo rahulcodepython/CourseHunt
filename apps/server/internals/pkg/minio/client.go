@@ -38,6 +38,11 @@ type MinioStorage struct {
 // region up front means presigned-URL generation never needs network I/O.
 const minioRegion = "us-east-1"
 
+// publicReadPolicyTemplate allows anonymous GetObject so direct public URLs
+// persisted in the DB (GetPublicURL) can be fetched by the browser without
+// credentials. %s is substituted with the bucket name.
+const publicReadPolicyTemplate = `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::%s/*"]}]}`
+
 var (
 	MINIO    *MinioStorage
 	savedCfg *config.Config
@@ -80,6 +85,13 @@ func initMinio(cfg *config.Config) error {
 		if err := client.MakeBucket(ctx, cfg.MinioBucket, minio.MakeBucketOptions{}); err != nil {
 			return fmt.Errorf("failed to create bucket: %w", err)
 		}
+	}
+
+	// The app persists GetPublicURL (base URL + object name) in the DB for
+	// images/videos and the browser fetches those directly, so the bucket must
+	// allow anonymous reads. Uploads still go through presigned PUT URLs.
+	if err := client.SetBucketPolicy(ctx, cfg.MinioBucket, fmt.Sprintf(publicReadPolicyTemplate, cfg.MinioBucket)); err != nil {
+		return fmt.Errorf("failed to set public-read policy: %w", err)
 	}
 
 	MINIO = &MinioStorage{

@@ -10,7 +10,7 @@ import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { getColumns } from "./columns";
 
-import { useCourseLandingQuery } from "@/query-hooks/courses.api";
+import { useManageCourseQuery } from "@/query-hooks/courses.api";
 import { useChaptersQuery } from "@/query-hooks/chapters.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 
@@ -19,14 +19,14 @@ export default function ChapterLessonsPage() {
   const courseId = params.courseId as string;
   const chapterId = params.chapterId as string;
 
-  const { data: courseData } = useCourseLandingQuery(courseId);
+  const { data: courseData } = useManageCourseQuery(courseId);
   const { data: chaptersData } = useChaptersQuery(courseId);
   const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
 
   useSetBreadcrumbs([
-    { label: "Courses", href: "/courses" },
-    { label: courseData?.data?.title || "Course", href: `/courses/overview/${courseId}` },
-    { label: "Chapters", href: `/courses/${courseId}/chapters` },
+    { label: "Courses", href: "/admin/courses" },
+    { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
+    { label: "Chapters", href: `/admin/courses/${courseId}/chapters` },
     { label: currentChapter?.title || "Chapter" },
     { label: "Lessons" },
   ]);

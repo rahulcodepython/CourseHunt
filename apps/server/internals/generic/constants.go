@@ -50,6 +50,7 @@ var (
 	ErrCoursesCourseNotFound = errors.New("course not found")
 	ErrCoursesNotEnrolled    = errors.New("not enrolled in this course")
 	ErrCoursesAccessDenied   = errors.New("access denied")
+	ErrCoursesNotFree        = errors.New("course is not free")
 )
 
 // Updates errors
@@ -84,6 +85,13 @@ var (
 	ErrChaptersChapterNotFound = errors.New("chapter not found")
 )
 
+// FAQs errors
+var (
+	ErrFaqsCourseNotFound = errors.New("course not found")
+	ErrFaqsUnauthorized   = errors.New("access denied: you are not the tutor of this course")
+	ErrFaqsFaqNotFound    = errors.New("faq not found")
+)
+
 // Discussions errors
 var (
 	ErrDiscussionsNotEnrolled        = errors.New("access denied: not enrolled in course")
@@ -103,6 +111,7 @@ var (
 	ErrQuizLessonNotFound   = errors.New("lesson not found")
 	ErrQuizNotFound         = errors.New("quiz not found")
 	ErrQuizQuestionNotFound = errors.New("question not found")
+	ErrQuizAttemptNotFound  = errors.New("quiz attempt not found")
 )
 
 // Coupons errors
