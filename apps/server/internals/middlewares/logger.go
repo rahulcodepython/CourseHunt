@@ -11,6 +11,7 @@ import (
 	"coursehunt/server/internals/generic"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/jmoiron/sqlx"
 )
 
 // sanitizeJSON recursively redacts sensitive fields from JSON payloads
@@ -65,7 +66,47 @@ func sanitizeRequestBody(body []byte) string {
 	return bodyStr
 }
 
-func LoggerMiddleware() fiber.Handler {
+// writeAuditRow persists the operational audit trail for this request in one
+// round trip: a `logs` row for any non-GET request, an admin-facing
+// `notifications` row for a 5xx ("system issue"), and a `security_events`
+// row for a 401/403/429 — three independently WHERE-gated CTEs in a single
+// INSERT statement, so a request that's none of these (a GET that succeeded)
+// costs nothing beyond the query round trip itself. Runs in a goroutine so a
+// slow/unavailable DB never adds latency to the actual response.
+func writeAuditRow(db *sqlx.DB, method, routePath string, status int, userID *string, ip, userAgent, logMessage, notifMessage string) {
+	if db == nil {
+		return
+	}
+	go func() {
+		_, err := db.Exec(`
+			WITH actor AS (
+				SELECT u.email FROM (SELECT $3::uuid AS uid) p
+				LEFT JOIN "users" u ON u.id = p.uid
+			),
+			log_ins AS (
+				INSERT INTO logs (message, actor_email, success)
+				SELECT $1, actor.email, $2 FROM actor WHERE $4
+			),
+			notif_ins AS (
+				INSERT INTO notifications (type, message, is_admin, is_tutor, is_student)
+				SELECT 'system_error', $5, true, false, false WHERE $6 >= 500
+			),
+			sec_ins AS (
+				INSERT INTO security_events (event_type, user_id, email, ip_address, user_agent, path)
+				SELECT
+					CASE WHEN $6 = 429 THEN 'rate_limit_exceeded' ELSE 'unauthorized_access' END,
+					$3::uuid, actor.email, $7, $8, $9
+				FROM actor WHERE $6 IN (401, 403, 429)
+			)
+			SELECT 1
+		`, logMessage, status < 400, userID, method != fiber.MethodGet, notifMessage, status, ip, userAgent, routePath)
+		if err != nil {
+			log.Printf("[LoggerMiddleware] audit insert failed: %v", err)
+		}
+	}()
+}
+
+func LoggerMiddleware(db *sqlx.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
 
@@ -86,19 +127,20 @@ func LoggerMiddleware() fiber.Handler {
 		handlerErr := c.Locals("handler_error")
 		handlerMsg := c.Locals("handler_error_msg")
 
+		routePath := "-"
+		if r := c.Route(); r != nil {
+			routePath = r.Path
+		}
+
+		var actorUserID *string
+		userInfo := "Anonymous / Unauthenticated"
+		if u, ok := c.Locals("user").(*generic.UserContext); ok && u != nil {
+			actorUserID = &u.UserID
+			userInfo = fmt.Sprintf("UserID: %s | Roles: %v", u.UserID, u.Roles)
+		}
+
 		// Check if this request represents an error (status >= 400 or has error attached)
 		if status >= 400 || handlerErr != nil {
-			routePath := "-"
-			if r := c.Route(); r != nil {
-				routePath = r.Path
-			}
-
-			// User & Caller context
-			userInfo := "Anonymous / Unauthenticated"
-			if u, ok := c.Locals("user").(*generic.UserContext); ok && u != nil {
-				userInfo = fmt.Sprintf("UserID: %s | Roles: %v", u.UserID, u.Roles)
-			}
-
 			// Error detail extraction
 			var errDetail string
 			if handlerErr != nil {
@@ -168,10 +210,17 @@ func LoggerMiddleware() fiber.Handler {
 				sanitizedBody,
 				latency,
 			)
+
+			logMessage := fmt.Sprintf("%s %s → %d %s", c.Method(), routePath, status, http.StatusText(status))
+			notifMessage := fmt.Sprintf("System error on %s %s: %s", c.Method(), routePath, errDetail)
+			writeAuditRow(db, c.Method(), routePath, status, actorUserID, c.IP(), c.Get("User-Agent", "-"), logMessage, notifMessage)
 		} else {
 			// Standard info log for healthy 2xx/3xx requests
 			log.Printf("[INFO] %s %s | Status: %d | Latency: %v | IP: %s",
 				c.Method(), c.OriginalURL(), status, latency, c.IP())
+
+			logMessage := fmt.Sprintf("%s %s → %d %s", c.Method(), routePath, status, http.StatusText(status))
+			writeAuditRow(db, c.Method(), routePath, status, actorUserID, c.IP(), c.Get("User-Agent", "-"), logMessage, "")
 		}
 
 		return err

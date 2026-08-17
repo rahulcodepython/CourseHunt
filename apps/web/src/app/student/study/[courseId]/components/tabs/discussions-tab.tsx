@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Icon } from "@/components/icon";
 import { DiscussionItem } from "./discussion-item";
-import { mergeListPage } from "./discussion-list-utils";
+import { mergeListPage } from "@/lib/merge-list-page";
 
 const PAGE_SIZE = 10;
 

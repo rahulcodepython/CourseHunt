@@ -24,27 +24,31 @@ type Router struct {
 	CFG   *config.Config
 	Cache *cache.Cache
 
-	Health       *controllers.HealthController
-	Wishlist     *controllers.WishlistController
-	Categories   *controllers.CategoriesController
-	Certificates *controllers.CertificatesController
-	Notes        *controllers.NotesController
-	Discussions  *controllers.DiscussionsController
-	Users        *controllers.UsersController
-	Dashboard    *controllers.DashboardController
-	Updates      *controllers.UpdatesController
-	Feedbacks    *controllers.FeedbacksController
-	Coupons      *controllers.CouponsController
-	Quiz         *controllers.QuizController
-	Enrollments  *controllers.EnrollmentsController
-	Chapters     *controllers.ChaptersController
-	Faqs         *controllers.FaqsController
-	Lessons      *controllers.LessonsController
-	Courses      *controllers.CoursesController
-	Transactions *controllers.TransactionsController
-	Upload       *controllers.UploadController
-	Roles        *controllers.RolesController
-	Profile      *controllers.ProfileController
+	Health        *controllers.HealthController
+	Notifications *controllers.NotificationsController
+	Logs          *controllers.LogsController
+	Security      *controllers.SecurityController
+	Monitoring    *controllers.MonitoringController
+	Wishlist      *controllers.WishlistController
+	Categories    *controllers.CategoriesController
+	Certificates  *controllers.CertificatesController
+	Notes         *controllers.NotesController
+	Discussions   *controllers.DiscussionsController
+	Users         *controllers.UsersController
+	Dashboard     *controllers.DashboardController
+	Updates       *controllers.UpdatesController
+	Feedbacks     *controllers.FeedbacksController
+	Coupons       *controllers.CouponsController
+	Quiz          *controllers.QuizController
+	Enrollments   *controllers.EnrollmentsController
+	Chapters      *controllers.ChaptersController
+	Faqs          *controllers.FaqsController
+	Lessons       *controllers.LessonsController
+	Courses       *controllers.CoursesController
+	Transactions  *controllers.TransactionsController
+	Upload        *controllers.UploadController
+	Roles         *controllers.RolesController
+	Profile       *controllers.ProfileController
 
 	UsersRepo *repositories.UsersRepository
 }
@@ -70,6 +74,9 @@ func NewRouter(app *fiber.App, db *sqlx.DB, rdb *redis.Client, cfg *config.Confi
 	faqsRepo := repositories.NewFaqsRepository(db, cch)
 	lessonsRepo := repositories.NewLessonsRepository(db, coursesRepo, cch)
 	rolesRepo := repositories.NewRolesRepository(db, cch)
+	notificationsRepo := repositories.NewNotificationsRepository(db)
+	logsRepo := repositories.NewLogsRepository(db)
+	securityRepo := repositories.NewSecurityRepository(db)
 
 	rzp := razorpay.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
 	transactionsRepo := repositories.NewTransactionsRepository(db)
@@ -80,33 +87,37 @@ func NewRouter(app *fiber.App, db *sqlx.DB, rdb *redis.Client, cfg *config.Confi
 
 	return &Router{
 		App: app, API: app.Group("/api"), DB: db, CFG: cfg, Cache: cch,
-		Health:       controllers.NewHealthController(db, cch, cfg),
-		Wishlist:     controllers.NewWishlistController(wishlistRepo, cfg),
-		Categories:   controllers.NewCategoriesController(categoriesRepo, cfg),
-		Certificates: controllers.NewCertificatesController(certificatesRepo, cfg),
-		Notes:        controllers.NewNotesController(notesRepo, cfg),
-		Discussions:  controllers.NewDiscussionsController(discussionsRepo, cfg),
-		Users:        controllers.NewUsersController(usersRepo, cfg),
-		Dashboard:    controllers.NewDashboardController(dashboardRepo, cfg),
-		Updates:      controllers.NewUpdatesController(updatesRepo, cfg),
-		Feedbacks:    controllers.NewFeedbacksController(feedbacksRepo, cfg),
-		Coupons:      controllers.NewCouponsController(couponsSvc, couponsRepo, cfg),
-		Quiz:         controllers.NewQuizController(quizSvc, quizRepo, cfg),
-		Enrollments:  controllers.NewEnrollmentsController(enrollmentsRepo, cfg),
-		Chapters:     controllers.NewChaptersController(chaptersRepo, cfg),
-		Faqs:         controllers.NewFaqsController(faqsRepo, cfg),
-		Lessons:      controllers.NewLessonsController(lessonsRepo, cfg),
-		Courses:      controllers.NewCoursesController(coursesRepo, cfg),
-		Transactions: controllers.NewTransactionsController(transactionsSvc, transactionsRepo, cfg),
-		Upload:       controllers.NewUploadController(cfg),
-		Roles:        controllers.NewRolesController(rolesRepo, cfg),
-		Profile:      controllers.NewProfileController(usersRepo, cfg),
-		UsersRepo:    usersRepo,
+		Health:        controllers.NewHealthController(db, cch, cfg),
+		Notifications: controllers.NewNotificationsController(notificationsRepo, cfg),
+		Logs:          controllers.NewLogsController(logsRepo, cfg),
+		Security:      controllers.NewSecurityController(securityRepo, cfg),
+		Monitoring:    controllers.NewMonitoringController(db, cch, cfg),
+		Wishlist:      controllers.NewWishlistController(wishlistRepo, cfg),
+		Categories:    controllers.NewCategoriesController(categoriesRepo, cfg),
+		Certificates:  controllers.NewCertificatesController(certificatesRepo, cfg),
+		Notes:         controllers.NewNotesController(notesRepo, cfg),
+		Discussions:   controllers.NewDiscussionsController(discussionsRepo, cfg),
+		Users:         controllers.NewUsersController(usersRepo, cfg),
+		Dashboard:     controllers.NewDashboardController(dashboardRepo, cfg),
+		Updates:       controllers.NewUpdatesController(updatesRepo, cfg),
+		Feedbacks:     controllers.NewFeedbacksController(feedbacksRepo, cfg),
+		Coupons:       controllers.NewCouponsController(couponsSvc, couponsRepo, cfg),
+		Quiz:          controllers.NewQuizController(quizSvc, quizRepo, cfg),
+		Enrollments:   controllers.NewEnrollmentsController(enrollmentsRepo, cfg),
+		Chapters:      controllers.NewChaptersController(chaptersRepo, cfg),
+		Faqs:          controllers.NewFaqsController(faqsRepo, cfg),
+		Lessons:       controllers.NewLessonsController(lessonsRepo, cfg),
+		Courses:       controllers.NewCoursesController(coursesRepo, cfg),
+		Transactions:  controllers.NewTransactionsController(transactionsSvc, transactionsRepo, cfg),
+		Upload:        controllers.NewUploadController(cfg),
+		Roles:         controllers.NewRolesController(rolesRepo, cfg),
+		Profile:       controllers.NewProfileController(usersRepo, cfg),
+		UsersRepo:     usersRepo,
 	}
 }
 
 func (r *Router) SetUp() {
-	r.App.Use(middlewares.LoggerMiddleware())
+	r.App.Use(middlewares.LoggerMiddleware(r.DB))
 	r.App.Use(middlewares.RateLimiterMiddleware())
 	r.App.Use(recover.New())
 	r.App.Use(cors.New(cors.Config{
@@ -284,4 +295,15 @@ func (r *Router) SetUp() {
 	protected.Get("/roles/:id/permissions", middlewares.PermissionGuard(generic.PermAdminRolesRead), r.Roles.GetRolePermissionsController)
 	protected.Put("/roles/:id/permissions", middlewares.PermissionGuard(generic.PermAdminRolesUpdate), r.Roles.SetRolePermissionsController)
 	protected.Get("/permissions", middlewares.PermissionGuard(generic.PermAdminRolesRead), r.Roles.ListPermissionsController)
+
+	// Notifications: shared admin/tutor feed, role-filtered inside the
+	// repository — any authenticated account may call this (a plain "user"
+	// account just gets an empty list back, see NotificationsController).
+	protected.Get("/notifications", r.Notifications.ListController)
+
+	// Logs/Security/Monitoring are admin-only.
+	protected.Get("/logs", middlewares.RoleGuard(generic.RoleAdmin), r.Logs.ListController)
+	protected.Get("/security/events", middlewares.RoleGuard(generic.RoleAdmin), r.Security.ListEventsController)
+	protected.Get("/security/stats", middlewares.RoleGuard(generic.RoleAdmin), r.Security.StatsController)
+	protected.Get("/monitoring", middlewares.RoleGuard(generic.RoleAdmin), r.Monitoring.SnapshotController)
 }

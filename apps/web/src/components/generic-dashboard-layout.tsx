@@ -16,6 +16,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { filterNavGroups } from "@/lib/permissions";
 import { useSessionStore } from "@/store/session.store";
 import { UserNav } from "@/components/user-nav";
+import { NotificationBell } from "@/components/notification-bell";
 
 function ThemeToggle() {
     const { resolvedTheme, setTheme } = useTheme();
@@ -62,6 +63,7 @@ export function GenericDashboardLayout({
                         <SidebarTrigger />
                         <BreadcrumbComponent />
                         <div className="ml-auto flex items-center gap-2 pr-2">
+                            <NotificationBell />
                             <ThemeToggle />
                             <UserNav />
                         </div>

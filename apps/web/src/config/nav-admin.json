@@ -95,6 +95,12 @@
         "label": "System",
         "items": [
             {
+                "title": "Notifications",
+                "href": "/admin/notifications",
+                "icon": "bell",
+                "permission": null
+            },
+            {
                 "title": "Security",
                 "href": "/admin/security",
                 "icon": "lock",
@@ -110,18 +116,6 @@
                 "title": "Logs",
                 "href": "/admin/logs",
                 "icon": "file-text",
-                "permission": null
-            },
-            {
-                "title": "System Config",
-                "href": "/admin/system-config",
-                "icon": "settings",
-                "permission": null
-            },
-            {
-                "title": "Maintenance",
-                "href": "/admin/maintenance",
-                "icon": "clock",
                 "permission": null
             }
         ]

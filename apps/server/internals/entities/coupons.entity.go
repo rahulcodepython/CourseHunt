@@ -7,16 +7,16 @@ import (
 )
 
 type Coupon struct {
-	ID              string            `json:"id" db:"id"`
-	Code            string            `json:"code" db:"code"`
+	ID              string             `json:"id" db:"id"`
+	Code            string             `json:"code" db:"code"`
 	Course          generic.CourseInfo `json:"course" db:"course"`
-	DiscountPercent float64           `json:"discount_percent" db:"discount_percent"`
-	MaxUsage        int               `json:"max_usage" db:"max_usage"`
-	UsageCount      int               `json:"usage_count" db:"usage_count"`
-	ExpiresAt       time.Time         `json:"expires_at" db:"expires_at"`
-	IsActive        bool              `json:"is_active" db:"is_active"`
-	CreatedBy       *string           `json:"created_by" db:"created_by"`
-	CreatedAt       time.Time         `json:"created_at" db:"created_at"`
+	DiscountPercent float64            `json:"discount_percent" db:"discount_percent"`
+	MaxUsage        int                `json:"max_usage" db:"max_usage"`
+	UsageCount      int                `json:"usage_count" db:"usage_count"`
+	ExpiresAt       time.Time          `json:"expires_at" db:"expires_at"`
+	IsActive        bool               `json:"is_active" db:"is_active"`
+	CreatedBy       *string            `json:"created_by" db:"created_by"`
+	CreatedAt       time.Time          `json:"created_at" db:"created_at"`
 }
 
 // ── Coupons Requests & Responses ──

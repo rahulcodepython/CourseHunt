@@ -144,6 +144,12 @@ export const API_ENDPOINTS = {
     PROFILE_USER: "/api/v1/profile/user",
     PROFILE_ADMIN: "/api/v1/profile/admin",
     WISHLIST: "/api/v1/wishlist",
+    NOTIFICATIONS: "/api/v1/notifications",
+    LOGS: "/api/v1/logs",
+    SECURITY_EVENTS: "/api/v1/security/events",
+    SECURITY_STATS: "/api/v1/security/stats",
+    MONITORING: "/api/v1/monitoring",
+    HEALTH: "/api/v1/health",
 } as const;
 
 export const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js"

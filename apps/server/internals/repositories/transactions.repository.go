@@ -56,8 +56,9 @@ func (r *TransactionsRepository) CreateRepository(id, userID, courseID string, c
 // MarkPaymentCapturedRepository handles a successful "payment.captured"
 // webhook in a single round trip: marks the transaction (found by Razorpay
 // order id) successful, marks the webhook event processed, records coupon
-// usage when a coupon was applied, and enrolls the user — all chained via
-// CTEs off the same updated row, so the coupon/enrollment steps are correct
+// usage when a coupon was applied, enrolls the user, and inserts an
+// admin-facing "purchase" notification — all chained via CTEs off the same
+// updated row, so the coupon/enrollment/notification steps are correct
 // no-ops when there's nothing to do (no coupon, transaction not found).
 func (r *TransactionsRepository) MarkPaymentCapturedRepository(razorpayPaymentID, razorpayOrderID, eventID string) error {
 	var txID string
@@ -89,6 +90,13 @@ func (r *TransactionsRepository) MarkPaymentCapturedRepository(razorpayPaymentID
 			INSERT INTO enrollments (user_id, course_id, revoked)
 			SELECT user_id, course_id, false FROM updated_tx
 			ON CONFLICT (user_id, course_id) DO UPDATE SET revoked = false
+		),
+		notified AS (
+			INSERT INTO notifications (type, message, is_admin, is_tutor, is_student)
+			SELECT 'purchase', COALESCE(u.email, 'A user') || ' purchased ' || COALESCE(c.title, 'a course'), true, false, false
+			FROM updated_tx utx
+			LEFT JOIN "users" u ON u.id = utx.user_id
+			LEFT JOIN courses c ON c.id = utx.course_id
 		)
 		SELECT id FROM updated_tx`,
 		razorpayPaymentID, razorpayOrderID, eventID,

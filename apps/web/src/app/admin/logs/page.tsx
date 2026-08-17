@@ -1,124 +1,54 @@
 "use client";
-import * as React from "react";
-
-import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { Icon } from "@/components/icon";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { exportToCSV } from "@/lib/csv";
-import { logsColumns, type LogEntry } from "./columns";
+import { useCursorFeed } from "@/hooks/use-cursor-feed";
+import { fetchLogs } from "@/query-hooks/logs.api";
+import { queryKeys } from "@/react-query/query-keys";
+import { logsColumns } from "./columns";
 
-const appLogs: LogEntry[] = [
-  {
-    timestamp: "2026-07-31 10:41:02",
-    level: "INFO",
-    source: "users-service",
-    message: "User profile updated successfully",
-    details: "user_id=usr_003",
-  },
-  {
-    timestamp: "2026-07-31 10:35:18",
-    level: "WARN",
-    source: "payment-service",
-    message: "Payment gateway response delayed",
-    details: "latency=210ms",
-  },
-  {
-    timestamp: "2026-07-31 10:22:47",
-    level: "INFO",
-    source: "course-service",
-    message: "Course published",
-    details: "course_id=crs_006",
-  },
-  {
-    timestamp: "2026-07-31 09:58:31",
-    level: "ERROR",
-    source: "media-service",
-    message: "Failed to upload file to ImageKit",
-    details: "file=lecture_12.mp4",
-  },
-  {
-    timestamp: "2026-07-31 09:41:05",
-    level: "INFO",
-    source: "auth-service",
-    message: "Admin session refreshed",
-    details: "user_id=adm_001",
-  },
-];
-
-const errorLogs: LogEntry[] = appLogs.filter((l) => l.level === "ERROR");
+const POLL_INTERVAL_MS = 60 * 1000;
 
 export default function LogsPage() {
-  const handleExport = () => {
-    exportToCSV(
-      "application-logs",
-      ["timestamp", "level", "source", "message", "details"],
-      appLogs.map((log) => [log.timestamp, log.level, log.source, log.message, log.details]),
+    const { items, loadMore, hasMore, refresh, isLoading, isFetching } = useCursorFeed(
+        queryKeys.logsFeed(),
+        fetchLogs,
+        { limit: 10, refetchInterval: POLL_INTERVAL_MS },
     );
-    toast.success("Logs exported as CSV");
-  };
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Logs"
-        subtitle="View and export platform log entries"
-        actions={
-          <Button onClick={handleExport}>
-            <Icon name="download" className="size-4" />
-            Export CSV
-          </Button>
-        }
-      />
+    return (
+        <div className="space-y-6">
+            <PageHeader
+                title="Logs"
+                subtitle="Audit trail of every mutating request across the platform"
+                actions={
+                    <Button variant="outline" disabled={isFetching} onClick={() => refresh()}>
+                        <Icon name="refresh" className="size-4" />
+                        Refresh
+                    </Button>
+                }
+            />
 
-      <Tabs defaultValue="application" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="application">Application</TabsTrigger>
-          <TabsTrigger value="errors">Errors</TabsTrigger>
-          <TabsTrigger value="api">API Access</TabsTrigger>
-          <TabsTrigger value="auth">Auth</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="application">
-          <DataTable
-            columns={logsColumns}
-            data={appLogs}
-            searchPlaceholder="Search logs..."
-            emptyIcon="file-text"
-            emptyText="No log entries found"
-          />
-        </TabsContent>
-        <TabsContent value="errors">
-          <DataTable
-            columns={logsColumns}
-            data={errorLogs}
-            searchPlaceholder="Search error logs..."
-            emptyIcon="check"
-            emptyText="No error logs recorded"
-          />
-        </TabsContent>
-        <TabsContent value="api">
-          <DataTable
-            columns={logsColumns}
-            data={[]}
-            searchPlaceholder="Search API logs..."
-            emptyIcon="file-text"
-            emptyText="Access logs will appear here"
-          />
-        </TabsContent>
-        <TabsContent value="auth">
-          <DataTable
-            columns={logsColumns}
-            data={[]}
-            searchPlaceholder="Search auth logs..."
-            emptyIcon="file-text"
-            emptyText="Auth logs will appear here"
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+            <DataTable
+                columns={logsColumns}
+                data={items}
+                pageSize={1000}
+                searchPlaceholder="Search logs..."
+                emptyIcon="file-text"
+                emptyText="No log entries found"
+                isLoading={isLoading}
+                exportFilename="logs"
+                toolbarActions={
+                    hasMore ? (
+                        <Button variant="outline" size="sm" disabled={isFetching} onClick={() => loadMore()}>
+                            <Icon name="chevron-down" className="size-4" />
+                            Load Older
+                        </Button>
+                    ) : undefined
+                }
+            />
+        </div>
+    );
 }

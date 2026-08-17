@@ -16,7 +16,7 @@ import { Icon } from "@/components/icon";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { formatDateTime } from "@/lib/format";
 import useSession from "@/hooks/use-session";
-import { mergeListPage } from "./discussion-list-utils";
+import { mergeListPage } from "@/lib/merge-list-page";
 
 const REPLIES_PAGE_SIZE = 5;
 

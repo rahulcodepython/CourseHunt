@@ -285,6 +285,13 @@ func (r *DiscussionsRepository) CreateRepository(userID string, req entities.Cre
 			       json_build_object('id', u.id, 'name', COALESCE(u.name, ''), 'image', COALESCE(u.image, '')) AS "user"
 			FROM inserted i
 			JOIN "users" u ON u.id = i.user_id
+		),
+		notified AS (
+			INSERT INTO notifications (type, message, is_admin, is_tutor, is_student)
+			SELECT 'discussion', COALESCE(u.name, u.email) || ' posted a new discussion in ' || COALESCE(c.title, 'a course'), true, true, false
+			FROM inserted i
+			JOIN "users" u ON u.id = i.user_id
+			LEFT JOIN courses c ON c.id = i.course_id
 		)
 		SELECT
 			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,

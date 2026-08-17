@@ -51,8 +51,15 @@ func (r *FeedbacksRepository) CreateRepository(userID, courseID string, req enti
 			FROM inserted i
 			JOIN "users" u ON u.id = i.user_id
 			LEFT JOIN courses c ON c.id = i.course_id
+		),
+		notified AS (
+			INSERT INTO notifications (type, message, is_admin, is_tutor, is_student)
+			SELECT 'feedback', COALESCE(u.name, u.email) || ' left feedback on ' || COALESCE(c.title, 'a course'), true, true, false
+			FROM inserted i
+			JOIN "users" u ON u.id = i.user_id
+			LEFT JOIN courses c ON c.id = i.course_id
 		)
-		SELECT 
+		SELECT
 			(SELECT is_enrolled FROM course_auth) AS is_enrolled,
 			(SELECT row_to_json(formatted.*) FROM formatted) AS inserted_data
 	`, courseID, userID, req.Rating, req.Content)

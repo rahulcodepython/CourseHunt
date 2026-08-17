@@ -7,6 +7,12 @@
                 "href": "/tutor",
                 "icon": "dashboard",
                 "permission": null
+            },
+            {
+                "title": "Notifications",
+                "href": "/tutor/notifications",
+                "icon": "bell",
+                "permission": null
             }
         ]
     },

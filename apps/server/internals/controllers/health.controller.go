@@ -28,18 +28,23 @@ type ServiceStatus struct {
 	Error  string `json:"error,omitempty"`
 }
 
-func (ctrl *HealthController) HealthCheckController(c *fiber.Ctx) error {
+// CheckServices pings every backing service this API depends on. Shared by
+// HealthCheckController and MonitoringController so the two don't maintain
+// two copies of the same up/down logic.
+func CheckServices(c *fiber.Ctx, db *sqlx.DB, cch *cache.Cache) (map[string]ServiceStatus, bool) {
 	services := make(map[string]ServiceStatus)
 	allHealthy := true
 
-	if err := ctrl.DB.Ping(); err != nil {
+	services["backend"] = ServiceStatus{Status: "up"}
+
+	if err := db.Ping(); err != nil {
 		allHealthy = false
 		services["postgres"] = ServiceStatus{Status: "down", Error: err.Error()}
 	} else {
 		services["postgres"] = ServiceStatus{Status: "up"}
 	}
 
-	if err := ctrl.Cache.Ping(c.Context()); err != nil {
+	if err := cch.Ping(c.Context()); err != nil {
 		allHealthy = false
 		services["redis"] = ServiceStatus{Status: "down", Error: err.Error()}
 	} else {
@@ -52,6 +57,12 @@ func (ctrl *HealthController) HealthCheckController(c *fiber.Ctx) error {
 	} else {
 		services["minio"] = ServiceStatus{Status: "up"}
 	}
+
+	return services, allHealthy
+}
+
+func (ctrl *HealthController) HealthCheckController(c *fiber.Ctx) error {
+	services, allHealthy := CheckServices(c, ctrl.DB, ctrl.Cache)
 
 	statusStr := "healthy"
 	if !allHealthy {

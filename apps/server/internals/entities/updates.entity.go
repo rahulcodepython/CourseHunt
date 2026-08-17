@@ -6,11 +6,11 @@ import (
 )
 
 type CourseUpdate struct {
-	ID        string            `json:"id" db:"id"`
+	ID        string             `json:"id" db:"id"`
 	Course    generic.CourseInfo `json:"course" db:"course"`
-	CreatedBy *string           `json:"created_by" db:"created_by"`
-	Message   string            `json:"message" db:"message"`
-	CreatedAt time.Time         `json:"created_at" db:"created_at"`
+	CreatedBy *string            `json:"created_by" db:"created_by"`
+	Message   string             `json:"message" db:"message"`
+	CreatedAt time.Time          `json:"created_at" db:"created_at"`
 }
 
 type CreateUpdateRequest struct {
@@ -23,14 +23,13 @@ type UpdateUpdateRequest struct {
 }
 
 type UpdateFeedItem struct {
-	ID        string            `json:"id" db:"id"`
-	Message   string            `json:"message" db:"message"`
+	ID        string             `json:"id" db:"id"`
+	Message   string             `json:"message" db:"message"`
 	Course    generic.CourseInfo `json:"course" db:"course"`
-	CreatedAt time.Time         `json:"created_at" db:"created_at"`
-	IsUnseen  bool              `json:"is_unseen" db:"is_unseen"`
+	CreatedAt time.Time          `json:"created_at" db:"created_at"`
+	IsUnseen  bool               `json:"is_unseen" db:"is_unseen"`
 }
 
 type UpdateFeedResponse struct {
 	Updates generic.PaginatedResponse[[]UpdateFeedItem] `json:"updates"`
 }
-
