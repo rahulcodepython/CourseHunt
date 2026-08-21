@@ -57,12 +57,19 @@ type UserContext struct {
 	Permissions map[string]struct{}
 }
 
+// UserClaims deliberately has no `permissions` field: the JWT no longer
+// carries it (see apps/web/src/lib/auth.ts's definePayload comment — a full
+// permissions array pushed the Authorization header past fasthttp's read
+// buffer for any account with enough permissions). Permissions are resolved
+// fresh from the DB on every request instead (BaseAuthMiddleware), which was
+// already happening anyway — the JWT claim was only ever a fallback for a
+// transient DB error.
 type UserClaims struct {
 	jwt.RegisteredClaims
-	Role        string   `json:"role"`
-	Roles       []string `json:"roles"`
-	Permissions []string `json:"permissions"`
-	Banned      bool     `json:"banned"`
+	Role               string   `json:"role"`
+	Roles              []string `json:"roles"`
+	Banned             bool     `json:"banned"`
+	MustChangePassword bool     `json:"must_change_password"`
 }
 
 // DeleteResponse represents the generic response envelope returned when a resource is deleted.

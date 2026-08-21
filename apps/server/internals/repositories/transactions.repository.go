@@ -32,7 +32,7 @@ func (r *TransactionsRepository) CreateRepository(id, userID, courseID string, c
 		WITH inserted_tx AS (
 			INSERT INTO transactions (id, user_id, course_id, razorpay_order_id, amount, actual_price, offered_price, tax_percent, discount_amount, currency, status)
 			VALUES ($1, $2, $3, $4, $5, $7, $8, $9, $10, 'INR', 'pending')
-			RETURNING id
+			RETURNING id, user_id, course_id, razorpay_order_id, razorpay_payment_id, amount, actual_price, offered_price, tax_percent, discount_amount, currency, status, error_description, confirmed_at, created_at
 		),
 		coupon_mapped AS (
 			INSERT INTO transactions_coupons (transaction_id, coupon_id)
@@ -44,7 +44,7 @@ func (r *TransactionsRepository) CreateRepository(id, userID, courseID string, c
 			COALESCE(course_id::text, '') AS "course.id",
 			razorpay_order_id, razorpay_payment_id, amount, actual_price, offered_price, tax_percent, discount_amount, currency, status,
 			error_description, confirmed_at, created_at
-		FROM transactions WHERE id = (SELECT id FROM inserted_tx)`,
+		FROM inserted_tx`,
 		id, userID, courseID, razorpayOrderID, amount, couponID, actualPrice, offeredPrice, taxPercent, discountAmount,
 	)
 	if err != nil {

@@ -36,13 +36,14 @@ const (
 
 // Auth errors
 var (
-	ErrAuthTokenMissing  = errors.New("authorization token missing or session expired")
-	ErrAuthEmptyJWKS     = errors.New("empty JWKS")
-	ErrAuthNoMatchingKey = errors.New("no matching JWKS key for token")
-	ErrAuthInvalidToken  = errors.New("invalid or expired token")
-	ErrAuthInvalidClaims = errors.New("invalid token claims")
-	ErrAuthUserBanned    = errors.New("account is banned")
-	ErrAuthNoUserContext = errors.New("user context not found")
+	ErrAuthTokenMissing       = errors.New("authorization token missing or session expired")
+	ErrAuthEmptyJWKS          = errors.New("empty JWKS")
+	ErrAuthNoMatchingKey      = errors.New("no matching JWKS key for token")
+	ErrAuthInvalidToken       = errors.New("invalid or expired token")
+	ErrAuthInvalidClaims      = errors.New("invalid token claims")
+	ErrAuthUserBanned         = errors.New("account is banned")
+	ErrAuthNoUserContext      = errors.New("user context not found")
+	ErrAuthMustChangePassword = errors.New("password change required before API access")
 )
 
 // Courses errors

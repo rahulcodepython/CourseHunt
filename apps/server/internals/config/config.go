@@ -17,7 +17,7 @@ type Config struct {
 	MinioBaseURL          string  `env:"MINIO_BASE_URL" envDefault:"http://localhost:9000/coursehunt"`
 	MinioSecure           bool    `env:"MINIO_SECURE" envDefault:"false"`
 	AllowedOrigins        string  `env:"ALLOWED_ORIGINS" envDefault:"http://localhost:3000,http://localhost:3001,http://localhost:3002,http://coursehunt.localhost:3000,http://admin.coursehunt.localhost:3000,https://coursehunt.com,https://tutor.coursehunt.com,https://admin.coursehunt.com"`
-	JWKSURL               string  `env:"JWKS_URL" envDefault:"http://coursehunt.localhost:3000/api/auth/jwks"`
+	JWKSURL               string  `env:"JWKS_URL" envDefault:"http://localhost:3000/api/auth/jwks"`
 	AuthCookieName        string  `env:"AUTH_COOKIE_NAME" envDefault:"access_token"`
 	RazorpayKeyID         string  `env:"RAZORPAY_KEY_ID"`
 	RazorpaySecret        string  `env:"RAZORPAY_SECRET"`

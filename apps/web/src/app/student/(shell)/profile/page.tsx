@@ -10,6 +10,7 @@ import authClient from "@/lib/auth-client";
 import { useSessionStore } from "@/store/session.store";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 
+import { TwoFactorSettings } from "@/components/auth/two-factor-settings";
 import { PageHeader } from "@/components/page-header";
 import { Loading } from "@/components/loading";
 import { LoadingButton } from "@/components/loading-button";
@@ -283,6 +284,8 @@ export default function StudentProfilePage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <TwoFactorSettings />
         </div>
     );
 }

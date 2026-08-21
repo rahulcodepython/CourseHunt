@@ -135,7 +135,7 @@ export default function MonitoringPage() {
                             </div>
                         </div>
 
-                        <div className="w-full flex-1 min-h-[180px] pt-2">
+                        <div className="w-full flex-1 min-h-45 pt-2">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
                                     <defs>

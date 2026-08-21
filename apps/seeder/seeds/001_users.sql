@@ -26,20 +26,19 @@ ON CONFLICT (email) DO UPDATE SET
 
 -- Insert Better-Auth Credential Accounts (scrypt hashes, format `<salt>:<key>`)
 -- Password hashes match Better-Auth's scrypt params: N=16384, r=16, p=1, dkLen=64
--- Verified against @better-auth/utils' verifyPassword: the shared student
--- hash (alice/bob/charlie/david/eva/fiona) is "password123". The
--- user@example.com hash previously in this file did NOT verify against
--- "password123" or any other tried candidate — regenerated to a fresh hash
--- of "password123" so it matches the rest of the seeded students. Admin/tutor
--- hashes were not part of this fix and weren't re-verified here.
+-- Verified against @better-auth/utils' verifyPassword: every account below
+-- (admin/tutor and student alike) hashes to "password123". The admin/tutor
+-- hashes were regenerated 2026-08-21 — the previous ones in this file did
+-- NOT verify against "password123" (or any other tried candidate), so no
+-- staff account could actually sign in with the documented password.
 INSERT INTO "accounts" ("userId", "accountId", "providerId", "password")
 SELECT u.id, v.email, 'credential', v.hash
 FROM (VALUES
-    ('admin@example.com',  '6b2905155c4f85aad3add8f218c21bc8:9897832af325de18682de24cec4a632193b872377d11fcf688921eda23be851f4ed865ce8682390cfe8510933d7ce42fb731ea0f23a1a26e55a23457ff4d67ab'),
-    ('superadmin@example.com', '6b2905155c4f85aad3add8f218c21bc8:9897832af325de18682de24cec4a632193b872377d11fcf688921eda23be851f4ed865ce8682390cfe8510933d7ce42fb731ea0f23a1a26e55a23457ff4d67ab'),
-    ('tutor@example.com',  '46c022d9752babc3e04d0f40920ce07c:6bf70f61a74a4fd6b1dc6b8b9e920b2af65299a4a4d80df4b5a6b743a037467e5a31ceaf5a282a45759fd35b4d81432aa128ba9218de407947e76e61251ed272'),
-    ('sarah.smith@example.com', '46c022d9752babc3e04d0f40920ce07c:6bf70f61a74a4fd6b1dc6b8b9e920b2af65299a4a4d80df4b5a6b743a037467e5a31ceaf5a282a45759fd35b4d81432aa128ba9218de407947e76e61251ed272'),
-    ('john.doe@example.com', '46c022d9752babc3e04d0f40920ce07c:6bf70f61a74a4fd6b1dc6b8b9e920b2af65299a4a4d80df4b5a6b743a037467e5a31ceaf5a282a45759fd35b4d81432aa128ba9218de407947e76e61251ed272'),
+    ('admin@example.com',  '3e241efba52e84fb56d8151a0467682c:1753d5e567d005f8fd62e6315225656442edd6d1a18ba6aee7d17961b350ce688d341b30c9cb748b6516354b189281315bc39f194fcc6472f8289dc5cb17b389'),
+    ('superadmin@example.com', '3e241efba52e84fb56d8151a0467682c:1753d5e567d005f8fd62e6315225656442edd6d1a18ba6aee7d17961b350ce688d341b30c9cb748b6516354b189281315bc39f194fcc6472f8289dc5cb17b389'),
+    ('tutor@example.com',  '2cb0733c3a8ef0699f0d5fee0f38fbca:f6e4b51eab9527a3c9c52c9ff5f842adef3cf921f23584d946ab27b8eda1414211de126aecaebb3283bf7b62472f59f6785baf4b0c4053b1240c42f357be1efd'),
+    ('sarah.smith@example.com', '2cb0733c3a8ef0699f0d5fee0f38fbca:f6e4b51eab9527a3c9c52c9ff5f842adef3cf921f23584d946ab27b8eda1414211de126aecaebb3283bf7b62472f59f6785baf4b0c4053b1240c42f357be1efd'),
+    ('john.doe@example.com', '2cb0733c3a8ef0699f0d5fee0f38fbca:f6e4b51eab9527a3c9c52c9ff5f842adef3cf921f23584d946ab27b8eda1414211de126aecaebb3283bf7b62472f59f6785baf4b0c4053b1240c42f357be1efd'),
     ('user@example.com',   '0d515d6ce843e0bb9963f0e0f4b8f59d:e88217fe8195c224a0890884a5b84d8347550b893ad5d200e82e0a9e013541224e69a5ca8b947faa4b0aa21bc6073f2cd7d9f48afbb12245c3a85f9327c6b78a'),
     ('alice@example.com',  '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
     ('bob@example.com',    '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),

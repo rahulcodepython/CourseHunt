@@ -41,6 +41,19 @@ func main() {
 		ErrorHandler:          utils.GlobalErrorHandler,
 		BodyLimit:             100 * 1024 * 1024,
 		DisableStartupMessage: false,
+		// fasthttp's default 4096-byte read buffer covers the request line
+		// plus ALL headers combined. Our Authorization header alone carries
+		// a JWT with the caller's full roles/permissions array embedded —
+		// an admin holding every admin:* permission already produces a
+		// ~1.3KB token, and Chrome's own default headers (sec-ch-ua-*,
+		// Accept, cookies, etc.) add several hundred more on top. Once that
+		// combined total exceeded the buffer, fasthttp didn't return a
+		// clean 431 — it just closed the connection, which every browser
+		// surfaces as an opaque "Failed to fetch"/network error with zero
+		// indication of the real cause. More permissions == a bigger JWT ==
+		// this getting worse over time, so headroom needs to be generous,
+		// not just bumped to whatever happens to work today.
+		ReadBufferSize: 16 * 1024,
 	})
 
 	// Scalar API docs

@@ -65,7 +65,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // Public pages render immediately rather than blocking on the session
     // check — an anonymous visitor on the landing page has no session to
     // wait for, and shouldn't see a full-screen spinner before it loads.
-    if (isPending && !isPublic) {
+    //
+    // The `shouldRedirect` branch matters just as much: `router.replace`
+    // above only fires inside a useEffect, i.e. AFTER this render commits.
+    // Falling through to `children` here would paint the protected page for
+    // one frame before the effect navigates away — a real (if brief)
+    // authorization leak, not just a flash of a loading spinner. So any
+    // pending redirect blocks the render exactly like the pending-session
+    // case does.
+    const isBlocked = (isPending && !isPublic) || (shouldRedirect !== null && shouldRedirect !== pathname);
+    if (isBlocked) {
         return (
             <div className="flex min-h-screen items-center justify-center">
                 <Loader2 className="size-8 animate-spin text-emerald-500" />

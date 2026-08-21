@@ -10,7 +10,6 @@ interface CustomJwtPayload {
     user_id?: string;
     role?: string;
     roles?: string[];
-    permissions?: string[];
     banned?: boolean;
     must_change_password?: boolean;
     exp?: number;
@@ -27,8 +26,10 @@ const EMPTY_SESSION: SessionPayload = {
 };
 
 /**
- * Generic builder that decodes a JWT token and constructs a standardized
- * SessionPayload from raw user/session/JWT data.
+ * Generic builder that decodes a JWT token (role/roles/mustChangePassword —
+ * kept small on purpose, see auth.ts) and reads `permissions` off the
+ * session response's user object instead, where the server's customSession
+ * plugin attaches it (no JWT size constraint there).
  */
 export function buildSessionPayload(params: {
     user: unknown;
@@ -39,12 +40,13 @@ export function buildSessionPayload(params: {
     if (!user) return EMPTY_SESSION;
 
     const payload = jwtToken ? jwtDecode<CustomJwtPayload>(jwtToken) : null;
+    const permissions = (user as { permissions?: string[] }).permissions;
 
     return {
         user: user as SessionPayload["user"],
         session: (session as SessionPayload["session"]) ?? null,
         roles: payload?.roles ?? [],
-        permissions: payload?.permissions ?? [],
+        permissions: permissions ?? [],
         token: jwtToken ?? null,
         mustChangePassword: Boolean(payload?.must_change_password),
     };
@@ -52,7 +54,8 @@ export function buildSessionPayload(params: {
 
 // Validates the better-auth session via native authClient.getSession(),
 // capturing the minted JWT from set-auth-jwt response header and decoding
-// custom roles/permissions/mustChangePassword for the client Zustand store using jwtDecode.
+// role/roles/mustChangePassword for the client Zustand store using jwtDecode
+// (permissions come from the session response itself, see buildSessionPayload).
 async function fetchSession(): Promise<SessionPayload> {
     try {
         let jwt: string | null = null;

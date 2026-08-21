@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -71,6 +73,12 @@ func (ctrl *WishlistController) DeleteController(c *fiber.Ctx) error {
 	userID := utils.GetUserID(c)
 	id, err := ctrl.Repo.DeleteRepository(userID, c.Params("id"))
 	if err != nil {
+		// The delete is scoped to the caller's own user_id, so "no rows"
+		// covers both "doesn't exist" and "belongs to someone else" — either
+		// way it's a 404, not a 500 leaking the raw driver error.
+		if errors.Is(err, sql.ErrNoRows) {
+			return utils.NotFound(c, "Wishlist item not found.", nil)
+		}
 		return utils.InternalError(c, "Failed to remove from wishlist.", err)
 	}
 

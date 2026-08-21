@@ -118,14 +118,24 @@ func NewRouter(app *fiber.App, db *sqlx.DB, rdb *redis.Client, cfg *config.Confi
 
 func (r *Router) SetUp() {
 	r.App.Use(middlewares.LoggerMiddleware(r.DB))
-	r.App.Use(middlewares.RateLimiterMiddleware())
 	r.App.Use(recover.New())
+	// CORS must run before the rate limiter (and any other middleware that
+	// can short-circuit the chain with an early response). Fiber applies
+	// middleware in registration order, so a 429 thrown by a limiter
+	// registered ahead of cors.New() never passes back through it — the
+	// response leaves with no Access-Control-Allow-Origin header at all.
+	// Browsers treat a cross-origin response with no CORS headers as a
+	// total network failure (XHR status 0 / fetch "Failed to fetch"), not a
+	// readable 429 — every rate-limited request from the actual frontend
+	// (a different origin/port from this API) silently looked like the
+	// backend was down instead of "too many requests, retry after Ns".
 	r.App.Use(cors.New(cors.Config{
 		AllowOrigins:     r.CFG.AllowedOrigins,
 		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
 		AllowCredentials: true,
 	}))
+	r.App.Use(middlewares.RateLimiterMiddleware())
 
 	// r.API is already "/api" (see NewRouter above), so this group only needs "/v1" —
 	// do NOT add "/api/v1" here or in any route below, or paths double up

@@ -44,7 +44,7 @@ export const getColumns = (
             <StatusBadge status={getValue() ? "banned" : "active"} map={bannedStatusMap} />
         ),
     }),
-    columnHelper.accessor("createdAt", {
+    columnHelper.accessor("created_at", {
         header: ({ column }) => <SortableColumnHeader column={column} label="Joined" />,
         cell: ({ getValue }) => (
             <span className="text-muted-foreground">{formatDate(getValue() || "")}</span>

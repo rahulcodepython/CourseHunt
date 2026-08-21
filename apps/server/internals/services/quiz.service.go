@@ -6,6 +6,7 @@ import (
 	"coursehunt/server/internals/helpers"
 	"coursehunt/server/internals/repositories"
 	"errors"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -156,8 +157,9 @@ func (s *QuizService) SubmitQuizService(quizID, userID string, req entities.Subm
 
 		isCorrect := false
 		if !ans.IsSkipped {
+			submitted := strings.TrimSpace(strings.ToLower(ans.FillText))
 			for _, correct := range q.CorrectFillAnswers {
-				if ans.FillText == correct {
+				if submitted == strings.TrimSpace(strings.ToLower(correct)) {
 					isCorrect = true
 					break
 				}

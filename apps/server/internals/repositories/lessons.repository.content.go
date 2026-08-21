@@ -101,7 +101,15 @@ func (r *LessonsRepository) ReadContentRepository(lessonID, userID string, scope
 			COALESCE((SELECT is_enrolled FROM enrollment_auth), false) AS is_enrolled,
 			(SELECT row_to_json(content_cte.*) FROM content_cte) AS content_data
 	`
-	err := r.DB.Get(&result, query, lessonID, userID)
+	// The elevated (non-ScopeUser) branches above never reference $2 in the
+	// query text — passing userID unconditionally makes Postgres reject the
+	// call ("got 2 parameters but the statement requires 1"), so only bind
+	// it when the query actually uses it.
+	args := []any{lessonID}
+	if scope == generic.ScopeUser {
+		args = append(args, userID)
+	}
+	err := r.DB.Get(&result, query, args...)
 	if err != nil {
 		return nil, err
 	}

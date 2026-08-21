@@ -7,7 +7,12 @@ import { ROUTES } from "@/lib/const";
 const PUBLIC_PREFIXES = ["/courses", "/checkout"];
 
 export function isPublicPath(pathname: string): boolean {
-    if (pathname === ROUTES.HOME || pathname === ROUTES.LOGIN || pathname === ROUTES.CHANGE_PASSWORD) {
+    if (
+        pathname === ROUTES.HOME ||
+        pathname === ROUTES.LOGIN ||
+        pathname === ROUTES.CHANGE_PASSWORD ||
+        pathname === ROUTES.TWO_FACTOR
+    ) {
         return true;
     }
     return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));

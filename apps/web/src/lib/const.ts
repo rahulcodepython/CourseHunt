@@ -4,7 +4,7 @@ export const API_CONFIG = {
 } as const;
 
 export const AUTH_CONFIG = {
-    DEFAULT_APP_URL: "http://coursehunt.localhost:3000",
+    DEFAULT_APP_URL: "http://localhost:3000",
 } as const;
 
 export const ERROR_MESSAGES = {
@@ -32,6 +32,7 @@ export const ROUTES = {
     STUDENT_DASHBOARD: "/student",
     LOGIN: "/auth/login",
     CHANGE_PASSWORD: "/auth/change-password",
+    TWO_FACTOR: "/auth/two-factor",
 } as const;
 
 // Resolve the post-login landing page for a given account role. Falls back to

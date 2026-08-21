@@ -56,6 +56,24 @@ services:
             retries: 5
             start_period: 5s
 
+    mailpit:
+        image: ${MAILPIT_IMAGE:-axllent/mailpit:latest}
+        container_name: ${MAILPIT_CONTAINER_NAME:-coursehunt-mailpit}
+        restart: unless-stopped
+        ports:
+            - "${MAILPIT_SMTP_PORT:-1025}:1025"
+            - "${MAILPIT_UI_PORT:-8025}:8025"
+        networks:
+            coursehunt-network:
+                aliases:
+                    - mailpit.coursehunt.localhost
+        healthcheck:
+            test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8025/livez || exit 1" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 5s
+
     # --------------------------------------------------------
     # GUI OPTION 1: WhoDB (Postgres + Redis) - Sleek & Minimal
     # --------------------------------------------------------
@@ -121,7 +139,7 @@ services:
             - MINIO_BUCKET=${MINIO_BUCKET:-coursehunt}
             - MINIO_BASE_URL=${MINIO_BASE_URL:-http://localhost:9000/coursehunt}
             - MINIO_SECURE=${MINIO_SECURE:-false}
-            - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://coursehunt.localhost:3000,http://admin.coursehunt.localhost:3000,http://api.coursehunt.localhost:8080}
+            - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://coursehunt.localhost:3000,http://admin.coursehunt.localhost:3000,http://api.coursehunt.localhost:8080}
             - JWKS_URL=${DOCKER_JWKS_URL:-${JWKS_URL:-http://host.docker.internal:3000/api/auth/jwks}}
         extra_hosts:
             - "host.docker.internal:host-gateway"

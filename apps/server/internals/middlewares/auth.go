@@ -211,20 +211,40 @@ func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo *reposit
 			return utils.Unauthorized(c, "Authorization token missing or session expired.", err)
 		}
 
-		// JWT permissions are a snapshot taken at token mint time (7-day
-		// lifetime), so a token can outlive role/permission changes in the DB
-		// and produce false 403s. Resolve the user's current roles/permissions
-		// from the database on every request, falling back to the token claims
-		// if the lookup fails so auth never breaks on a transient DB error.
+		// JWT claims are a snapshot taken at token mint time (7-day lifetime),
+		// so a token can outlive role/permission changes — and a ban issued
+		// mid-lifetime — in the DB. Resolve the user's current roles/
+		// permissions/ban status on every request, falling back to the token
+		// claims (role/roles/banned) if the lookup fails so auth never
+		// breaks on a transient DB error. Permissions have no JWT fallback
+		// at all (the claim was removed — see UserClaims) — a failed lookup
+		// fails closed to zero permissions rather than trusting anything
+		// stale, which is the safer default for an authorization decision.
 		role := claims.Role
 		roles := claims.Roles
-		permissions := claims.Permissions
+		var permissions []string
+		banned := claims.Banned
 		if usersRepo != nil && claims.Subject != "" {
 			if fresh, err := usersRepo.GetRolesAndPermissions(claims.Subject); err == nil {
 				role = fresh.Role
 				roles = fresh.Roles
 				permissions = fresh.Permissions
+				banned = fresh.Banned
 			}
+		}
+		if banned {
+			return utils.Unauthorized(c, "Authorization token missing or session expired.", generic.ErrAuthUserBanned)
+		}
+
+		// `must_change_password` was previously only a JWT claim the frontend
+		// read to decide whether to redirect to /auth/change-password — a
+		// direct API caller could just ignore it and use a seeded admin/tutor
+		// account's documented default password indefinitely. The actual
+		// password-change action happens entirely through better-auth on the
+		// Next.js side (never through this Go API), so blocking every route
+		// here is safe: it can't strand a legitimate user mid-flow.
+		if claims.MustChangePassword {
+			return utils.Unauthorized(c, "Password change required before API access.", generic.ErrAuthMustChangePassword)
 		}
 
 		setUserContext(c, claims.Subject, role, roles, permissions)
