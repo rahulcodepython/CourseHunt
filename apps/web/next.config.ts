@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+    output: "standalone",
     reactStrictMode: false,
-    allowedDevOrigins: ['localhost', 'coursehunt.localhost'],
+    allowedDevOrigins: ['localhost'],
     images: {
         remotePatterns: [
             { protocol: "https", hostname: "ik.imagekit.io", port: "", pathname: "/egg4kxv60/**" },

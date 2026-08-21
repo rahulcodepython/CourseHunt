@@ -33,6 +33,10 @@ export function TwoFactorSettings() {
                 toast.error(response.error?.message || "Failed to start setup.");
                 return;
             }
+            if (!("totpURI" in response.data)) {
+                toast.error("Invalid 2FA method returned.");
+                return;
+            }
             const dataUrl = await QRCode.toDataURL(response.data.totpURI);
             setQrDataUrl(dataUrl);
             setBackupCodes(response.data.backupCodes);

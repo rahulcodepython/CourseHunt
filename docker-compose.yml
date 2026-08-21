@@ -1,17 +1,58 @@
 services:
-    # traefik:
-    #   image: traefik:v2.10
-    #   command:
-    #     - "--api.insecure=true"
-    #     - "--providers.docker=true"
-    #     - "--entrypoints.web.address=:80"
-    #   ports:
-    #     - "80:80"
-    #     - "8081:8080"
-    #   volumes:
-    #     - /var/run/docker.sock:/var/run/docker.sock
-    #   networks:
-    #     - coursehunt-network
+    traefik:
+        image: traefik:latest
+        command:
+            - "--api.insecure=true"
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--entrypoints.web.address=:80"
+            - "--ping=true"
+        ports:
+            - "80:80"
+            - "8081:8080" # Traefik dashboard
+        environment:
+            - DOCKER_API_VERSION=1.41
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            - coursehunt-network
+        healthcheck:
+            test: [ "CMD", "traefik", "healthcheck", "--ping" ]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+
+    web:
+        build:
+            context: ./apps/web
+            dockerfile: Dockerfile
+            args:
+                NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost}
+                NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost}
+        container_name: coursehunt-web
+        restart: unless-stopped
+        env_file:
+            - .env
+        environment:
+            - DATABASE_URL=${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coursehunt}?sslmode=disable}
+        depends_on:
+            postgres:
+                condition: service_healthy
+            backend:
+                condition: service_started
+        networks:
+            - coursehunt-network
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+            - "traefik.http.routers.web.entrypoints=web"
+            - "traefik.http.services.web.loadbalancer.server.port=${PORT:-8080}"
+        healthcheck:
+            test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-8080}/ || exit 1" ]
+            interval: 15s
+            timeout: 10s
+            retries: 3
+            start_period: 15s
 
     postgres:
         image: ${POSTGRES_IMAGE:-postgres:latest}
@@ -64,9 +105,7 @@ services:
             - "${MAILPIT_SMTP_PORT:-1025}:1025"
             - "${MAILPIT_UI_PORT:-8025}:8025"
         networks:
-            coursehunt-network:
-                aliases:
-                    - mailpit.coursehunt.localhost
+            - coursehunt-network
         healthcheck:
             test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8025/livez || exit 1" ]
             interval: 10s
@@ -74,9 +113,6 @@ services:
             retries: 5
             start_period: 5s
 
-    # --------------------------------------------------------
-    # GUI OPTION 1: WhoDB (Postgres + Redis) - Sleek & Minimal
-    # --------------------------------------------------------
     whodb:
         image: ${WHODB_IMAGE:-clidey/whodb:latest}
         container_name: ${WHODB_CONTAINER_NAME:-coursehunt-whodb}
@@ -92,6 +128,12 @@ services:
                 condition: service_healthy
         networks:
             - coursehunt-network
+        healthcheck:
+            test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/ || exit 1" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 5s
 
     minio:
         image: ${MINIO_IMAGE:-minio/minio:latest}
@@ -107,10 +149,13 @@ services:
             - "${MINIO_CONSOLE_PORT:-9001}:9001"
         volumes:
             - miniodata:/data
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.minio.rule=PathPrefix(`/coursehunt`)"
+            - "traefik.http.routers.minio.entrypoints=web"
+            - "traefik.http.services.minio.loadbalancer.server.port=9000"
         networks:
-            coursehunt-network:
-                aliases:
-                    - minio.coursehunt.localhost
+            - coursehunt-network
         healthcheck:
             test: [ "CMD-SHELL", "mc ready local || curl -f http://localhost:${MINIO_PORT:-9000}/minio/health/live || exit 1" ]
             interval: 10s
@@ -124,8 +169,6 @@ services:
             dockerfile: ./apps/server/Dockerfile
         container_name: ${BACKEND_CONTAINER_NAME:-coursehunt-backend}
         restart: unless-stopped
-        ports:
-            - "${PORT:-8080}:8080"
         env_file:
             - .env
         environment:
@@ -139,7 +182,7 @@ services:
             - MINIO_BUCKET=${MINIO_BUCKET:-coursehunt}
             - MINIO_BASE_URL=${MINIO_BASE_URL:-http://localhost:9000/coursehunt}
             - MINIO_SECURE=${MINIO_SECURE:-false}
-            - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://coursehunt.localhost:3000,http://admin.coursehunt.localhost:3000,http://api.coursehunt.localhost:8080}
+            - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost,http://localhost:80}
             - JWKS_URL=${DOCKER_JWKS_URL:-${JWKS_URL:-http://host.docker.internal:3000/api/auth/jwks}}
         extra_hosts:
             - "host.docker.internal:host-gateway"
@@ -150,6 +193,11 @@ services:
                 condition: service_healthy
             minio:
                 condition: service_healthy
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.backend.rule=PathPrefix(`/api/v1`)"
+            - "traefik.http.routers.backend.entrypoints=web"
+            - "traefik.http.services.backend.loadbalancer.server.port=${PORT:-8080}"
         networks:
             - coursehunt-network
         healthcheck:
