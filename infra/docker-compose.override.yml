@@ -1,0 +1,81 @@
+# Local-development-only additions, auto-merged by `docker compose up` when
+# run from this directory (`cd infra && docker compose up`). NOT deployed to
+# the VPS — a production deploy runs `docker compose -f infra/docker-compose.yml
+# up -d` from the repo root, which never auto-discovers this file.
+# It re-adds the convenience-over-security choices that don't belong in the
+# production base: published DB/cache/object-store ports for local tooling
+# (psql, redis-cli, a S3 client), the Traefik dashboard, and the two
+# dev-only GUIs (whodb, mailpit).
+#
+# Compose merges services key-by-key onto the base file: `ports` entries are
+# appended, but `command` arrays are replaced wholesale — see the redis and
+# traefik overrides below, which restate their full command for that reason.
+services:
+    traefik:
+        # No redirect-to-https and no ACME resolver here on purpose: Let's
+        # Encrypt's HTTP-01 challenge can't validate a non-public "localhost"
+        # domain. App routers have no explicit "entrypoints" label (see
+        # docker-compose.yml), so with this command they just attach to
+        # :80 and serve plain HTTP, same as before this change.
+        command:
+            - "--api.insecure=true"
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--entrypoints.web.address=:80"
+            - "--entrypoints.websecure.address=:443"
+            - "--ping=true"
+        ports:
+            - "8081:8080" # Traefik dashboard (insecure — dev only)
+
+    postgres:
+        ports:
+            - "${POSTGRES_PORT:-5432}:5432"
+
+    redis:
+        # No --requirepass: local dev doesn't need REDIS_PASSWORD set.
+        command: [ "redis-server" ]
+        ports:
+            - "${REDIS_PORT:-6379}:6379"
+
+    minio:
+        ports:
+            - "${MINIO_PORT:-9000}:9000"
+            - "${MINIO_CONSOLE_PORT:-9001}:9001"
+
+    mailpit:
+        image: ${MAILPIT_IMAGE:-axllent/mailpit:latest}
+        container_name: ${MAILPIT_CONTAINER_NAME:-coursehunt-mailpit}
+        restart: unless-stopped
+        ports:
+            - "${MAILPIT_SMTP_PORT:-1025}:1025"
+            - "${MAILPIT_UI_PORT:-8025}:8025"
+        networks:
+            - coursehunt-network
+        healthcheck:
+            test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8025/livez || exit 1" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 5s
+
+    whodb:
+        image: ${WHODB_IMAGE:-clidey/whodb:latest}
+        container_name: ${WHODB_CONTAINER_NAME:-coursehunt-whodb}
+        env_file:
+            - ../.env
+        restart: unless-stopped
+        ports:
+            - "${WHODB_PORT:-8085}:8080"
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        networks:
+            - coursehunt-network
+        healthcheck:
+            test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/ || exit 1" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 5s

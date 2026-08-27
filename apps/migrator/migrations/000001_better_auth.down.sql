@@ -1,0 +1,10 @@
+DROP INDEX IF EXISTS "verifications_identifier_idx";
+DROP INDEX IF EXISTS "accounts_providerId_accountId_idx";
+DROP INDEX IF EXISTS "accounts_userId_idx";
+DROP INDEX IF EXISTS "sessions_userId_idx";
+DROP TABLE IF EXISTS "jwkss";
+DROP TABLE IF EXISTS "verifications";
+DROP TABLE IF EXISTS "accounts";
+DROP TABLE IF EXISTS "sessions";
+DROP TABLE IF EXISTS "users";
+DROP EXTENSION IF EXISTS "pgcrypto";

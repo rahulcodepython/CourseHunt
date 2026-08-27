@@ -1,0 +1,43 @@
+[
+    {
+        "label": "Learning",
+        "items": [
+            {
+                "title": "Dashboard",
+                "href": "/student",
+                "icon": "dashboard",
+                "permission": null
+            },
+            {
+                "title": "Learn",
+                "href": "/student/learn",
+                "icon": "book",
+                "permission": null
+            },
+            {
+                "title": "Wishlist",
+                "href": "/student/wishlist",
+                "icon": "heart",
+                "permission": null
+            },
+            {
+                "title": "Certificates",
+                "href": "/student/certificates",
+                "icon": "shield-check",
+                "permission": null
+            },
+            {
+                "title": "Transactions",
+                "href": "/student/transactions",
+                "icon": "currency-rupee",
+                "permission": null
+            },
+            {
+                "title": "Updates",
+                "href": "/student/updates",
+                "icon": "bell",
+                "permission": null
+            }
+        ]
+    }
+]
