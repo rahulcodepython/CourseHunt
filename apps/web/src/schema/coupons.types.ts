@@ -2,10 +2,10 @@ import { z } from 'zod';
 import { CourseInfoZod } from "@/schema/common.types";
 
 export const CreateCouponRequestZod = z.object({
-    code: z.string(),
+    code: z.string().min(3).max(50),
     course_id: z.string().nullable().optional(),
-    discount_percent: z.number(),
-    max_usage: z.number(),
+    discount_percent: z.number().min(1).max(100),
+    max_usage: z.number().min(1),
     expires_at: z.string(),
     is_active: z.boolean(),
 });

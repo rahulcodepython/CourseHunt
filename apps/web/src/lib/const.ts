@@ -159,3 +159,12 @@ export const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js
 // `apps/web/public/<this file>` — swap the actual file in later without
 // touching any code that references this const.
 export const CERTIFICATE_SIGNATURE_FILENAME = "certificate-signature.png";
+
+export const PAYMENT_CONFIG = {
+    BRAND_NAME: "CourseHunt",
+    THEME_COLOR: "#16a34a",
+    LOAD_FAILED: "Failed to load the payment gateway. Please try again.",
+    START_FAILED: "Failed to start checkout.",
+    CANCELLED: "Payment cancelled.",
+    FAILED_DEFAULT: "Payment failed. Please try again.",
+} as const;

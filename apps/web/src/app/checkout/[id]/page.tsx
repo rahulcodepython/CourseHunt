@@ -11,7 +11,7 @@ import { useEnrollFreeMutation } from "@/query-hooks/courses.api";
 import { useCheckCouponQuery } from "@/query-hooks/coupons.api";
 import useSession from "@/hooks/use-session";
 import { loadRazorpayScript } from "@/lib/razorpay";
-import { ROUTES } from "@/lib/const";
+import { PAYMENT_CONFIG, ROUTES } from "@/lib/const";
 import { formatINR } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,13 +63,22 @@ export default function CheckoutPage() {
     setAppliedCode(couponInput.trim());
   };
 
+  const isPayingRef = React.useRef(false);
+  const isEnrollingRef = React.useRef(false);
+
   const handleEnrollFree = async () => {
     if (!user) {
       router.push(ROUTES.LOGIN);
       return;
     }
-    const res = await enrollFree.execute(course.id);
-    if (res?.success) router.push(`/student/study/${course.id}`);
+    if (isEnrollingRef.current) return;
+    isEnrollingRef.current = true;
+    try {
+      const res = await enrollFree.execute(course.id);
+      if (res?.success) router.push(`/student/study/${course.id}`);
+    } finally {
+      isEnrollingRef.current = false;
+    }
   };
 
   const handlePayment = async () => {
@@ -77,12 +86,16 @@ export default function CheckoutPage() {
       router.push(ROUTES.LOGIN);
       return;
     }
+    if (isPayingRef.current) return;
+    isPayingRef.current = true;
 
     setIsPaying(true);
     try {
       const loaded = await loadRazorpayScript();
       if (!loaded) {
-        toast.error("Failed to load the payment gateway. Please try again.");
+        toast.error(PAYMENT_CONFIG.LOAD_FAILED);
+        isPayingRef.current = false;
+        setIsPaying(false);
         return;
       }
 
@@ -91,34 +104,49 @@ export default function CheckoutPage() {
         coupon_code: couponApplied ? appliedCode : null,
       });
       if (!res?.success || !res.data) {
-        toast.error(res?.message || "Failed to start checkout.");
+        toast.error(res?.message || PAYMENT_CONFIG.START_FAILED);
+        isPayingRef.current = false;
+        setIsPaying(false);
         return;
       }
 
       const { transaction_id, razorpay_order_id, amount, currency, razorpay_key } = res.data;
 
-      if (!window.Razorpay) return;
+      if (!window.Razorpay) {
+        isPayingRef.current = false;
+        setIsPaying(false);
+        return;
+      }
       const rzp = new window.Razorpay({
         key: razorpay_key,
         amount: Math.round(amount * 100),
         currency,
         order_id: razorpay_order_id,
-        name: "CourseHunt",
+        name: PAYMENT_CONFIG.BRAND_NAME,
         description: course.title,
         prefill: { name: user.name, email: user.email },
-        theme: { color: "#16a34a" },
+        theme: { color: PAYMENT_CONFIG.THEME_COLOR },
         handler: () => {
+          isPayingRef.current = false;
+          setIsPaying(false);
           router.push(`/checkout/confirmation/${transaction_id}`);
         },
         modal: {
-          ondismiss: () => toast.info("Payment cancelled."),
+          ondismiss: () => {
+            isPayingRef.current = false;
+            setIsPaying(false);
+            toast.info(PAYMENT_CONFIG.CANCELLED);
+          },
         },
       });
       rzp.on("payment.failed", (response) => {
-        toast.error(response.error?.description || "Payment failed. Please try again.");
+        isPayingRef.current = false;
+        setIsPaying(false);
+        toast.error(response.error?.description || PAYMENT_CONFIG.FAILED_DEFAULT);
       });
       rzp.open();
-    } finally {
+    } catch {
+      isPayingRef.current = false;
       setIsPaying(false);
     }
   };

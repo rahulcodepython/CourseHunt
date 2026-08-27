@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"strings"
+	"time"
 
 	"coursehunt/server/internals/config"
 	"coursehunt/server/internals/entities"
@@ -40,9 +41,15 @@ func (ctrl *TransactionsController) CreateController(c *fiber.Ctx) error {
 		if errors.Is(err, generic.ErrTransactionsInvalidCoupon) {
 			return utils.BadRequest(c, "Invalid coupon.", err)
 		}
+		if errors.Is(err, generic.ErrTransactionsAlreadyEnrolled) {
+			return utils.BadRequest(c, generic.ErrMsgAlreadyEnrolled, err)
+		}
+		if errors.Is(err, generic.ErrTransactionsCourseIsFree) {
+			return utils.BadRequest(c, generic.ErrMsgFreeCourseDirect, err)
+		}
 		return utils.InternalError(c, "Failed to initiate transaction.", err)
 	}
-	return utils.Created(c, "Transaction initiated.", resp)
+	return utils.Created(c, generic.MsgTransactionInitiated, resp)
 }
 
 func (ctrl *TransactionsController) WebhookController(c *fiber.Ctx) error {
@@ -103,11 +110,31 @@ func (ctrl *TransactionsController) ListController(c *fiber.Ctx) error {
 	permission, _ := c.Locals("permission").(string)
 
 	if strings.HasPrefix(permission, "admin:") {
-		list, total, err := ctrl.Repo.ListRepository(page, limit, c.Query("user_id"), "", c.Query("status"), c.Query("course_id"), c.Query("date_from"), c.Query("date_to"))
+		status := c.Query("status")
+		validStatuses := map[string]bool{"pending": true, "success": true, "failed": true}
+		if status != "" && !validStatuses[status] {
+			return utils.BadRequest(c, generic.ErrMsgInvalidStatusParam, nil)
+		}
+
+		dateFrom := c.Query("date_from")
+		if dateFrom != "" {
+			if _, err := time.Parse(time.RFC3339, dateFrom); err != nil {
+				return utils.BadRequest(c, generic.ErrMsgInvalidDateFrom, nil)
+			}
+		}
+
+		dateTo := c.Query("date_to")
+		if dateTo != "" {
+			if _, err := time.Parse(time.RFC3339, dateTo); err != nil {
+				return utils.BadRequest(c, generic.ErrMsgInvalidDateTo, nil)
+			}
+		}
+
+		list, total, err := ctrl.Repo.ListRepository(page, limit, c.Query("user_id"), "", status, c.Query("course_id"), dateFrom, dateTo)
 		if err != nil {
 			return utils.InternalError(c, "Failed to fetch transactions.", err)
 		}
-		return utils.OK(c, "Transactions fetched.", generic.PaginatedResponse[[]entities.Transaction]{
+		return utils.OK(c, generic.MsgTransactionsFetched, generic.PaginatedResponse[[]entities.Transaction]{
 			Data: list, Total: total, Page: page, Limit: limit,
 		})
 	}

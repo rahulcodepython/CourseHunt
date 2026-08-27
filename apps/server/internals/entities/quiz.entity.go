@@ -80,64 +80,64 @@ type CreateQuizRequest struct {
 }
 
 type QuestionOptionInput struct {
-	OptionText string `json:"option_text" validate:"required"`
+	OptionText string `json:"option_text" validate:"required,max=500"`
 	IsCorrect  bool   `json:"is_correct"`
 	SortOrder  int    `json:"sort_order"`
 }
 
 type QuestionArrangeItemInput struct {
-	ItemText     string `json:"item_text" validate:"required"`
+	ItemText     string `json:"item_text" validate:"required,max=500"`
 	CorrectOrder int    `json:"correct_order" validate:"min=1"`
 }
 
 type CreateQuestionRequest struct {
 	QuestionType  string                     `json:"question_type" validate:"required,oneof=single_choice multi_choice arrange fill_blank"`
-	QuestionText  string                     `json:"question_text" validate:"required"`
+	QuestionText  string                     `json:"question_text" validate:"required,max=2000"`
 	Points        int                        `json:"points" validate:"min=1"`
-	FillBlankHint *string                    `json:"fill_blank_hint"`
-	Options       []QuestionOptionInput      `json:"options"`
-	ArrangeItems  []QuestionArrangeItemInput `json:"arrange_items"`
-	FillAnswers   []string                   `json:"fill_answers"`
+	FillBlankHint *string                    `json:"fill_blank_hint" validate:"omitempty,max=500"`
+	Options       []QuestionOptionInput      `json:"options" validate:"omitempty,max=20,dive"`
+	ArrangeItems  []QuestionArrangeItemInput `json:"arrange_items" validate:"omitempty,max=20,dive"`
+	FillAnswers   []string                   `json:"fill_answers" validate:"omitempty,max=20,dive,max=500"`
 }
 
 type NextQuestionRequest struct {
-	FetchedQuestionIDs []string `json:"fetched_question_ids"`
+	FetchedQuestionIDs []string `json:"fetched_question_ids" validate:"omitempty,max=500,dive,uuid"`
 }
 
 type SubmitSingleAnswerInput struct {
-	QuestionID       string `json:"question_id" validate:"required"`
-	SelectedOptionID string `json:"selected_option_id" validate:"required"`
+	QuestionID       string `json:"question_id" validate:"required,uuid"`
+	SelectedOptionID string `json:"selected_option_id" validate:"required,uuid"`
 	IsSkipped        bool   `json:"is_skipped"`
 }
 
 type SubmitMultiAnswerInput struct {
-	QuestionID        string   `json:"question_id" validate:"required"`
-	SelectedOptionIDs []string `json:"selected_option_ids" validate:"required"`
+	QuestionID        string   `json:"question_id" validate:"required,uuid"`
+	SelectedOptionIDs []string `json:"selected_option_ids" validate:"required,dive,uuid"`
 	IsSkipped         bool     `json:"is_skipped"`
 }
 
 type ArrangeSubmittedItem struct {
-	ItemID string `json:"item_id" validate:"required"`
+	ItemID string `json:"item_id" validate:"required,uuid"`
 	Order  int    `json:"order" validate:"required"`
 }
 
 type SubmitArrangeAnswerInput struct {
-	QuestionID string                 `json:"question_id" validate:"required"`
-	Items      []ArrangeSubmittedItem `json:"items" validate:"required"`
+	QuestionID string                 `json:"question_id" validate:"required,uuid"`
+	Items      []ArrangeSubmittedItem `json:"items" validate:"required,dive"`
 	IsSkipped  bool                   `json:"is_skipped"`
 }
 
 type SubmitFillAnswerInput struct {
-	QuestionID string `json:"question_id" validate:"required"`
-	FillText   string `json:"fill_text" validate:"required"`
+	QuestionID string `json:"question_id" validate:"required,uuid"`
+	FillText   string `json:"fill_text" validate:"required,max=500"`
 	IsSkipped  bool   `json:"is_skipped"`
 }
 
 type SubmitQuizRequest struct {
-	SingleAnswers  []SubmitSingleAnswerInput  `json:"single_answers"`
-	MultiAnswers   []SubmitMultiAnswerInput   `json:"multi_answers"`
-	ArrangeAnswers []SubmitArrangeAnswerInput `json:"arrange_answers"`
-	FillAnswers    []SubmitFillAnswerInput    `json:"fill_answers"`
+	SingleAnswers  []SubmitSingleAnswerInput  `json:"single_answers" validate:"omitempty,max=100,dive"`
+	MultiAnswers   []SubmitMultiAnswerInput   `json:"multi_answers" validate:"omitempty,max=100,dive"`
+	ArrangeAnswers []SubmitArrangeAnswerInput `json:"arrange_answers" validate:"omitempty,max=100,dive"`
+	FillAnswers    []SubmitFillAnswerInput    `json:"fill_answers" validate:"omitempty,max=100,dive"`
 }
 
 // ── Quiz Question Response Models ──

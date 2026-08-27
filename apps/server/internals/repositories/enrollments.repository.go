@@ -197,3 +197,9 @@ func (r *EnrollmentsRepository) ListRepository(scope generic.AuthScope, page, li
 
 	return list, result.Total, nil
 }
+
+func (r *EnrollmentsRepository) IsEnrolledRepository(userID, courseID string) (bool, error) {
+	var isEnrolled bool
+	err := r.DB.Get(&isEnrolled, `SELECT EXISTS(SELECT 1 FROM enrollments WHERE user_id = NULLIF($1, '')::uuid AND course_id = NULLIF($2, '')::uuid AND revoked = false)`, userID, courseID)
+	return isEnrolled, err
+}

@@ -128,6 +128,8 @@ var (
 	ErrTransactionsInvalidCoupon    = errors.New("invalid coupon")
 	ErrTransactionsInvalidSignature = errors.New("invalid webhook signature")
 	ErrTransactionsNotFound         = errors.New("transaction not found for this order")
+	ErrTransactionsAlreadyEnrolled  = errors.New("user is already enrolled in this course")
+	ErrTransactionsCourseIsFree     = errors.New("free courses must be enrolled directly via free enrollment")
 )
 
 // Feedbacks errors
@@ -149,4 +151,43 @@ var (
 	ErrCertificateNotEnrolled     = errors.New("access denied: not enrolled in course")
 	ErrCertificateNotCompleted    = errors.New("course not completed")
 	ErrCertificateFailedToExecute = errors.New("failed to issue certificate")
+)
+
+// Centralized Response Messages
+const (
+	MsgTransactionInitiated       = "Transaction initiated."
+	MsgTransactionStatusFetched   = "Transaction status fetched."
+	MsgCheckoutCourseFetched      = "Checkout course info fetched."
+	MsgTransactionsFetched        = "Transactions fetched."
+	MsgSignedURLGenerated         = "Signed URL generated successfully."
+	MsgEnrolledSuccessfully       = "Enrolled successfully."
+	MsgNoteSaved                  = "Note saved."
+	MsgNoteFetched                = "Note fetched."
+	MsgNoteUpdated                = "Note updated."
+	MsgNoteDeleted                = "Note deleted."
+	MsgFeedbackPosted             = "Feedback posted."
+	MsgFeedbackFetched            = "Feedbacks fetched."
+	MsgCouponCreated              = "Coupon created."
+	MsgCouponChecked              = "Coupon checked."
+	MsgQuizSubmitted              = "Quiz submitted successfully."
+	MsgCourseCreated              = "Course created successfully."
+	MsgCourseUpdated              = "Course updated successfully."
+	MsgCourseDeleted              = "Course deleted successfully."
+)
+
+// Centralized Error Response Messages
+const (
+	ErrMsgInvalidRequestBody   = "Invalid request body."
+	ErrMsgValidationFailed     = "Validation failed."
+	ErrMsgInternalServerError  = "Internal server error"
+	ErrMsgTooManyRequests      = "Too many requests. Please try again later."
+	ErrMsgInvalidFileName      = "File name query param required."
+	ErrMsgUnsafeFileName       = "Invalid or unsafe file name."
+	ErrMsgExtensionNotAllowed  = "File extension not allowed."
+	ErrMsgInvalidStatusParam   = "Invalid status parameter."
+	ErrMsgInvalidDateFrom      = "Invalid date_from format. Use RFC3339 format."
+	ErrMsgInvalidDateTo        = "Invalid date_to format. Use RFC3339 format."
+	ErrMsgAlreadyEnrolled      = "You are already enrolled in this course."
+	ErrMsgFreeCourseDirect     = "Free courses must be enrolled directly."
+	ErrMsgWishlistLimitReached = "Wishlist limit reached (max 100 items)"
 )

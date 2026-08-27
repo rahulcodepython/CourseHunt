@@ -14,15 +14,15 @@ type Permission struct {
 }
 
 type CreateRoleRequest struct {
-	Name        string  `json:"name" validate:"required"`
-	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name" validate:"required,min=2,max=50"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=500"`
 }
 
 type UpdateRoleRequest struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
+	Name        *string `json:"name,omitempty" validate:"omitempty,min=2,max=50"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=500"`
 }
 
 type UpdateRolePermissionsRequest struct {
-	PermissionIDs []string `json:"permission_ids" validate:"required"`
+	PermissionIDs []string `json:"permission_ids" validate:"required,max=200,dive,uuid"`
 }

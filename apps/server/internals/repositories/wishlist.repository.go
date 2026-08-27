@@ -4,6 +4,7 @@ import (
 	"coursehunt/server/internals/entities"
 	"coursehunt/server/internals/pkg/cache"
 	"encoding/json"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -18,6 +19,11 @@ func NewWishlistRepository(db *sqlx.DB, cache *cache.Cache) *WishlistRepository 
 }
 
 func (r *WishlistRepository) CreateRepository(userID, courseID string) (*entities.WishlistItem, error) {
+	var count int
+	if err := r.DB.Get(&count, `SELECT COUNT(*) FROM wishlists WHERE user_id = $1`, userID); err == nil && count >= 100 {
+		return nil, fmt.Errorf("wishlist limit reached (max 100 items)")
+	}
+
 	var w entities.WishlistItem
 	err := r.DB.Get(&w, `
 		INSERT INTO wishlists (user_id, course_id)

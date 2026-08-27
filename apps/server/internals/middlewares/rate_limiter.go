@@ -3,6 +3,7 @@ package middlewares
 import (
 	"time"
 
+	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,7 +18,7 @@ func RateLimiterMiddleware() fiber.Handler {
 			return c.IP()
 		},
 		LimitReached: func(c *fiber.Ctx) error {
-			return utils.TooManyRequests(c, "Too many requests. Please try again later.", nil)
+			return utils.TooManyRequests(c, generic.ErrMsgTooManyRequests, nil)
 		},
 		// docker-compose's own healthcheck polls this route from inside the
 		// container network every 15s; exempting it stops legitimate,

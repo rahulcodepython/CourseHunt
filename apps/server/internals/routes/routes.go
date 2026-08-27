@@ -85,7 +85,7 @@ func NewRouter(app *fiber.App, db *sqlx.DB, rdb *redis.Client, cfg *config.Confi
 
 	couponsSvc := services.NewCouponsService(couponsRepo)
 	quizSvc := services.NewQuizService(db, quizRepo, enrollmentsRepo, coursesRepo)
-	transactionsSvc := services.NewTransactionsService(transactionsRepo, cfg, rzp, couponsSvc)
+	transactionsSvc := services.NewTransactionsService(transactionsRepo, enrollmentsRepo, cfg, rzp, couponsSvc)
 
 	return &Router{
 		App: app, API: app.Group("/api"), DB: db, CFG: cfg, Cache: cch,
@@ -163,7 +163,12 @@ func (r *Router) SetUp() {
 	public.Get("/feedbacks/pinned", r.Feedbacks.ListPinnedController)
 	public.Get("/faqs/public", r.Faqs.PublicListController)
 	public.Get("/certificates/verify/:id", r.Certificates.VerifyController)
-	public.Post("/transactions/webhook", r.Transactions.WebhookController)
+	public.Post("/transactions/webhook", func(c *fiber.Ctx) error {
+		if len(c.Body()) > 64*1024 {
+			return c.Status(fiber.StatusRequestEntityTooLarge).JSON(fiber.Map{"error": "Payload too large"})
+		}
+		return c.Next()
+	}, r.Transactions.WebhookController)
 
 	// ============================================================
 	// BLOCK 2 — AUTH MIDDLEWARE CREATED HERE. NOTHING PUBLIC BELOW THIS LINE.

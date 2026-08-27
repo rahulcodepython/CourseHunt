@@ -261,7 +261,7 @@ func (r *DiscussionsRepository) CreateRepository(userID string, req entities.Cre
 			WHERE l.id = NULLIF($1, '')::uuid
 		),
 		parent_info AS (
-			SELECT id, lesson_id FROM discussions WHERE id = NULLIF($2, '')::uuid AND $2 != ''
+			SELECT id, lesson_id FROM discussions WHERE id = NULLIF($2, '')::uuid AND $2 != '' AND parent_id IS NULL
 		),
 		%s
 		parent_validation AS (

@@ -2,14 +2,14 @@ import { z } from 'zod';
 import { UserInfoZod } from "@/schema/common.types";
 
 export const CreateDiscussionRequestZod = z.object({
-    content: z.string(),
+    content: z.string().min(1).max(5000),
     parent_id: z.string().nullable().optional(),
     lesson_id: z.string(),
 });
 export type CreateDiscussionRequest = z.infer<typeof CreateDiscussionRequestZod>;
 
 export const UpdateDiscussionRequestZod = z.object({
-    content: z.string(),
+    content: z.string().min(1).max(5000),
 });
 export type UpdateDiscussionRequest = z.infer<typeof UpdateDiscussionRequestZod>;
 

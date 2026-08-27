@@ -63,17 +63,17 @@ type StudyChapterItem struct {
 // change it afterward via the dedicated status action (UpdateCourseRequest).
 type CreateCourseRequest struct {
 	Title            string   `json:"title" validate:"required,min=3,max=200"`
-	ShortDescription *string  `json:"short_description"`
-	LongDescription  *string  `json:"long_description"`
-	ImageURL         *string  `json:"image_url"`
-	PreviewVideoURL  *string  `json:"preview_video_url"`
-	CategoryID       *string  `json:"category_id"`
-	Language         string   `json:"language"`
+	ShortDescription *string  `json:"short_description" validate:"omitempty,max=500"`
+	LongDescription  *string  `json:"long_description" validate:"omitempty,max=50000"`
+	ImageURL         *string  `json:"image_url" validate:"omitempty,url"`
+	PreviewVideoURL  *string  `json:"preview_video_url" validate:"omitempty,url"`
+	CategoryID       *string  `json:"category_id" validate:"omitempty,uuid"`
+	Language         string   `json:"language" validate:"omitempty,max=50"`
 	Level            string   `json:"level" validate:"omitempty,oneof=beginner intermediate advanced all"`
 	ActualPrice      float64  `json:"actual_price" validate:"omitempty,min=0"`
 	FinalPrice       float64  `json:"final_price" validate:"omitempty,min=0,ltefield=ActualPrice"`
-	Benefits         []string `json:"benefits"`
-	Requirements     []string `json:"requirements"`
+	Benefits         []string `json:"benefits" validate:"omitempty,max=20,dive,max=300"`
+	Requirements     []string `json:"requirements" validate:"omitempty,max=20,dive,max=300"`
 	CouponAllowed    bool     `json:"coupon_allowed"`
 	IsFree           bool     `json:"is_free"`
 }
@@ -88,17 +88,17 @@ type CourseFileCleanup struct {
 
 type UpdateCourseRequest struct {
 	Title            *string   `json:"title" validate:"omitempty,min=3,max=200"`
-	ShortDescription *string   `json:"short_description"`
-	LongDescription  *string   `json:"long_description"`
-	ImageURL         *string   `json:"image_url"`
-	PreviewVideoURL  *string   `json:"preview_video_url"`
-	Language         *string   `json:"language"`
+	ShortDescription *string   `json:"short_description" validate:"omitempty,max=500"`
+	LongDescription  *string   `json:"long_description" validate:"omitempty,max=50000"`
+	ImageURL         *string   `json:"image_url" validate:"omitempty,url"`
+	PreviewVideoURL  *string   `json:"preview_video_url" validate:"omitempty,url"`
+	Language         *string   `json:"language" validate:"omitempty,max=50"`
 	Level            *string   `json:"level" validate:"omitempty,oneof=beginner intermediate advanced all"`
 	ActualPrice      *float64  `json:"actual_price" validate:"omitempty,min=0"`
 	FinalPrice       *float64  `json:"final_price" validate:"omitempty,min=0"`
-	Benefits         *[]string `json:"benefits"`
-	Requirements     *[]string `json:"requirements"`
-	CategoryID       *string   `json:"category_id"`
+	Benefits         *[]string `json:"benefits" validate:"omitempty,max=20,dive,max=300"`
+	Requirements     *[]string `json:"requirements" validate:"omitempty,max=20,dive,max=300"`
+	CategoryID       *string   `json:"category_id" validate:"omitempty,uuid"`
 	CouponAllowed    *bool     `json:"coupon_allowed"`
 	IsFree           *bool     `json:"is_free"`
 	Status           *string   `json:"status" validate:"omitempty,oneof=draft published archived"`

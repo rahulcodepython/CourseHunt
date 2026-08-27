@@ -5,7 +5,7 @@ import {
 	type QueryClient,
 	type UseMutationResult,
 } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 
 import type { ApiResponse, PaginatedResponse } from "@/schema/common.types";
@@ -93,10 +93,15 @@ function handleError(error: Error) {
 function useWithExecute<TData, TVars, TContext>(
 	mutation: UseMutationResult<ApiResponse<TData>, Error, TVars, TContext>,
 ) {
+	const inProgressRef = useRef(false);
+
 	const execute = useCallback(
 		async (variables: TVars): Promise<ApiResponse<TData> | null> => {
+			if (inProgressRef.current) return null;
+			inProgressRef.current = true;
 			try { return await mutation.mutateAsync(variables); }
 			catch { return null; }
+			finally { inProgressRef.current = false; }
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[mutation.mutateAsync],

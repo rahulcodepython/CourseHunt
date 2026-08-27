@@ -15,9 +15,9 @@ type Profile struct {
 }
 
 type UpdateProfileRequest struct {
-	Headline *string `json:"headline"`
-	Bio      *string `json:"bio"`
-	Website  *string `json:"website"`
+	Headline *string `json:"headline" validate:"omitempty,max=200"`
+	Bio      *string `json:"bio" validate:"omitempty,max=1000"`
+	Website  *string `json:"website" validate:"omitempty,max=500,url"`
 }
 
 type AdminProfileItem struct {

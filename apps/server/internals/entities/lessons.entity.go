@@ -55,8 +55,8 @@ type LessonFileCleanup struct {
 type CreateLessonRequest struct {
 	Title            string  `json:"title" validate:"required,min=2,max=200"`
 	LessonType       string  `json:"lesson_type" validate:"required,oneof=video document quiz"`
-	ShortDescription *string `json:"short_description"`
-	PreviewVideoURL  *string `json:"preview_video_url"`
+	ShortDescription *string `json:"short_description" validate:"omitempty,max=500"`
+	PreviewVideoURL  *string `json:"preview_video_url" validate:"omitempty,url"`
 	DurationSeconds  int     `json:"duration_seconds" validate:"min=0"`
 }
 
@@ -64,24 +64,24 @@ type CreateLessonRequest struct {
 // highest existing lesson_no) — never client-settable.
 type UpdateLessonRequest struct {
 	Title            *string `json:"title" validate:"omitempty,min=2,max=200"`
-	ShortDescription *string `json:"short_description"`
-	PreviewVideoURL  *string `json:"preview_video_url"`
+	ShortDescription *string `json:"short_description" validate:"omitempty,max=500"`
+	PreviewVideoURL  *string `json:"preview_video_url" validate:"omitempty,url"`
 	DurationSeconds  *int    `json:"duration_seconds" validate:"omitempty,min=0"`
 }
 
 type UpsertVideoContentRequest struct {
 	VideoURL       string  `json:"video_url" validate:"required,url"`
-	WrittenContent *string `json:"written_content"`
+	WrittenContent *string `json:"written_content" validate:"omitempty,max=50000"`
 }
 
 type UpsertDocumentContentRequest struct {
-	Content string `json:"content" validate:"required"`
+	Content string `json:"content" validate:"required,max=500000"`
 }
 
 type AddResourceRequest struct {
 	Title    string  `json:"title" validate:"required,min=1,max=200"`
 	FileURL  string  `json:"file_url" validate:"required,url"`
-	FileType *string `json:"file_type"`
+	FileType *string `json:"file_type" validate:"omitempty,max=50"`
 }
 
 type AggregatedLessonContentResponse struct {

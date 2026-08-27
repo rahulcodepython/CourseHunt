@@ -54,8 +54,18 @@ func UnprocessableEntity(c *fiber.Ctx, message string, error error) error {
 	return json[any](c, fiber.StatusUnprocessableEntity, false, message, nil, error)
 }
 
-func InternalError(c *fiber.Ctx, message string, error error) error {
-	return json[any](c, fiber.StatusInternalServerError, false, message, nil, error)
+func InternalError(c *fiber.Ctx, message string, err error) error {
+	if err != nil {
+		c.Locals("handler_error", err)
+	}
+	c.Locals("handler_error_msg", message)
+	body := generic.Response[any]{
+		Success: false,
+		Message: message,
+		Data:    nil,
+		Error:   generic.ErrMsgInternalServerError,
+	}
+	return c.Status(fiber.StatusInternalServerError).JSON(body)
 }
 
 func TooManyRequests(c *fiber.Ctx, message string, error error) error {

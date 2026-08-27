@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"coursehunt/server/internals/config"
@@ -137,14 +138,18 @@ func (ctrl *CouponsController) CheckController(c *fiber.Ctx) error {
 		return utils.BadRequest(c, "Code and course ID required.", nil)
 	}
 
-	cacheKey := fmt.Sprintf("coupons:check:c:%s:course:%s", code, courseID)
+	if len(code) > 50 {
+		return utils.BadRequest(c, "Invalid coupon code.", nil)
+	}
+
+	cacheKey := fmt.Sprintf("coupons:check:c:%s:course:%s", url.QueryEscape(code), url.QueryEscape(courseID))
 	var cached entities.CouponCheckResponse
 	if hit, _ := ctrl.Repo.Cache.Get(c.Context(), cacheKey, &cached); hit {
 		return utils.OK(c, "Coupon checked.", cached)
 	}
 
 	resp := ctrl.Svc.CheckCoupon(code, courseID)
-	_ = ctrl.Repo.Cache.Set(c.Context(), cacheKey, resp, 3*time.Minute)
+	_ = ctrl.Repo.Cache.Set(c.Context(), cacheKey, resp, 30*time.Second)
 
 	return utils.OK(c, "Coupon checked.", resp)
 }

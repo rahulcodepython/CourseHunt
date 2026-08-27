@@ -19,6 +19,24 @@ func NewTransactionsRepository(db *sqlx.DB) *TransactionsRepository {
 	return &TransactionsRepository{DB: db}
 }
 
+func (r *TransactionsRepository) GetPendingTransactionRepository(userID, courseID string) (*entities.Transaction, error) {
+	var t entities.Transaction
+	err := r.DB.Get(&t, `
+		SELECT
+			id,
+			COALESCE(user_id::text, '') AS "user.id",
+			COALESCE(course_id::text, '') AS "course.id",
+			razorpay_order_id, razorpay_payment_id, amount, actual_price, offered_price, tax_percent, discount_amount, currency, status,
+			error_description, confirmed_at, created_at
+		FROM transactions
+		WHERE user_id = $1 AND course_id = $2 AND status = 'pending' AND (created_at + INTERVAL '30 minutes') > CURRENT_TIMESTAMP
+		ORDER BY created_at DESC LIMIT 1`, userID, courseID)
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
 // ── Writes ──
 
 // CreateRepository writes the transaction row ONCE, fully formed: the

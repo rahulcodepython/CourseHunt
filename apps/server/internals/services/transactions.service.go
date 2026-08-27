@@ -15,14 +15,15 @@ import (
 )
 
 type TransactionsService struct {
-	Repos    *repositories.TransactionsRepository
-	Cfg      *config.Config
-	Rzp      *razorpay.Client
-	CouponsS *CouponsService
+	Repos           *repositories.TransactionsRepository
+	EnrollmentsRepo *repositories.EnrollmentsRepository
+	Cfg             *config.Config
+	Rzp             *razorpay.Client
+	CouponsS        *CouponsService
 }
 
-func NewTransactionsService(repos *repositories.TransactionsRepository, cfg *config.Config, rzp *razorpay.Client, couponsS *CouponsService) *TransactionsService {
-	return &TransactionsService{Repos: repos, Cfg: cfg, Rzp: rzp, CouponsS: couponsS}
+func NewTransactionsService(repos *repositories.TransactionsRepository, enrollmentsRepo *repositories.EnrollmentsRepository, cfg *config.Config, rzp *razorpay.Client, couponsS *CouponsService) *TransactionsService {
+	return &TransactionsService{Repos: repos, EnrollmentsRepo: enrollmentsRepo, Cfg: cfg, Rzp: rzp, CouponsS: couponsS}
 }
 
 // InitiateService is the sole place the paid amount is ever computed — the
@@ -33,9 +34,32 @@ func NewTransactionsService(repos *repositories.TransactionsRepository, cfg *con
 // invoice generated later reflects exactly what was charged even if the
 // course's price or the platform's tax rate changes afterward.
 func (s *TransactionsService) InitiateService(userID string, req entities.InitiateTransactionRequest) (*entities.InitiateTransactionResponse, error) {
+	// ISSUE-027: Check if user is already enrolled before initiating payment
+	if s.EnrollmentsRepo != nil {
+		isEnrolled, err := s.EnrollmentsRepo.IsEnrolledRepository(userID, req.CourseID)
+		if err == nil && isEnrolled {
+			return nil, generic.ErrTransactionsAlreadyEnrolled
+		}
+	}
+
+	if existing, err := s.Repos.GetPendingTransactionRepository(userID, req.CourseID); err == nil && existing != nil && existing.RazorpayOrderID != nil {
+		return &entities.InitiateTransactionResponse{
+			TransactionID:   existing.ID,
+			RazorpayOrderID: *existing.RazorpayOrderID,
+			Amount:          existing.Amount,
+			Currency:        existing.Currency,
+			RazorpayKey:     s.Cfg.RazorpayKeyID,
+		}, nil
+	}
+
 	pricing, err := s.Repos.GetCoursePricingRepository(req.CourseID)
 	if err != nil {
 		return nil, generic.ErrCoursesCourseNotFound
+	}
+
+	// ISSUE-028: Prevent creating paid transactions for free courses
+	if pricing.FinalPrice <= 0 {
+		return nil, generic.ErrTransactionsCourseIsFree
 	}
 
 	discountedAmount := pricing.FinalPrice

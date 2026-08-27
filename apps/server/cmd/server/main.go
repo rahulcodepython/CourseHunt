@@ -39,7 +39,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		AppName:               "CourseHunt API v1.0",
 		ErrorHandler:          utils.GlobalErrorHandler,
-		BodyLimit:             100 * 1024 * 1024,
+		BodyLimit:             1 * 1024 * 1024,
 		DisableStartupMessage: false,
 		// fasthttp's default 4096-byte read buffer covers the request line
 		// plus ALL headers combined. Our Authorization header alone carries

@@ -20,12 +20,12 @@ type Faq struct {
 // CreateChapterRequest's pattern).
 type CreateFaqRequest struct {
 	Question string `json:"question" validate:"required,min=3,max=500"`
-	Answer   string `json:"answer" validate:"required,min=1"`
+	Answer   string `json:"answer" validate:"required,min=1,max=5000"`
 }
 
 // sort_order is auto-incremented server-side (next after the course's
 // highest existing sort_order) — never client-settable.
 type UpdateFaqRequest struct {
 	Question *string `json:"question" validate:"omitempty,min=3,max=500"`
-	Answer   *string `json:"answer" validate:"omitempty,min=1"`
+	Answer   *string `json:"answer" validate:"omitempty,min=1,max=5000"`
 }

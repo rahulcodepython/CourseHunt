@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"coursehunt/server/internals/config"
@@ -35,8 +36,11 @@ func (ctrl *CoursesController) PublicListController(c *fiber.Ctx) error {
 	subID := c.Query("subcategory_id")
 	lvl := c.Query("level")
 	search := c.Query("search")
+	if len(search) > 200 {
+		search = search[:200]
+	}
 
-	cacheKey := fmt.Sprintf("courses:public:list:p:%d:l:%d:c:%s:s:%s:lvl:%s:q:%s", page, limit, catID, subID, lvl, search)
+	cacheKey := fmt.Sprintf("courses:public:list:p:%d:l:%d:c:%s:s:%s:lvl:%s:q:%s", page, limit, url.QueryEscape(catID), url.QueryEscape(subID), url.QueryEscape(lvl), url.QueryEscape(search))
 
 	var cached publicCoursesCacheData
 	if hit, _ := ctrl.Repo.Cache.Get(c.Context(), cacheKey, &cached); hit {
