@@ -41,5 +41,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# backend
-backend/server
+# turbo
+.turbo
+
+# Go backend binaries
+apps/server/server
+apps/seeder/seeder
+apps/migrator/migrator
+.opencode
+
+*_PLAN.md
+
+.vscode
+.workspace
