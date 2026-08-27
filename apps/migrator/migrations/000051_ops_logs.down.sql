@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS logs_id_desc_idx;
+DROP TABLE IF EXISTS logs;
