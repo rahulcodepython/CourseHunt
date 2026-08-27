@@ -44,8 +44,10 @@ next-env.d.ts
 # turbo
 .turbo
 
-# api (Go backend)
-apps/api/server
+# Go backend binaries
+apps/server/server
+apps/seeder/seeder
+apps/migrator/migrator
 .opencode
 
 *_PLAN.md

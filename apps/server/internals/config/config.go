@@ -31,6 +31,7 @@ type Config struct {
 	DBMaxOpenConns        int     `env:"DB_MAX_OPEN_CONNS" envDefault:"25"`
 	DBMaxIdleConns        int     `env:"DB_MAX_IDLE_CONNS" envDefault:"10"`
 	DBConnMaxLifetime     int     `env:"DB_CONN_MAX_LIFETIME" envDefault:"5"`
+	DBConnMaxIdleTime     int     `env:"DB_CONN_MAX_IDLE_TIME" envDefault:"3"`
 }
 
 // Load replaces init() — explicit, testable, no global state

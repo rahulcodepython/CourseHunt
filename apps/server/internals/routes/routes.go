@@ -11,7 +11,9 @@ import (
 	"coursehunt/server/internals/services"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
@@ -119,6 +121,8 @@ func NewRouter(app *fiber.App, db *sqlx.DB, rdb *redis.Client, cfg *config.Confi
 func (r *Router) SetUp() {
 	r.App.Use(middlewares.LoggerMiddleware(r.DB))
 	r.App.Use(recover.New())
+	r.App.Use(helmet.New())
+	r.App.Use(compress.New())
 	// CORS must run before the rate limiter (and any other middleware that
 	// can short-circuit the chain with an early response). Fiber applies
 	// middleware in registration order, so a 429 thrown by a limiter

@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CourseHunt
 
-## Getting Started
+An online course platform: Go/Fiber API, Next.js frontend (public site, student area, tutor and admin dashboards), Postgres, Redis, and MinIO.
 
-First, run the development server:
+## Layout
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+apps/
+  web/        Next.js app — public site, student/tutor/admin dashboards, better-auth
+  server/     Go/Fiber API
+  migrator/   Schema migrations (golang-migrate) — commit / up / down
+  seeder/     Local dev seed data
+infra/
+  docker-compose.yml            production-base services (Traefik, web, server, postgres, redis, minio, migrator)
+  docker-compose.override.yml   local-dev-only additions (published DB/cache ports, whodb, mailpit, Traefik dashboard)
+  postgres/                     Postgres image build (adds pg_cron)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+See `ARCHITECTURE_TEMPLATE.md` for the architectural patterns used throughout both stacks.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Running locally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env.example .env   # fill in secrets
+cd infra
+docker compose up -d --build
+```
 
-## Learn More
+Running from `infra/` auto-merges `docker-compose.override.yml`. The app is served through Traefik at `http://localhost`.
 
-To learn more about Next.js, take a look at the following resources:
+## Deploying
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See `.env.production.example` for the values that must be overridden for a real deploy, then run only the production base (no dev override):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+docker compose -f infra/docker-compose.yml up -d --build
+```

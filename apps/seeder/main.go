@@ -154,8 +154,11 @@ func main() {
 	log.Println("==================================================")
 }
 
-// runMigrationsIfNeeded applies the server migration SQL files when the
-// database has no tables yet, mirroring the docker-entrypoint-initdb.d flow.
+// runMigrationsIfNeeded applies the migrator's *.up.sql files directly when
+// the database has no tables yet — a standalone fallback for running the
+// seeder against an empty DB without going through the apps/migrator binary
+// first. Schema in real environments is applied by apps/migrator ("commit"),
+// not by this function.
 func runMigrationsIfNeeded(db *sqlx.DB) {
 	var exists bool
 	if err := db.Get(&exists, `SELECT EXISTS (
@@ -171,7 +174,7 @@ func runMigrationsIfNeeded(db *sqlx.DB) {
 
 	dir := os.Getenv("MIGRATIONS_DIR")
 	if dir == "" {
-		dir = filepath.Join("..", "server", "internals", "migrations")
+		dir = filepath.Join("..", "migrator", "migrations")
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -180,7 +183,7 @@ func runMigrationsIfNeeded(db *sqlx.DB) {
 
 	var files []string
 	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".sql") {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".up.sql") {
 			files = append(files, entry.Name())
 		}
 	}
