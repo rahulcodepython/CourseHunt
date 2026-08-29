@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -8,10 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"coursehunt/server/internals/generic"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // sanitizeJSON recursively redacts sensitive fields from JSON payloads
@@ -73,12 +72,12 @@ func sanitizeRequestBody(body []byte) string {
 // INSERT statement, so a request that's none of these (a GET that succeeded)
 // costs nothing beyond the query round trip itself. Runs in a goroutine so a
 // slow/unavailable DB never adds latency to the actual response.
-func writeAuditRow(db *sqlx.DB, method, routePath string, status int, userID *string, ip, userAgent, logMessage, notifMessage string) {
+func writeAuditRow(db *pgxpool.Pool, method, routePath string, status int, userID *string, ip, userAgent, logMessage, notifMessage string) {
 	if db == nil {
 		return
 	}
 	go func() {
-		_, err := db.Exec(`
+		_, err := db.Exec(context.Background(), `
 			WITH actor AS (
 				SELECT u.email FROM (SELECT $3::uuid AS uid) p
 				LEFT JOIN "users" u ON u.id = p.uid
@@ -106,7 +105,7 @@ func writeAuditRow(db *sqlx.DB, method, routePath string, status int, userID *st
 	}()
 }
 
-func LoggerMiddleware(db *sqlx.DB) fiber.Handler {
+func LoggerMiddleware(db *pgxpool.Pool) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
 
@@ -134,7 +133,7 @@ func LoggerMiddleware(db *sqlx.DB) fiber.Handler {
 
 		var actorUserID *string
 		userInfo := "Anonymous / Unauthenticated"
-		if u, ok := c.Locals("user").(*generic.UserContext); ok && u != nil {
+		if u, err := UserFromContext(c); err == nil && u != nil {
 			actorUserID = &u.UserID
 			userInfo = fmt.Sprintf("UserID: %s | Roles: %v", u.UserID, u.Roles)
 		}

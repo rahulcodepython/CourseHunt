@@ -18,7 +18,7 @@ func RateLimiterMiddleware() fiber.Handler {
 			return c.IP()
 		},
 		LimitReached: func(c *fiber.Ctx) error {
-			return utils.TooManyRequests(c, generic.ErrMsgTooManyRequests, nil)
+			return utils.ErrTooManyRequests(generic.ErrMsgTooManyRequests, nil)
 		},
 		// docker-compose's own healthcheck polls this route from inside the
 		// container network every 15s; exempting it stops legitimate,

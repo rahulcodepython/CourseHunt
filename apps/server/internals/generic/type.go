@@ -10,6 +10,18 @@ type PaginatedResponse[T any] struct {
 	Limit int `json:"limit"`
 }
 
+// RolesAndPermissionsResult holds the current segment, custom roles,
+// permissions, and ban status resolved from the database for a given user.
+// Lives here (not in the users feature) because middlewares.BaseAuthMiddleware
+// needs this exact type in its UsersLookup interface without importing the
+// users feature package — see internals/middlewares/auth.go.
+type RolesAndPermissionsResult struct {
+	Role        string   `db:"role"`
+	Roles       []string `db:"roles"`
+	Permissions []string `db:"permissions"`
+	Banned      bool     `db:"banned"`
+}
+
 // UserInfo represents basic user details used across multiple modules.
 type UserInfo struct {
 	ID    string  `json:"id" db:"id"`
