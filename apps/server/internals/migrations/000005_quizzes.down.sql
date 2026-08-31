@@ -1,0 +1,13 @@
+DROP TRIGGER IF EXISTS trg_quiz_question_count ON quiz_questions;
+DROP FUNCTION IF EXISTS update_quiz_question_count();
+DROP TABLE IF EXISTS quiz_attempt_fill_answers;
+DROP TABLE IF EXISTS quiz_attempt_arrange_answers;
+DROP TABLE IF EXISTS quiz_attempt_multi_answer_options;
+DROP TABLE IF EXISTS quiz_attempt_multi_answers;
+DROP TABLE IF EXISTS quiz_attempt_single_answers;
+DROP TABLE IF EXISTS quiz_attempts;
+DROP TABLE IF EXISTS quiz_fill_blank_answers;
+DROP TABLE IF EXISTS quiz_arrange_items;
+DROP TABLE IF EXISTS quiz_options;
+DROP TABLE IF EXISTS quiz_questions;
+DROP TABLE IF EXISTS quiz_metadata;

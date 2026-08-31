@@ -1,0 +1,10 @@
+DROP TRIGGER IF EXISTS trg_discussion_reply_count ON discussions;
+DROP FUNCTION IF EXISTS update_discussion_reply_count();
+DROP TRIGGER IF EXISTS trg_tutor_stats ON enrollments;
+DROP FUNCTION IF EXISTS update_tutor_stats();
+DROP TRIGGER IF EXISTS trg_course_rating ON feedbacks;
+DROP FUNCTION IF EXISTS update_course_rating();
+DROP TRIGGER IF EXISTS trg_course_stats ON chapters;
+DROP FUNCTION IF EXISTS update_course_stats();
+DROP TRIGGER IF EXISTS trg_chapter_stats ON lessons;
+DROP FUNCTION IF EXISTS update_chapter_stats();

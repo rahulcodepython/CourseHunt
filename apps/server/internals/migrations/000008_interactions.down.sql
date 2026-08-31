@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS cart_items;
+DROP TABLE IF EXISTS wishlists;
+DROP TABLE IF EXISTS certificates;
+DROP TABLE IF EXISTS update_seen;
+DROP TABLE IF EXISTS updates;
+DROP TABLE IF EXISTS feedbacks;
+DROP TABLE IF EXISTS notes;
+DROP TABLE IF EXISTS discussions;

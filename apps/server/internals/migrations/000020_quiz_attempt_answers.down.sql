@@ -1,9 +1,0 @@
-DROP INDEX IF EXISTS idx_quiz_attempt_fill_answers_attempt;
-DROP TABLE IF EXISTS quiz_attempt_fill_answers;
-DROP INDEX IF EXISTS idx_quiz_attempt_arrange_answers_attempt;
-DROP TABLE IF EXISTS quiz_attempt_arrange_answers;
-DROP TABLE IF EXISTS quiz_attempt_multi_answer_options;
-DROP INDEX IF EXISTS idx_quiz_attempt_multi_answers_attempt;
-DROP TABLE IF EXISTS quiz_attempt_multi_answers;
-DROP INDEX IF EXISTS idx_quiz_attempt_single_answers_attempt;
-DROP TABLE IF EXISTS quiz_attempt_single_answers;
