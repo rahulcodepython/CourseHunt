@@ -8,21 +8,35 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-func (a *App) ReadContentRepository(ctx context.Context, lessonID, userID string, scope generic.AuthScope) (*AggregatedLessonContentResponse, error) {
-	query := BuildReadContentScopedQuery(scope)
+func (a *App) AdminReadContentRepository(ctx context.Context, lessonID string) (*AggregatedLessonContentResponse, error) {
+	var (
+		lessonExists bool
+		contentData  []byte
+	)
 
+	err := a.DB.QueryRow(ctx, ReadContentAdmin, lessonID).Scan(&lessonExists, &contentData)
+	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+
+	if !lessonExists {
+		return nil, generic.ErrLessonsLessonNotFound
+	}
+	if len(contentData) == 0 || string(contentData) == "null" {
+		return nil, errors.New("failed to retrieve content")
+	}
+
+	return postgres.DecodeJSON[AggregatedLessonContentResponse](contentData)
+}
+
+func (a *App) StudentReadContentRepository(ctx context.Context, lessonID, userID string) (*AggregatedLessonContentResponse, error) {
 	var (
 		lessonExists bool
 		isEnrolled   bool
 		contentData  []byte
 	)
 
-	args := []any{lessonID}
-	if scope == generic.ScopeUser {
-		args = append(args, userID)
-	}
-
-	err := a.DB.QueryRow(ctx, query, args...).Scan(&lessonExists, &isEnrolled, &contentData)
+	err := a.DB.QueryRow(ctx, ReadContentStudent, lessonID, userID).Scan(&lessonExists, &isEnrolled, &contentData)
 	if err != nil {
 		return nil, postgres.MapPgError(err)
 	}
@@ -61,54 +75,64 @@ func (a *App) ReadContentForTutorRepository(ctx context.Context, lessonID, tutor
 	return postgres.DecodeJSON[AggregatedLessonContentResponse](contentData)
 }
 
-func (a *App) UpsertVideoContentRepository(ctx context.Context, lessonID, tutorID string, req UpsertVideoContentRequest) (*LessonVideoContent, *LessonFileCleanup, error) {
+func (a *App) UpsertVideoContentRepository(ctx context.Context, lessonID, tutorID string, req UpsertVideoContentRequest) (*LessonVideoContent, *LessonVideoContentCleanup, error) {
 	var (
-		courseTutorID *string
-		oldVideoURL   *string
-		insertedData  []byte
+		lessonExists bool
+		isOwner      bool
+		oldVideoURL  *string
+		contentData  []byte
 	)
 
-	err := a.DB.QueryRow(ctx, UpsertVideoContent, lessonID, req.VideoURL, req.WrittenContent, tutorID).Scan(
-		&courseTutorID, &oldVideoURL, &insertedData,
-	)
+	err := a.DB.QueryRow(
+		ctx,
+		UpsertVideoContent,
+		lessonID, req.VideoURL, req.WrittenContent, tutorID,
+	).Scan(&lessonExists, &isOwner, &oldVideoURL, &contentData)
 	if err != nil {
 		return nil, nil, postgres.MapPgError(err)
 	}
 
 	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: courseTutorID == nil, Err: generic.ErrLessonsLessonNotFound},
-		postgres.Condition{Failed: len(insertedData) == 0 || string(insertedData) == "null", Err: generic.ErrLessonsAccessDenied},
+		postgres.Condition{Failed: !lessonExists, Err: generic.ErrLessonsLessonNotFound},
+		postgres.Condition{Failed: !isOwner, Err: generic.ErrLessonsAccessDenied},
 	); err != nil {
 		return nil, nil, err
 	}
 
-	vc, err := postgres.DecodeJSON[LessonVideoContent](insertedData)
+	content, err := postgres.DecodeJSON[LessonVideoContent](contentData)
 	if err != nil {
 		return nil, nil, err
 	}
-	cleanup := &LessonFileCleanup{OldVideoURL: oldVideoURL}
-	return vc, cleanup, nil
+
+	cleanup := &LessonVideoContentCleanup{
+		OldVideoURL: oldVideoURL,
+	}
+
+	return content, cleanup, nil
 }
 
 func (a *App) UpsertDocumentContentRepository(ctx context.Context, lessonID, tutorID, content string) (*LessonDocumentContent, error) {
 	var (
-		courseTutorID *string
-		insertedData  []byte
+		lessonExists bool
+		isOwner      bool
+		contentData  []byte
 	)
 
-	err := a.DB.QueryRow(ctx, UpsertDocumentContent, lessonID, content, tutorID).Scan(
-		&courseTutorID, &insertedData,
-	)
+	err := a.DB.QueryRow(
+		ctx,
+		UpsertDocumentContent,
+		lessonID, content, tutorID,
+	).Scan(&lessonExists, &isOwner, &contentData)
 	if err != nil {
 		return nil, postgres.MapPgError(err)
 	}
 
 	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: courseTutorID == nil, Err: generic.ErrLessonsLessonNotFound},
-		postgres.Condition{Failed: len(insertedData) == 0 || string(insertedData) == "null", Err: generic.ErrLessonsAccessDenied},
+		postgres.Condition{Failed: !lessonExists, Err: generic.ErrLessonsLessonNotFound},
+		postgres.Condition{Failed: !isOwner, Err: generic.ErrLessonsAccessDenied},
 	); err != nil {
 		return nil, err
 	}
 
-	return postgres.DecodeJSON[LessonDocumentContent](insertedData)
+	return postgres.DecodeJSON[LessonDocumentContent](contentData)
 }

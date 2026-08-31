@@ -23,25 +23,6 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 	return utils.Created(c, "Feedback posted.", f)
 }
 
-func (a *App) handleList(c *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(c)
-	scope := middlewares.ResolveScope(c)
-	userID := middlewares.UserID(c)
-	isPinned := c.Query("is_pinned")
-	userName := c.Query("user_name")
-	userEmail := c.Query("user_email")
-	courseID := c.Query("course_id")
-
-	list, total, err := a.List(c.Context(), scope, userID, page, limit, isPinned, userName, userEmail, courseID)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Feedbacks fetched.", generic.PaginatedResponse[[]Feedback]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	})
-}
-
 func (a *App) handleListPinned(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	courseID := c.Query("course_id")
@@ -56,13 +37,32 @@ func (a *App) handleListPinned(c *fiber.Ctx) error {
 	})
 }
 
-func (a *App) handleUpdate(c *fiber.Ctx) error {
+// --- Admin Handlers ---
+
+func (a *App) handleAdminList(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+	isPinned := c.Query("is_pinned")
+	userName := c.Query("user_name")
+	userEmail := c.Query("user_email")
+	courseID := c.Query("course_id")
+
+	list, total, err := a.AdminList(c.Context(), page, limit, isPinned, userName, userEmail, courseID)
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Feedbacks fetched.", generic.PaginatedResponse[[]Feedback]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	})
+}
+
+func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
 	var req PinFeedbackRequest
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	f, err := a.Update(c.Context(), c.Params("id"), req.IsPinned)
+	f, err := a.AdminUpdate(c.Context(), c.Params("id"), req.IsPinned)
 	if err != nil {
 		return err
 	}
@@ -70,11 +70,39 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 	return utils.OK(c, "Feedback pin status updated.", f)
 }
 
-func (a *App) handleDelete(c *fiber.Ctx) error {
-	scope := middlewares.ResolveScope(c)
+func (a *App) handleAdminDelete(c *fiber.Ctx) error {
+	id, err := a.AdminDelete(c.Context(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Feedback deleted.", generic.DeleteResponse{ID: id})
+}
+
+// --- Tutor Handlers ---
+
+func (a *App) handleTutorList(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+	userID := middlewares.UserID(c)
+	isPinned := c.Query("is_pinned")
+	userName := c.Query("user_name")
+	userEmail := c.Query("user_email")
+	courseID := c.Query("course_id")
+
+	list, total, err := a.TutorList(c.Context(), userID, page, limit, isPinned, userName, userEmail, courseID)
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Feedbacks fetched.", generic.PaginatedResponse[[]Feedback]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	})
+}
+
+func (a *App) handleTutorDelete(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
 
-	id, err := a.Delete(c.Context(), c.Params("id"), userID, scope)
+	id, err := a.TutorDelete(c.Context(), c.Params("id"), userID)
 	if err != nil {
 		return err
 	}

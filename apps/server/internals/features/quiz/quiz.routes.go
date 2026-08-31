@@ -8,18 +8,26 @@ import (
 )
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
-	manage := middlewares.PermissionGuard(generic.PermTutorQuizManage)
-	manageOrInspect := middlewares.PermissionGuard(generic.PermTutorQuizManage, generic.PermAdminCoursesInspect)
+	// Admin quiz inspection: strictly single permission PermAdminCoursesInspect
+	adminGuard := middlewares.PermissionGuard(generic.PermAdminCoursesInspect)
+	gAdmin := router.Group("/v1/admin/quiz", auth, adminGuard)
+	gAdmin.Get("/metadata", a.handleAdminReadMetadata)
+	gAdmin.Get("/questions", a.handleAdminListQuestions)
 
-	g := router.Group("/v1/quiz", auth)
-	g.Post("/metadata", manage, a.handleCreateMetadata)
-	g.Get("/metadata", manageOrInspect, a.handleReadMetadata)
-	g.Post("/questions", manage, a.handleCreateQuestion)
-	g.Get("/questions", manageOrInspect, a.handleListQuestions)
-	g.Patch("/questions/:id", manage, a.handleUpdateQuestion)
-	g.Delete("/questions/:id", manage, a.handleDeleteQuestion)
-	g.Post("/question", a.handleGetQuestion)
-	g.Post("/submit", a.handleCreateSubmit)
-	g.Get("/attempts", a.handleListAttempts)
-	g.Get("/attempts/:id", a.handleGetAttemptDetail)
+	// Tutor quiz management: strictly single permission PermTutorQuizManage
+	tutorGuard := middlewares.PermissionGuard(generic.PermTutorQuizManage)
+	gTutor := router.Group("/v1/tutor/quiz", auth, tutorGuard)
+	gTutor.Post("/metadata", a.handleCreateMetadata)
+	gTutor.Get("/metadata", a.handleTutorReadMetadata)
+	gTutor.Post("/questions", a.handleCreateQuestion)
+	gTutor.Get("/questions", a.handleTutorListQuestions)
+	gTutor.Patch("/questions/:id", a.handleUpdateQuestion)
+	gTutor.Delete("/questions/:id", a.handleDeleteQuestion)
+
+	// Student quiz taking
+	gStudent := router.Group("/v1/quiz", auth)
+	gStudent.Post("/question", a.handleGetQuestion)
+	gStudent.Post("/submit", a.handleCreateSubmit)
+	gStudent.Get("/attempts", a.handleListAttempts)
+	gStudent.Get("/attempts/:id", a.handleGetAttemptDetail)
 }

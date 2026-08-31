@@ -32,13 +32,10 @@ func (a *App) ReadByCodeRepository(ctx context.Context, code string) (*Coupon, e
 	return coupon, nil
 }
 
-func (a *App) ListRepository(ctx context.Context, page, limit int, userID string, scope generic.AuthScope, status, isActive, code string) ([]Coupon, int, error) {
+func (a *App) AdminListRepository(ctx context.Context, page, limit int, status, isActive, code string) ([]Coupon, int, error) {
 	offset := (page - 1) * limit
 	filter := postgres.NewFilter(limit, offset)
 
-	if scope != generic.ScopeAdmin {
-		filter.Add("c.created_by = $%d", userID)
-	}
 	if status != "" {
 		filter.Add("c.is_active = $%d::boolean", status)
 	}
@@ -53,11 +50,34 @@ func (a *App) ListRepository(ctx context.Context, page, limit int, userID string
 	if err != nil {
 		return nil, 0, err
 	}
-	if payload == nil {
+	if payload == nil || payload.Data == nil {
 		return []Coupon{}, 0, nil
 	}
-	if payload.Data == nil {
-		payload.Data = []Coupon{}
+
+	return payload.Data, payload.Total, nil
+}
+
+func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID, status, isActive, code string) ([]Coupon, int, error) {
+	offset := (page - 1) * limit
+	filter := postgres.NewFilter(limit, offset)
+
+	filter.Add("c.created_by = $%d", userID)
+	if status != "" {
+		filter.Add("c.is_active = $%d::boolean", status)
+	}
+	if isActive == "true" || isActive == "false" {
+		filter.Add("c.is_active = $%d", isActive == "true")
+	}
+	if code != "" {
+		filter.Add("c.code ILIKE $%d", "%"+code+"%")
+	}
+
+	payload, err := postgres.QueryJSON[CouponListPayload](ctx, a.DB, BuildListQuery(filter.Join("1=1")), filter.Args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	if payload == nil || payload.Data == nil {
+		return []Coupon{}, 0, nil
 	}
 
 	return payload.Data, payload.Total, nil
@@ -75,32 +95,62 @@ var (
 	}
 )
 
-func (a *App) CreateRepository(ctx context.Context, userID string, scope generic.AuthScope, req CreateCouponRequest) (*Coupon, error) {
+func (a *App) AdminCreateRepository(ctx context.Context, userID string, req CreateCouponRequest) (*Coupon, error) {
 	return postgres.QueryWithStatus[Coupon](
 		ctx,
 		a.DB,
-		CreateCoupon,
+		AdminCreateCoupon,
 		createCouponErrMap,
-		userID, req.CourseID, req.Code, req.DiscountPercent, req.MaxUsage, req.ExpiresAt, req.IsActive, string(scope),
+		userID, req.CourseID, req.Code, req.DiscountPercent, req.MaxUsage, req.ExpiresAt, req.IsActive,
 	)
 }
 
-func (a *App) UpdateRepository(ctx context.Context, id, userID string, scope generic.AuthScope, req UpdateCouponRequest) (*Coupon, error) {
+func (a *App) TutorCreateRepository(ctx context.Context, userID string, req CreateCouponRequest) (*Coupon, error) {
 	return postgres.QueryWithStatus[Coupon](
 		ctx,
 		a.DB,
-		UpdateCoupon,
-		couponItemErrMap,
-		id, userID, req.DiscountPercent, req.MaxUsage, req.ExpiresAt, req.IsActive, string(scope),
+		TutorCreateCoupon,
+		createCouponErrMap,
+		userID, req.CourseID, req.Code, req.DiscountPercent, req.MaxUsage, req.ExpiresAt, req.IsActive,
 	)
 }
 
-func (a *App) DeleteRepository(ctx context.Context, id, userID string, scope generic.AuthScope) (string, error) {
+func (a *App) AdminUpdateRepository(ctx context.Context, id string, req UpdateCouponRequest) (*Coupon, error) {
+	return postgres.QueryWithStatus[Coupon](
+		ctx,
+		a.DB,
+		AdminUpdateCoupon,
+		couponItemErrMap,
+		id, req.DiscountPercent, req.MaxUsage, req.ExpiresAt, req.IsActive,
+	)
+}
+
+func (a *App) TutorUpdateRepository(ctx context.Context, id, userID string, req UpdateCouponRequest) (*Coupon, error) {
+	return postgres.QueryWithStatus[Coupon](
+		ctx,
+		a.DB,
+		TutorUpdateCoupon,
+		couponItemErrMap,
+		id, userID, req.DiscountPercent, req.MaxUsage, req.ExpiresAt, req.IsActive,
+	)
+}
+
+func (a *App) AdminDeleteRepository(ctx context.Context, id string) (string, error) {
 	return postgres.QueryIDWithStatus(
 		ctx,
 		a.DB,
-		DeleteCoupon,
+		AdminDeleteCoupon,
 		couponItemErrMap,
-		id, userID, string(scope),
+		id,
+	)
+}
+
+func (a *App) TutorDeleteRepository(ctx context.Context, id, userID string) (string, error) {
+	return postgres.QueryIDWithStatus(
+		ctx,
+		a.DB,
+		TutorDeleteCoupon,
+		couponItemErrMap,
+		id, userID,
 	)
 }

@@ -12,6 +12,7 @@ import {
 } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
+import { API_ENDPOINTS } from "@/lib/const";
 import {
   LessonZod,
   CreateLessonRequestZod,
@@ -27,10 +28,11 @@ import {
 } from "@/schema/lessons.types";
 import { DeleteResponseZod } from "@/schema/common.types";
 
-export function useLessonsQuery(chapterId: string) {
-  return useAppQuery(queryKeys.lessons(chapterId), () =>
+export function useLessonsQuery(chapterId: string, scope: "admin" | "tutor" = "tutor") {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_LESSONS : API_ENDPOINTS.TUTOR_LESSONS;
+  return useAppQuery(queryKeys.lessons(chapterId, scope), () =>
     apiRequest(
-      { url: `/api/v1/lessons?chapter_id=${chapterId}`, method: "GET" },
+      { url: `${endpoint}?chapter_id=${chapterId}`, method: "GET" },
       z.array(LessonZod),
     ),
   );
@@ -40,10 +42,10 @@ export function useCreateLessonMutation(chapterId: string) {
   return useArrayMutation({
     mutationFn: (data: z.infer<typeof CreateLessonRequestZod>) =>
       apiRequest(
-        { url: `/api/v1/lessons?chapter_id=${chapterId}`, method: "POST", data },
+        { url: `${API_ENDPOINTS.TUTOR_LESSONS}?chapter_id=${chapterId}`, method: "POST", data },
         LessonZod,
       ),
-    queryKey: queryKeys.lessons(chapterId),
+    queryKey: queryKeys.lessons(chapterId, "tutor"),
     updater: (lesson) => appendToArray(lesson),
     showToast: true,
   });
@@ -52,8 +54,8 @@ export function useCreateLessonMutation(chapterId: string) {
 export function useDeleteLessonMutation(chapterId: string) {
   return useArrayMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `/api/v1/lessons/${id}`, method: "DELETE" }, DeleteResponseZod),
-    queryKey: queryKeys.lessons(chapterId),
+      apiRequest({ url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}`, method: "DELETE" }, DeleteResponseZod),
+    queryKey: queryKeys.lessons(chapterId, "tutor"),
     updater: (res) => removeFromArray(res.id),
     optimistic: (id) => removeFromArray(id),
     showToast: true,
@@ -63,8 +65,8 @@ export function useDeleteLessonMutation(chapterId: string) {
 export function useUpdateLessonMutation(chapterId: string) {
   return useArrayMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateLessonRequestZod> }) =>
-      apiRequest({ url: `/api/v1/lessons/${id}`, method: "PATCH", data }, LessonZod),
-    queryKey: queryKeys.lessons(chapterId),
+      apiRequest({ url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}`, method: "PATCH", data }, LessonZod),
+    queryKey: queryKeys.lessons(chapterId, "tutor"),
     updater: (lesson) => replaceInArray(lesson),
     showToast: true,
   });
@@ -74,7 +76,7 @@ export function useCompleteLessonMutation(courseId: string) {
   return useSimpleMutation({
     mutationFn: (id: string) =>
       apiRequest(
-        { url: `/api/v1/lessons/${id}/complete`, method: "POST" },
+        { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/complete`, method: "POST" },
         LessonCompleteResponseZod,
       ),
     invalidateKeys: [queryKeys.courseStudy(courseId)],
@@ -82,24 +84,19 @@ export function useCompleteLessonMutation(courseId: string) {
   });
 }
 
-// Ownership-gated (not enrollment-gated) — for the tutor authoring flow,
-// which is the only caller of this hook. A tutor is never "enrolled" in
-// their own course, so the student-facing /content endpoint always 403s them.
-export function useLessonContentQuery(id: string) {
+export function useLessonContentQuery(id: string, scope: "admin" | "tutor" = "tutor") {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_LESSONS : API_ENDPOINTS.TUTOR_LESSONS;
   return useAppQuery(
-    queryKeys.lessonContent(id),
+    queryKeys.lessonContent(id, scope),
     () =>
       apiRequest(
-        { url: `/api/v1/lessons/${id}/manage/content`, method: "GET" },
+        { url: `${endpoint}/${id}/content`, method: "GET" },
         AggregatedLessonContentResponseZod,
       ),
     { enabled: !!id },
   );
 }
 
-// id is a runtime arg (not a hook param) so this can be called with a
-// lesson id that only becomes known partway through a single submit —
-// e.g. the lesson wizard's deferred create-then-attach-content flow.
 export function useAddVideoMutation() {
   return useSimpleMutation({
     mutationFn: ({
@@ -110,10 +107,13 @@ export function useAddVideoMutation() {
       data: z.infer<typeof UpsertVideoContentRequestZod>;
     }) =>
       apiRequest(
-        { url: `/api/v1/lessons/${id}/video`, method: "POST", data },
+        { url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}/video`, method: "POST", data },
         LessonVideoContentZod,
       ),
-    invalidateKeys: (_data, vars) => [queryKeys.lessonContent(vars.id)],
+    invalidateKeys: (_data, vars) => [
+      queryKeys.lessonContent(vars.id, "tutor"),
+      queryKeys.lessonContent(vars.id, "admin"),
+    ],
     showToast: true,
   });
 }
@@ -128,10 +128,13 @@ export function useAddDocumentMutation() {
       data: z.infer<typeof UpsertDocumentContentRequestZod>;
     }) =>
       apiRequest(
-        { url: `/api/v1/lessons/${id}/document`, method: "POST", data },
+        { url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}/document`, method: "POST", data },
         LessonDocumentContentZod,
       ),
-    invalidateKeys: (_data, vars) => [queryKeys.lessonContent(vars.id)],
+    invalidateKeys: (_data, vars) => [
+      queryKeys.lessonContent(vars.id, "tutor"),
+      queryKeys.lessonContent(vars.id, "admin"),
+    ],
     showToast: true,
   });
 }
@@ -144,24 +147,17 @@ export function useAddResourceMutation(id: string) {
   >({
     mutationFn: (data: z.infer<typeof AddResourceRequestZod>) =>
       apiRequest(
-        { url: `/api/v1/lessons/${id}/resources`, method: "POST", data },
+        { url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}/resources`, method: "POST", data },
         LessonResourceZod,
       ),
-    queryKey: queryKeys.lessonResources(id),
-    // Reconciles the optimistic temp-id placeholder below with its
-    // server-confirmed replacement — not a real id match (the server's id
-    // never equals the temp one), so this opts into replaceInArray's
-    // custom-matcher form instead of its default id-equality match.
+    queryKey: queryKeys.lessonResources(id, "tutor"),
     updater: (resource) => (old) =>
       replaceInArray(resource, {
         matches: (r) => r.id.startsWith("temp-"),
         appendIfMissing: true,
       })(old),
     optimistic: (data) => appendToArray({ ...data, id: `temp-${Date.now()}` }),
-    // Safety net: the direct cache write above silently no-ops when this
-    // is the lesson's first-ever resource (no cache entry exists yet to
-    // write into) — invalidating forces a real fetch regardless.
-    invalidateKeys: [queryKeys.lessonResources(id)],
+    invalidateKeys: [queryKeys.lessonResources(id, "tutor"), queryKeys.lessonResources(id, "admin")],
     showToast: true,
   });
 }
@@ -174,49 +170,45 @@ export function useDeleteResourceMutation(id: string) {
   >({
     mutationFn: (resourceId: string) =>
       apiRequest(
-        { url: `/api/v1/lessons/${id}/resources/${resourceId}`, method: "DELETE" },
+        { url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}/resources/${resourceId}`, method: "DELETE" },
         DeleteResponseZod,
       ),
-    queryKey: queryKeys.lessonResources(id),
+    queryKey: queryKeys.lessonResources(id, "tutor"),
     updater: (res) => removeFromArray(res.id),
     optimistic: (resourceId) => removeFromArray(resourceId),
-    invalidateKeys: [queryKeys.lessonResources(id)],
+    invalidateKeys: [queryKeys.lessonResources(id, "tutor"), queryKeys.lessonResources(id, "admin")],
     showToast: true,
   });
 }
 
-// Ownership-gated — see useLessonContentQuery above for why.
-export function useLessonResourcesQuery(id: string) {
-  return useAppQuery(queryKeys.lessonResources(id), () =>
+export function useLessonResourcesQuery(id: string, scope: "admin" | "tutor" = "tutor") {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_LESSONS : API_ENDPOINTS.TUTOR_LESSONS;
+  return useAppQuery(queryKeys.lessonResources(id, scope), () =>
     apiRequest(
-      { url: `/api/v1/lessons/${id}/manage/resources`, method: "GET" },
+      { url: `${endpoint}/${id}/resources`, method: "GET" },
       z.array(LessonResourceZod),
     ),
   );
 }
 
-// Enrollment-gated student-facing content read — distinct from
-// useLessonContentQuery above, which is the tutor's ownership-gated
-// authoring view and 403s for an enrolled student.
 export function useStudyLessonContentQuery(id: string) {
   return useAppQuery(
     queryKeys.studyLessonContent(id),
     () =>
       apiRequest(
-        { url: `/api/v1/lessons/${id}/content`, method: "GET" },
+        { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/content`, method: "GET" },
         AggregatedLessonContentResponseZod,
       ),
     { enabled: !!id },
   );
 }
 
-// Enrollment-gated student-facing resources read — see useStudyLessonContentQuery above.
 export function useStudyLessonResourcesQuery(id: string) {
   return useAppQuery(
     queryKeys.studyLessonResources(id),
     () =>
       apiRequest(
-        { url: `/api/v1/lessons/${id}/resources`, method: "GET" },
+        { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/resources`, method: "GET" },
         z.array(LessonResourceZod),
       ),
     { enabled: !!id },

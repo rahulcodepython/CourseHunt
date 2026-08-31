@@ -7,14 +7,14 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-func (a *App) MarkLessonCompleteRepository(ctx context.Context, userID, lessonID string) error {
+func (a *App) UpdateCompleteRepository(ctx context.Context, lessonID, userID string) error {
 	var (
 		lessonExists bool
 		isEnrolled   bool
 		completed    bool
 	)
 
-	err := a.DB.QueryRow(ctx, MarkLessonComplete, lessonID, userID).Scan(
+	err := a.DB.QueryRow(ctx, UpdateComplete, lessonID, userID).Scan(
 		&lessonExists, &isEnrolled, &completed,
 	)
 	if err != nil {

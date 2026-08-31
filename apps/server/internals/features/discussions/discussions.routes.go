@@ -8,20 +8,36 @@ import (
 )
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
-	// Discussions mix elevated admin/tutor access (any discussion) with plain
-	// self-scoped user access (own enrolled-course discussions, enforced by
-	// ErrDiscussionsNotEnrolled in the repository) — ScopeGuard records the
-	// elevated permission when present and otherwise defaults to ScopeUser.
-	discussionElevatedPerms := []string{
-		generic.PermAdminDiscussionRead, generic.PermAdminDiscussionWrite, generic.PermAdminDiscussionDelete,
-		generic.PermTutorDiscussionRead, generic.PermTutorDiscussionWrite, generic.PermTutorDiscussionDelete,
-	}
-	scopeGuard := middlewares.ScopeGuard(discussionElevatedPerms...)
+	// Admin Discussions
+	adminRead := middlewares.PermissionGuard(generic.PermAdminDiscussionRead)
+	adminWrite := middlewares.PermissionGuard(generic.PermAdminDiscussionWrite)
+	adminDelete := middlewares.PermissionGuard(generic.PermAdminDiscussionDelete)
 
-	g := router.Group("/v1/discussions", auth, scopeGuard)
-	g.Get("/:lessonId", a.handleList)
-	g.Get("/replies/:id", a.handleListReplies)
-	g.Post("/", a.handleCreate)
-	g.Patch("/:id", a.handleUpdate)
-	g.Delete("/:id", a.handleDelete)
+	gAdmin := router.Group("/v1/admin/discussions", auth)
+	gAdmin.Get("/lesson/:lessonId", adminRead, a.handleAdminList)
+	gAdmin.Get("/replies/:id", adminRead, a.handleAdminListReplies)
+	gAdmin.Post("/", adminWrite, a.handleAdminCreate)
+	gAdmin.Patch("/:id", adminWrite, a.handleAdminUpdate)
+	gAdmin.Delete("/:id", adminDelete, a.handleAdminDelete)
+
+	// Tutor Discussions
+	tutorRead := middlewares.PermissionGuard(generic.PermTutorDiscussionRead)
+	tutorWrite := middlewares.PermissionGuard(generic.PermTutorDiscussionWrite)
+	tutorDelete := middlewares.PermissionGuard(generic.PermTutorDiscussionDelete)
+
+	gTutor := router.Group("/v1/tutor/discussions", auth)
+	gTutor.Get("/lesson/:lessonId", tutorRead, a.handleTutorList)
+	gTutor.Get("/replies/:id", tutorRead, a.handleTutorListReplies)
+	gTutor.Post("/", tutorWrite, a.handleTutorCreate)
+	gTutor.Patch("/:id", tutorWrite, a.handleTutorUpdate)
+	gTutor.Delete("/:id", tutorDelete, a.handleTutorDelete)
+
+	// Student Discussions
+	gStudent := router.Group("/v1/discussions", auth)
+	gStudent.Get("/lesson/:lessonId", a.handleStudentList)
+	gStudent.Get("/:lessonId", a.handleStudentList)
+	gStudent.Get("/replies/:id", a.handleStudentListReplies)
+	gStudent.Post("/", a.handleStudentCreate)
+	gStudent.Patch("/:id", a.handleStudentUpdate)
+	gStudent.Delete("/:id", a.handleStudentDelete)
 }

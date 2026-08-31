@@ -8,23 +8,36 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (a *App) handleList(c *fiber.Ctx) error {
+func (a *App) handleAdminList(c *fiber.Ctx) error {
 	courseID := c.Query("course_id")
 	targetUserID := c.Query("user_id")
 
-	scope := middlewares.ResolveScope(c)
-
-	if scope == generic.ScopeTutor && courseID == "" {
-		return utils.ErrBadRequest("Course ID required.", nil)
-	}
-	if scope != generic.ScopeTutor && courseID == "" && targetUserID == "" {
+	if courseID == "" && targetUserID == "" {
 		return utils.ErrBadRequest("course_id or user_id is required.", nil)
+	}
+
+	page, limit := utils.PaginationParams(c)
+
+	list, total, err := a.AdminList(c.Context(), page, limit, courseID, targetUserID,
+		c.Query("user_name"), c.Query("user_email"), c.Query("revoked"))
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Enrollments fetched.", generic.PaginatedResponse[[]ListEnrollmentResponse]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	})
+}
+
+func (a *App) handleTutorList(c *fiber.Ctx) error {
+	courseID, err := utils.RequireQuery(c, "course_id", "Course ID")
+	if err != nil {
+		return err
 	}
 
 	page, limit := utils.PaginationParams(c)
 	callerID := middlewares.UserID(c)
 
-	list, total, err := a.List(c.Context(), scope, page, limit, courseID, targetUserID, callerID,
+	list, total, err := a.TutorList(c.Context(), page, limit, courseID, callerID,
 		c.Query("user_name"), c.Query("user_email"), c.Query("revoked"))
 	if err != nil {
 		return err

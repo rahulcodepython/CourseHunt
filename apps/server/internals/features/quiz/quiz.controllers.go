@@ -8,6 +8,36 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// --- Admin Handlers ---
+
+func (a *App) handleAdminReadMetadata(c *fiber.Ctx) error {
+	lessonID, err := utils.RequireQuery(c, "lesson_id", "Lesson ID")
+	if err != nil {
+		return err
+	}
+
+	qm, err := a.AdminReadMetadata(c.Context(), lessonID)
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Quiz metadata fetched.", qm)
+}
+
+func (a *App) handleAdminListQuestions(c *fiber.Ctx) error {
+	quizID, err := utils.RequireQuery(c, "quiz_id", "Quiz ID")
+	if err != nil {
+		return err
+	}
+
+	questions, err := a.AdminListQuestions(c.Context(), quizID)
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Questions fetched.", questions)
+}
+
+// --- Tutor Handlers ---
+
 func (a *App) handleCreateMetadata(c *fiber.Ctx) error {
 	var req CreateQuizRequest
 	if err := utils.BindAndValidate(c, &req); err != nil {
@@ -26,30 +56,28 @@ func (a *App) handleCreateMetadata(c *fiber.Ctx) error {
 	return utils.OK(c, "Quiz saved successfully.", qm)
 }
 
-func (a *App) handleReadMetadata(c *fiber.Ctx) error {
+func (a *App) handleTutorReadMetadata(c *fiber.Ctx) error {
 	lessonID, err := utils.RequireQuery(c, "lesson_id", "Lesson ID")
 	if err != nil {
 		return err
 	}
 	userID := middlewares.UserID(c)
-	scope := middlewares.ResolveScope(c)
 
-	qm, err := a.ReadMetadata(c.Context(), lessonID, userID, scope)
+	qm, err := a.TutorReadMetadata(c.Context(), lessonID, userID)
 	if err != nil {
 		return err
 	}
 	return utils.OK(c, "Quiz metadata fetched.", qm)
 }
 
-func (a *App) handleListQuestions(c *fiber.Ctx) error {
+func (a *App) handleTutorListQuestions(c *fiber.Ctx) error {
 	quizID, err := utils.RequireQuery(c, "quiz_id", "Quiz ID")
 	if err != nil {
 		return err
 	}
 	userID := middlewares.UserID(c)
-	scope := middlewares.ResolveScope(c)
 
-	questions, err := a.ListQuestions(c.Context(), quizID, userID, scope)
+	questions, err := a.TutorListQuestions(c.Context(), quizID, userID)
 	if err != nil {
 		return err
 	}
@@ -71,7 +99,7 @@ func (a *App) handleCreateQuestion(c *fiber.Ctx) error {
 		return err
 	}
 
-	return utils.Created(c, "Question added successfully.", q)
+	return utils.Created(c, "Question created successfully.", q)
 }
 
 func (a *App) handleUpdateQuestion(c *fiber.Ctx) error {
@@ -97,22 +125,25 @@ func (a *App) handleDeleteQuestion(c *fiber.Ctx) error {
 	return utils.OK(c, "Question deleted successfully.", generic.DeleteResponse{ID: id})
 }
 
+// --- Student Taking Handlers ---
+
 func (a *App) handleGetQuestion(c *fiber.Ctx) error {
 	var req NextQuestionRequest
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
+
 	quizID, err := utils.RequireQuery(c, "quiz_id", "Quiz ID")
 	if err != nil {
 		return err
 	}
 
-	resp, err := a.GetQuestion(c.Context(), quizID, middlewares.UserID(c), req)
+	q, err := a.GetQuestion(c.Context(), quizID, middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
 
-	return utils.OK(c, "Question fetched.", resp)
+	return utils.OK(c, "Question fetched.", q)
 }
 
 func (a *App) handleCreateSubmit(c *fiber.Ctx) error {
@@ -120,6 +151,7 @@ func (a *App) handleCreateSubmit(c *fiber.Ctx) error {
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
+
 	quizID, err := utils.RequireQuery(c, "quiz_id", "Quiz ID")
 	if err != nil {
 		return err
@@ -130,7 +162,7 @@ func (a *App) handleCreateSubmit(c *fiber.Ctx) error {
 		return err
 	}
 
-	return utils.OK(c, "Quiz submitted successfully.", resp)
+	return utils.Created(c, generic.MsgQuizSubmitted, resp)
 }
 
 func (a *App) handleListAttempts(c *fiber.Ctx) error {
@@ -143,7 +175,8 @@ func (a *App) handleListAttempts(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return utils.OK(c, "Quiz attempts fetched.", attempts)
+
+	return utils.OK(c, "Attempts fetched.", attempts)
 }
 
 func (a *App) handleGetAttemptDetail(c *fiber.Ctx) error {
@@ -151,5 +184,6 @@ func (a *App) handleGetAttemptDetail(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return utils.OK(c, "Quiz attempt fetched.", detail)
+
+	return utils.OK(c, "Attempt detail fetched.", detail)
 }

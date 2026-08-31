@@ -17,14 +17,14 @@ export default function CourseChaptersPage() {
   const params = useParams<{ courseId: string }>();
   const courseId = params.courseId as string;
 
-  const { data: courseData } = useManageCourseQuery(courseId);
+  const { data: courseData } = useManageCourseQuery(courseId, "admin");
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },
     { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "Chapters" },
   ]);
 
-  const { data: rawChapters, isLoading } = useChaptersQuery(courseId);
+  const { data: rawChapters, isLoading } = useChaptersQuery(courseId, "admin");
   const chapters = rawChapters?.data ?? [];
   const columns = getColumns(courseId);
 

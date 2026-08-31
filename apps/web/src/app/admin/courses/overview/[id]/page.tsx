@@ -66,7 +66,7 @@ import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 export default function CourseOverviewPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id as string;
-  const { data: raw, isLoading } = useManageCourseQuery(courseId);
+  const { data: raw, isLoading } = useManageCourseQuery(courseId, "admin");
   const course = raw?.data;
 
   useSetBreadcrumbs([

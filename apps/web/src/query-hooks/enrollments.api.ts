@@ -6,14 +6,19 @@ import { z } from "zod";
 import { usePaginatedMutation } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
+import { API_ENDPOINTS } from "@/lib/const";
 import { ListEnrollmentResponseZod, type ListEnrollmentResponse } from "@/schema/enrollments.types";
 import { PaginatedResponseZod, type PaginatedResponse } from "@/schema/common.types";
 
-export function useEnrollmentsQuery(params: { courseId?: string; userId?: string }) {
-  return useAppQuery(queryKeys.enrollments(params), () =>
+export function useEnrollmentsQuery(
+  params: { courseId?: string; userId?: string },
+  scope: "admin" | "tutor" = "admin",
+) {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_ENROLLMENTS : API_ENDPOINTS.TUTOR_ENROLLMENTS;
+  return useAppQuery(queryKeys.enrollments(params, scope), () =>
     apiRequest(
       {
-        url: "/api/v1/enrollments",
+        url: endpoint,
         method: "GET",
         params: compactParams({ course_id: params.courseId, user_id: params.userId }),
       },
@@ -22,8 +27,6 @@ export function useEnrollmentsQuery(params: { courseId?: string; userId?: string
   );
 }
 
-// Flip the `revoked` flag on the target enrollment (matched by user + course).
-// Used for the optimistic update while the revoke/regain request is in flight.
 const flipEnrollmentRevoked =
   (userId: string, courseId: string, revoked: boolean) =>
   (old: PaginatedResponse<ListEnrollmentResponse>): PaginatedResponse<ListEnrollmentResponse> => ({
@@ -37,13 +40,10 @@ export function useRevokeEnrollmentMutation(params: { courseId?: string; userId?
   return usePaginatedMutation<null, { userId: string; courseId: string }, ListEnrollmentResponse>({
     mutationFn: ({ userId, courseId }) =>
       apiRequest(
-        { url: `/api/v1/enrollments/${userId}/${courseId}/revoke`, method: "POST" },
+        { url: `${API_ENDPOINTS.ADMIN_ENROLLMENTS}/${userId}/${courseId}/revoke`, method: "POST" },
         z.null(),
       ),
-    queryKey: queryKeys.enrollments(params),
-    // The revoke endpoint returns no row data, so the optimistic flip is
-    // kept as-is on success; the ["enrollments"] invalidation refetches the
-    // authoritative list from the server.
+    queryKey: queryKeys.enrollments(params, "admin"),
     updater: () => (old) => old,
     optimistic: (vars) => flipEnrollmentRevoked(vars.userId, vars.courseId, true),
     invalidateKeys: [queryKeys.enrollmentsAll()],
@@ -55,10 +55,10 @@ export function useRegainEnrollmentMutation(params: { courseId?: string; userId?
   return usePaginatedMutation<null, { userId: string; courseId: string }, ListEnrollmentResponse>({
     mutationFn: ({ userId, courseId }) =>
       apiRequest(
-        { url: `/api/v1/enrollments/${userId}/${courseId}/regain`, method: "POST" },
+        { url: `${API_ENDPOINTS.ADMIN_ENROLLMENTS}/${userId}/${courseId}/regain`, method: "POST" },
         z.null(),
       ),
-    queryKey: queryKeys.enrollments(params),
+    queryKey: queryKeys.enrollments(params, "admin"),
     updater: () => (old) => old,
     optimistic: (vars) => flipEnrollmentRevoked(vars.userId, vars.courseId, false),
     invalidateKeys: [queryKeys.enrollmentsAll()],

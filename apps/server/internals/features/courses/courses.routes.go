@@ -8,19 +8,27 @@ import (
 )
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
+	// Public / Student courses
 	router.Get("/v1/courses", a.handlePublicList)
 	router.Get("/v1/courses/course/:slug", a.handlePublicSingle)
 
-	manage := middlewares.PermissionGuard(generic.PermTutorCoursesManage, generic.PermAdminCoursesInspect)
-	manageOnly := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
+	gAuth := router.Group("/v1/courses", auth)
+	gAuth.Get("/:id/study", a.handleStudy)
+	gAuth.Get("/enrolled", a.handleEnrolledList)
+	gAuth.Post("/:id/enroll", a.handleEnrollFree)
 
-	g := router.Group("/v1/courses", auth)
-	g.Get("/:id/study", a.handleStudy)
-	g.Get("/enrolled", a.handleEnrolledList)
-	g.Post("/:id/enroll", a.handleEnrollFree)
-	g.Get("/manage", manage, a.handleManageList)
-	g.Get("/:id", manage, a.handleGetByID)
-	g.Post("/", manageOnly, a.handleCreate)
-	g.Patch("/:id", manageOnly, a.handleUpdate)
-	g.Delete("/:id", manageOnly, a.handleDelete)
+	// Admin course inspection: strictly single permission PermAdminCoursesInspect
+	adminGuard := middlewares.PermissionGuard(generic.PermAdminCoursesInspect)
+	gAdmin := router.Group("/v1/admin/courses", auth, adminGuard)
+	gAdmin.Get("/", a.handleAdminList)
+	gAdmin.Get("/:id", a.handleAdminGetByID)
+
+	// Tutor course authoring: strictly single permission PermTutorCoursesManage
+	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
+	gTutor := router.Group("/v1/tutor/courses", auth, tutorGuard)
+	gTutor.Get("/", a.handleTutorList)
+	gTutor.Get("/:id", a.handleTutorGetByID)
+	gTutor.Post("/", a.handleCreate)
+	gTutor.Patch("/:id", a.handleUpdate)
+	gTutor.Delete("/:id", a.handleDelete)
 }

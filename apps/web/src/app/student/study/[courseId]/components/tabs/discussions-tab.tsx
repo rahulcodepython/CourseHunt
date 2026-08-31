@@ -16,17 +16,19 @@ export function DiscussionsTab({
   lessonId,
   canEditAny = false,
   canDeleteAny = false,
+  scope = "student",
 }: {
   lessonId: string;
   canEditAny?: boolean;
   canDeleteAny?: boolean;
+  scope?: "admin" | "tutor" | "student";
 }) {
   const [page, setPage] = React.useState(1);
   const [items, setItems] = React.useState<Discussion[]>([]);
   const [content, setContent] = React.useState("");
 
-  const { data: raw, isLoading, isFetching } = useDiscussionsQuery(lessonId, page, PAGE_SIZE);
-  const createDiscussion = useCreateDiscussionMutation();
+  const { data: raw, isLoading, isFetching } = useDiscussionsQuery(lessonId, page, PAGE_SIZE, scope);
+  const createDiscussion = useCreateDiscussionMutation(scope);
 
   // Reset accumulated state whenever the lesson changes — this component
   // stays mounted across lesson navigation within the study page.
@@ -100,6 +102,7 @@ export function DiscussionsTab({
               onDeleted={handleDeleted}
               canEditAny={canEditAny}
               canDeleteAny={canDeleteAny}
+              scope={scope}
             />
           ))}
         </div>

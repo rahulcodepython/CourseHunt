@@ -8,12 +8,16 @@ import (
 )
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
-	inspect := middlewares.PermissionGuard(generic.PermTutorCoursesManage, generic.PermAdminCoursesInspect)
-	manage := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
+	// Admin chapter inspection: strictly single permission PermAdminCoursesInspect
+	adminGuard := middlewares.PermissionGuard(generic.PermAdminCoursesInspect)
+	gAdmin := router.Group("/v1/admin/chapters", auth, adminGuard)
+	gAdmin.Get("/", a.handleAdminList)
 
-	g := router.Group("/v1/chapters", auth)
-	g.Get("/", inspect, a.handleList)
-	g.Post("/", manage, a.handleCreate)
-	g.Patch("/:id", manage, a.handleUpdate)
-	g.Delete("/:id", manage, a.handleDelete)
+	// Tutor chapter management: strictly single permission PermTutorCoursesManage
+	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
+	gTutor := router.Group("/v1/tutor/chapters", auth, tutorGuard)
+	gTutor.Get("/", a.handleTutorList)
+	gTutor.Post("/", a.handleCreate)
+	gTutor.Patch("/:id", a.handleUpdate)
+	gTutor.Delete("/:id", a.handleDelete)
 }

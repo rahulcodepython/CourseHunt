@@ -26,16 +26,10 @@ const COPY = {
   },
 } as const;
 
-/**
- * Shared admin/tutor coupons list — the backend already scopes which
- * coupons `useCouponsQuery()` returns per the caller's role, so this
- * component only needs to vary copy, the course-selector requirement, and
- * one table column by scope (see coupon-form.tsx / coupon-columns.tsx).
- */
 export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
-  const { data: raw, isLoading } = useCouponsQuery();
-  const updateMutation = useUpdateCouponMutation();
-  const deleteMutation = useDeleteCouponMutation();
+  const { data: raw, isLoading } = useCouponsQuery(scope);
+  const updateMutation = useUpdateCouponMutation(scope);
+  const deleteMutation = useDeleteCouponMutation(scope);
   const coupons: Coupon[] = raw?.data?.data ?? [];
 
   const {

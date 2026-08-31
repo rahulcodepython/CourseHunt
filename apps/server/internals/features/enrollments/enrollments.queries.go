@@ -6,8 +6,6 @@ const (
 	RevokeEnrollment = `UPDATE enrollments SET revoked = true WHERE user_id = NULLIF($1, '')::uuid AND course_id = NULLIF($2, '')::uuid;`
 
 	RegainEnrollment = `UPDATE enrollments SET revoked = false WHERE user_id = NULLIF($1, '')::uuid AND course_id = NULLIF($2, '')::uuid;`
-
-	IsEnrolled = `SELECT EXISTS(SELECT 1 FROM enrollments WHERE user_id = NULLIF($1, '')::uuid AND course_id = NULLIF($2, '')::uuid AND revoked = false);`
 )
 
 func BuildTutorListQuery(whereClause string, idx int) string {

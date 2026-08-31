@@ -22,15 +22,28 @@ func (a *App) handlePublicList(c *fiber.Ctx) error {
 	return utils.OK(c, "FAQs fetched successfully.", faqs)
 }
 
-func (a *App) handleList(c *fiber.Ctx) error {
-	scope := middlewares.ResolveScope(c)
+func (a *App) handleAdminList(c *fiber.Ctx) error {
+	courseID, err := utils.RequireQuery(c, "course_id", "Course ID")
+	if err != nil {
+		return err
+	}
+
+	faqs, err := a.AdminList(c.Context(), courseID)
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "FAQs fetched successfully.", faqs)
+}
+
+func (a *App) handleTutorList(c *fiber.Ctx) error {
 	courseID, err := utils.RequireQuery(c, "course_id", "Course ID")
 	if err != nil {
 		return err
 	}
 
 	userID := middlewares.UserID(c)
-	faqs, err := a.List(c.Context(), courseID, userID, scope)
+	faqs, err := a.TutorList(c.Context(), courseID, userID)
 	if err != nil {
 		return err
 	}

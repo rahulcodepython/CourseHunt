@@ -35,7 +35,27 @@ func (a *App) CreateRepository(ctx context.Context, userID, courseID string, req
 	return postgres.DecodeJSON[Feedback](insertedData)
 }
 
-func (a *App) ListRepository(ctx context.Context, scope generic.AuthScope, userID string, page, limit int, isPinned, userName, userEmail, courseID string) ([]Feedback, int, error) {
+func (a *App) ListPinnedRepository(ctx context.Context, page, limit int, courseID string) ([]Feedback, int, error) {
+	filter := postgres.NewFilter()
+	filter.AddRaw("f.is_pinned = true")
+	if courseID != "" {
+		filter.Add("f.course_id = $%d", courseID)
+	}
+
+	limitIdx := filter.Paginate(page, limit)
+	query := BuildListQuery(filter.Where(""), limitIdx)
+
+	payload, err := postgres.QueryJSON[FeedbackListPayload](ctx, a.DB, query, filter.Args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	if payload == nil || payload.Data == nil {
+		return []Feedback{}, 0, nil
+	}
+	return payload.Data, payload.Total, nil
+}
+
+func (a *App) AdminListRepository(ctx context.Context, page, limit int, isPinned, userName, userEmail, courseID string) ([]Feedback, int, error) {
 	filter := postgres.NewFilter()
 
 	if isPinned == "true" || isPinned == "false" {
@@ -50,53 +70,101 @@ func (a *App) ListRepository(ctx context.Context, scope generic.AuthScope, userI
 	if courseID != "" {
 		filter.Add("f.course_id = $%d", courseID)
 	}
-	if scope == generic.ScopeTutor {
-		filter.Add("c.tutor_id = $%d", userID)
-	}
 
 	limitIdx := filter.Paginate(page, limit)
-
 	query := BuildListQuery(filter.Where(""), limitIdx)
 
-	result, err := postgres.QueryJSON[FeedbackListPayload](ctx, a.DB, query, filter.Args...)
+	payload, err := postgres.QueryJSON[FeedbackListPayload](ctx, a.DB, query, filter.Args...)
 	if err != nil {
 		return nil, 0, err
 	}
-	if result == nil {
+	if payload == nil || payload.Data == nil {
 		return []Feedback{}, 0, nil
 	}
-	if result.Data == nil {
-		result.Data = []Feedback{}
-	}
-	return result.Data, result.Total, nil
+	return payload.Data, payload.Total, nil
 }
 
-func (a *App) UpdateRepository(ctx context.Context, id string, pin bool) (*Feedback, error) {
-	f, err := postgres.QueryJSON[Feedback](ctx, a.DB, UpdateFeedbackPin, pin, id)
+func (a *App) TutorListRepository(ctx context.Context, userID string, page, limit int, isPinned, userName, userEmail, courseID string) ([]Feedback, int, error) {
+	filter := postgres.NewFilter()
+
+	filter.Add("c.tutor_id = $%d", userID)
+	if isPinned == "true" || isPinned == "false" {
+		filter.AddRaw(fmt.Sprintf("f.is_pinned = %s", isPinned))
+	}
+	if userName != "" {
+		filter.Add("u.name ILIKE $%d", "%"+userName+"%")
+	}
+	if userEmail != "" {
+		filter.Add("u.email ILIKE $%d", "%"+userEmail+"%")
+	}
+	if courseID != "" {
+		filter.Add("f.course_id = $%d", courseID)
+	}
+
+	limitIdx := filter.Paginate(page, limit)
+	query := BuildListQuery(filter.Where(""), limitIdx)
+
+	payload, err := postgres.QueryJSON[FeedbackListPayload](ctx, a.DB, query, filter.Args...)
 	if err != nil {
-		return nil, generic.ErrFeedbacksFeedbackNotFound
+		return nil, 0, err
 	}
-	if f == nil {
-		return nil, generic.ErrFeedbacksFeedbackNotFound
+	if payload == nil || payload.Data == nil {
+		return []Feedback{}, 0, nil
 	}
-	return f, nil
+	return payload.Data, payload.Total, nil
 }
 
-func (a *App) DeleteRepository(ctx context.Context, id, userID string, scope generic.AuthScope) (string, error) {
+func (a *App) AdminUpdateRepository(ctx context.Context, id string, isPinned bool) (*Feedback, error) {
 	var (
-		courseFound bool
-		isOwner     bool
-		deletedID   string
+		feedbackExists bool
+		updatedData    []byte
 	)
 
-	err := a.DB.QueryRow(ctx, DeleteFeedback, id, userID, string(scope)).Scan(&courseFound, &isOwner, &deletedID)
+	err := a.DB.QueryRow(ctx, AdminPinFeedback, id, isPinned).Scan(&feedbackExists, &updatedData)
+	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+
+	if !feedbackExists {
+		return nil, generic.ErrFeedbacksFeedbackNotFound
+	}
+
+	return postgres.DecodeJSON[Feedback](updatedData)
+}
+
+func (a *App) AdminDeleteRepository(ctx context.Context, id string) (string, error) {
+	var (
+		feedbackExists bool
+		deletedID      string
+	)
+
+	err := a.DB.QueryRow(ctx, AdminDeleteFeedback, id).Scan(&feedbackExists, &deletedID)
+	if err != nil {
+		return "", postgres.MapPgError(err)
+	}
+
+	if !feedbackExists {
+		return "", generic.ErrFeedbacksFeedbackNotFound
+	}
+
+	return deletedID, nil
+}
+
+func (a *App) TutorDeleteRepository(ctx context.Context, id, userID string) (string, error) {
+	var (
+		feedbackExists bool
+		isOwner        bool
+		deletedID      string
+	)
+
+	err := a.DB.QueryRow(ctx, TutorDeleteFeedback, id, userID).Scan(&feedbackExists, &isOwner, &deletedID)
 	if err != nil {
 		return "", postgres.MapPgError(err)
 	}
 
 	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: !courseFound, Err: generic.ErrFeedbacksFeedbackNotFound},
-		postgres.Condition{Failed: deletedID == "", Err: errors.New("access denied: you are not the tutor of this course")},
+		postgres.Condition{Failed: !feedbackExists, Err: generic.ErrFeedbacksFeedbackNotFound},
+		postgres.Condition{Failed: !isOwner, Err: generic.ErrCoursesAccessDenied},
 	); err != nil {
 		return "", err
 	}

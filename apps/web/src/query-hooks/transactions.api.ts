@@ -17,10 +17,14 @@ import {
   RefundTransactionZod,
 } from "@/schema/transactions.types";
 
-export function useTransactionsQuery(params?: { page?: number; limit?: number }) {
-  return useAppQuery(queryKeys.transactions(), () =>
+export function useTransactionsQuery(
+  params?: { page?: number; limit?: number },
+  scope: "admin" | "student" = "student",
+) {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_TRANSACTIONS : API_ENDPOINTS.TRANSACTIONS;
+  return useAppQuery(queryKeys.transactions(scope), () =>
     apiRequest(
-      { url: API_ENDPOINTS.TRANSACTIONS, method: "GET", params: compactParams(params) },
+      { url: endpoint, method: "GET", params: compactParams(params) },
       PaginatedResponseZod(TransactionZod),
     ),
   );
@@ -35,7 +39,7 @@ export function useRefundsQuery(params?: {
 }) {
   return useAppQuery(queryKeys.refunds(params as Record<string, string | number>), () =>
     apiRequest(
-      { url: `${API_ENDPOINTS.TRANSACTIONS}/refunds`, method: "GET", params: compactParams(params) },
+      { url: `${API_ENDPOINTS.ADMIN_TRANSACTIONS}/refunds`, method: "GET", params: compactParams(params) },
       PaginatedResponseZod(RefundTransactionZod),
     ),
   );

@@ -25,9 +25,9 @@ export default function TutorLessonFeedbackPage() {
   }>();
   const { courseId, chapterId, lessonId } = params;
 
-  const { data: rawCourses } = useManageCoursesQuery();
-  const { data: chaptersData } = useChaptersQuery(courseId);
-  const { data: lessonsData } = useLessonsQuery(chapterId);
+  const { data: rawCourses } = useManageCoursesQuery({ scope: "tutor" });
+  const { data: chaptersData } = useChaptersQuery(courseId, "tutor");
+  const { data: lessonsData } = useLessonsQuery(chapterId, "tutor");
 
   const currentCourse = (rawCourses?.data?.data as any[])?.find((c: any) => c.id === courseId);
   const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
@@ -45,8 +45,8 @@ export default function TutorLessonFeedbackPage() {
     { label: "Feedbacks" },
   ]);
 
-  const { data: rawFeedbacks, isLoading } = useFeedbacksQuery();
-  const deleteMutation = useDeleteFeedbackMutation();
+  const { data: rawFeedbacks, isLoading } = useFeedbacksQuery("tutor");
+  const deleteMutation = useDeleteFeedbackMutation("tutor");
 
   const feedbacks: Feedback[] = (rawFeedbacks?.data?.data as any) ?? [];
   const [deleting, setDeleting] = React.useState<Feedback | null>(null);

@@ -8,8 +8,16 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-func (a *App) List(ctx context.Context, scope generic.AuthScope, page, limit int, courseID, targetUserID, callerID, userName, userEmail, revoked string) ([]ListEnrollmentResponse, int, error) {
-	list, total, err := a.ListRepository(ctx, scope, page, limit, courseID, targetUserID, callerID, userName, userEmail, revoked)
+func (a *App) AdminList(ctx context.Context, page, limit int, courseID, targetUserID, userName, userEmail, revoked string) ([]ListEnrollmentResponse, int, error) {
+	list, total, err := a.AdminListRepository(ctx, page, limit, courseID, targetUserID, userName, userEmail, revoked)
+	if err != nil {
+		return nil, 0, utils.ErrInternal("Failed to fetch enrollments.", err)
+	}
+	return list, total, nil
+}
+
+func (a *App) TutorList(ctx context.Context, page, limit int, courseID, callerID, userName, userEmail, revoked string) ([]ListEnrollmentResponse, int, error) {
+	list, total, err := a.TutorListRepository(ctx, page, limit, courseID, callerID, userName, userEmail, revoked)
 	if err != nil {
 		if errors.Is(err, generic.ErrEnrollmentsAccessDenied) {
 			return nil, 0, utils.ErrForbidden("Access denied. You do not own this course.", err)
@@ -31,12 +39,4 @@ func (a *App) Regain(ctx context.Context, userID, courseID string) error {
 		return utils.ErrInternal("Failed to regain course access.", err)
 	}
 	return nil
-}
-
-// IsEnrolled is the one exported method other features call across the
-// feature boundary (transactions.InitiateService, to short-circuit before
-// creating a payment order for a course the user is already enrolled in) —
-// see enrollments.App threaded into transactions.New.
-func (a *App) IsEnrolled(ctx context.Context, userID, courseID string) (bool, error) {
-	return a.IsEnrolledRepository(ctx, userID, courseID)
 }

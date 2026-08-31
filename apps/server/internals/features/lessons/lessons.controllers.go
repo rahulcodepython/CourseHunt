@@ -8,20 +8,76 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (a *App) handleList(c *fiber.Ctx) error {
-	scope := middlewares.ResolveScope(c)
+// --- Admin Handlers ---
+
+func (a *App) handleAdminList(c *fiber.Ctx) error {
+	chapterID, err := utils.RequireQuery(c, "chapter_id", "Chapter ID")
+	if err != nil {
+		return err
+	}
+
+	lessons, err := a.AdminList(c.Context(), chapterID)
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Lessons fetched successfully.", lessons)
+}
+
+func (a *App) handleAdminReadContent(c *fiber.Ctx) error {
+	resp, err := a.AdminReadContent(c.Context(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Lesson content fetched successfully.", resp)
+}
+
+func (a *App) handleAdminReadResources(c *fiber.Ctx) error {
+	resources, err := a.AdminReadResources(c.Context(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Resources fetched successfully.", resources)
+}
+
+// --- Tutor Handlers ---
+
+func (a *App) handleTutorList(c *fiber.Ctx) error {
 	chapterID, err := utils.RequireQuery(c, "chapter_id", "Chapter ID")
 	if err != nil {
 		return err
 	}
 
 	userID := middlewares.UserID(c)
-	lessons, err := a.List(c.Context(), chapterID, userID, scope)
+	lessons, err := a.TutorList(c.Context(), chapterID, userID)
 	if err != nil {
 		return err
 	}
 
 	return utils.OK(c, "Lessons fetched successfully.", lessons)
+}
+
+func (a *App) handleTutorReadContent(c *fiber.Ctx) error {
+	lessonID := c.Params("id")
+	userID := middlewares.UserID(c)
+
+	resp, err := a.TutorReadContent(c.Context(), lessonID, userID)
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Lesson content fetched successfully.", resp)
+}
+
+func (a *App) handleTutorReadResources(c *fiber.Ctx) error {
+	resources, err := a.TutorReadResources(c.Context(), c.Params("id"), middlewares.UserID(c))
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Resources fetched successfully.", resources)
 }
 
 func (a *App) handleCreate(c *fiber.Ctx) error {
@@ -94,42 +150,6 @@ func (a *App) handleUpsertDocumentContent(c *fiber.Ctx) error {
 	return utils.OK(c, "Document content updated successfully.", dc)
 }
 
-func (a *App) handleReadContent(c *fiber.Ctx) error {
-	scope := middlewares.ResolveScope(c)
-	lessonID := c.Params("id")
-	userID := middlewares.UserID(c)
-
-	resp, err := a.ReadContent(c.Context(), lessonID, userID, scope)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Lesson content fetched successfully.", resp)
-}
-
-func (a *App) handleReadContentForTutor(c *fiber.Ctx) error {
-	lessonID := c.Params("id")
-	userID := middlewares.UserID(c)
-
-	resp, err := a.ReadContentForTutor(c.Context(), lessonID, userID)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Lesson content fetched successfully.", resp)
-}
-
-func (a *App) handleUpdateComplete(c *fiber.Ctx) error {
-	lessonID := c.Params("id")
-	userID := middlewares.UserID(c)
-
-	if err := a.UpdateComplete(c.Context(), lessonID, userID); err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Lesson marked as complete.", LessonCompleteResponse{LessonID: lessonID, Completed: true})
-}
-
 func (a *App) handleCreateResource(c *fiber.Ctx) error {
 	var req AddResourceRequest
 	if err := utils.BindAndValidate(c, &req); err != nil {
@@ -153,8 +173,22 @@ func (a *App) handleDeleteResource(c *fiber.Ctx) error {
 	return utils.OK(c, "Resource deleted successfully.", generic.DeleteResponse{ID: id})
 }
 
-func (a *App) handleReadResourcesForTutor(c *fiber.Ctx) error {
-	resources, err := a.ReadResourcesForTutor(c.Context(), c.Params("id"), middlewares.UserID(c))
+// --- Student Handlers ---
+
+func (a *App) handleStudentReadContent(c *fiber.Ctx) error {
+	lessonID := c.Params("id")
+	userID := middlewares.UserID(c)
+
+	resp, err := a.StudentReadContent(c.Context(), lessonID, userID)
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Lesson content fetched successfully.", resp)
+}
+
+func (a *App) handleStudentReadResources(c *fiber.Ctx) error {
+	resources, err := a.StudentReadResources(c.Context(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -162,12 +196,13 @@ func (a *App) handleReadResourcesForTutor(c *fiber.Ctx) error {
 	return utils.OK(c, "Resources fetched successfully.", resources)
 }
 
-func (a *App) handleReadResources(c *fiber.Ctx) error {
-	scope := middlewares.ResolveScope(c)
-	resources, err := a.ReadResources(c.Context(), c.Params("id"), middlewares.UserID(c), scope)
-	if err != nil {
+func (a *App) handleUpdateComplete(c *fiber.Ctx) error {
+	lessonID := c.Params("id")
+	userID := middlewares.UserID(c)
+
+	if err := a.UpdateComplete(c.Context(), lessonID, userID); err != nil {
 		return err
 	}
 
-	return utils.OK(c, "Resources fetched successfully.", resources)
+	return utils.OK(c, "Lesson marked as complete.", LessonCompleteResponse{LessonID: lessonID, Completed: true})
 }

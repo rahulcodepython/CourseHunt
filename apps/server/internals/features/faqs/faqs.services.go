@@ -16,8 +16,16 @@ func (a *App) PublicList(ctx context.Context, courseID string) ([]Faq, error) {
 	return faqs, nil
 }
 
-func (a *App) List(ctx context.Context, courseID, userID string, scope generic.AuthScope) ([]Faq, error) {
-	faqs, err := a.ListRepository(ctx, courseID, userID, scope)
+func (a *App) AdminList(ctx context.Context, courseID string) ([]Faq, error) {
+	faqs, err := a.AdminListRepository(ctx, courseID)
+	if err != nil {
+		return nil, utils.ErrInternal("Failed to fetch FAQs.", err)
+	}
+	return faqs, nil
+}
+
+func (a *App) TutorList(ctx context.Context, courseID, userID string) ([]Faq, error) {
+	faqs, err := a.TutorListRepository(ctx, courseID, userID)
 	if err != nil {
 		if errors.Is(err, generic.ErrFaqsCourseNotFound) {
 			return nil, utils.ErrNotFound("Course not found.", err)

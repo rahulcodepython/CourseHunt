@@ -54,7 +54,8 @@ export function EnrollmentAccessTable({
   showAccessActions?: boolean;
 }) {
   const params = { courseId, userId };
-  const { data: raw, isLoading } = useEnrollmentsQuery(params);
+  const scope = showAccessActions ? "admin" : "tutor";
+  const { data: raw, isLoading } = useEnrollmentsQuery(params, scope);
   const revokeMutation = useRevokeEnrollmentMutation(params);
   const regainMutation = useRegainEnrollmentMutation(params);
 

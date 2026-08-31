@@ -3,13 +3,10 @@ package updates
 import "fmt"
 
 const (
-	CreateUpdate = `
+	AdminCreateUpdate = `
 		WITH inserted AS (
 			INSERT INTO updates (course_id, created_by, message)
-			SELECT $1::uuid, $2::uuid, $3
-			WHERE $4::text = 'admin'
-			   OR $1::uuid IS NULL
-			   OR $1::uuid IN (SELECT id FROM courses WHERE tutor_id = $2::uuid)
+			VALUES ($1::uuid, $2::uuid, $3)
 			RETURNING id, course_id, created_by, message, created_at
 		)
 		SELECT jsonb_build_object(
@@ -27,19 +24,35 @@ const (
 		LEFT JOIN courses c ON c.id = i.course_id;
 	`
 
-	UpdateUpdate = `
+	TutorCreateUpdate = `
+		WITH inserted AS (
+			INSERT INTO updates (course_id, created_by, message)
+			SELECT $1::uuid, $2::uuid, $3
+			WHERE $1::uuid IN (SELECT id FROM courses WHERE tutor_id = $2::uuid)
+			RETURNING id, course_id, created_by, message, created_at
+		)
+		SELECT jsonb_build_object(
+			'id', i.id,
+			'created_by', i.created_by,
+			'message', i.message,
+			'created_at', i.created_at,
+			'course', jsonb_build_object(
+				'id', COALESCE(i.course_id::text, ''),
+				'title', COALESCE(c.title, ''),
+				'thumbnail', c.image_url
+			)
+		)
+		FROM inserted i
+		LEFT JOIN courses c ON c.id = i.course_id;
+	`
+
+	AdminUpdateUpdate = `
 		WITH target AS (
 			SELECT id, course_id FROM updates WHERE id = $1
 		),
-		owned AS (
-			SELECT t.id FROM target t
-			JOIN courses c ON c.id = t.course_id
-			WHERE c.tutor_id = $2
-		),
 		updated AS (
-			UPDATE updates SET message = $3
+			UPDATE updates SET message = $2
 			WHERE id = $1
-			  AND ($4::text = 'admin' OR EXISTS (SELECT 1 FROM owned))
 			RETURNING id, course_id, created_by, message, created_at
 		)
 		SELECT
@@ -61,7 +74,55 @@ const (
 			) AS data;
 	`
 
-	DeleteUpdate = `
+	TutorUpdateUpdate = `
+		WITH target AS (
+			SELECT id, course_id FROM updates WHERE id = $1
+		),
+		owned AS (
+			SELECT t.id FROM target t
+			JOIN courses c ON c.id = t.course_id
+			WHERE c.tutor_id = $2
+		),
+		updated AS (
+			UPDATE updates SET message = $3
+			WHERE id = $1
+			  AND EXISTS (SELECT 1 FROM owned)
+			RETURNING id, course_id, created_by, message, created_at
+		)
+		SELECT
+			(SELECT id::text FROM target) AS db_id,
+			(
+				SELECT jsonb_build_object(
+					'id', u.id,
+					'created_by', u.created_by,
+					'message', u.message,
+					'created_at', u.created_at,
+					'course', jsonb_build_object(
+						'id', COALESCE(u.course_id::text, ''),
+						'title', COALESCE(c.title, ''),
+						'thumbnail', c.image_url
+					)
+				)
+				FROM updated u
+				LEFT JOIN courses c ON c.id = u.course_id
+			) AS data;
+	`
+
+	AdminDeleteUpdate = `
+		WITH target AS (
+			SELECT id, course_id FROM updates WHERE id = $1
+		),
+		deleted AS (
+			DELETE FROM updates
+			WHERE id = $1
+			RETURNING id
+		)
+		SELECT
+			(SELECT id::text FROM target) AS db_id,
+			(SELECT id::text FROM deleted) AS deleted_id;
+	`
+
+	TutorDeleteUpdate = `
 		WITH target AS (
 			SELECT id, course_id FROM updates WHERE id = $1
 		),
@@ -73,7 +134,7 @@ const (
 		deleted AS (
 			DELETE FROM updates
 			WHERE id = $1
-			  AND ($3::text = 'admin' OR EXISTS (SELECT 1 FROM owned))
+			  AND EXISTS (SELECT 1 FROM owned)
 			RETURNING id
 		)
 		SELECT

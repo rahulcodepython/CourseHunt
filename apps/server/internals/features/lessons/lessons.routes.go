@@ -8,24 +8,30 @@ import (
 )
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
-	manageOrInspect := middlewares.PermissionGuard(generic.PermTutorCoursesManage, generic.PermAdminCoursesInspect)
-	manage := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
-	inspectScope := middlewares.ScopeGuard(generic.PermAdminCoursesInspect)
+	// Admin lessons inspection: strictly single permission PermAdminCoursesInspect
+	adminGuard := middlewares.PermissionGuard(generic.PermAdminCoursesInspect)
+	gAdmin := router.Group("/v1/admin/lessons", auth, adminGuard)
+	gAdmin.Get("/", a.handleAdminList)
+	gAdmin.Get("/:id/content", a.handleAdminReadContent)
+	gAdmin.Get("/:id/resources", a.handleAdminReadResources)
 
-	g := router.Group("/v1/lessons", auth)
-	g.Get("/", manageOrInspect, a.handleList)
-	g.Post("/", manage, a.handleCreate)
-	g.Patch("/:id", manage, a.handleUpdate)
-	g.Delete("/:id", manage, a.handleDelete)
-	g.Get("/:id/content", inspectScope, a.handleReadContent)
-	g.Post("/:id/complete", a.handleUpdateComplete)
-	g.Get("/:id/resources", inspectScope, a.handleReadResources)
+	// Tutor lessons management: strictly single permission PermTutorCoursesManage
+	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
+	gTutor := router.Group("/v1/tutor/lessons", auth, tutorGuard)
+	gTutor.Get("/", a.handleTutorList)
+	gTutor.Post("/", a.handleCreate)
+	gTutor.Patch("/:id", a.handleUpdate)
+	gTutor.Delete("/:id", a.handleDelete)
+	gTutor.Get("/:id/content", a.handleTutorReadContent)
+	gTutor.Get("/:id/resources", a.handleTutorReadResources)
+	gTutor.Post("/:id/video", a.handleUpsertVideoContent)
+	gTutor.Post("/:id/document", a.handleUpsertDocumentContent)
+	gTutor.Post("/:id/resources", a.handleCreateResource)
+	gTutor.Delete("/:id/resources/:resourceID", a.handleDeleteResource)
 
-	// Tutor-authoring reads: ownership-gated, not enrollment-gated
-	g.Get("/:id/manage/content", manage, a.handleReadContentForTutor)
-	g.Get("/:id/manage/resources", manage, a.handleReadResourcesForTutor)
-	g.Post("/:id/video", manage, a.handleUpsertVideoContent)
-	g.Post("/:id/document", manage, a.handleUpsertDocumentContent)
-	g.Post("/:id/resources", manage, a.handleCreateResource)
-	g.Delete("/:id/resources/:resourceID", manage, a.handleDeleteResource)
+	// Student study endpoints
+	gStudent := router.Group("/v1/lessons", auth)
+	gStudent.Get("/:id/content", a.handleStudentReadContent)
+	gStudent.Get("/:id/resources", a.handleStudentReadResources)
+	gStudent.Post("/:id/complete", a.handleUpdateComplete)
 }

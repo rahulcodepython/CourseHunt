@@ -8,8 +8,17 @@ import (
 )
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
-	g := router.Group("/v1/enrollments", auth)
-	g.Get("/", middlewares.ScopeGuard(generic.PermAdminEnrollmentsInspect), a.handleList)
-	g.Post("/:userId/:courseId/revoke", middlewares.PermissionGuard(generic.PermAdminRevokeCourse), a.handleRevoke)
-	g.Post("/:userId/:courseId/regain", middlewares.PermissionGuard(generic.PermAdminRevokeCourse), a.handleRegain)
+	// Admin enrollments inspection and revoke/regain
+	adminInspect := middlewares.PermissionGuard(generic.PermAdminEnrollmentsInspect)
+	adminRevoke := middlewares.PermissionGuard(generic.PermAdminRevokeCourse)
+
+	gAdmin := router.Group("/v1/admin/enrollments", auth)
+	gAdmin.Get("/", adminInspect, a.handleAdminList)
+	gAdmin.Post("/:userId/:courseId/revoke", adminRevoke, a.handleRevoke)
+	gAdmin.Post("/:userId/:courseId/regain", adminRevoke, a.handleRegain)
+
+	// Tutor enrollments management: strictly single permission PermTutorCoursesManage
+	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
+	gTutor := router.Group("/v1/tutor/enrollments", auth, tutorGuard)
+	gTutor.Get("/", a.handleTutorList)
 }

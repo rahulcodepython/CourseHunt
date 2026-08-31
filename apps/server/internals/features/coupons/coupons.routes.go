@@ -8,12 +8,22 @@ import (
 )
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
-	manage := middlewares.PermissionGuard(generic.PermAdminCouponsManage, generic.PermTutorCouponsManage)
+	// Admin coupon management: strictly single permission PermAdminCouponsManage
+	adminGuard := middlewares.PermissionGuard(generic.PermAdminCouponsManage)
+	gAdmin := router.Group("/v1/admin/coupons", auth, adminGuard)
+	gAdmin.Get("/", a.handleAdminList)
+	gAdmin.Post("/", a.handleAdminCreate)
+	gAdmin.Patch("/:id", a.handleAdminUpdate)
+	gAdmin.Delete("/:id", a.handleAdminDelete)
 
-	g := router.Group("/v1/coupons", auth)
-	g.Get("/", manage, a.handleList)
-	g.Post("/", manage, a.handleCreate)
-	g.Patch("/:id", manage, a.handleUpdate)
-	g.Delete("/:id", manage, a.handleDelete)
-	g.Get("/check", a.handleCheck)
+	// Tutor coupon management: strictly single permission PermTutorCouponsManage
+	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCouponsManage)
+	gTutor := router.Group("/v1/tutor/coupons", auth, tutorGuard)
+	gTutor.Get("/", a.handleTutorList)
+	gTutor.Post("/", a.handleTutorCreate)
+	gTutor.Patch("/:id", a.handleTutorUpdate)
+	gTutor.Delete("/:id", a.handleTutorDelete)
+
+	// Public / Student coupon checkout validity check
+	router.Get("/v1/coupons/check", a.handleCheck)
 }

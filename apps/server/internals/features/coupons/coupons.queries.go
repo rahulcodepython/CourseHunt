@@ -68,13 +68,11 @@ func BuildListQuery(whereClause string) string {
 }
 
 const (
-	CreateCoupon = `
+	AdminCreateCoupon = `
 		WITH auth_check AS (
 			SELECT
 				CASE
 					WHEN $2::uuid IS NOT NULL AND NOT EXISTS(SELECT 1 FROM courses WHERE id = $2) THEN 0
-					WHEN $8 != 'admin' AND $2::uuid IS NULL THEN 3
-					WHEN $8 != 'admin' AND $2::uuid IS NOT NULL AND NOT EXISTS(SELECT 1 FROM courses WHERE id = $2 AND tutor_id = $1) THEN 1
 					ELSE 2
 				END as status_code
 		),
@@ -111,12 +109,98 @@ const (
 		FROM auth_check ac;
 	`
 
-	UpdateCoupon = `
+	TutorCreateCoupon = `
+		WITH auth_check AS (
+			SELECT
+				CASE
+					WHEN NOT EXISTS(SELECT 1 FROM courses WHERE id = $2) THEN 0
+					WHEN NOT EXISTS(SELECT 1 FROM courses WHERE id = $2 AND tutor_id = $1) THEN 1
+					ELSE 2
+				END as status_code
+		),
+		inserted AS (
+			INSERT INTO coupons (code, course_id, discount_percent, max_usage, expires_at, is_active, created_by)
+			SELECT $3, $2, $4, $5, $6, $7, $1
+			FROM auth_check
+			WHERE auth_check.status_code = 2
+			RETURNING id, code, course_id, discount_percent, max_usage, usage_count, expires_at, is_active, created_by, created_at
+		)
+		SELECT
+			ac.status_code AS status_flag,
+			COALESCE(
+				(
+					SELECT jsonb_build_object(
+						'id', i.id,
+						'code', i.code,
+						'discount_percent', i.discount_percent,
+						'max_usage', i.max_usage,
+						'usage_count', i.usage_count,
+						'expires_at', i.expires_at,
+						'is_active', i.is_active,
+						'created_by', i.created_by,
+						'created_at', i.created_at,
+						'course', jsonb_build_object(
+							'id', COALESCE(i.course_id::text, ''),
+							'title', COALESCE(co.title, ''),
+							'thumbnail', co.image_url
+						)
+					) FROM inserted i
+					LEFT JOIN courses co ON i.course_id = co.id
+				), '{}'::jsonb
+			) AS data_json
+		FROM auth_check ac;
+	`
+
+	AdminUpdateCoupon = `
 		WITH status_check AS (
 			SELECT
 				CASE
 					WHEN NOT EXISTS(SELECT 1 FROM coupons WHERE id = $1) THEN 0
-					WHEN $7 != 'admin' AND EXISTS(SELECT 1 FROM coupons WHERE id = $1 AND created_by != $2) THEN 1
+					ELSE 2
+				END as status_code
+		),
+		updated AS (
+			UPDATE coupons c
+			SET
+				discount_percent = COALESCE($2, discount_percent),
+				max_usage = COALESCE($3, max_usage),
+				expires_at = COALESCE($4, expires_at),
+				is_active = COALESCE($5, is_active)
+			WHERE c.id = $1 AND EXISTS (SELECT 1 FROM status_check WHERE status_code = 2)
+			RETURNING c.id, c.code, c.course_id, c.discount_percent, c.max_usage, c.usage_count, c.expires_at, c.is_active, c.created_by, c.created_at
+		)
+		SELECT
+			sc.status_code AS status_flag,
+			COALESCE(
+				(
+					SELECT jsonb_build_object(
+						'id', u.id,
+						'code', u.code,
+						'discount_percent', u.discount_percent,
+						'max_usage', u.max_usage,
+						'usage_count', u.usage_count,
+						'expires_at', u.expires_at,
+						'is_active', u.is_active,
+						'created_by', u.created_by,
+						'created_at', u.created_at,
+						'course', jsonb_build_object(
+							'id', COALESCE(u.course_id::text, ''),
+							'title', COALESCE(co.title, ''),
+							'thumbnail', co.image_url
+						)
+					) FROM updated u
+					LEFT JOIN courses co ON u.course_id = co.id
+				), '{}'::jsonb
+			) AS data_json
+		FROM status_check sc;
+	`
+
+	TutorUpdateCoupon = `
+		WITH status_check AS (
+			SELECT
+				CASE
+					WHEN NOT EXISTS(SELECT 1 FROM coupons WHERE id = $1) THEN 0
+					WHEN EXISTS(SELECT 1 FROM coupons WHERE id = $1 AND created_by != $2) THEN 1
 					ELSE 2
 				END as status_code
 		),
@@ -156,12 +240,31 @@ const (
 		FROM status_check sc;
 	`
 
-	DeleteCoupon = `
+	AdminDeleteCoupon = `
 		WITH status_check AS (
 			SELECT
 				CASE
 					WHEN NOT EXISTS(SELECT 1 FROM coupons WHERE id = $1) THEN 0
-					WHEN $3 != 'admin' AND EXISTS(SELECT 1 FROM coupons WHERE id = $1 AND created_by != $2) THEN 1
+					ELSE 2
+				END as status_code
+		),
+		deleted AS (
+			DELETE FROM coupons c
+			WHERE c.id = $1 AND EXISTS(SELECT 1 FROM status_check WHERE status_code = 2)
+			RETURNING c.id
+		)
+		SELECT
+			sc.status_code AS status_flag,
+			COALESCE((SELECT d.id::text FROM deleted d), '') AS deleted_id
+		FROM status_check sc;
+	`
+
+	TutorDeleteCoupon = `
+		WITH status_check AS (
+			SELECT
+				CASE
+					WHEN NOT EXISTS(SELECT 1 FROM coupons WHERE id = $1) THEN 0
+					WHEN EXISTS(SELECT 1 FROM coupons WHERE id = $1 AND created_by != $2) THEN 1
 					ELSE 2
 				END as status_code
 		),

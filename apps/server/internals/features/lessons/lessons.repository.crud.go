@@ -7,11 +7,11 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-func (a *App) ListRepository(ctx context.Context, chapterID, userID string, scope generic.AuthScope) ([]Lesson, error) {
-	if scope == generic.ScopeAdmin {
-		return postgres.QueryJSONSlice[Lesson](ctx, a.DB, ListAdmin, chapterID)
-	}
+func (a *App) AdminListRepository(ctx context.Context, chapterID string) ([]Lesson, error) {
+	return postgres.QueryJSONSlice[Lesson](ctx, a.DB, ListAdmin, chapterID)
+}
 
+func (a *App) TutorListRepository(ctx context.Context, chapterID, userID string) ([]Lesson, error) {
 	var (
 		chapterExists bool
 		isOwner       bool
@@ -62,7 +62,8 @@ func (a *App) CreateRepository(ctx context.Context, tutorID, chapterID string, r
 
 func (a *App) UpdateRepository(ctx context.Context, id, tutorID string, req UpdateLessonRequest) (*Lesson, *LessonFileCleanup, error) {
 	var (
-		courseTutorID      *string
+		lessonExists       bool
+		isOwner            bool
 		oldPreviewVideoURL *string
 		updatedData        []byte
 	)
@@ -71,43 +72,59 @@ func (a *App) UpdateRepository(ctx context.Context, id, tutorID string, req Upda
 		ctx,
 		UpdateLesson,
 		id, tutorID, req.Title, req.ShortDescription, req.PreviewVideoURL, req.DurationSeconds,
-	).Scan(&courseTutorID, &oldPreviewVideoURL, &updatedData)
+	).Scan(&lessonExists, &isOwner, &oldPreviewVideoURL, &updatedData)
 	if err != nil {
 		return nil, nil, postgres.MapPgError(err)
 	}
 
 	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: courseTutorID == nil, Err: generic.ErrLessonsLessonNotFound},
-		postgres.Condition{Failed: len(updatedData) == 0 || string(updatedData) == "null", Err: generic.ErrLessonsAccessDenied},
+		postgres.Condition{Failed: !lessonExists, Err: generic.ErrLessonsLessonNotFound},
+		postgres.Condition{Failed: !isOwner, Err: generic.ErrLessonsAccessDenied},
 	); err != nil {
 		return nil, nil, err
 	}
 
-	l, err := postgres.DecodeJSON[Lesson](updatedData)
+	lesson, err := postgres.DecodeJSON[Lesson](updatedData)
 	if err != nil {
 		return nil, nil, err
 	}
-	cleanup := &LessonFileCleanup{OldPreviewVideoURL: oldPreviewVideoURL}
-	return l, cleanup, nil
+
+	cleanup := &LessonFileCleanup{
+		OldPreviewVideoURL: oldPreviewVideoURL,
+	}
+
+	return lesson, cleanup, nil
 }
 
-func (a *App) DeleteRepository(ctx context.Context, id, tutorID string) (string, error) {
+func (a *App) DeleteRepository(ctx context.Context, id, tutorID string) (string, *LessonDeleteCleanup, error) {
 	var (
-		courseTutorID *string
-		deletedID     *string
+		lessonExists       bool
+		isOwner            bool
+		deletedID          *string
+		oldPreviewVideoURL *string
+		videoURL           *string
+		resourceURLs       []string
 	)
 
-	err := a.DB.QueryRow(ctx, DeleteLesson, id, tutorID).Scan(&courseTutorID, &deletedID)
+	err := a.DB.QueryRow(ctx, DeleteLesson, id, tutorID).Scan(
+		&lessonExists, &isOwner, &deletedID, &oldPreviewVideoURL, &videoURL, &resourceURLs,
+	)
 	if err != nil {
-		return "", postgres.MapPgError(err)
+		return "", nil, postgres.MapPgError(err)
 	}
 
 	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: courseTutorID == nil, Err: generic.ErrLessonsLessonNotFound},
-		postgres.Condition{Failed: deletedID == nil, Err: generic.ErrLessonsAccessDenied},
+		postgres.Condition{Failed: !lessonExists, Err: generic.ErrLessonsLessonNotFound},
+		postgres.Condition{Failed: !isOwner, Err: generic.ErrLessonsAccessDenied},
 	); err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return *deletedID, nil
+	cleanup := &LessonDeleteCleanup{
+		OldPreviewVideoURL: oldPreviewVideoURL,
+		VideoURL:           videoURL,
+		ResourceURLs:       resourceURLs,
+	}
+
+	return *deletedID, cleanup, nil
 }

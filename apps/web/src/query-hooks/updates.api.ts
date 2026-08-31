@@ -20,10 +20,14 @@ import {
 } from "@/schema/updates.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/schema/common.types";
 
-export function useUpdatesQuery() {
-  return useAppQuery(queryKeys.updates(), () =>
+function getUpdateEndpoint(scope: "admin" | "tutor") {
+  return scope === "admin" ? API_ENDPOINTS.ADMIN_UPDATES : API_ENDPOINTS.TUTOR_UPDATES;
+}
+
+export function useUpdatesQuery(scope: "admin" | "tutor" = "admin") {
+  return useAppQuery(queryKeys.updates(scope), () =>
     apiRequest(
-      { url: API_ENDPOINTS.UPDATES, method: "GET" },
+      { url: getUpdateEndpoint(scope), method: "GET" },
       PaginatedResponseZod(CourseUpdateZod),
     ),
   );
@@ -38,36 +42,36 @@ export function useUpdateFeedQuery(params?: { page?: number; limit?: number }) {
   );
 }
 
-export function useCreateUpdateMutation() {
+export function useCreateUpdateMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: (data: z.infer<typeof CreateUpdateRequestZod>) =>
-      apiRequest({ url: API_ENDPOINTS.UPDATES, method: "POST", data }, CourseUpdateZod),
-    queryKey: queryKeys.updates(),
+      apiRequest({ url: getUpdateEndpoint(scope), method: "POST", data }, CourseUpdateZod),
+    queryKey: queryKeys.updates(scope),
     updater: (update) => prependToPaginated(update),
-    invalidateKeys: [queryKeys.updateFeed()],
+    invalidateKeys: [queryKeys.updateFeed(), queryKeys.updatesAll()],
     showToast: true,
   });
 }
 
-export function useDeleteUpdateMutation() {
+export function useDeleteUpdateMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `${API_ENDPOINTS.UPDATES}/${id}`, method: "DELETE" }, DeleteResponseZod),
-    queryKey: queryKeys.updates(),
+      apiRequest({ url: `${getUpdateEndpoint(scope)}/${id}`, method: "DELETE" }, DeleteResponseZod),
+    queryKey: queryKeys.updates(scope),
     updater: (res) => removeFromPaginated(res.id),
     optimistic: (id) => removeFromPaginated(id),
-    invalidateKeys: [queryKeys.updateFeed()],
+    invalidateKeys: [queryKeys.updateFeed(), queryKeys.updatesAll()],
     showToast: true,
   });
 }
 
-export function useUpdateUpdateMutation() {
+export function useUpdateUpdateMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateUpdateRequestZod> }) =>
-      apiRequest({ url: `${API_ENDPOINTS.UPDATES}/${id}`, method: "PATCH", data }, CourseUpdateZod),
-    queryKey: queryKeys.updates(),
+      apiRequest({ url: `${getUpdateEndpoint(scope)}/${id}`, method: "PATCH", data }, CourseUpdateZod),
+    queryKey: queryKeys.updates(scope),
     updater: (update) => replaceInPaginated(update),
-    invalidateKeys: [queryKeys.updateFeed()],
+    invalidateKeys: [queryKeys.updateFeed(), queryKeys.updatesAll()],
     showToast: true,
   });
 }

@@ -19,8 +19,8 @@ export default function ChapterLessonsPage() {
   const courseId = params.courseId as string;
   const chapterId = params.chapterId as string;
 
-  const { data: courseData } = useManageCourseQuery(courseId);
-  const { data: chaptersData } = useChaptersQuery(courseId);
+  const { data: courseData } = useManageCourseQuery(courseId, "admin");
+  const { data: chaptersData } = useChaptersQuery(courseId, "admin");
   const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
 
   useSetBreadcrumbs([
@@ -31,7 +31,7 @@ export default function ChapterLessonsPage() {
     { label: "Lessons" },
   ]);
 
-  const { data: rawLessons, isLoading } = useLessonsQuery(chapterId);
+  const { data: rawLessons, isLoading } = useLessonsQuery(chapterId, "admin");
   const lessons = rawLessons?.data ?? [];
 
   const columns = getColumns(courseId, chapterId);

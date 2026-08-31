@@ -12,12 +12,9 @@ type ManageListPayload struct {
 	Data  []Course `json:"data"`
 }
 
-func (a *App) ListRepository(ctx context.Context, page, limit int, userID string, scope generic.AuthScope, categoryID, subcategoryID, level, search, status, filterTutorID string) ([]Course, int, error) {
+func (a *App) AdminListRepository(ctx context.Context, page, limit int, categoryID, subcategoryID, level, search, status, filterTutorID string) ([]Course, int, error) {
 	filter := postgres.NewFilter()
 
-	if scope == generic.ScopeTutor {
-		filter.Add("c.tutor_id = NULLIF($%d, '')::uuid", userID)
-	}
 	if status != "" {
 		filter.Add("c.status = $%d", status)
 	}
@@ -35,7 +32,7 @@ func (a *App) ListRepository(ctx context.Context, page, limit int, userID string
 	if search != "" {
 		filter.Add2("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", "%"+search+"%")
 	}
-	if scope != generic.ScopeTutor && filterTutorID != "" {
+	if filterTutorID != "" {
 		filter.Add("c.tutor_id = NULLIF($%d, '')::uuid", filterTutorID)
 	}
 
@@ -45,28 +42,64 @@ func (a *App) ListRepository(ctx context.Context, page, limit int, userID string
 	if err != nil {
 		return nil, 0, err
 	}
-	if result == nil {
+	if result == nil || result.Data == nil {
 		return []Course{}, 0, nil
-	}
-	if result.Data == nil {
-		result.Data = []Course{}
 	}
 	return result.Data, result.Total, nil
 }
 
-// GetByIDRepository fetches a single course by ID, honoring the caller's scope.
-func (a *App) GetByIDRepository(ctx context.Context, id, userID string, scope generic.AuthScope) (*Course, error) {
-	ownerID := ""
-	if scope == generic.ScopeTutor {
-		ownerID = userID
+func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID string, categoryID, subcategoryID, level, search, status string) ([]Course, int, error) {
+	filter := postgres.NewFilter()
+
+	filter.Add("c.tutor_id = NULLIF($%d, '')::uuid", userID)
+	if status != "" {
+		filter.Add("c.status = $%d", status)
 	}
 
-	resp, err := postgres.QueryJSON[Course](ctx, a.DB, GetByID, id, ownerID)
-	if err != nil {
-		return nil, err
+	targetCatID := categoryID
+	if targetCatID == "" && subcategoryID != "" {
+		targetCatID = subcategoryID
 	}
-	if resp == nil {
+	if targetCatID != "" {
+		filter.Add("c.category_id = NULLIF($%d, '')::uuid", targetCatID)
+	}
+	if level != "" {
+		filter.Add("c.level = $%d", level)
+	}
+	if search != "" {
+		filter.Add2("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", "%"+search+"%")
+	}
+
+	limitIdx := filter.Paginate(page, limit)
+
+	result, err := postgres.QueryJSON[ManageListPayload](ctx, a.DB, BuildTutorListQuery(filter.Join("1=1"), limitIdx), filter.Args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	if result == nil || result.Data == nil {
+		return []Course{}, 0, nil
+	}
+	return result.Data, result.Total, nil
+}
+
+func (a *App) AdminGetByIDRepository(ctx context.Context, id string) (*Course, error) {
+	course, err := postgres.QueryJSON[Course](ctx, a.DB, GetByID, id, "")
+	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+	if course == nil {
 		return nil, generic.ErrCoursesCourseNotFound
 	}
-	return resp, nil
+	return course, nil
+}
+
+func (a *App) TutorGetByIDRepository(ctx context.Context, id, userID string) (*Course, error) {
+	course, err := postgres.QueryJSON[Course](ctx, a.DB, GetByID, id, userID)
+	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+	if course == nil {
+		return nil, generic.ErrCoursesCourseNotFound
+	}
+	return course, nil
 }

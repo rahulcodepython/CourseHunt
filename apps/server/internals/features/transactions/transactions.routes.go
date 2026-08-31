@@ -16,11 +16,17 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 		return c.Next()
 	}, a.handleWebhook)
 
-	g := router.Group("/v1/transactions", auth)
-	g.Post("/initiate", a.handleCreate)
-	g.Get("/checkout/course/:courseId", a.handleCheckout)
-	g.Get("/:id/status", a.handleStatus)
-	g.Get("/refunds/me", a.handleListRefunds)
-	g.Get("/refunds", middlewares.ScopeGuard(generic.PermAdminTransactionsReadAll), a.handleListRefunds)
-	g.Get("/", a.handleList)
+	// Admin transactions inspection: strictly single permission PermAdminTransactionsReadAll
+	adminGuard := middlewares.PermissionGuard(generic.PermAdminTransactionsReadAll)
+	gAdmin := router.Group("/v1/admin/transactions", auth, adminGuard)
+	gAdmin.Get("/", a.handleAdminList)
+	gAdmin.Get("/refunds", a.handleAdminListRefunds)
+
+	// Student transactions endpoints
+	gStudent := router.Group("/v1/transactions", auth)
+	gStudent.Get("/", a.handleStudentList)
+	gStudent.Get("/refunds/me", a.handleStudentListRefunds)
+	gStudent.Post("/initiate", a.handleCreate)
+	gStudent.Get("/checkout/course/:courseId", a.handleCheckout)
+	gStudent.Get("/:id/status", a.handleStatus)
 }

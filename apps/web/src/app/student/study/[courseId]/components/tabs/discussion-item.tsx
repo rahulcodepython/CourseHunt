@@ -28,6 +28,7 @@ export function DiscussionItem({
   onDeleted,
   canEditAny = false,
   canDeleteAny = false,
+  scope = "student",
 }: {
   lessonId: string;
   discussion: Discussion;
@@ -36,6 +37,7 @@ export function DiscussionItem({
   onDeleted?: (id: string) => void;
   canEditAny?: boolean;
   canDeleteAny?: boolean;
+  scope?: "admin" | "tutor" | "student";
 }) {
   const { user } = useSession();
   const isOwner = user?.id === discussion.user.id;
@@ -47,8 +49,8 @@ export function DiscussionItem({
   const [editText, setEditText] = React.useState(discussion.content);
   const [deleting, setDeleting] = React.useState(false);
 
-  const updateDiscussion = useUpdateDiscussionMutation();
-  const deleteDiscussion = useDeleteDiscussionMutation();
+  const updateDiscussion = useUpdateDiscussionMutation(scope);
+  const deleteDiscussion = useDeleteDiscussionMutation(scope);
 
   const submitEdit = async () => {
     if (!editText.trim()) return;
@@ -148,6 +150,7 @@ export function DiscussionItem({
             parentId={discussion.id}
             canEditAny={canEditAny}
             canDeleteAny={canDeleteAny}
+            scope={scope}
           />
         )}
       </div>
@@ -175,11 +178,13 @@ function DiscussionReplies({
   parentId,
   canEditAny = false,
   canDeleteAny = false,
+  scope = "student",
 }: {
   lessonId: string;
   parentId: string;
   canEditAny?: boolean;
   canDeleteAny?: boolean;
+  scope?: "admin" | "tutor" | "student";
 }) {
   const [page, setPage] = React.useState(1);
   const [items, setItems] = React.useState<Discussion[]>([]);
@@ -189,8 +194,8 @@ function DiscussionReplies({
     data: raw,
     isLoading,
     isFetching,
-  } = useDiscussionRepliesQuery(parentId, page, REPLIES_PAGE_SIZE);
-  const createReply = useCreateDiscussionMutation();
+  } = useDiscussionRepliesQuery(parentId, page, REPLIES_PAGE_SIZE, scope);
+  const createReply = useCreateDiscussionMutation(scope);
 
   React.useEffect(() => {
     const pageItems = raw?.data?.data;
@@ -237,6 +242,7 @@ function DiscussionReplies({
             onDeleted={handleDeleted}
             canEditAny={canEditAny}
             canDeleteAny={canDeleteAny}
+            scope={scope}
           />
         ))
       )}

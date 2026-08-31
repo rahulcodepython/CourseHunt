@@ -12,7 +12,7 @@ import { columns } from "./columns";
 import { refundColumns } from "./refund-columns";
 
 export default function TransactionsPage() {
-    const { data: rawTx, isLoading: txLoading } = useTransactionsQuery();
+    const { data: rawTx, isLoading: txLoading } = useTransactionsQuery(undefined, "admin");
     const { data: rawRefunds, isLoading: refundsLoading } = useRefundsQuery();
 
     const transactions: Transaction[] = (rawTx?.data?.data as any) ?? [];

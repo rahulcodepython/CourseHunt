@@ -21,9 +21,9 @@ export default function AdminLessonDiscussionsPage() {
   }>();
   const { courseId, chapterId, lessonId } = params;
 
-  const { data: rawCourses } = useManageCourseQuery(courseId);
-  const { data: chaptersData } = useChaptersQuery(courseId);
-  const { data: lessonsData } = useLessonsQuery(chapterId);
+  const { data: rawCourses } = useManageCourseQuery(courseId, "admin");
+  const { data: chaptersData } = useChaptersQuery(courseId, "admin");
+  const { data: lessonsData } = useLessonsQuery(chapterId, "admin");
 
   const currentCourse = rawCourses?.data;
   const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
@@ -57,7 +57,7 @@ export default function AdminLessonDiscussionsPage() {
 
       <Card className="shadow-sm">
         <CardContent className="p-6">
-          <DiscussionsTab lessonId={lessonId} canEditAny canDeleteAny />
+          <DiscussionsTab lessonId={lessonId} scope="admin" canEditAny canDeleteAny />
         </CardContent>
       </Card>
     </div>

@@ -21,9 +21,9 @@ export default function TutorLessonDiscussionsPage() {
   }>();
   const { courseId, chapterId, lessonId } = params;
 
-  const { data: rawCourses } = useManageCoursesQuery();
-  const { data: chaptersData } = useChaptersQuery(courseId);
-  const { data: lessonsData } = useLessonsQuery(chapterId);
+  const { data: rawCourses } = useManageCoursesQuery({ scope: "tutor" });
+  const { data: chaptersData } = useChaptersQuery(courseId, "tutor");
+  const { data: lessonsData } = useLessonsQuery(chapterId, "tutor");
 
   const currentCourse = (rawCourses?.data?.data as any[])?.find((c: any) => c.id === courseId);
   const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
@@ -57,7 +57,7 @@ export default function TutorLessonDiscussionsPage() {
 
       <Card className="shadow-sm">
         <CardContent className="p-6">
-          <DiscussionsTab lessonId={lessonId} canEditAny canDeleteAny />
+          <DiscussionsTab lessonId={lessonId} scope="tutor" canEditAny canDeleteAny />
         </CardContent>
       </Card>
     </div>

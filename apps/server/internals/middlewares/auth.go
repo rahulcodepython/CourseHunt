@@ -113,20 +113,16 @@ func UserID(c *fiber.Ctx) string {
 	return ""
 }
 
-// PermissionGuard restricts a route to callers holding at least one of the
-// required permissions.
-func PermissionGuard(requiredPermissions ...string) fiber.Handler {
+// PermissionGuard restricts a route to callers holding the specified permission.
+func PermissionGuard(requiredPermission string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user, err := UserFromContext(c)
 		if err != nil {
 			return utils.ErrUnauthorized("Unauthorized.", err)
 		}
 
-		for _, perm := range requiredPermissions {
-			if _, hasPerm := user.Permissions[perm]; hasPerm {
-				c.Locals("permission", perm)
-				return c.Next()
-			}
+		if _, hasPerm := user.Permissions[requiredPermission]; hasPerm {
+			return c.Next()
 		}
 
 		return utils.ErrForbidden("Permission denied.", nil)
@@ -145,32 +141,4 @@ func RoleGuard(required string) fiber.Handler {
 		}
 		return c.Next()
 	}
-}
-
-// ScopeGuard is for routes that mix "any authenticated user, self-scoped"
-// with "elevated permission holder, sees everyone's data". It records the
-// matched elevated permission in c.Locals("permission").
-func ScopeGuard(elevatedPermissions ...string) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		user, err := UserFromContext(c)
-		if err != nil {
-			return utils.ErrUnauthorized("Unauthorized.", err)
-		}
-
-		for _, perm := range elevatedPermissions {
-			if _, hasPerm := user.Permissions[perm]; hasPerm {
-				c.Locals("permission", perm)
-				break
-			}
-		}
-
-		return c.Next()
-	}
-}
-
-// ResolveScope reads the elevated permission recorded by PermissionGuard/ScopeGuard
-// and maps it to an AuthScope.
-func ResolveScope(c *fiber.Ctx) generic.AuthScope {
-	perm, _ := c.Locals("permission").(string)
-	return generic.ScopeFromPermission(perm)
 }

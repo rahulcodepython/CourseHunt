@@ -18,11 +18,13 @@ import {
 } from "@/schema/feedbacks.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/schema/common.types";
 
-const feedbackKeys = [queryKeys.feedbacks(), queryKeys.feedbacksPinned()];
+function getFeedbackEndpoint(scope: "admin" | "tutor") {
+  return scope === "admin" ? API_ENDPOINTS.ADMIN_FEEDBACKS : API_ENDPOINTS.TUTOR_FEEDBACKS;
+}
 
-export function useFeedbacksQuery() {
-  return useAppQuery(queryKeys.feedbacks(), () =>
-    apiRequest({ url: API_ENDPOINTS.FEEDBACKS, method: "GET" }, PaginatedResponseZod(FeedbackZod)),
+export function useFeedbacksQuery(scope: "admin" | "tutor" = "admin") {
+  return useAppQuery(queryKeys.feedbacks(scope), () =>
+    apiRequest({ url: getFeedbackEndpoint(scope), method: "GET" }, PaginatedResponseZod(FeedbackZod)),
   );
 }
 
@@ -39,7 +41,12 @@ export function useCreateFeedbackMutation() {
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof CreateFeedbackRequestZod>) =>
       apiRequest({ url: API_ENDPOINTS.FEEDBACKS, method: "POST", data }, FeedbackZod),
-    invalidateKeys: feedbackKeys,
+    invalidateKeys: [
+      queryKeys.feedbacks("admin"),
+      queryKeys.feedbacks("tutor"),
+      queryKeys.feedbacksPinned(),
+      queryKeys.feedbacksAll(),
+    ],
     showToast: true,
   });
 }
@@ -47,18 +54,23 @@ export function useCreateFeedbackMutation() {
 export function useUpdateFeedbackMutation() {
   return useSimpleMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof PinFeedbackRequestZod> }) =>
-      apiRequest({ url: `${API_ENDPOINTS.FEEDBACKS}/${id}`, method: "PATCH", data }, FeedbackZod),
-    invalidateKeys: feedbackKeys,
+      apiRequest({ url: `${API_ENDPOINTS.ADMIN_FEEDBACKS}/${id}`, method: "PATCH", data }, FeedbackZod),
+    invalidateKeys: [
+      queryKeys.feedbacks("admin"),
+      queryKeys.feedbacks("tutor"),
+      queryKeys.feedbacksPinned(),
+      queryKeys.feedbacksAll(),
+    ],
     showToast: true,
   });
 }
 
-export function useDeleteFeedbackMutation() {
+export function useDeleteFeedbackMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `${API_ENDPOINTS.FEEDBACKS}/${id}`, method: "DELETE" }, DeleteResponseZod),
-    queryKey: queryKeys.feedbacks(),
-    invalidateKeys: [queryKeys.feedbacksPinned()],
+      apiRequest({ url: `${getFeedbackEndpoint(scope)}/${id}`, method: "DELETE" }, DeleteResponseZod),
+    queryKey: queryKeys.feedbacks(scope),
+    invalidateKeys: [queryKeys.feedbacksPinned(), queryKeys.feedbacksAll()],
     updater: (res) => removeFromPaginated(res.id),
     optimistic: (id) => removeFromPaginated(id),
     showToast: true,

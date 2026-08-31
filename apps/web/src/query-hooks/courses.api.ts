@@ -5,8 +5,6 @@ import { z } from "zod";
 
 import {
   useSimpleMutation,
-  usePaginatedMutation,
-  removeFromPaginated,
 } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { createListQuery } from "@/react-query/query-factories";
@@ -49,9 +47,29 @@ export function useCourseLandingQuery(slug: string) {
   );
 }
 
-export function useManageCourseQuery(id: string) {
-  return useAppQuery(queryKeys.courseById(id), () =>
-    apiRequest({ url: `${API_ENDPOINTS.COURSES}/${id}`, method: "GET" }, CourseZod),
+export function useManageCoursesQuery(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category_id?: string;
+  level?: string;
+  tutor_id?: string;
+  status?: string;
+  scope?: "admin" | "tutor";
+}) {
+  const scope = params?.scope ?? "admin";
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_COURSES : API_ENDPOINTS.TUTOR_COURSES;
+  const keyBuilder = scope === "admin" ? queryKeys.coursesAdmin : queryKeys.coursesTutor;
+
+  return useAppQuery(keyBuilder(params as Record<string, string | number>), () =>
+    apiRequest({ url: endpoint, method: "GET", params }, PaginatedResponseZod(CourseZod)),
+  );
+}
+
+export function useManageCourseQuery(id: string, scope: "admin" | "tutor" = "tutor") {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_COURSES : API_ENDPOINTS.TUTOR_COURSES;
+  return useAppQuery(queryKeys.courseById(id, scope), () =>
+    apiRequest({ url: `${endpoint}/${id}`, method: "GET" }, CourseZod),
   );
 }
 
@@ -73,24 +91,11 @@ export function useEnrollFreeMutation() {
   });
 }
 
-export const useManageCoursesQuery = createListQuery<
-  z.infer<typeof CourseZod>,
-  {
-    page?: number;
-    limit?: number;
-    search?: string;
-    category_id?: string;
-    level?: string;
-    tutor_id?: string;
-    status?: string;
-  }
->(API_ENDPOINTS.COURSES_MANAGE, queryKeys.coursesManage, CourseZod);
-
 export function useCreateCourseMutation() {
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof CreateCourseRequestZod>) =>
-      apiRequest({ url: API_ENDPOINTS.COURSES, method: "POST", data }, CourseZod),
-    invalidateKeys: [queryKeys.courses(), queryKeys.coursesManage()],
+      apiRequest({ url: API_ENDPOINTS.TUTOR_COURSES, method: "POST", data }, CourseZod),
+    invalidateKeys: [queryKeys.courses(), queryKeys.coursesTutor()],
     showToast: true,
   });
 }
@@ -98,20 +103,22 @@ export function useCreateCourseMutation() {
 export function useUpdateCourseMutation() {
   return useSimpleMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateCourseRequestZod> }) =>
-      apiRequest({ url: `${API_ENDPOINTS.COURSES}/${id}`, method: "PATCH", data }, CourseZod),
-    invalidateKeys: [queryKeys.courses(), queryKeys.coursesManage()],
+      apiRequest({ url: `${API_ENDPOINTS.TUTOR_COURSES}/${id}`, method: "PATCH", data }, CourseZod),
+    invalidateKeys: (_data, vars) => [
+      queryKeys.courseById(vars.id, "tutor"),
+      queryKeys.courseById(vars.id, "admin"),
+      queryKeys.courses(),
+      queryKeys.coursesTutor(),
+    ],
     showToast: true,
   });
 }
 
 export function useDeleteCourseMutation() {
-  return usePaginatedMutation({
+  return useSimpleMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `${API_ENDPOINTS.COURSES}/${id}`, method: "DELETE" }, DeleteResponseZod),
-    queryKey: queryKeys.courses(),
-    invalidateKeys: [queryKeys.coursesManage()],
-    updater: (res) => removeFromPaginated(res.id),
-    optimistic: (id) => removeFromPaginated(id),
+      apiRequest({ url: `${API_ENDPOINTS.TUTOR_COURSES}/${id}`, method: "DELETE" }, DeleteResponseZod),
+    invalidateKeys: [queryKeys.courses(), queryKeys.coursesTutor()],
     showToast: true,
   });
 }

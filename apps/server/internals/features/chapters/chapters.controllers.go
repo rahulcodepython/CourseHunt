@@ -8,15 +8,32 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (a *App) handleList(c *fiber.Ctx) error {
-	scope := middlewares.ResolveScope(c)
+// --- Admin Handlers ---
+
+func (a *App) handleAdminList(c *fiber.Ctx) error {
+	courseID, err := utils.RequireQuery(c, "course_id", "Course ID")
+	if err != nil {
+		return err
+	}
+
+	chapters, err := a.AdminList(c.Context(), courseID)
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Chapters fetched successfully.", chapters)
+}
+
+// --- Tutor Handlers ---
+
+func (a *App) handleTutorList(c *fiber.Ctx) error {
 	courseID, err := utils.RequireQuery(c, "course_id", "Course ID")
 	if err != nil {
 		return err
 	}
 
 	userID := middlewares.UserID(c)
-	chapters, err := a.List(c.Context(), courseID, userID, scope)
+	chapters, err := a.TutorList(c.Context(), courseID, userID)
 	if err != nil {
 		return err
 	}

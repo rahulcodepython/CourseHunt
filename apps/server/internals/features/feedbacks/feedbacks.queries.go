@@ -37,22 +37,33 @@ const (
 			(SELECT row_to_json(formatted.*) FROM formatted) AS inserted_data;
 	`
 
-	UpdateFeedbackPin = `
+	AdminPinFeedback = `
 		WITH updated AS (
-			UPDATE feedbacks SET is_pinned = $1 WHERE id = $2 RETURNING *
-		)
-		SELECT row_to_json(formatted.*)
-		FROM (
+			UPDATE feedbacks SET is_pinned = $2 WHERE id = $1 RETURNING *
+		),
+		formatted AS (
 			SELECT u.id, u.rating, u.content, u.is_pinned, u.created_at,
 				   jsonb_build_object('id', c.id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url) AS course,
 				   jsonb_build_object('id', usr.id, 'name', COALESCE(usr.name, ''), 'image', usr.image) AS "user"
 			FROM updated u
 			JOIN "users" usr ON usr.id = u.user_id
 			LEFT JOIN courses c ON c.id = u.course_id
-		) formatted;
+		)
+		SELECT EXISTS(SELECT 1 FROM feedbacks WHERE id = $1) AS feedback_exists,
+		       (SELECT row_to_json(formatted.*) FROM formatted) AS updated_data;
 	`
 
-	DeleteFeedback = `
+	AdminDeleteFeedback = `
+		WITH deleted AS (
+			DELETE FROM feedbacks WHERE id = $1
+			RETURNING id
+		)
+		SELECT
+			EXISTS(SELECT 1 FROM feedbacks WHERE id = $1) AS feedback_exists,
+			COALESCE((SELECT id::text FROM deleted), '') AS deleted_id;
+	`
+
+	TutorDeleteFeedback = `
 		WITH feedback_course AS (
 			SELECT c.tutor_id
 			FROM feedbacks f
@@ -62,11 +73,11 @@ const (
 		deleted AS (
 			DELETE FROM feedbacks f
 			USING feedback_course fc
-			WHERE f.id = $1 AND (fc.tutor_id = $2 OR $3 = 'admin')
+			WHERE f.id = $1 AND fc.tutor_id = $2
 			RETURNING f.id
 		)
 		SELECT
-			EXISTS(SELECT 1 FROM feedback_course) AS course_found,
+			EXISTS(SELECT 1 FROM feedback_course) AS feedback_exists,
 			EXISTS(SELECT 1 FROM feedback_course WHERE tutor_id = $2) AS is_owner,
 			COALESCE((SELECT id::text FROM deleted), '') AS deleted_id;
 	`

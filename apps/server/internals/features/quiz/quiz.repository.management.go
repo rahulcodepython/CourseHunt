@@ -35,14 +35,36 @@ func (a *App) CreateMetadataRepository(ctx context.Context, lessonID, tutorID st
 	return postgres.DecodeJSON[QuizMetadata](data)
 }
 
-func (a *App) ReadMetadataRepository(ctx context.Context, lessonID, userID string, scope generic.AuthScope) (*QuizMetadata, error) {
+func (a *App) AdminReadMetadataRepository(ctx context.Context, lessonID string) (*QuizMetadata, error) {
 	var (
 		lessonExists bool
 		isOwner      bool
 		data         []byte
 	)
 
-	err := a.DB.QueryRow(ctx, ReadMetadata, lessonID, string(scope), userID).Scan(&lessonExists, &isOwner, &data)
+	err := a.DB.QueryRow(ctx, ReadMetadata, lessonID, "admin", "").Scan(&lessonExists, &isOwner, &data)
+	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+
+	if err := postgres.CheckConditions(
+		postgres.Condition{Failed: !lessonExists, Err: generic.ErrQuizLessonNotFound},
+		postgres.Condition{Failed: len(data) == 0 || string(data) == "null", Err: generic.ErrQuizNotFound},
+	); err != nil {
+		return nil, err
+	}
+
+	return postgres.DecodeJSON[QuizMetadata](data)
+}
+
+func (a *App) TutorReadMetadataRepository(ctx context.Context, lessonID, userID string) (*QuizMetadata, error) {
+	var (
+		lessonExists bool
+		isOwner      bool
+		data         []byte
+	)
+
+	err := a.DB.QueryRow(ctx, ReadMetadata, lessonID, "tutor", userID).Scan(&lessonExists, &isOwner, &data)
 	if err != nil {
 		return nil, postgres.MapPgError(err)
 	}
@@ -58,14 +80,33 @@ func (a *App) ReadMetadataRepository(ctx context.Context, lessonID, userID strin
 	return postgres.DecodeJSON[QuizMetadata](data)
 }
 
-func (a *App) ListQuestionsRepository(ctx context.Context, quizID, userID string, scope generic.AuthScope) ([]QuizQuestionDetail, error) {
+func (a *App) AdminListQuestionsRepository(ctx context.Context, quizID string) ([]QuizQuestionDetail, error) {
 	var (
 		quizExists bool
 		isOwner    bool
 		data       []byte
 	)
 
-	err := a.DB.QueryRow(ctx, ListQuestions, quizID, string(scope), userID).Scan(&quizExists, &isOwner, &data)
+	err := a.DB.QueryRow(ctx, ListQuestions, quizID, "admin", "").Scan(&quizExists, &isOwner, &data)
+	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+
+	if !quizExists {
+		return nil, generic.ErrQuizNotFound
+	}
+
+	return postgres.DecodeJSONSlice[QuizQuestionDetail](data)
+}
+
+func (a *App) TutorListQuestionsRepository(ctx context.Context, quizID, userID string) ([]QuizQuestionDetail, error) {
+	var (
+		quizExists bool
+		isOwner    bool
+		data       []byte
+	)
+
+	err := a.DB.QueryRow(ctx, ListQuestions, quizID, "tutor", userID).Scan(&quizExists, &isOwner, &data)
 	if err != nil {
 		return nil, postgres.MapPgError(err)
 	}
@@ -179,7 +220,6 @@ func (a *App) DeleteQuestionRepository(ctx context.Context, id, tutorID string) 
 	if err := postgres.CheckConditions(
 		postgres.Condition{Failed: !questionExists, Err: generic.ErrQuizQuestionNotFound},
 		postgres.Condition{Failed: !isOwner, Err: generic.ErrQuizAccessDenied},
-		postgres.Condition{Failed: deletedID == nil, Err: errors.New("failed to delete question")},
 	); err != nil {
 		return "", err
 	}

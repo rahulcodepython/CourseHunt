@@ -8,6 +8,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// --- Public & Student Handlers ---
+
 func (a *App) handlePublicList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 
@@ -37,8 +39,6 @@ func (a *App) handleStudy(c *fiber.Ctx) error {
 	return utils.OK(c, "Study page fetched successfully.", resp)
 }
 
-// handleEnrollFree enrolls the caller directly into a course marked
-// is_free, bypassing the Razorpay flow entirely.
 func (a *App) handleEnrollFree(c *fiber.Ctx) error {
 	if err := a.EnrollFree(c.Context(), middlewares.UserID(c), c.Params("id")); err != nil {
 		return err
@@ -57,13 +57,12 @@ func (a *App) handleEnrolledList(c *fiber.Ctx) error {
 	})
 }
 
-func (a *App) handleManageList(c *fiber.Ctx) error {
-	scope := middlewares.ResolveScope(c)
-	page, limit := utils.PaginationParams(c)
-	userID := middlewares.UserID(c)
+// --- Admin Handlers ---
 
-	list, total, err := a.ManageList(c.Context(), page, limit,
-		userID, scope,
+func (a *App) handleAdminList(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
+
+	list, total, err := a.AdminList(c.Context(), page, limit,
 		c.Query("category_id"),
 		c.Query("subcategory_id"),
 		c.Query("level"),
@@ -79,10 +78,39 @@ func (a *App) handleManageList(c *fiber.Ctx) error {
 	})
 }
 
-func (a *App) handleGetByID(c *fiber.Ctx) error {
-	scope := middlewares.ResolveScope(c)
+func (a *App) handleAdminGetByID(c *fiber.Ctx) error {
+	course, err := a.AdminGetByID(c.Context(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Course fetched successfully.", course)
+}
+
+// --- Tutor Handlers ---
+
+func (a *App) handleTutorList(c *fiber.Ctx) error {
+	page, limit := utils.PaginationParams(c)
 	userID := middlewares.UserID(c)
-	course, err := a.GetByID(c.Context(), c.Params("id"), userID, scope)
+
+	list, total, err := a.TutorList(c.Context(), page, limit,
+		userID,
+		c.Query("category_id"),
+		c.Query("subcategory_id"),
+		c.Query("level"),
+		c.Query("search"),
+		c.Query("status"),
+	)
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Courses fetched successfully.", generic.PaginatedResponse[[]Course]{
+		Data: list, Total: total, Page: page, Limit: limit,
+	})
+}
+
+func (a *App) handleTutorGetByID(c *fiber.Ctx) error {
+	userID := middlewares.UserID(c)
+	course, err := a.TutorGetByID(c.Context(), c.Params("id"), userID)
 	if err != nil {
 		return err
 	}

@@ -3,73 +3,114 @@ package quiz
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
+	"time"
 
 	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/pkg/cache"
 	"coursehunt/server/internals/utils"
 )
 
-func (a *App) CreateMetadata(ctx context.Context, lessonID, tutorID string, req CreateQuizRequest) (*QuizMetadata, error) {
-	qm, err := a.CreateMetadataRepository(ctx, lessonID, tutorID, req)
+func (a *App) CreateMetadata(ctx context.Context, lessonID, userID string, req CreateQuizRequest) (*QuizMetadata, error) {
+	qm, err := a.CreateMetadataRepository(ctx, lessonID, userID, req)
 	if err != nil {
-		switch {
-		case errors.Is(err, generic.ErrQuizLessonNotFound):
+		if errors.Is(err, generic.ErrQuizLessonNotFound) {
 			return nil, utils.ErrNotFound("Lesson not found.", err)
-		case errors.Is(err, generic.ErrQuizAccessDenied):
-			return nil, utils.ErrForbidden("Access denied. You do not own the course this lesson belongs to.", err)
-		default:
-			return nil, utils.ErrInternal("Failed to save quiz metadata.", err)
 		}
+		if errors.Is(err, generic.ErrQuizAccessDenied) {
+			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to save quiz metadata.", err)
 	}
 
-	a.Cache.Invalidate(ctx, "quiz:*")
+	a.Cache.Invalidate(ctx, "quiz:*", "lessons:*")
 
 	return qm, nil
 }
 
-func (a *App) ReadMetadata(ctx context.Context, lessonID, userID string, scope generic.AuthScope) (*QuizMetadata, error) {
-	qm, err := a.ReadMetadataRepository(ctx, lessonID, userID, scope)
-	if err != nil {
-		switch {
-		case errors.Is(err, generic.ErrQuizLessonNotFound):
-			return nil, utils.ErrNotFound("Lesson not found.", err)
-		case errors.Is(err, generic.ErrQuizAccessDenied):
-			return nil, utils.ErrForbidden("Access denied. You do not own the course this lesson belongs to.", err)
-		case errors.Is(err, generic.ErrQuizNotFound):
-			return nil, utils.ErrNotFound("Quiz not found.", err)
-		default:
+func (a *App) AdminReadMetadata(ctx context.Context, lessonID string) (*QuizMetadata, error) {
+	cacheKey := fmt.Sprintf("quiz:admin:meta:%s", lessonID)
+
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*QuizMetadata, error) {
+		qm, err := a.AdminReadMetadataRepository(ctx, lessonID)
+		if err != nil {
+			if errors.Is(err, generic.ErrQuizLessonNotFound) {
+				return nil, utils.ErrNotFound("Lesson not found.", err)
+			}
+			if errors.Is(err, generic.ErrQuizNotFound) {
+				return nil, utils.ErrNotFound("Quiz not found.", err)
+			}
 			return nil, utils.ErrInternal("Failed to fetch quiz metadata.", err)
 		}
-	}
-	return qm, nil
+		return qm, nil
+	})
 }
 
-func (a *App) ListQuestions(ctx context.Context, quizID, userID string, scope generic.AuthScope) ([]QuizQuestionDetail, error) {
-	questions, err := a.ListQuestionsRepository(ctx, quizID, userID, scope)
-	if err != nil {
-		switch {
-		case errors.Is(err, generic.ErrQuizNotFound):
-			return nil, utils.ErrNotFound("Quiz not found.", err)
-		case errors.Is(err, generic.ErrQuizAccessDenied):
-			return nil, utils.ErrForbidden("Access denied. You do not own the course this quiz belongs to.", err)
-		default:
+func (a *App) TutorReadMetadata(ctx context.Context, lessonID, userID string) (*QuizMetadata, error) {
+	cacheKey := fmt.Sprintf("quiz:tutor:meta:%s:u:%s", lessonID, userID)
+
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*QuizMetadata, error) {
+		qm, err := a.TutorReadMetadataRepository(ctx, lessonID, userID)
+		if err != nil {
+			if errors.Is(err, generic.ErrQuizLessonNotFound) {
+				return nil, utils.ErrNotFound("Lesson not found.", err)
+			}
+			if errors.Is(err, generic.ErrQuizAccessDenied) {
+				return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+			}
+			if errors.Is(err, generic.ErrQuizNotFound) {
+				return nil, utils.ErrNotFound("Quiz not found.", err)
+			}
+			return nil, utils.ErrInternal("Failed to fetch quiz metadata.", err)
+		}
+		return qm, nil
+	})
+}
+
+func (a *App) AdminListQuestions(ctx context.Context, quizID string) ([]QuizQuestionDetail, error) {
+	cacheKey := fmt.Sprintf("quiz:admin:questions:%s", quizID)
+
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]QuizQuestionDetail, error) {
+		questions, err := a.AdminListQuestionsRepository(ctx, quizID)
+		if err != nil {
+			if errors.Is(err, generic.ErrQuizNotFound) {
+				return nil, utils.ErrNotFound("Quiz not found.", err)
+			}
 			return nil, utils.ErrInternal("Failed to fetch questions.", err)
 		}
-	}
-	return questions, nil
+		return questions, nil
+	})
+}
+
+func (a *App) TutorListQuestions(ctx context.Context, quizID, userID string) ([]QuizQuestionDetail, error) {
+	cacheKey := fmt.Sprintf("quiz:tutor:questions:%s:u:%s", quizID, userID)
+
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]QuizQuestionDetail, error) {
+		questions, err := a.TutorListQuestionsRepository(ctx, quizID, userID)
+		if err != nil {
+			if errors.Is(err, generic.ErrQuizNotFound) {
+				return nil, utils.ErrNotFound("Quiz not found.", err)
+			}
+			if errors.Is(err, generic.ErrQuizAccessDenied) {
+				return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+			}
+			return nil, utils.ErrInternal("Failed to fetch questions.", err)
+		}
+		return questions, nil
+	})
 }
 
 func (a *App) CreateQuestion(ctx context.Context, quizID, tutorID string, req CreateQuestionRequest) (*QuizQuestion, error) {
 	q, err := a.CreateQuestionRepository(ctx, quizID, tutorID, req)
 	if err != nil {
-		switch {
-		case errors.Is(err, generic.ErrQuizNotFound):
+		if errors.Is(err, generic.ErrQuizNotFound) {
 			return nil, utils.ErrNotFound("Quiz not found.", err)
-		case errors.Is(err, generic.ErrQuizAccessDenied):
-			return nil, utils.ErrForbidden("Access denied. You do not own the course this quiz belongs to.", err)
-		default:
-			return nil, utils.ErrInternal("Failed to add question.", err)
 		}
+		if errors.Is(err, generic.ErrQuizAccessDenied) {
+			return nil, utils.ErrForbidden("Access denied. You do not own the course this quiz belongs to.", err)
+		}
+		return nil, utils.ErrInternal("Failed to create question.", err)
 	}
 
 	a.Cache.Invalidate(ctx, "quiz:*")
@@ -77,17 +118,16 @@ func (a *App) CreateQuestion(ctx context.Context, quizID, tutorID string, req Cr
 	return q, nil
 }
 
-func (a *App) UpdateQuestion(ctx context.Context, questionID, tutorID string, req CreateQuestionRequest) (*QuizQuestion, error) {
-	q, err := a.UpdateQuestionRepository(ctx, questionID, tutorID, req)
+func (a *App) UpdateQuestion(ctx context.Context, id, tutorID string, req CreateQuestionRequest) (*QuizQuestion, error) {
+	q, err := a.UpdateQuestionRepository(ctx, id, tutorID, req)
 	if err != nil {
-		switch {
-		case errors.Is(err, generic.ErrQuizQuestionNotFound):
+		if errors.Is(err, generic.ErrQuizQuestionNotFound) {
 			return nil, utils.ErrNotFound("Question not found.", err)
-		case errors.Is(err, generic.ErrQuizAccessDenied):
-			return nil, utils.ErrForbidden("Access denied. You do not own the course this quiz belongs to.", err)
-		default:
-			return nil, utils.ErrInternal("Failed to update question.", err)
 		}
+		if errors.Is(err, generic.ErrQuizAccessDenied) {
+			return nil, utils.ErrForbidden("Access denied. You do not own the course this quiz belongs to.", err)
+		}
+		return nil, utils.ErrInternal("Failed to update question.", err)
 	}
 
 	a.Cache.Invalidate(ctx, "quiz:*")
@@ -98,14 +138,13 @@ func (a *App) UpdateQuestion(ctx context.Context, questionID, tutorID string, re
 func (a *App) DeleteQuestion(ctx context.Context, id, tutorID string) (string, error) {
 	deletedID, err := a.DeleteQuestionRepository(ctx, id, tutorID)
 	if err != nil {
-		switch {
-		case errors.Is(err, generic.ErrQuizQuestionNotFound):
+		if errors.Is(err, generic.ErrQuizQuestionNotFound) {
 			return "", utils.ErrNotFound("Question not found.", err)
-		case errors.Is(err, generic.ErrQuizAccessDenied):
-			return "", utils.ErrForbidden("Access denied. You do not own the course this question belongs to.", err)
-		default:
-			return "", utils.ErrInternal("Failed to delete question.", err)
 		}
+		if errors.Is(err, generic.ErrQuizAccessDenied) {
+			return "", utils.ErrForbidden("Access denied. You do not own the course this question belongs to.", err)
+		}
+		return "", utils.ErrInternal("Failed to delete question.", err)
 	}
 
 	a.Cache.Invalidate(ctx, "quiz:*")
@@ -113,21 +152,16 @@ func (a *App) DeleteQuestion(ctx context.Context, id, tutorID string) (string, e
 	return deletedID, nil
 }
 
-// GetQuestion is deliberately not cached: it picks a random not-yet-fetched
-// question per call, so caching by (quiz, user, fetched_ids) doesn't cache a
-// stable answer — it just risks serving a stale/empty result (e.g. a
-// transient "no question" response) on every retry for the cache's TTL.
 func (a *App) GetQuestion(ctx context.Context, quizID, userID string, req NextQuestionRequest) (*NextQuestionResponse, error) {
 	resp, err := a.GetQuestionRepository(ctx, quizID, userID, req)
 	if err != nil {
-		switch {
-		case errors.Is(err, generic.ErrQuizNotFound):
+		if errors.Is(err, generic.ErrQuizNotFound) {
 			return nil, utils.ErrNotFound("Quiz not found.", err)
-		case errors.Is(err, generic.ErrQuizNotEnrolled):
-			return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
-		default:
-			return nil, utils.ErrInternal("Failed to get question.", err)
 		}
+		if errors.Is(err, generic.ErrQuizNotEnrolled) {
+			return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to get question.", err)
 	}
 	return resp, nil
 }
@@ -154,14 +188,13 @@ func (a *App) GetAttemptDetail(ctx context.Context, attemptID, userID string) (*
 func (a *App) Submit(ctx context.Context, quizID, userID string, req SubmitQuizRequest) (*SubmitQuizResponse, error) {
 	resp, err := a.submit(ctx, quizID, userID, req)
 	if err != nil {
-		switch {
-		case errors.Is(err, generic.ErrQuizNotFound):
+		if errors.Is(err, generic.ErrQuizNotFound) {
 			return nil, utils.ErrNotFound("Quiz not found.", err)
-		case errors.Is(err, generic.ErrQuizNotEnrolled):
-			return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
-		default:
-			return nil, utils.ErrInternal("Failed to submit quiz.", err)
 		}
+		if errors.Is(err, generic.ErrQuizNotEnrolled) {
+			return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to submit quiz.", err)
 	}
 
 	a.Cache.Invalidate(ctx, "quiz:*")
@@ -182,7 +215,6 @@ func (a *App) submit(ctx context.Context, quizID, userID string, req SubmitQuizR
 	var correctCount, incorrectCount, skippedCount int
 	results := make([]QuizResultItem, 0)
 
-	// 1. Single answers
 	for _, ans := range req.SingleAnswers {
 		q, ok := quiz.Questions[ans.QuestionID]
 		if !ok {
@@ -215,7 +247,6 @@ func (a *App) submit(ctx context.Context, quizID, userID string, req SubmitQuizR
 		})
 	}
 
-	// 2. Multi answers
 	for _, ans := range req.MultiAnswers {
 		q, ok := quiz.Questions[ans.QuestionID]
 		if !ok {
@@ -253,7 +284,6 @@ func (a *App) submit(ctx context.Context, quizID, userID string, req SubmitQuizR
 		})
 	}
 
-	// 3. Arrange answers
 	for _, ans := range req.ArrangeAnswers {
 		q, ok := quiz.Questions[ans.QuestionID]
 		if !ok {
@@ -295,7 +325,6 @@ func (a *App) submit(ctx context.Context, quizID, userID string, req SubmitQuizR
 		})
 	}
 
-	// 4. Fill answers
 	for _, ans := range req.FillAnswers {
 		q, ok := quiz.Questions[ans.QuestionID]
 		if !ok {

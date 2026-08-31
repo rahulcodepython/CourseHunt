@@ -11,6 +11,7 @@ import {
 } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
+import { API_ENDPOINTS } from "@/lib/const";
 import {
   ChapterZod,
   CreateChapterRequestZod,
@@ -18,10 +19,11 @@ import {
 } from "@/schema/chapters.types";
 import { DeleteResponseZod } from "@/schema/common.types";
 
-export function useChaptersQuery(courseId: string) {
-  return useAppQuery(queryKeys.chapters(courseId), () =>
+export function useChaptersQuery(courseId: string, scope: "admin" | "tutor" = "tutor") {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_CHAPTERS : API_ENDPOINTS.TUTOR_CHAPTERS;
+  return useAppQuery(queryKeys.chapters(courseId, scope), () =>
     apiRequest(
-      { url: `/api/v1/chapters?course_id=${courseId}`, method: "GET" },
+      { url: `${endpoint}?course_id=${courseId}`, method: "GET" },
       z.array(ChapterZod),
     ),
   );
@@ -31,10 +33,10 @@ export function useCreateChapterMutation(courseId: string) {
   return useArrayMutation({
     mutationFn: (data: z.infer<typeof CreateChapterRequestZod>) =>
       apiRequest(
-        { url: `/api/v1/chapters?course_id=${courseId}`, method: "POST", data },
+        { url: `${API_ENDPOINTS.TUTOR_CHAPTERS}?course_id=${courseId}`, method: "POST", data },
         ChapterZod,
       ),
-    queryKey: queryKeys.chapters(courseId),
+    queryKey: queryKeys.chapters(courseId, "tutor"),
     updater: (ch) => appendToArray(ch),
     showToast: true,
   });
@@ -43,8 +45,8 @@ export function useCreateChapterMutation(courseId: string) {
 export function useUpdateChapterMutation(courseId: string) {
   return useArrayMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateChapterRequestZod> }) =>
-      apiRequest({ url: `/api/v1/chapters/${id}`, method: "PATCH", data }, ChapterZod),
-    queryKey: queryKeys.chapters(courseId),
+      apiRequest({ url: `${API_ENDPOINTS.TUTOR_CHAPTERS}/${id}`, method: "PATCH", data }, ChapterZod),
+    queryKey: queryKeys.chapters(courseId, "tutor"),
     updater: (ch) => replaceInArray(ch),
     showToast: true,
   });
@@ -53,8 +55,8 @@ export function useUpdateChapterMutation(courseId: string) {
 export function useDeleteChapterMutation(courseId: string) {
   return useArrayMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `/api/v1/chapters/${id}`, method: "DELETE" }, DeleteResponseZod),
-    queryKey: queryKeys.chapters(courseId),
+      apiRequest({ url: `${API_ENDPOINTS.TUTOR_CHAPTERS}/${id}`, method: "DELETE" }, DeleteResponseZod),
+    queryKey: queryKeys.chapters(courseId, "tutor"),
     updater: (res) => removeFromArray(res.id),
     optimistic: (id) => removeFromArray(id),
     showToast: true,

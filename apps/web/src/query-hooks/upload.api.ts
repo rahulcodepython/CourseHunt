@@ -1,6 +1,7 @@
 import { apiRequest } from "@/react-query/client";
 import { useSimpleMutation } from "@/react-query/mutation";
 import { UploadMediaResponseZod } from "@/schema/upload.types";
+import { API_ENDPOINTS } from "@/lib/const";
 import { z } from "zod";
 import axios from "axios";
 
@@ -13,7 +14,7 @@ export const SignedURLResponseZod = z.object({
 export async function getSignedUrl(fileName: string) {
   const res = await apiRequest(
     {
-      url: `/api/v1/upload/signed-url?file_name=${encodeURIComponent(fileName)}`,
+      url: `${API_ENDPOINTS.UPLOAD_SIGNED_URL}?file_name=${encodeURIComponent(fileName)}`,
       method: "GET",
     },
     SignedURLResponseZod,

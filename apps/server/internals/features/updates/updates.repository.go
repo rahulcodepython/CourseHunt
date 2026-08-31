@@ -7,126 +7,121 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type UpdateListPayload struct {
+type updatesPayload struct {
 	Total int            `json:"total"`
 	Data  []CourseUpdate `json:"data"`
 }
 
-func (a *App) CreateRepository(ctx context.Context, createdBy string, req CreateUpdateRequest, scope generic.AuthScope) (*CourseUpdate, error) {
-	var data []byte
+func (a *App) AdminListRepository(ctx context.Context, page, limit int) ([]CourseUpdate, int, error) {
+	offset := (page - 1) * limit
+	query := BuildListUpdatesQuery(DefaultUpdatesWhere)
 
-	err := a.DB.QueryRow(
-		ctx,
-		CreateUpdate,
-		req.CourseID, createdBy, req.Message, string(scope),
-	).Scan(&data)
+	payload, err := postgres.QueryJSON[updatesPayload](ctx, a.DB, query, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	if payload == nil || payload.Data == nil {
+		return []CourseUpdate{}, 0, nil
+	}
+	return payload.Data, payload.Total, nil
+}
+
+func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID string) ([]CourseUpdate, int, error) {
+	offset := (page - 1) * limit
+	query := BuildListUpdatesQuery(TutorUpdatesWhere)
+
+	payload, err := postgres.QueryJSON[updatesPayload](ctx, a.DB, query, limit, offset, userID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if payload == nil || payload.Data == nil {
+		return []CourseUpdate{}, 0, nil
+	}
+	return payload.Data, payload.Total, nil
+}
+
+func (a *App) AdminCreateRepository(ctx context.Context, userID string, req CreateUpdateRequest) (*CourseUpdate, error) {
+	u, err := postgres.QueryJSON[CourseUpdate](ctx, a.DB, AdminCreateUpdate, req.CourseID, userID, req.Message)
 	if err != nil {
 		return nil, postgres.MapPgError(err)
 	}
+	return u, nil
+}
 
-	u, err := postgres.DecodeJSON[CourseUpdate](data)
+func (a *App) TutorCreateRepository(ctx context.Context, userID string, req CreateUpdateRequest) (*CourseUpdate, error) {
+	u, err := postgres.QueryJSON[CourseUpdate](ctx, a.DB, TutorCreateUpdate, req.CourseID, userID, req.Message)
 	if err != nil {
-		return nil, err
+		return nil, postgres.MapPgError(err)
 	}
 	if u == nil {
 		return nil, generic.ErrUpdatesAccessDenied
 	}
-
 	return u, nil
 }
 
-func (a *App) UpdateRepository(ctx context.Context, id, message string, userID string, scope generic.AuthScope) (*CourseUpdate, error) {
+func (a *App) AdminUpdateRepository(ctx context.Context, id, message string) (*CourseUpdate, error) {
 	var (
-		dbID *string
+		dbID string
 		data []byte
 	)
-
-	err := a.DB.QueryRow(
-		ctx,
-		UpdateUpdate,
-		id, userID, message, string(scope),
-	).Scan(&dbID, &data)
+	err := a.DB.QueryRow(ctx, AdminUpdateUpdate, id, message).Scan(&dbID, &data)
 	if err != nil {
 		return nil, postgres.MapPgError(err)
 	}
-
-	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: dbID == nil, Err: generic.ErrUpdatesNotFound},
-		postgres.Condition{Failed: len(data) == 0 || string(data) == "null", Err: generic.ErrUpdatesAccessDenied},
-	); err != nil {
-		return nil, err
+	if dbID == "" {
+		return nil, generic.ErrUpdatesNotFound
 	}
 
 	return postgres.DecodeJSON[CourseUpdate](data)
 }
 
-func (a *App) DeleteRepository(ctx context.Context, id, userID string, scope generic.AuthScope) (string, error) {
+func (a *App) TutorUpdateRepository(ctx context.Context, id, message, userID string) (*CourseUpdate, error) {
 	var (
-		dbID      *string
-		deletedID *string
+		dbID string
+		data []byte
 	)
+	err := a.DB.QueryRow(ctx, TutorUpdateUpdate, id, userID, message).Scan(&dbID, &data)
+	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+	if dbID == "" {
+		return nil, generic.ErrUpdatesNotFound
+	}
+	if len(data) == 0 {
+		return nil, generic.ErrUpdatesAccessDenied
+	}
 
-	err := a.DB.QueryRow(ctx, DeleteUpdate, id, userID, string(scope)).Scan(&dbID, &deletedID)
+	return postgres.DecodeJSON[CourseUpdate](data)
+}
+
+func (a *App) AdminDeleteRepository(ctx context.Context, id string) (string, error) {
+	var dbID, deletedID *string
+	err := a.DB.QueryRow(ctx, AdminDeleteUpdate, id).Scan(&dbID, &deletedID)
 	if err != nil {
 		return "", postgres.MapPgError(err)
 	}
-
-	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: dbID == nil, Err: generic.ErrUpdatesNotFound},
-		postgres.Condition{Failed: deletedID == nil, Err: generic.ErrUpdatesAccessDenied},
-	); err != nil {
-		return "", err
+	if dbID == nil {
+		return "", generic.ErrUpdatesNotFound
 	}
+	return *deletedID, nil
+}
 
+func (a *App) TutorDeleteRepository(ctx context.Context, id, userID string) (string, error) {
+	var dbID, deletedID *string
+	err := a.DB.QueryRow(ctx, TutorDeleteUpdate, id, userID).Scan(&dbID, &deletedID)
+	if err != nil {
+		return "", postgres.MapPgError(err)
+	}
+	if dbID == nil {
+		return "", generic.ErrUpdatesNotFound
+	}
+	if deletedID == nil {
+		return "", generic.ErrUpdatesAccessDenied
+	}
 	return *deletedID, nil
 }
 
 func (a *App) FeedRepository(ctx context.Context, userID string, page, limit int) (*UpdateFeedResponse, error) {
 	offset := (page - 1) * limit
-
-	var (
-		total   int
-		updates []byte
-	)
-
-	err := a.DB.QueryRow(ctx, FeedUpdates, userID, limit, offset).Scan(&total, &updates)
-	if err != nil {
-		return nil, postgres.MapPgError(err)
-	}
-
-	feedUpdates, err := postgres.DecodeJSONSlice[UpdateFeedItem](updates)
-	if err != nil {
-		return nil, err
-	}
-
-	return &UpdateFeedResponse{
-		Updates: generic.PaginatedResponse[[]UpdateFeedItem]{
-			Data: feedUpdates, Total: total, Page: page, Limit: limit,
-		},
-	}, nil
-}
-
-func (a *App) ListRepository(ctx context.Context, page, limit int, userID string, scope generic.AuthScope) ([]CourseUpdate, int, error) {
-	offset := (page - 1) * limit
-	filter := postgres.NewFilter(limit, offset)
-
-	where := DefaultUpdatesWhere
-	if scope == generic.ScopeTutor {
-		where = TutorUpdatesWhere
-		filter.AddArgs(userID)
-	}
-
-	query := BuildListUpdatesQuery(where)
-
-	result, err := postgres.QueryJSON[UpdateListPayload](ctx, a.DB, query, filter.Args...)
-	if err != nil {
-		return nil, 0, err
-	}
-	if result == nil {
-		return []CourseUpdate{}, 0, nil
-	}
-	if result.Data == nil {
-		result.Data = []CourseUpdate{}
-	}
-	return result.Data, result.Total, nil
+	return postgres.QueryJSON[UpdateFeedResponse](ctx, a.DB, FeedUpdates, userID, limit, offset)
 }

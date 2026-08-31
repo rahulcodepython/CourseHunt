@@ -123,21 +123,54 @@ export const QUESTION_TYPE = {
 
 export const API_ENDPOINTS = {
   COURSES: "/api/v1/courses",
-  COURSES_MANAGE: "/api/v1/courses/manage",
   COURSES_ENROLLED: "/api/v1/courses/enrolled",
+  ADMIN_COURSES: "/api/v1/admin/courses",
+  TUTOR_COURSES: "/api/v1/tutor/courses",
+
+  ADMIN_CHAPTERS: "/api/v1/admin/chapters",
+  TUTOR_CHAPTERS: "/api/v1/tutor/chapters",
+
+  ADMIN_LESSONS: "/api/v1/admin/lessons",
+  TUTOR_LESSONS: "/api/v1/tutor/lessons",
+  STUDENT_LESSONS: "/api/v1/lessons",
+
+  ADMIN_FAQS: "/api/v1/admin/faqs",
+  TUTOR_FAQS: "/api/v1/tutor/faqs",
+  FAQS_PUBLIC: "/api/v1/faqs/public",
+
+  ADMIN_QUIZ: "/api/v1/admin/quiz",
+  TUTOR_QUIZ: "/api/v1/tutor/quiz",
+  QUIZ: "/api/v1/quiz",
+
+  ADMIN_ENROLLMENTS: "/api/v1/admin/enrollments",
+  TUTOR_ENROLLMENTS: "/api/v1/tutor/enrollments",
+
+  ADMIN_COUPONS: "/api/v1/admin/coupons",
+  TUTOR_COUPONS: "/api/v1/tutor/coupons",
+  COUPONS_CHECK: "/api/v1/coupons/check",
+
+  ADMIN_UPDATES: "/api/v1/admin/updates",
+  TUTOR_UPDATES: "/api/v1/tutor/updates",
+  UPDATES_FEED: "/api/v1/updates/feed",
+
+  ADMIN_FEEDBACKS: "/api/v1/admin/feedbacks",
+  TUTOR_FEEDBACKS: "/api/v1/tutor/feedbacks",
+  FEEDBACKS: "/api/v1/feedbacks",
+  FEEDBACKS_PINNED: "/api/v1/feedbacks/pinned",
+
+  ADMIN_TRANSACTIONS: "/api/v1/admin/transactions",
+  TRANSACTIONS: "/api/v1/transactions",
+  TRANSACTIONS_INITIATE: "/api/v1/transactions/initiate",
+
+  ADMIN_DISCUSSIONS: "/api/v1/admin/discussions",
+  TUTOR_DISCUSSIONS: "/api/v1/tutor/discussions",
+  DISCUSSIONS: "/api/v1/discussions",
+
   USERS: "/api/v1/users",
   ROLES: "/api/v1/roles",
   PERMISSIONS: "/api/v1/permissions",
   CATEGORIES: "/api/v1/categories",
-  COUPONS: "/api/v1/coupons",
-  UPDATES: "/api/v1/updates",
-  UPDATES_FEED: "/api/v1/updates/feed",
-  FEEDBACKS: "/api/v1/feedbacks",
-  FEEDBACKS_PINNED: "/api/v1/feedbacks/pinned",
-  TRANSACTIONS: "/api/v1/transactions",
-  TRANSACTIONS_INITIATE: "/api/v1/transactions/initiate",
   CERTIFICATES: "/api/v1/certificates",
-  DISCUSSIONS: "/api/v1/discussions",
   DASHBOARD_ADMIN: "/api/v1/dashboard/admin",
   DASHBOARD_TUTOR: "/api/v1/dashboard/tutor",
   DASHBOARD_USER: "/api/v1/dashboard/user",
@@ -151,13 +184,11 @@ export const API_ENDPOINTS = {
   SECURITY_STATS: "/api/v1/security/stats",
   MONITORING: "/api/v1/monitoring",
   HEALTH: "/api/v1/health",
+  UPLOAD_SIGNED_URL: "/api/v1/upload/signed/url",
 } as const;
 
 export const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
 
-// Filename of the generic placeholder signature image, expected at
-// `apps/web/public/<this file>` — swap the actual file in later without
-// touching any code that references this const.
 export const CERTIFICATE_SIGNATURE_FILENAME = "certificate-signature.png";
 
 export const PAYMENT_CONFIG = {

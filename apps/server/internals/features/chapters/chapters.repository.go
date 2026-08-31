@@ -18,10 +18,11 @@ var (
 	}
 )
 
-func (a *App) ListRepository(ctx context.Context, courseID, userID string, scope generic.AuthScope) ([]Chapter, error) {
-	if scope == generic.ScopeAdmin {
-		return postgres.QueryJSONSlice[Chapter](ctx, a.DB, ListAdmin, courseID)
-	}
+func (a *App) AdminListRepository(ctx context.Context, courseID string) ([]Chapter, error) {
+	return postgres.QueryJSONSlice[Chapter](ctx, a.DB, ListAdmin, courseID)
+}
+
+func (a *App) TutorListRepository(ctx context.Context, courseID, userID string) ([]Chapter, error) {
 	return postgres.QuerySliceWithStatus[Chapter](ctx, a.DB, ListScoped, chapterCourseErrMap, courseID, userID)
 }
 

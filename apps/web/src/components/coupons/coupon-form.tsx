@@ -54,9 +54,9 @@ export function CouponForm({
   onSuccess: () => void;
   scope: "admin" | "tutor";
 }) {
-  const createMutation = useCreateCouponMutation();
-  const updateMutation = useUpdateCouponMutation();
-  const { data: rawCourses } = useManageCoursesQuery({ limit: 100 });
+  const createMutation = useCreateCouponMutation(scope);
+  const updateMutation = useUpdateCouponMutation(scope);
+  const { data: rawCourses } = useManageCoursesQuery({ limit: 100, scope });
   const courses = rawCourses?.data?.data ?? [];
 
   const {

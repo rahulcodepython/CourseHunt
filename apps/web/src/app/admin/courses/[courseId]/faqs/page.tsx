@@ -17,14 +17,14 @@ export default function AdminCourseFaqsPage() {
   const params = useParams<{ courseId: string }>();
   const courseId = params.courseId as string;
 
-  const { data: courseData } = useManageCourseQuery(courseId);
+  const { data: courseData } = useManageCourseQuery(courseId, "admin");
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },
     { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "FAQs" },
   ]);
 
-  const { data: rawFaqs, isLoading } = useFaqsQuery(courseId);
+  const { data: rawFaqs, isLoading } = useFaqsQuery(courseId, "admin");
   const faqs = rawFaqs?.data ?? [];
   const columns = getColumns();
 

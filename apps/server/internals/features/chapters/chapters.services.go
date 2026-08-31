@@ -11,11 +11,23 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-func (a *App) List(ctx context.Context, courseID, userID string, scope generic.AuthScope) ([]Chapter, error) {
-	cacheKey := fmt.Sprintf("chapters:list:course:%s:u:%s:s:%v", courseID, userID, scope)
+func (a *App) AdminList(ctx context.Context, courseID string) ([]Chapter, error) {
+	cacheKey := fmt.Sprintf("chapters:admin:list:course:%s", courseID)
 
 	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]Chapter, error) {
-		chapters, err := a.ListRepository(ctx, courseID, userID, scope)
+		chapters, err := a.AdminListRepository(ctx, courseID)
+		if err != nil {
+			return nil, utils.ErrInternal("Failed to fetch chapters.", err)
+		}
+		return chapters, nil
+	})
+}
+
+func (a *App) TutorList(ctx context.Context, courseID, userID string) ([]Chapter, error) {
+	cacheKey := fmt.Sprintf("chapters:tutor:list:course:%s:u:%s", courseID, userID)
+
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]Chapter, error) {
+		chapters, err := a.TutorListRepository(ctx, courseID, userID)
 		if err != nil {
 			if errors.Is(err, generic.ErrChaptersCourseNotFound) {
 				return nil, utils.ErrNotFound("Course not found.", err)

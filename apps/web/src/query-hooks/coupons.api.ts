@@ -20,9 +20,13 @@ import {
 } from "@/schema/coupons.types";
 import { PaginatedResponseZod, DeleteResponseZod } from "@/schema/common.types";
 
-export function useCouponsQuery() {
-  return useAppQuery(queryKeys.coupons(), () =>
-    apiRequest({ url: API_ENDPOINTS.COUPONS, method: "GET" }, PaginatedResponseZod(CouponZod)),
+function getCouponEndpoint(scope: "admin" | "tutor") {
+  return scope === "admin" ? API_ENDPOINTS.ADMIN_COUPONS : API_ENDPOINTS.TUTOR_COUPONS;
+}
+
+export function useCouponsQuery(scope: "admin" | "tutor" = "admin") {
+  return useAppQuery(queryKeys.coupons(scope), () =>
+    apiRequest({ url: getCouponEndpoint(scope), method: "GET" }, PaginatedResponseZod(CouponZod)),
   );
 }
 
@@ -32,7 +36,7 @@ export function useCheckCouponQuery(code: string, courseId: string, enabled: boo
     () =>
       apiRequest(
         {
-          url: `${API_ENDPOINTS.COUPONS}/check?code=${encodeURIComponent(code)}&course_id=${courseId}`,
+          url: `${API_ENDPOINTS.COUPONS_CHECK}?code=${encodeURIComponent(code)}&course_id=${courseId}`,
           method: "GET",
         },
         CouponCheckResponseZod,
@@ -41,31 +45,31 @@ export function useCheckCouponQuery(code: string, courseId: string, enabled: boo
   );
 }
 
-export function useCreateCouponMutation() {
+export function useCreateCouponMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: (data: z.infer<typeof CreateCouponRequestZod>) =>
-      apiRequest({ url: API_ENDPOINTS.COUPONS, method: "POST", data }, CouponZod),
-    queryKey: queryKeys.coupons(),
+      apiRequest({ url: getCouponEndpoint(scope), method: "POST", data }, CouponZod),
+    queryKey: queryKeys.coupons(scope),
     updater: (coupon) => prependToPaginated(coupon),
     showToast: true,
   });
 }
 
-export function useUpdateCouponMutation() {
+export function useUpdateCouponMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateCouponRequestZod> }) =>
-      apiRequest({ url: `${API_ENDPOINTS.COUPONS}/${id}`, method: "PATCH", data }, CouponZod),
-    queryKey: queryKeys.coupons(),
+      apiRequest({ url: `${getCouponEndpoint(scope)}/${id}`, method: "PATCH", data }, CouponZod),
+    queryKey: queryKeys.coupons(scope),
     updater: (coupon) => replaceInPaginated(coupon),
     showToast: true,
   });
 }
 
-export function useDeleteCouponMutation() {
+export function useDeleteCouponMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `${API_ENDPOINTS.COUPONS}/${id}`, method: "DELETE" }, DeleteResponseZod),
-    queryKey: queryKeys.coupons(),
+      apiRequest({ url: `${getCouponEndpoint(scope)}/${id}`, method: "DELETE" }, DeleteResponseZod),
+    queryKey: queryKeys.coupons(scope),
     updater: (res) => removeFromPaginated(res.id),
     optimistic: (id) => removeFromPaginated(id),
     showToast: true,

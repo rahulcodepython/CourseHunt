@@ -66,8 +66,6 @@ func (a *App) Study(ctx context.Context, courseID, userID string) (*CourseStudyR
 	return resp, nil
 }
 
-// EnrollFree enrolls the caller directly into a course marked is_free,
-// bypassing the Razorpay flow entirely.
 func (a *App) EnrollFree(ctx context.Context, userID, courseID string) error {
 	if err := a.EnrollFreeRepository(ctx, userID, courseID); err != nil {
 		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
@@ -89,16 +87,18 @@ func (a *App) EnrolledList(ctx context.Context, userID string, page, limit int) 
 	return list, total, nil
 }
 
-func (a *App) ManageList(ctx context.Context, page, limit int, userID string, scope generic.AuthScope, categoryID, subcategoryID, level, search, status, filterTutorID string) ([]Course, int, error) {
-	list, total, err := a.ListRepository(ctx, page, limit, userID, scope, categoryID, subcategoryID, level, search, status, filterTutorID)
+// --- Admin Services ---
+
+func (a *App) AdminList(ctx context.Context, page, limit int, categoryID, subcategoryID, level, search, status, filterTutorID string) ([]Course, int, error) {
+	list, total, err := a.AdminListRepository(ctx, page, limit, categoryID, subcategoryID, level, search, status, filterTutorID)
 	if err != nil {
 		return nil, 0, utils.ErrInternal("Failed to fetch courses.", err)
 	}
 	return list, total, nil
 }
 
-func (a *App) GetByID(ctx context.Context, id, userID string, scope generic.AuthScope) (*Course, error) {
-	course, err := a.GetByIDRepository(ctx, id, userID, scope)
+func (a *App) AdminGetByID(ctx context.Context, id string) (*Course, error) {
+	course, err := a.AdminGetByIDRepository(ctx, id)
 	if err != nil {
 		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
 			return nil, utils.ErrNotFound("Course not found.", err)
@@ -108,9 +108,31 @@ func (a *App) GetByID(ctx context.Context, id, userID string, scope generic.Auth
 	return course, nil
 }
 
+// --- Tutor Services ---
+
+func (a *App) TutorList(ctx context.Context, page, limit int, userID, categoryID, subcategoryID, level, search, status string) ([]Course, int, error) {
+	list, total, err := a.TutorListRepository(ctx, page, limit, userID, categoryID, subcategoryID, level, search, status)
+	if err != nil {
+		return nil, 0, utils.ErrInternal("Failed to fetch courses.", err)
+	}
+	return list, total, nil
+}
+
+func (a *App) TutorGetByID(ctx context.Context, id, userID string) (*Course, error) {
+	course, err := a.TutorGetByIDRepository(ctx, id, userID)
+	if err != nil {
+		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
+			return nil, utils.ErrNotFound("Course not found.", err)
+		}
+		if errors.Is(err, generic.ErrCoursesAccessDenied) {
+			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch course.", err)
+	}
+	return course, nil
+}
+
 func (a *App) Create(ctx context.Context, userID string, req CreateCourseRequest) (*Course, error) {
-	// A free course has no price and never accepts coupons — enforced
-	// server-side, not just left to the client UI to respect.
 	if req.IsFree {
 		req.FinalPrice = 0
 		req.CouponAllowed = false
@@ -127,8 +149,6 @@ func (a *App) Create(ctx context.Context, userID string, req CreateCourseRequest
 }
 
 func (a *App) Update(ctx context.Context, id, userID string, req UpdateCourseRequest) (*Course, error) {
-	// A free course has no price and never accepts coupons — enforced
-	// server-side, not just left to the client UI to respect.
 	if req.IsFree != nil && *req.IsFree {
 		zero := 0.0
 		req.FinalPrice = &zero
