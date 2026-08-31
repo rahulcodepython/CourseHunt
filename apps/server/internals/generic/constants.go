@@ -153,6 +153,11 @@ var (
 	ErrCertificateFailedToExecute = errors.New("failed to issue certificate")
 )
 
+// Wishlist errors
+var (
+	ErrWishlistLimitReached = errors.New("wishlist limit reached")
+)
+
 // Centralized Response Messages
 const (
 	MsgTransactionInitiated     = "Transaction initiated."

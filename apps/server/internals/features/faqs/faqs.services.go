@@ -43,7 +43,7 @@ func (a *App) Create(ctx context.Context, userID, courseID string, req CreateFaq
 		return nil, utils.ErrInternal("Failed to create FAQ.", err)
 	}
 
-	a.Cache.InvalidateFaqs(ctx)
+	a.Cache.Invalidate(ctx, "faqs:*")
 
 	return faq, nil
 }
@@ -60,7 +60,7 @@ func (a *App) Update(ctx context.Context, id, userID string, req UpdateFaqReques
 		return nil, utils.ErrInternal("Failed to update FAQ.", err)
 	}
 
-	a.Cache.InvalidateFaqs(ctx)
+	a.Cache.Invalidate(ctx, "faqs:*")
 
 	return faq, nil
 }
@@ -77,7 +77,7 @@ func (a *App) Delete(ctx context.Context, id, userID string) (string, error) {
 		return "", utils.ErrInternal("Failed to delete FAQ.", err)
 	}
 
-	a.Cache.InvalidateFaqs(ctx)
+	a.Cache.Invalidate(ctx, "faqs:*")
 
 	return deletedID, nil
 }

@@ -13,39 +13,69 @@ function isExpired(coupon: Coupon): boolean {
   return !!coupon.expires_at && new Date(coupon.expires_at) < new Date();
 }
 
+/**
+ * Shared admin/tutor coupons table columns. The only real difference between
+ * the two scopes is this one column: admin coupons can be valid on any
+ * course, so "Max Usage" is the more useful glance-value; tutor coupons are
+ * always course-scoped, so which course is more useful there.
+ */
 export const getColumns = (
   onEdit: (coupon: Coupon) => void,
   onToggleActive: (coupon: Coupon) => void,
   onDelete: (coupon: Coupon) => void,
+  scope: "admin" | "tutor",
 ): ColumnDef<Coupon, any>[] => {
   const cols: ColumnDef<Coupon, any>[] = [
     columnHelper.accessor("code", {
       header: ({ column }) => <SortableColumnHeader column={column} label="Code" />,
       cell: ({ getValue }) => (
-        <span className="font-mono text-sm font-bold tracking-wider">
-          {getValue()}
-        </span>
+        <span className="font-mono text-sm font-bold tracking-wider">{getValue()}</span>
       ),
     }),
-    columnHelper.accessor("course", {
-      header: "Course",
-      cell: ({ getValue }) => (
-        <span className="block max-w-52 truncate text-muted-foreground">
-          {getValue()?.title ?? "Any course"}
-        </span>
-      ),
-    }),
+  ];
+
+  if (scope === "tutor") {
+    cols.push(
+      columnHelper.accessor("course", {
+        header: "Course",
+        cell: ({ getValue }) => (
+          <span className="block max-w-52 truncate text-muted-foreground">
+            {getValue()?.title ?? "Any course"}
+          </span>
+        ),
+      }),
+    );
+  }
+
+  cols.push(
     columnHelper.accessor("discount_percent", {
       header: ({ column }) => <SortableColumnHeader column={column} label="Discount" />,
       cell: ({ getValue }) => (
         <span className="font-medium text-emerald-500">{getValue()}% OFF</span>
       ),
     }),
+  );
+
+  if (scope === "admin") {
+    cols.push(
+      columnHelper.accessor("max_usage", {
+        header: "Max Usage",
+        cell: ({ getValue }) => {
+          const val = getValue();
+          return (
+            <span className="font-mono text-xs text-muted-foreground">
+              {val ? `${val} uses` : "Unlimited"}
+            </span>
+          );
+        },
+      }),
+    );
+  }
+
+  cols.push(
     columnHelper.accessor("usage_count", {
       header: "Redeemed",
-      cell: ({ getValue }) => (
-        <span className="font-mono text-xs font-medium">{getValue()}</span>
-      ),
+      cell: ({ getValue }) => <span className="font-mono text-xs font-medium">{getValue()}</span>,
     }),
     columnHelper.accessor("expires_at", {
       header: ({ column }) => <SortableColumnHeader column={column} label="Expires" />,
@@ -79,7 +109,7 @@ export const getColumns = (
         return <Badge variant="outline">Inactive</Badge>;
       },
     }),
-  ];
+  );
 
   cols.push(
     columnHelper.display({
@@ -95,7 +125,12 @@ export const getColumns = (
               label={coupon.is_active ? "Deactivate" : "Activate"}
               onClick={() => onToggleActive(coupon)}
             />
-            <RowActionButton icon="trash" label="Delete Coupon" onClick={() => onDelete(coupon)} destructive />
+            <RowActionButton
+              icon="trash"
+              label="Delete Coupon"
+              onClick={() => onDelete(coupon)}
+              destructive
+            />
           </RowActions>
         );
       },

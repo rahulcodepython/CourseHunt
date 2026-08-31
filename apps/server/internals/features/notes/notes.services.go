@@ -23,7 +23,7 @@ func (a *App) Upsert(ctx context.Context, userID, lessonID, content string) (*No
 		}
 	}
 
-	a.Cache.InvalidateNotes(ctx)
+	a.Cache.Invalidate(ctx, "notes:*")
 
 	return n, nil
 }
@@ -77,7 +77,7 @@ func (a *App) Update(ctx context.Context, id, userID, content string) (*NoteResp
 		}
 	}
 
-	a.Cache.InvalidateNotes(ctx)
+	a.Cache.Invalidate(ctx, "notes:*")
 
 	return n, nil
 }
@@ -97,7 +97,7 @@ func (a *App) Delete(ctx context.Context, id, userID string) (string, error) {
 		}
 	}
 
-	a.Cache.InvalidateNotes(ctx)
+	a.Cache.Invalidate(ctx, "notes:*")
 
 	return deletedID, nil
 }

@@ -8,7 +8,7 @@ import (
 
 // json is the canonical response envelope used by every handler (success,
 // via OK/Created below) and by the central ErrorHandler (errors.go/
-// errorHandler.go) for every failure. It's the one place the wire shape is
+// error.handler.go) for every failure. It's the one place the wire shape is
 // defined.
 func json[T any](c *fiber.Ctx, status int, success bool, message string, data T, err error) error {
 	var errStr string

@@ -6,24 +6,18 @@ import (
 	"time"
 
 	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/pkg/cache"
 	"coursehunt/server/internals/utils"
 )
 
 func (a *App) List(ctx context.Context) ([]Role, error) {
-	cacheKey := "roles:list"
-	var cached []Role
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached, nil
-	}
-
-	rolesList, err := a.ListRolesRepository(ctx)
-	if err != nil {
-		return nil, utils.ErrInternal("Failed to fetch roles.", err)
-	}
-
-	_ = a.Cache.Set(ctx, cacheKey, rolesList, 10*time.Minute)
-
-	return rolesList, nil
+	return cache.Fetch(ctx, a.Cache, "roles:list", 10*time.Minute, func() ([]Role, error) {
+		rolesList, err := a.ListRolesRepository(ctx)
+		if err != nil {
+			return nil, utils.ErrInternal("Failed to fetch roles.", err)
+		}
+		return rolesList, nil
+	})
 }
 
 // isSystemRoleName reports whether name collides with one of the three
@@ -44,7 +38,7 @@ func (a *App) Create(ctx context.Context, req CreateRoleRequest) (*Role, error) 
 		return nil, utils.ErrInternal("Failed to create role.", err)
 	}
 
-	a.Cache.InvalidateRoles(ctx)
+	a.Cache.Invalidate(ctx, "roles:*", "permissions:*")
 
 	return role, nil
 }
@@ -67,7 +61,7 @@ func (a *App) Update(ctx context.Context, roleID string, req UpdateRoleRequest) 
 		return nil, utils.ErrInternal("Failed to update role.", err)
 	}
 
-	a.Cache.InvalidateRoles(ctx)
+	a.Cache.Invalidate(ctx, "roles:*", "permissions:*")
 
 	return role, nil
 }
@@ -98,7 +92,7 @@ func (a *App) Delete(ctx context.Context, roleID string) (string, error) {
 		return "", utils.ErrInternal("Failed to delete role.", err)
 	}
 
-	a.Cache.InvalidateRoles(ctx)
+	a.Cache.Invalidate(ctx, "roles:*", "permissions:*")
 
 	return deletedID, nil
 }
@@ -109,19 +103,13 @@ func (a *App) GetPermissions(ctx context.Context, roleID string) ([]Permission, 
 	}
 
 	cacheKey := fmt.Sprintf("roles:permissions:role:%s", roleID)
-	var cached []Permission
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached, nil
-	}
-
-	permissions, err := a.GetRolePermissionsRepository(ctx, roleID)
-	if err != nil {
-		return nil, utils.ErrInternal("Failed to fetch role permissions.", err)
-	}
-
-	_ = a.Cache.Set(ctx, cacheKey, permissions, 10*time.Minute)
-
-	return permissions, nil
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]Permission, error) {
+		permissions, err := a.GetRolePermissionsRepository(ctx, roleID)
+		if err != nil {
+			return nil, utils.ErrInternal("Failed to fetch role permissions.", err)
+		}
+		return permissions, nil
+	})
 }
 
 func (a *App) SetPermissions(ctx context.Context, roleID string, req UpdateRolePermissionsRequest) error {
@@ -141,24 +129,21 @@ func (a *App) SetPermissions(ctx context.Context, roleID string, req UpdateRoleP
 		return utils.ErrInternal("Failed to update role permissions.", err)
 	}
 
-	a.Cache.InvalidateRoles(ctx)
+	a.Cache.Invalidate(ctx, "roles:*", "permissions:*")
+	// Every user holding this role now has different effective permissions —
+	// bust the per-user auth cache app-wide since it's unknown which users
+	// hold it (see internals/middlewares/auth.go's authCacheTTL fallback).
+	a.Cache.InvalidateAllUserAuthCache(ctx)
 
 	return nil
 }
 
 func (a *App) ListPermissions(ctx context.Context) ([]Permission, error) {
-	cacheKey := "permissions:list"
-	var cached []Permission
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached, nil
-	}
-
-	permissions, err := a.ListPermissionsRepository(ctx)
-	if err != nil {
-		return nil, utils.ErrInternal("Failed to fetch permissions.", err)
-	}
-
-	_ = a.Cache.Set(ctx, cacheKey, permissions, 10*time.Minute)
-
-	return permissions, nil
+	return cache.Fetch(ctx, a.Cache, "permissions:list", 10*time.Minute, func() ([]Permission, error) {
+		permissions, err := a.ListPermissionsRepository(ctx)
+		if err != nil {
+			return nil, utils.ErrInternal("Failed to fetch permissions.", err)
+		}
+		return permissions, nil
+	})
 }

@@ -13,7 +13,6 @@ type ManageListPayload struct {
 }
 
 func (a *App) ListRepository(ctx context.Context, page, limit int, userID string, scope generic.AuthScope, categoryID, subcategoryID, level, search, status, filterTutorID string) ([]Course, int, error) {
-	offset := (page - 1) * limit
 	filter := postgres.NewFilter()
 
 	if scope == generic.ScopeTutor {
@@ -40,8 +39,7 @@ func (a *App) ListRepository(ctx context.Context, page, limit int, userID string
 		filter.Add("c.tutor_id = NULLIF($%d, '')::uuid", filterTutorID)
 	}
 
-	limitIdx := filter.NextIdx()
-	filter.AddArgs(limit, offset)
+	limitIdx := filter.Paginate(page, limit)
 
 	result, err := postgres.QueryJSON[ManageListPayload](ctx, a.DB, BuildTutorListQuery(filter.Join("1=1"), limitIdx), filter.Args...)
 	if err != nil {

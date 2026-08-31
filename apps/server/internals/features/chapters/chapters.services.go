@@ -7,31 +7,26 @@ import (
 	"time"
 
 	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/pkg/cache"
 	"coursehunt/server/internals/utils"
 )
 
 func (a *App) List(ctx context.Context, courseID, userID string, scope generic.AuthScope) ([]Chapter, error) {
 	cacheKey := fmt.Sprintf("chapters:list:course:%s:u:%s:s:%v", courseID, userID, scope)
 
-	var cached []Chapter
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached, nil
-	}
-
-	chapters, err := a.ListRepository(ctx, courseID, userID, scope)
-	if err != nil {
-		if errors.Is(err, generic.ErrChaptersCourseNotFound) {
-			return nil, utils.ErrNotFound("Course not found.", err)
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]Chapter, error) {
+		chapters, err := a.ListRepository(ctx, courseID, userID, scope)
+		if err != nil {
+			if errors.Is(err, generic.ErrChaptersCourseNotFound) {
+				return nil, utils.ErrNotFound("Course not found.", err)
+			}
+			if errors.Is(err, generic.ErrChaptersUnauthorized) {
+				return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+			}
+			return nil, utils.ErrInternal("Failed to fetch chapters.", err)
 		}
-		if errors.Is(err, generic.ErrChaptersUnauthorized) {
-			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
-		}
-		return nil, utils.ErrInternal("Failed to fetch chapters.", err)
-	}
-
-	_ = a.Cache.Set(ctx, cacheKey, chapters, 10*time.Minute)
-
-	return chapters, nil
+		return chapters, nil
+	})
 }
 
 func (a *App) Create(ctx context.Context, userID, courseID string, req CreateChapterRequest) (*Chapter, error) {
@@ -46,7 +41,7 @@ func (a *App) Create(ctx context.Context, userID, courseID string, req CreateCha
 		return nil, utils.ErrInternal("Failed to create chapter.", err)
 	}
 
-	a.Cache.InvalidateChapters(ctx)
+	a.Cache.Invalidate(ctx, "chapters:*", "courses:*")
 
 	return ch, nil
 }
@@ -63,7 +58,7 @@ func (a *App) Update(ctx context.Context, id, userID string, req UpdateChapterRe
 		return nil, utils.ErrInternal("Failed to update chapter.", err)
 	}
 
-	a.Cache.InvalidateChapters(ctx)
+	a.Cache.Invalidate(ctx, "chapters:*", "courses:*")
 
 	return ch, nil
 }
@@ -80,7 +75,7 @@ func (a *App) Delete(ctx context.Context, id, userID string) (string, error) {
 		return "", utils.ErrInternal("Failed to delete chapter.", err)
 	}
 
-	a.Cache.InvalidateChapters(ctx)
+	a.Cache.Invalidate(ctx, "chapters:*", "courses:*")
 
 	return deletedID, nil
 }

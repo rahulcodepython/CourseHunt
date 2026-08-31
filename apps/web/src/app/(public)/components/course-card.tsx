@@ -19,7 +19,9 @@ export function CourseCard({ course }: { course: CoursePublicResponse }) {
         </div>
         <CardContent className="space-y-2 p-4">
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="capitalize">{course.level}</Badge>
+            <Badge variant="secondary" className="capitalize">
+              {course.level}
+            </Badge>
             {course.category && <Badge variant="outline">{course.category.name}</Badge>}
           </div>
           <p className="line-clamp-2 font-semibold leading-snug">{course.title}</p>
@@ -36,7 +38,9 @@ export function CourseCard({ course }: { course: CoursePublicResponse }) {
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold">{formatINR(course.final_price)}</span>
                 {course.final_price < course.actual_price && (
-                  <span className="text-xs text-muted-foreground line-through">{formatINR(course.actual_price)}</span>
+                  <span className="text-xs text-muted-foreground line-through">
+                    {formatINR(course.actual_price)}
+                  </span>
                 )}
               </div>
             )}

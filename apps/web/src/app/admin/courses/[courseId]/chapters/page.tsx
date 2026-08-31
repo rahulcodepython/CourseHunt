@@ -39,10 +39,7 @@ export default function CourseChaptersPage() {
             </span>
           </Link>
         </Button>
-        <PageHeader
-          title="Course Chapters"
-          subtitle="Browse and manage chapters for this course"
-        />
+        <PageHeader title="Course Chapters" subtitle="Browse and manage chapters for this course" />
       </div>
 
       <DataTable

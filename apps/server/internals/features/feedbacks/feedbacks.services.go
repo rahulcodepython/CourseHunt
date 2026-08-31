@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/pkg/cache"
 	"coursehunt/server/internals/utils"
 )
 
@@ -24,7 +25,7 @@ func (a *App) Create(ctx context.Context, userID, courseID string, req CreateFee
 		return nil, utils.ErrInternal("Failed to post feedback.", err)
 	}
 
-	a.Cache.InvalidateFeedbacks(ctx)
+	a.Cache.Invalidate(ctx, "feedbacks:*")
 
 	return f, nil
 }
@@ -32,37 +33,33 @@ func (a *App) Create(ctx context.Context, userID, courseID string, req CreateFee
 func (a *App) List(ctx context.Context, scope generic.AuthScope, userID string, page, limit int, isPinned, userName, userEmail, courseID string) ([]Feedback, int, error) {
 	cacheKey := fmt.Sprintf("feedbacks:list:p:%d:l:%d:s:%v:u:%s:pin:%s:c:%s", page, limit, scope, userID, isPinned, courseID)
 
-	var cached feedbacksListCacheData
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached.Data, cached.Total, nil
-	}
-
-	list, total, err := a.ListRepository(ctx, scope, userID, page, limit, isPinned, userName, userEmail, courseID)
+	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (feedbacksListCacheData, error) {
+		list, total, err := a.ListRepository(ctx, scope, userID, page, limit, isPinned, userName, userEmail, courseID)
+		if err != nil {
+			return feedbacksListCacheData{}, utils.ErrInternal("Failed to fetch feedbacks.", err)
+		}
+		return feedbacksListCacheData{Data: list, Total: total}, nil
+	})
 	if err != nil {
-		return nil, 0, utils.ErrInternal("Failed to fetch feedbacks.", err)
+		return nil, 0, err
 	}
-
-	_ = a.Cache.Set(ctx, cacheKey, feedbacksListCacheData{Data: list, Total: total}, 5*time.Minute)
-
-	return list, total, nil
+	return result.Data, result.Total, nil
 }
 
 func (a *App) ListPinned(ctx context.Context, page, limit int, courseID string) ([]Feedback, int, error) {
 	cacheKey := fmt.Sprintf("feedbacks:pinned:p:%d:l:%d:c:%s", page, limit, courseID)
 
-	var cached feedbacksListCacheData
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached.Data, cached.Total, nil
-	}
-
-	list, total, err := a.ListRepository(ctx, generic.ScopeAdmin, "", page, limit, "true", "", "", courseID)
+	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (feedbacksListCacheData, error) {
+		list, total, err := a.ListRepository(ctx, generic.ScopeAdmin, "", page, limit, "true", "", "", courseID)
+		if err != nil {
+			return feedbacksListCacheData{}, utils.ErrInternal("Failed to fetch pinned feedbacks.", err)
+		}
+		return feedbacksListCacheData{Data: list, Total: total}, nil
+	})
 	if err != nil {
-		return nil, 0, utils.ErrInternal("Failed to fetch pinned feedbacks.", err)
+		return nil, 0, err
 	}
-
-	_ = a.Cache.Set(ctx, cacheKey, feedbacksListCacheData{Data: list, Total: total}, 10*time.Minute)
-
-	return list, total, nil
+	return result.Data, result.Total, nil
 }
 
 func (a *App) Update(ctx context.Context, id string, isPinned bool) (*Feedback, error) {
@@ -74,7 +71,7 @@ func (a *App) Update(ctx context.Context, id string, isPinned bool) (*Feedback, 
 		return nil, utils.ErrInternal("Failed to update feedback pin status.", err)
 	}
 
-	a.Cache.InvalidateFeedbacks(ctx)
+	a.Cache.Invalidate(ctx, "feedbacks:*")
 
 	return f, nil
 }
@@ -88,7 +85,7 @@ func (a *App) Delete(ctx context.Context, id, userID string, scope generic.AuthS
 		return "", utils.ErrInternal("Failed to delete feedback.", err)
 	}
 
-	a.Cache.InvalidateFeedbacks(ctx)
+	a.Cache.Invalidate(ctx, "feedbacks:*")
 
 	return deletedID, nil
 }

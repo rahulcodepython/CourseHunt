@@ -40,12 +40,7 @@ export const getColumns = (courseId: string, chapterId: string) => [
       return (
         <div className="flex items-center gap-2">
           <span className="font-medium">{lesson.title}</span>
-          <Badge
-            className={cn(
-              "shrink-0",
-              lessonTypeBadge[lesson.lesson_type]?.className,
-            )}
-          >
+          <Badge className={cn("shrink-0", lessonTypeBadge[lesson.lesson_type]?.className)}>
             {lessonTypeBadge[lesson.lesson_type]?.label ?? lesson.lesson_type}
           </Badge>
         </div>

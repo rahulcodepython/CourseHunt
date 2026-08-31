@@ -85,7 +85,8 @@ export default function PaymentConfirmationPage() {
           </div>
           <h1 className="text-xl font-semibold">Payment Processing</h1>
           <p className="max-w-sm text-sm text-muted-foreground">
-            This is taking longer than expected. We&apos;ll update your enrollment as soon as the payment confirms.
+            This is taking longer than expected. We&apos;ll update your enrollment as soon as the
+            payment confirms.
           </p>
           <Button asChild>
             <Link href={ROUTES.STUDENT_DASHBOARD}>Go to Dashboard</Link>

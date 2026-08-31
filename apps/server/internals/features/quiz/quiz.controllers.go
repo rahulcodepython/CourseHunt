@@ -13,9 +13,9 @@ func (a *App) handleCreateMetadata(c *fiber.Ctx) error {
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
-	lessonID := c.Query("lesson_id")
-	if lessonID == "" {
-		return utils.ErrBadRequest("Lesson ID query param required.", nil)
+	lessonID, err := utils.RequireQuery(c, "lesson_id", "Lesson ID")
+	if err != nil {
+		return err
 	}
 
 	qm, err := a.CreateMetadata(c.Context(), lessonID, middlewares.UserID(c), req)
@@ -27,9 +27,9 @@ func (a *App) handleCreateMetadata(c *fiber.Ctx) error {
 }
 
 func (a *App) handleReadMetadata(c *fiber.Ctx) error {
-	lessonID := c.Query("lesson_id")
-	if lessonID == "" {
-		return utils.ErrBadRequest("Lesson ID query param required.", nil)
+	lessonID, err := utils.RequireQuery(c, "lesson_id", "Lesson ID")
+	if err != nil {
+		return err
 	}
 	userID := middlewares.UserID(c)
 	scope := middlewares.ResolveScope(c)
@@ -42,9 +42,9 @@ func (a *App) handleReadMetadata(c *fiber.Ctx) error {
 }
 
 func (a *App) handleListQuestions(c *fiber.Ctx) error {
-	quizID := c.Query("quiz_id")
-	if quizID == "" {
-		return utils.ErrBadRequest("Quiz ID query param required.", nil)
+	quizID, err := utils.RequireQuery(c, "quiz_id", "Quiz ID")
+	if err != nil {
+		return err
 	}
 	userID := middlewares.UserID(c)
 	scope := middlewares.ResolveScope(c)
@@ -61,9 +61,9 @@ func (a *App) handleCreateQuestion(c *fiber.Ctx) error {
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
-	quizID := c.Query("quiz_id")
-	if quizID == "" {
-		return utils.ErrBadRequest("Quiz ID query param required.", nil)
+	quizID, err := utils.RequireQuery(c, "quiz_id", "Quiz ID")
+	if err != nil {
+		return err
 	}
 
 	q, err := a.CreateQuestion(c.Context(), quizID, middlewares.UserID(c), req)
@@ -102,9 +102,9 @@ func (a *App) handleGetQuestion(c *fiber.Ctx) error {
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
-	quizID := c.Query("quiz_id")
-	if quizID == "" {
-		return utils.ErrBadRequest("Quiz ID query param required.", nil)
+	quizID, err := utils.RequireQuery(c, "quiz_id", "Quiz ID")
+	if err != nil {
+		return err
 	}
 
 	resp, err := a.GetQuestion(c.Context(), quizID, middlewares.UserID(c), req)
@@ -120,9 +120,9 @@ func (a *App) handleCreateSubmit(c *fiber.Ctx) error {
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
-	quizID := c.Query("quiz_id")
-	if quizID == "" {
-		return utils.ErrBadRequest("Quiz ID query param required.", nil)
+	quizID, err := utils.RequireQuery(c, "quiz_id", "Quiz ID")
+	if err != nil {
+		return err
 	}
 
 	resp, err := a.Submit(c.Context(), quizID, middlewares.UserID(c), req)
@@ -134,9 +134,9 @@ func (a *App) handleCreateSubmit(c *fiber.Ctx) error {
 }
 
 func (a *App) handleListAttempts(c *fiber.Ctx) error {
-	quizID := c.Query("quiz_id")
-	if quizID == "" {
-		return utils.ErrBadRequest("Quiz ID query param required.", nil)
+	quizID, err := utils.RequireQuery(c, "quiz_id", "Quiz ID")
+	if err != nil {
+		return err
 	}
 
 	attempts, err := a.ListAttempts(c.Context(), quizID, middlewares.UserID(c))

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/pkg/cache"
 	"coursehunt/server/internals/utils"
 )
 
@@ -19,19 +20,17 @@ type couponListCacheData struct {
 func (a *App) List(ctx context.Context, page, limit int, userID string, scope generic.AuthScope, status, isActive, code string) ([]Coupon, int, error) {
 	cacheKey := fmt.Sprintf("coupons:list:p:%d:l:%d:u:%s:s:%v:st:%s:ia:%s:c:%s", page, limit, userID, scope, status, isActive, code)
 
-	var cached couponListCacheData
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached.Data, cached.Total, nil
-	}
-
-	list, total, err := a.ListRepository(ctx, page, limit, userID, scope, status, isActive, code)
+	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (couponListCacheData, error) {
+		list, total, err := a.ListRepository(ctx, page, limit, userID, scope, status, isActive, code)
+		if err != nil {
+			return couponListCacheData{}, utils.ErrInternal("Failed to fetch coupons.", err)
+		}
+		return couponListCacheData{Data: list, Total: total}, nil
+	})
 	if err != nil {
-		return nil, 0, utils.ErrInternal("Failed to fetch coupons.", err)
+		return nil, 0, err
 	}
-
-	_ = a.Cache.Set(ctx, cacheKey, couponListCacheData{Data: list, Total: total}, 5*time.Minute)
-
-	return list, total, nil
+	return result.Data, result.Total, nil
 }
 
 func (a *App) Create(ctx context.Context, userID string, scope generic.AuthScope, req CreateCouponRequest) (*Coupon, error) {
@@ -49,7 +48,7 @@ func (a *App) Create(ctx context.Context, userID string, scope generic.AuthScope
 		return nil, utils.ErrInternal("Failed to create coupon.", err)
 	}
 
-	a.Cache.InvalidateCoupons(ctx)
+	a.Cache.Invalidate(ctx, "coupons:*")
 
 	return coupon, nil
 }
@@ -66,7 +65,7 @@ func (a *App) Update(ctx context.Context, id, userID string, scope generic.AuthS
 		return nil, utils.ErrInternal("Failed to update coupon.", err)
 	}
 
-	a.Cache.InvalidateCoupons(ctx)
+	a.Cache.Invalidate(ctx, "coupons:*")
 
 	return coupon, nil
 }
@@ -83,7 +82,7 @@ func (a *App) Delete(ctx context.Context, id, userID string, scope generic.AuthS
 		return "", utils.ErrInternal("Failed to delete coupon.", err)
 	}
 
-	a.Cache.InvalidateCoupons(ctx)
+	a.Cache.Invalidate(ctx, "coupons:*")
 
 	return deletedID, nil
 }

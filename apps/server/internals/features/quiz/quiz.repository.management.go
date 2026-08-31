@@ -6,8 +6,6 @@ import (
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/postgres"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (a *App) CreateMetadataRepository(ctx context.Context, lessonID, tutorID string, req CreateQuizRequest) (*QuizMetadata, error) {
@@ -125,65 +123,45 @@ func (a *App) CreateQuestionRepository(ctx context.Context, quizID, tutorID stri
 }
 
 func (a *App) UpdateQuestionRepository(ctx context.Context, questionID, tutorID string, req CreateQuestionRequest) (*QuizQuestion, error) {
-	var question QuizQuestion
+	var optTexts []string
+	var optCorrects []bool
+	for _, o := range req.Options {
+		optTexts = append(optTexts, o.OptionText)
+		optCorrects = append(optCorrects, o.IsCorrect)
+	}
 
-	err := postgres.WithTx(ctx, a.DB, func(tx pgx.Tx) error {
-		var (
-			questionExists bool
-			isOwner        bool
-		)
-		if err := tx.QueryRow(ctx, CheckQuestionOwner, questionID, tutorID).Scan(&questionExists, &isOwner); err != nil {
-			return err
-		}
+	var arrTexts []string
+	var arrOrders []int64
+	for _, it := range req.ArrangeItems {
+		arrTexts = append(arrTexts, it.ItemText)
+		arrOrders = append(arrOrders, int64(it.CorrectOrder))
+	}
 
-		if err := postgres.CheckConditions(
-			postgres.Condition{Failed: !questionExists, Err: generic.ErrQuizQuestionNotFound},
-			postgres.Condition{Failed: !isOwner, Err: generic.ErrQuizAccessDenied},
-		); err != nil {
-			return err
-		}
+	var (
+		questionExists bool
+		isOwner        bool
+		questionData   []byte
+	)
 
-		if err := tx.QueryRow(
-			ctx, UpdateQuestion, questionID, req.QuestionType, req.QuestionText, req.Points, req.FillBlankHint,
-		).Scan(
-			&question.ID, &question.QuizID, &question.QuestionType, &question.QuestionText,
-			&question.Points, &question.FillBlankHint, &question.CreatedAt, &question.UpdatedAt,
-		); err != nil {
-			return err
-		}
-
-		if _, err := tx.Exec(ctx, DeleteQuestionOptions, questionID); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, DeleteQuestionArrangeItems, questionID); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, DeleteQuestionFillAnswers, questionID); err != nil {
-			return err
-		}
-
-		for _, o := range req.Options {
-			if _, err := tx.Exec(ctx, InsertQuestionOption, questionID, o.OptionText, o.IsCorrect); err != nil {
-				return err
-			}
-		}
-		for _, arr := range req.ArrangeItems {
-			if _, err := tx.Exec(ctx, InsertQuestionArrangeItem, questionID, arr.ItemText, arr.CorrectOrder); err != nil {
-				return err
-			}
-		}
-		for _, ans := range req.FillAnswers {
-			if _, err := tx.Exec(ctx, InsertQuestionFillAnswer, questionID, ans); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
+	err := a.DB.QueryRow(
+		ctx,
+		UpdateQuestionFull,
+		questionID, tutorID, req.QuestionType, req.QuestionText, req.Points, req.FillBlankHint,
+		optTexts, optCorrects, arrTexts, arrOrders, req.FillAnswers,
+	).Scan(&questionExists, &isOwner, &questionData)
 	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+
+	if err := postgres.CheckConditions(
+		postgres.Condition{Failed: !questionExists, Err: generic.ErrQuizQuestionNotFound},
+		postgres.Condition{Failed: !isOwner, Err: generic.ErrQuizAccessDenied},
+		postgres.Condition{Failed: len(questionData) == 0 || string(questionData) == "null", Err: errors.New("failed to update question")},
+	); err != nil {
 		return nil, err
 	}
-	return &question, nil
+
+	return postgres.DecodeJSON[QuizQuestion](questionData)
 }
 
 func (a *App) DeleteQuestionRepository(ctx context.Context, id, tutorID string) (string, error) {

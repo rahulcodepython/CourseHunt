@@ -13,10 +13,7 @@ export default function UserPurchasedCoursesPage() {
   const params = useParams<{ userId: string }>();
   const userId = params.userId as string;
 
-  useSetBreadcrumbs([
-    { label: "Users", href: "/users" },
-    { label: "Purchased Courses" },
-  ]);
+  useSetBreadcrumbs([{ label: "Users", href: "/users" }, { label: "Purchased Courses" }]);
 
   return (
     <div className="space-y-6">

@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"coursehunt/server/internals/config"
-	"coursehunt/server/internals/middlewares"
 	"coursehunt/server/internals/pkg/jwt"
 	"coursehunt/server/internals/pkg/minio"
 	"coursehunt/server/internals/pkg/postgres"
@@ -20,6 +21,8 @@ import (
 )
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
 	// Load application configuration
 	cfg := config.Load()
 
@@ -34,19 +37,21 @@ func main() {
 	// Connect to MinIO storage, continuing without file storage if initialization fails.
 	storage, err := minio.Connect(cfg)
 	if err != nil {
-		log.Printf("[main] minio connect warning: %v (continuing without file storage)", err)
+		slog.Warn("minio connect failed, continuing without file storage", "error", err)
 	}
 
 	// Create root context for background services like JWKS keyfunc refresh
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Initialize JWKS JWT verifier
+	// Initialize JWKS JWT verifier. Auth is not optional — every protected
+	// route depends on it, so a bad JWKS URL must fail the deploy here
+	// rather than let the server boot and 500 on every authenticated
+	// request at runtime.
 	verifier, err := jwt.NewVerifier(ctx, cfg.JWKSURL)
 	if err != nil {
-		log.Printf("[main] jwks verifier init warning: %v", err)
+		log.Fatalf("[main] jwks verifier init failed: %v", err)
 	}
-	middlewares.InitAuth(verifier)
 
 	// Create the Fiber app with production-oriented defaults.
 	app := fiber.New(fiber.Config{
@@ -69,11 +74,8 @@ func main() {
 		ReadBufferSize: 16 * 1024,
 	})
 
-	// Scalar API docs
-	utils.ServeScalarDocs(app)
-
 	// Setup router composition root
-	r := router.New(app, db, rdb, storage, cfg)
+	r := router.New(app, db, rdb, storage, cfg, verifier)
 	r.SetUp()
 
 	// Gracefully stop the server on SIGINT or SIGTERM.
@@ -81,15 +83,18 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-quit
-		log.Println("[main] Shutting down server...")
+		slog.Info("shutting down server")
 		cancel()
-		if err := app.Shutdown(); err != nil {
-			log.Printf("[main] shutdown: %v", err)
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer shutdownCancel()
+		if err := app.ShutdownWithContext(shutdownCtx); err != nil {
+			slog.Error("shutdown error", "error", err)
 		}
 	}()
 
 	addr := ":" + cfg.Port
-	log.Printf("[main] CourseHunt API listening on %s", addr)
+	slog.Info("CourseHunt API listening", "addr", addr)
 	if err := app.Listen(addr); err != nil {
 		log.Fatalf("[main] listen: %v", err)
 	}

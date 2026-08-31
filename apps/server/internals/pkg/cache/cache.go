@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -83,11 +83,11 @@ func (c *Cache) Get(ctx context.Context, key string, dest any) (bool, error) {
 	if err == redis.Nil {
 		return false, nil
 	} else if err != nil {
-		log.Printf("[Cache] Get error for key %s: %v", key, err)
+		slog.Error("cache get error", "key", key, "error", err)
 		return false, nil
 	}
 	if err := json.Unmarshal([]byte(val), dest); err != nil {
-		log.Printf("[Cache] JSON unmarshal error for key %s: %v", key, err)
+		slog.Error("cache json unmarshal error", "key", key, "error", err)
 		return false, nil
 	}
 	return true, nil
@@ -105,11 +105,11 @@ func (c *Cache) Set(ctx context.Context, key string, val any, ttl time.Duration)
 	}
 	data, err := json.Marshal(val)
 	if err != nil {
-		log.Printf("[Cache] JSON marshal error for key %s: %v", key, err)
+		slog.Error("cache json marshal error", "key", key, "error", err)
 		return err
 	}
 	if err := c.client.Set(ctx, key, data, ttl).Err(); err != nil {
-		log.Printf("[Cache] Set error for key %s: %v", key, err)
+		slog.Error("cache set error", "key", key, "error", err)
 		return nil
 	}
 	return nil
@@ -120,13 +120,30 @@ func Set[T any](c *Cache, ctx context.Context, key string, val T, ttl time.Durat
 	return c.Set(ctx, key, val, ttl)
 }
 
+// Fetch returns the cached value at key if present; otherwise it calls fn,
+// caches the result for ttl, and returns it — the read-check-set pattern
+// otherwise hand-written at the top of most cached service methods.
+func Fetch[T any](ctx context.Context, c *Cache, key string, ttl time.Duration, fn func() (T, error)) (T, error) {
+	var cached T
+	if hit, _ := c.Get(ctx, key, &cached); hit {
+		return cached, nil
+	}
+	result, err := fn()
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+	_ = c.Set(ctx, key, result, ttl)
+	return result, nil
+}
+
 // Delete removes specific keys from Redis.
 func (c *Cache) Delete(ctx context.Context, keys ...string) error {
 	if c == nil || c.client == nil || len(keys) == 0 {
 		return nil
 	}
 	if err := c.client.Del(ctx, keys...).Err(); err != nil {
-		log.Printf("[Cache] Delete error: %v", err)
+		slog.Error("cache delete error", "error", err)
 	}
 	return nil
 }
@@ -143,7 +160,7 @@ func (c *Cache) DeleteByPattern(ctx context.Context, pattern string) error {
 		var k []string
 		k, cursor, err = c.client.Scan(ctx, cursor, pattern, 100).Result()
 		if err != nil {
-			log.Printf("[Cache] DeleteByPattern scan error (%s): %v", pattern, err)
+			slog.Error("cache delete-by-pattern scan error", "pattern", pattern, "error", err)
 			return nil
 		}
 		keys = append(keys, k...)
@@ -153,7 +170,7 @@ func (c *Cache) DeleteByPattern(ctx context.Context, pattern string) error {
 	}
 	if len(keys) > 0 {
 		if err := c.client.Del(ctx, keys...).Err(); err != nil {
-			log.Printf("[Cache] DeleteByPattern del error (%s): %v", pattern, err)
+			slog.Error("cache delete-by-pattern delete error", "pattern", pattern, "error", err)
 		}
 	}
 	return nil

@@ -36,7 +36,6 @@ func (a *App) CreateRepository(ctx context.Context, userID, courseID string, req
 }
 
 func (a *App) ListRepository(ctx context.Context, scope generic.AuthScope, userID string, page, limit int, isPinned, userName, userEmail, courseID string) ([]Feedback, int, error) {
-	offset := (page - 1) * limit
 	filter := postgres.NewFilter()
 
 	if isPinned == "true" || isPinned == "false" {
@@ -55,8 +54,7 @@ func (a *App) ListRepository(ctx context.Context, scope generic.AuthScope, userI
 		filter.Add("c.tutor_id = $%d", userID)
 	}
 
-	limitIdx := filter.NextIdx()
-	filter.AddArgs(limit, offset)
+	limitIdx := filter.Paginate(page, limit)
 
 	query := BuildListQuery(filter.Where(""), limitIdx)
 

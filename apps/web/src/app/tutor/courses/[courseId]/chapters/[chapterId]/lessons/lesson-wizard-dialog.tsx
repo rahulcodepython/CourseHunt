@@ -88,7 +88,7 @@ export function LessonWizardDialog({
   const { data: rawContent } = useLessonContentQuery(editingLesson?.id ?? "");
   const content = rawContent?.success ? rawContent.data : null;
   const { data: rawQuizMetadata } = useQuizMetadataQuery(editingLesson?.id ?? "");
-  const quizMetadata = rawQuizMetadata?.success ? rawQuizMetadata.data ?? null : null;
+  const quizMetadata = rawQuizMetadata?.success ? (rawQuizMetadata.data ?? null) : null;
 
   const [step, setStep] = React.useState<1 | 2>(1);
   const [measuredDuration, setMeasuredDuration] = React.useState<number | null>(null);
@@ -198,10 +198,16 @@ export function LessonWizardDialog({
       data.lesson_type === "video" && data.video_url
         ? addVideoMutation.execute({
             id: lesson.id,
-            data: { video_url: data.video_url, written_content: data.written_content?.trim() || null },
+            data: {
+              video_url: data.video_url,
+              written_content: data.written_content?.trim() || null,
+            },
           })
         : data.lesson_type === "document" && data.document_content?.trim()
-          ? addDocumentMutation.execute({ id: lesson.id, data: { content: data.document_content.trim() } })
+          ? addDocumentMutation.execute({
+              id: lesson.id,
+              data: { content: data.document_content.trim() },
+            })
           : data.lesson_type === "quiz"
             ? createQuizMutation.execute({
                 lessonId: lesson.id,
@@ -216,7 +222,10 @@ export function LessonWizardDialog({
     await Promise.all([contentCommit, flushPendingUploads()]);
 
     if (data.lesson_type === "video" && measuredDuration != null) {
-      await updateLessonMutation.execute({ id: lesson.id, data: { duration_seconds: measuredDuration } });
+      await updateLessonMutation.execute({
+        id: lesson.id,
+        data: { duration_seconds: measuredDuration },
+      });
     }
 
     onOpenChange(false);
@@ -264,7 +273,11 @@ export function LessonWizardDialog({
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="lesson-title">Title</Label>
-              <Input id="lesson-title" placeholder="e.g. Introduction to React" {...register("title")} />
+              <Input
+                id="lesson-title"
+                placeholder="e.g. Introduction to React"
+                {...register("title")}
+              />
               {errors.title && <p className="text-xs text-red-400">{errors.title.message}</p>}
             </div>
             <div className="space-y-1.5">
@@ -273,7 +286,11 @@ export function LessonWizardDialog({
                 control={control}
                 name="lesson_type"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange} disabled={!!editingLesson}>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={!!editingLesson}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -345,7 +362,12 @@ export function LessonWizardDialog({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="video-written-content">Written Content (optional, Markdown)</Label>
-                <Button type="button" variant="outline" size="sm" onClick={() => setPreviewingWritten((v) => !v)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPreviewingWritten((v) => !v)}
+                >
                   <Icon name={previewingWritten ? "pencil" : "eye"} className="size-3.5" />
                   {previewingWritten ? "Write" : "Preview"}
                 </Button>
@@ -374,7 +396,12 @@ export function LessonWizardDialog({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="document-content">Content (Markdown)</Label>
-              <Button type="button" variant="outline" size="sm" onClick={() => setPreviewingDocument((v) => !v)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPreviewingDocument((v) => !v)}
+              >
                 <Icon name={previewingDocument ? "pencil" : "eye"} className="size-3.5" />
                 {previewingDocument ? "Write" : "Preview"}
               </Button>
@@ -402,7 +429,11 @@ export function LessonWizardDialog({
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="quiz-title">Quiz Title</Label>
-              <Input id="quiz-title" placeholder="e.g. Chapter 1 Assessment" {...register("quiz_title")} />
+              <Input
+                id="quiz-title"
+                placeholder="e.g. Chapter 1 Assessment"
+                {...register("quiz_title")}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="quiz-time">Time Limit (seconds)</Label>
@@ -433,7 +464,9 @@ export function LessonWizardDialog({
                   Questions are managed on their own page, once the quiz is saved.
                 </p>
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/tutor/courses/${courseId}/chapters/${chapterId}/lessons/${editingLesson.id}/quiz`}>
+                  <Link
+                    href={`/tutor/courses/${courseId}/chapters/${chapterId}/lessons/${editingLesson.id}/quiz`}
+                  >
                     <Icon name="list" className="size-4" />
                     Manage Questions
                   </Link>

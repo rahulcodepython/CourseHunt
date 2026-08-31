@@ -69,9 +69,7 @@ export const getColumns = (
   columnHelper.accessor("subcategories", {
     header: "Subcategories",
     cell: ({ getValue }) => (
-      <span className="tabular-nums font-medium">
-        {getValue()?.length ?? 0} items
-      </span>
+      <span className="tabular-nums font-medium">{getValue()?.length ?? 0} items</span>
     ),
   }),
   columnHelper.display({
@@ -82,7 +80,12 @@ export const getColumns = (
       return (
         <RowActions>
           <RowActionButton icon="pencil" label="Edit Category" onClick={() => onEdit(category)} />
-          <RowActionButton icon="trash" label="Delete Category" onClick={() => onDelete(category)} destructive />
+          <RowActionButton
+            icon="trash"
+            label="Delete Category"
+            onClick={() => onDelete(category)}
+            destructive
+          />
         </RowActions>
       );
     },

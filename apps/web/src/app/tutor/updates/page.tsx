@@ -29,6 +29,7 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 
 // Sentinel Select value standing in for "no course" (course_id omitted from
@@ -104,15 +105,8 @@ function UpdateDialog({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="upd-message">Message</Label>
-          <Textarea
-            id="upd-message"
-            placeholder="What's new?"
-            {...register("message")}
-            rows={4}
-          />
-          {errors.message && (
-            <p className="text-xs text-red-400">{errors.message.message}</p>
-          )}
+          <Textarea id="upd-message" placeholder="What's new?" {...register("message")} rows={4} />
+          {errors.message && <p className="text-xs text-red-400">{errors.message.message}</p>}
         </div>
         {!editing && (
           <div className="space-y-1.5">
@@ -136,17 +130,11 @@ function UpdateDialog({
                 </Select>
               )}
             />
-            {errors.courseId && (
-              <p className="text-xs text-red-400">{errors.courseId.message}</p>
-            )}
+            {errors.courseId && <p className="text-xs text-red-400">{errors.courseId.message}</p>}
           </div>
         )}
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <LoadingButton
@@ -167,28 +155,21 @@ export default function TutorUpdatesPage() {
 
   const updates: CourseUpdate[] = (rawUpdates?.data?.data as any) ?? [];
 
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<CourseUpdate | null>(null);
-  const [deleting, setDeleting] = React.useState<CourseUpdate | null>(null);
+  const {
+    dialogOpen,
+    setDialogOpen,
+    editing,
+    openCreate,
+    openEdit,
+    deleting,
+    setDeleting,
+    requestDelete,
+    confirmDelete,
+  } = useCrudDialogState<CourseUpdate>();
 
-  const openCreate = () => {
-    setEditing(null);
-    setDialogOpen(true);
-  };
+  const handleDelete = () => confirmDelete(deleteMutation.execute);
 
-  const openEdit = (u: CourseUpdate) => {
-    setEditing(u);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (deleting) {
-      await deleteMutation.execute(deleting.id);
-      setDeleting(null);
-    }
-  };
-
-  const columns = getColumns(openEdit, setDeleting);
+  const columns = getColumns(openEdit, requestDelete);
 
   return (
     <div className="space-y-6">
@@ -213,11 +194,7 @@ export default function TutorUpdatesPage() {
         loadingText="Loading updates..."
       />
 
-      <UpdateDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        editing={editing}
-      />
+      <UpdateDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} />
 
       <ConfirmDeleteDialog
         open={!!deleting}

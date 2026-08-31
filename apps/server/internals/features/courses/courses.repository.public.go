@@ -24,7 +24,6 @@ type PublicListPayload struct {
 }
 
 func (a *App) PublicListRepository(ctx context.Context, page, limit int, categoryID, subcategoryID, level, search string) ([]CoursePublicResponse, int, error) {
-	offset := (page - 1) * limit
 	filter := postgres.NewFilter()
 	filter.AddRaw("c.status = 'published'")
 
@@ -43,8 +42,7 @@ func (a *App) PublicListRepository(ctx context.Context, page, limit int, categor
 		filter.Add2("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", "%"+search+"%")
 	}
 
-	limitIdx := filter.NextIdx()
-	filter.AddArgs(limit, offset)
+	limitIdx := filter.Paginate(page, limit)
 
 	result, err := postgres.QueryJSON[PublicListPayload](ctx, a.DB, BuildPublicListQuery(filter.Join(""), limitIdx), filter.Args...)
 	if err != nil {

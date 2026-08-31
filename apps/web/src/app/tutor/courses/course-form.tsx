@@ -181,11 +181,7 @@ export function CourseForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="course-title">Title</Label>
-        <Input
-          id="course-title"
-          {...register("title")}
-          placeholder="e.g. React for Beginners"
-        />
+        <Input id="course-title" {...register("title")} placeholder="e.g. React for Beginners" />
         {errors.title && <p className="text-xs text-red-400">{errors.title.message}</p>}
       </div>
 
@@ -234,11 +230,7 @@ export function CourseForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="course-language">Language</Label>
-          <Input
-            id="course-language"
-            {...register("language")}
-            placeholder="English"
-          />
+          <Input id="course-language" {...register("language")} placeholder="English" />
         </div>
         <div className="space-y-1.5">
           <Label>Level</Label>
@@ -339,14 +331,14 @@ export function CourseForm({
       <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
         <div>
           <p className="text-sm font-medium">Free Course</p>
-          <p className="text-xs text-muted-foreground">Students enroll instantly at no cost — price and coupons are disabled</p>
+          <p className="text-xs text-muted-foreground">
+            Students enroll instantly at no cost — price and coupons are disabled
+          </p>
         </div>
         <Controller
           control={control}
           name="is_free"
-          render={({ field }) => (
-            <Switch checked={field.value} onCheckedChange={field.onChange} />
-          )}
+          render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
         />
       </div>
       <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
@@ -358,7 +350,11 @@ export function CourseForm({
           control={control}
           name="coupon_allowed"
           render={({ field }) => (
-            <Switch checked={!isFree && field.value} disabled={isFree} onCheckedChange={field.onChange} />
+            <Switch
+              checked={!isFree && field.value}
+              disabled={isFree}
+              onCheckedChange={field.onChange}
+            />
           )}
         />
       </div>
@@ -367,10 +363,7 @@ export function CourseForm({
         <Button type="button" variant="outline" onClick={onSuccess}>
           Cancel
         </Button>
-        <LoadingButton
-          type="submit"
-          loading={createMutation.isPending || updateMutation.isPending}
-        >
+        <LoadingButton type="submit" loading={createMutation.isPending || updateMutation.isPending}>
           {editingCourse ? "Save Changes" : "Create Course"}
         </LoadingButton>
       </div>

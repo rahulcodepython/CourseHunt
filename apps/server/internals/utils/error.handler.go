@@ -14,7 +14,7 @@ import (
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	var apiErr *APIError
 	if errors.As(err, &apiErr) {
-		return json[any](c, apiErr.Status, false, apiErr.Message, nil, apiErr.Err)
+		return json(c, apiErr.Status, false, apiErr.Message, apiErr.Data, apiErr.Err)
 	}
 
 	code := fiber.StatusInternalServerError

@@ -24,7 +24,9 @@ export const columns: ColumnDef<Transaction, any>[] = [
   }),
   columnHelper.accessor("created_at", {
     header: "Date",
-    cell: ({ getValue }) => <span className="text-muted-foreground">{formatDateTime(getValue())}</span>,
+    cell: ({ getValue }) => (
+      <span className="text-muted-foreground">{formatDateTime(getValue())}</span>
+    ),
   }),
   columnHelper.accessor((row) => row.course?.title ?? "Unknown", {
     id: "course",
@@ -33,7 +35,9 @@ export const columns: ColumnDef<Transaction, any>[] = [
   }),
   columnHelper.accessor("amount", {
     header: "Amount",
-    cell: ({ getValue }) => <span className="font-medium tabular-nums">{formatINR(getValue() || 0)}</span>,
+    cell: ({ getValue }) => (
+      <span className="font-medium tabular-nums">{formatINR(getValue() || 0)}</span>
+    ),
   }),
   columnHelper.accessor("status", {
     header: "Status",

@@ -28,8 +28,7 @@ func (a *App) ListRepository(ctx context.Context, scope generic.AuthScope, page,
 		filter := postgres.NewFilter(courseID, callerID)
 		applyCommonFilters(filter, userName, userEmail, revoked)
 
-		limitIdx := filter.NextIdx()
-		filter.AddArgs(limit, offset)
+		limitIdx := filter.Paginate(page, limit)
 
 		query := BuildTutorListQuery(filter.AndPrefix(), limitIdx)
 

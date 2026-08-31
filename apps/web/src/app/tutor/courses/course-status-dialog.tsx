@@ -14,8 +14,16 @@ import { LoadingButton } from "@/components/loading-button";
 
 const STATUS_OPTIONS = [
   { value: COURSE_STATUS.DRAFT, label: "Draft", description: "Only visible to you" },
-  { value: COURSE_STATUS.PUBLISHED, label: "Published", description: "Live and visible to students" },
-  { value: COURSE_STATUS.ARCHIVED, label: "Archived", description: "Hidden from students, kept for records" },
+  {
+    value: COURSE_STATUS.PUBLISHED,
+    label: "Published",
+    description: "Live and visible to students",
+  },
+  {
+    value: COURSE_STATUS.ARCHIVED,
+    label: "Archived",
+    description: "Hidden from students, kept for records",
+  },
 ];
 
 export function CourseStatusDialog({
@@ -62,7 +70,11 @@ export function CourseStatusDialog({
         ))}
       </RadioGroup>
       <DialogFooter className="mt-2">
-        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={updateMutation.isPending}>
+        <Button
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={updateMutation.isPending}
+        >
           Cancel
         </Button>
         <LoadingButton onClick={handleSave} loading={updateMutation.isPending}>

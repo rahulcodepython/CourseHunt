@@ -14,43 +14,48 @@ import { Icon } from "@/components/icon";
 import { getColumns } from "./columns";
 
 export default function StudentCertificatesPage() {
-    const { user } = useSession();
-    const { data: rawCerts, isLoading } = useCertificatesQuery();
-    const { data: rawEnrolled } = useEnrolledCoursesQuery();
-    const claimMutation = useClaimCertificateMutation();
+  const { user } = useSession();
+  const { data: rawCerts, isLoading } = useCertificatesQuery();
+  const { data: rawEnrolled } = useEnrolledCoursesQuery();
+  const claimMutation = useClaimCertificateMutation();
 
-    const certificates: Certificate[] = rawCerts?.data?.data ?? [];
-    const enrolled = rawEnrolled?.data?.data ?? [];
+  const certificates: Certificate[] = rawCerts?.data?.data ?? [];
+  const enrolled = rawEnrolled?.data?.data ?? [];
 
-    const certifiedCourseIds = new Set(certificates.map((c) => c.course.id));
-    const claimable = enrolled.filter((c) => c.completion_percent >= 100 && !certifiedCourseIds.has(c.id));
+  const certifiedCourseIds = new Set(certificates.map((c) => c.course.id));
+  const claimable = enrolled.filter(
+    (c) => c.completion_percent >= 100 && !certifiedCourseIds.has(c.id),
+  );
 
-    const claimableCerts = claimable.map((c) => ({
-        id: `claimable_${c.id}`,
-        user_id: user?.id ?? "",
-        course: c as any,
-        tutor: (c as any).tutor,
-        issued_at: new Date().toISOString(),
-        isClaimable: true,
-    }));
+  const claimableCerts = claimable.map((c) => ({
+    id: `claimable_${c.id}`,
+    user_id: user?.id ?? "",
+    course: c as any,
+    tutor: (c as any).tutor,
+    issued_at: new Date().toISOString(),
+    isClaimable: true,
+  }));
 
-    const allCerts = [...claimableCerts, ...certificates];
+  const allCerts = [...claimableCerts, ...certificates];
 
-    const columns = React.useMemo(() => getColumns(user?.name ?? "Student", claimMutation), [user?.name, claimMutation]);
+  const columns = React.useMemo(
+    () => getColumns(user?.name ?? "Student", claimMutation),
+    [user?.name, claimMutation],
+  );
 
-    return (
-        <div className="space-y-6">
-            <PageHeader title="Certificates" subtitle="Certificates earned for your completed courses" />
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Certificates" subtitle="Certificates earned for your completed courses" />
 
-            <DataTable
-                columns={columns}
-                data={allCerts as any[]}
-                showColumnToggle={false}
-                emptyIcon="shield-check"
-                emptyText="No certificates yet — complete a course to earn one."
-                isLoading={isLoading}
-                loadingText="Loading certificates..."
-            />
-        </div>
-    );
+      <DataTable
+        columns={columns}
+        data={allCerts as any[]}
+        showColumnToggle={false}
+        emptyIcon="shield-check"
+        emptyText="No certificates yet — complete a course to earn one."
+        isLoading={isLoading}
+        loadingText="Loading certificates..."
+      />
+    </div>
+  );
 }

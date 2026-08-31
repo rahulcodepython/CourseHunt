@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"coursehunt/server/internals/pkg/cache"
 	"coursehunt/server/internals/utils"
 )
 
@@ -16,19 +17,17 @@ type categoryListCacheData struct {
 func (a *App) List(ctx context.Context, page, limit int, name string) ([]Category, int, error) {
 	cacheKey := fmt.Sprintf("categories:list:page:%d:limit:%d:name:%s", page, limit, name)
 
-	var cached categoryListCacheData
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached.Cats, cached.Total, nil
-	}
-
-	cats, total, err := a.ListRepository(ctx, page, limit, name)
+	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (categoryListCacheData, error) {
+		cats, total, err := a.ListRepository(ctx, page, limit, name)
+		if err != nil {
+			return categoryListCacheData{}, utils.ErrInternal("Failed to fetch categories.", err)
+		}
+		return categoryListCacheData{Cats: cats, Total: total}, nil
+	})
 	if err != nil {
-		return nil, 0, utils.ErrInternal("Failed to fetch categories.", err)
+		return nil, 0, err
 	}
-
-	_ = a.Cache.Set(ctx, cacheKey, categoryListCacheData{Cats: cats, Total: total}, 10*time.Minute)
-
-	return cats, total, nil
+	return result.Cats, result.Total, nil
 }
 
 func (a *App) Create(ctx context.Context, req CreateCategoryRequest) (*Category, error) {
@@ -37,7 +36,7 @@ func (a *App) Create(ctx context.Context, req CreateCategoryRequest) (*Category,
 		return nil, utils.ErrInternal("Failed to create category.", err)
 	}
 
-	a.Cache.InvalidateCategories(ctx)
+	a.Cache.Invalidate(ctx, "categories:*")
 
 	return cat, nil
 }
@@ -48,7 +47,7 @@ func (a *App) Update(ctx context.Context, id string, req UpdateCategoryRequest) 
 		return nil, utils.ErrInternal("Failed to update category.", err)
 	}
 
-	a.Cache.InvalidateCategories(ctx)
+	a.Cache.Invalidate(ctx, "categories:*")
 
 	return cat, nil
 }
@@ -59,7 +58,7 @@ func (a *App) Delete(ctx context.Context, id string) (string, error) {
 		return "", utils.ErrInternal("Failed to delete category.", err)
 	}
 
-	a.Cache.InvalidateCategories(ctx)
+	a.Cache.Invalidate(ctx, "categories:*")
 
 	return deletedID, nil
 }

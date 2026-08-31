@@ -105,7 +105,7 @@ func (a *App) initiate(ctx context.Context, userID string, req InitiateTransacti
 
 	txID := uuid.NewString()
 
-	order, err := a.Rzp.CreateOrder(amountPaise, "INR", txID)
+	order, err := a.Rzp.CreateOrder(ctx, amountPaise, "INR", txID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create payment order: %w", err)
 	}

@@ -53,7 +53,6 @@ func (a *App) MarkPaymentFailedRepository(ctx context.Context, errorDescription 
 }
 
 func (a *App) ListRepository(ctx context.Context, page, limit int, userID, tutorID, status, courseID, dateFrom, dateTo string) ([]Transaction, int, error) {
-	offset := (page - 1) * limit
 	filter := postgres.NewFilter()
 
 	if userID != "" {
@@ -75,9 +74,8 @@ func (a *App) ListRepository(ctx context.Context, page, limit int, userID, tutor
 		filter.Add("t.created_at <= $%d", dateTo)
 	}
 
-	limitParam := filter.NextIdx()
+	limitParam := filter.Paginate(page, limit)
 	offsetParam := limitParam + 1
-	filter.AddArgs(limit, offset)
 
 	query := BuildListTransactionsQuery(filter.Where(""), limitParam, offsetParam)
 

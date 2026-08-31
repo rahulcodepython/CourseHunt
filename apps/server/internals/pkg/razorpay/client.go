@@ -2,6 +2,7 @@ package razorpay
 
 import (
 	"bytes"
+	"context"
 	"coursehunt/server/internals/generic"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -29,14 +30,14 @@ func NewClient(keyID, secret, webhookSecret, baseURL string) *Client {
 
 // ── Public Methods ──
 
-func (c *Client) CreateOrder(amount int64, currency, receipt string) (*OrderResponse, error) {
+func (c *Client) CreateOrder(ctx context.Context, amount int64, currency, receipt string) (*OrderResponse, error) {
 	payload := OrderRequest{Amount: amount, Currency: currency, Receipt: receipt}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("razorpay: marshal order: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, c.BaseURL+"/orders", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/orders", bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("razorpay: new request: %w", err)
 	}

@@ -21,10 +21,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Users"
-        subtitle="Manage platform users"
-      />
+      <PageHeader title="Users" subtitle="Manage platform users" />
 
       <DataTable
         columns={columns}

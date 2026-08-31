@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"coursehunt/server/internals/generic"
+	"coursehunt/server/internals/pkg/cache"
 	"coursehunt/server/internals/utils"
 )
 
@@ -23,40 +24,32 @@ func (a *App) PublicList(ctx context.Context, page, limit int, catID, subID, lvl
 
 	cacheKey := fmt.Sprintf("courses:public:list:p:%d:l:%d:c:%s:s:%s:lvl:%s:q:%s", page, limit, url.QueryEscape(catID), url.QueryEscape(subID), url.QueryEscape(lvl), url.QueryEscape(search))
 
-	var cached publicCoursesCacheData
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached.Cards, cached.Total, nil
-	}
-
-	cards, total, err := a.PublicListRepository(ctx, page, limit, catID, subID, lvl, search)
+	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (publicCoursesCacheData, error) {
+		cards, total, err := a.PublicListRepository(ctx, page, limit, catID, subID, lvl, search)
+		if err != nil {
+			return publicCoursesCacheData{}, utils.ErrInternal("Failed to fetch public courses.", err)
+		}
+		return publicCoursesCacheData{Cards: cards, Total: total}, nil
+	})
 	if err != nil {
-		return nil, 0, utils.ErrInternal("Failed to fetch public courses.", err)
+		return nil, 0, err
 	}
-
-	_ = a.Cache.Set(ctx, cacheKey, publicCoursesCacheData{Cards: cards, Total: total}, 5*time.Minute)
-
-	return cards, total, nil
+	return result.Cards, result.Total, nil
 }
 
 func (a *App) PublicSingle(ctx context.Context, slug, userID string) (*CourseLandingResponse, error) {
 	cacheKey := fmt.Sprintf("courses:public:single:slug:%s:u:%s", slug, userID)
 
-	var cached CourseLandingResponse
-	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return &cached, nil
-	}
-
-	resp, err := a.PublicSingleRepository(ctx, slug, userID)
-	if err != nil {
-		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
-			return nil, utils.ErrNotFound("Course not found.", err)
+	return cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (*CourseLandingResponse, error) {
+		resp, err := a.PublicSingleRepository(ctx, slug, userID)
+		if err != nil {
+			if errors.Is(err, generic.ErrCoursesCourseNotFound) {
+				return nil, utils.ErrNotFound("Course not found.", err)
+			}
+			return nil, utils.ErrInternal("Failed to fetch course details.", err)
 		}
-		return nil, utils.ErrInternal("Failed to fetch course details.", err)
-	}
-
-	_ = a.Cache.Set(ctx, cacheKey, resp, 5*time.Minute)
-
-	return resp, nil
+		return resp, nil
+	})
 }
 
 func (a *App) Study(ctx context.Context, courseID, userID string) (*CourseStudyResponse, error) {
@@ -128,7 +121,7 @@ func (a *App) Create(ctx context.Context, userID string, req CreateCourseRequest
 		return nil, utils.ErrInternal("Failed to create course.", err)
 	}
 
-	a.Cache.InvalidateCourses(ctx)
+	a.Cache.Invalidate(ctx, "courses:*")
 
 	return resp, nil
 }
@@ -163,7 +156,7 @@ func (a *App) Update(ctx context.Context, id, userID string, req UpdateCourseReq
 		}
 	}
 
-	a.Cache.InvalidateCourses(ctx)
+	a.Cache.Invalidate(ctx, "courses:*")
 
 	return course, nil
 }
@@ -180,7 +173,7 @@ func (a *App) Delete(ctx context.Context, id, userID string) (string, error) {
 		return "", utils.ErrInternal("Failed to delete course.", err)
 	}
 
-	a.Cache.InvalidateCourses(ctx)
+	a.Cache.Invalidate(ctx, "courses:*")
 
 	return deletedID, nil
 }

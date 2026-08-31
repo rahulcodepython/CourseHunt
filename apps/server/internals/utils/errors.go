@@ -5,12 +5,17 @@ import "github.com/gofiber/fiber/v2"
 // APIError is the only error type any handler/service returns up the call
 // stack. Nothing below the HTTP layer writes a status code or JSON body
 // directly — it constructs one of these and returns it, and the central
-// ErrorHandler (errorHandler.go) renders it through the standard response
+// ErrorHandler (error.handler.go) renders it through the standard response
 // envelope. Err carries the underlying cause for logging only; it is never
-// serialized to the client.
+// serialized to the client. Data is optional and nil for almost every
+// caller — it exists for the rare non-2xx response that still needs to
+// carry a payload (e.g. a 503 health check reporting which dependencies
+// are down), set directly on the struct literal rather than via a
+// dedicated constructor.
 type APIError struct {
 	Status  int
 	Message string
+	Data    any
 	Err     error
 }
 

@@ -12,13 +12,8 @@ import (
 // pagination depth.
 const maxPage = 1_000_000_000
 
+// PaginationParams extracts sanitized page and limit integers from query parameters.
 func PaginationParams(c *fiber.Ctx) (int, int) {
-	// strconv.Atoi returns (math.MaxInt, err) — not 0 — on overflow (e.g. a
-	// page value with more digits than fits an int), so the error MUST be
-	// checked here: silently discarding it let an oversized page value slip
-	// through the `page < 1` guard below unclamped, and `(page-1) * limit`
-	// would then wrap around into a negative offset a few lines downstream,
-	// turning one crafted query string into a 500 on every paginated route.
 	page, err := strconv.Atoi(c.Query("page", "1"))
 	if err != nil || page < 1 {
 		page = 1

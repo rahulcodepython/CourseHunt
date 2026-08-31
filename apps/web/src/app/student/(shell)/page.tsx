@@ -47,10 +47,29 @@ export default function StudentDashboardPage() {
       <PageHeader title="Dashboard" subtitle="Your learning at a glance" />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Enrolled Courses" value={d.enrolled_courses_count.toLocaleString()} icon="book" />
-        <StatCard title="Completed" value={d.completed_courses_count.toLocaleString()} icon="check" iconClassName="text-green-600" />
-        <StatCard title="In Progress" value={d.in_progress_courses_count.toLocaleString()} icon="clock" iconClassName="text-amber-600" />
-        <StatCard title="Certificates" value={d.certificates_count.toLocaleString()} icon="user-check" iconClassName="text-blue-600" />
+        <StatCard
+          title="Enrolled Courses"
+          value={d.enrolled_courses_count.toLocaleString()}
+          icon="book"
+        />
+        <StatCard
+          title="Completed"
+          value={d.completed_courses_count.toLocaleString()}
+          icon="check"
+          iconClassName="text-green-600"
+        />
+        <StatCard
+          title="In Progress"
+          value={d.in_progress_courses_count.toLocaleString()}
+          icon="clock"
+          iconClassName="text-amber-600"
+        />
+        <StatCard
+          title="Certificates"
+          value={d.certificates_count.toLocaleString()}
+          icon="user-check"
+          iconClassName="text-blue-600"
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -83,7 +102,11 @@ export default function StudentDashboardPage() {
                     <div className="size-12 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center text-muted-foreground">
                       {course.image_url ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={course.image_url} alt={course.title} className="size-full object-cover" />
+                        <img
+                          src={course.image_url}
+                          alt={course.title}
+                          className="size-full object-cover"
+                        />
                       ) : (
                         <Icon name="book" className="size-5 opacity-40" />
                       )}
@@ -130,7 +153,9 @@ export default function StudentDashboardPage() {
                 {d.recent_certificates.map((cert, i) => (
                   <li key={i} className="flex items-center justify-between gap-3 text-sm">
                     <span className="truncate font-medium">{cert.course_title}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">{formatDate(cert.issued_at)}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {formatDate(cert.issued_at)}
+                    </span>
                   </li>
                 ))}
               </ul>

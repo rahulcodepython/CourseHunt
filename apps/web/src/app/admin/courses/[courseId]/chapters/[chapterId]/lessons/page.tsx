@@ -47,10 +47,7 @@ export default function ChapterLessonsPage() {
             </span>
           </Link>
         </Button>
-        <PageHeader
-          title="Chapter Lessons"
-          subtitle="Manage lessons for this chapter"
-        />
+        <PageHeader title="Chapter Lessons" subtitle="Manage lessons for this chapter" />
       </div>
 
       <DataTable

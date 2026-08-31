@@ -26,20 +26,14 @@ export const getColumns = (
           <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
             {course.image_url ? (
               /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={course.image_url}
-                alt={course.title}
-                className="size-full object-cover"
-              />
+              <img src={course.image_url} alt={course.title} className="size-full object-cover" />
             ) : (
               <Icon name="book" className="size-5 opacity-40" />
             )}
           </div>
           <div className="min-w-0">
             <p className="max-w-70 truncate font-medium">{course.title}</p>
-            <p className="text-xs text-muted-foreground">
-              {course.total_lectures} lectures
-            </p>
+            <p className="text-xs text-muted-foreground">{course.total_lectures} lectures</p>
           </div>
         </div>
       );
@@ -113,11 +107,7 @@ export const getColumns = (
             href={`/tutor/courses/${course.id}/faqs`}
           />
           <RowActionButton icon="pencil" label="Edit Course" onClick={() => onEdit(course)} />
-          <RowActionButton
-            icon="globe"
-            label="Set Status"
-            onClick={() => onSetStatus(course)}
-          />
+          <RowActionButton icon="globe" label="Set Status" onClick={() => onSetStatus(course)} />
           <RowActionButton
             icon="trash"
             label="Delete Course"

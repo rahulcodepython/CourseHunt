@@ -4,7 +4,12 @@ import { useQuizAttemptDetailQuery } from "@/query-hooks/quiz.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Icon } from "@/components/icon";
 import { cn } from "@/lib/utils";
 import { QUESTION_TYPE } from "@/lib/const";
@@ -29,7 +34,11 @@ function ChoiceAnswer({ question }: { question: QuizAttemptQuestionBreakdown }) 
             <span
               className={cn(
                 "flex size-4 shrink-0 items-center justify-center rounded-sm border",
-                correct ? "border-green-500 text-green-600" : selected ? "border-red-500 text-red-600" : "border-border",
+                correct
+                  ? "border-green-500 text-green-600"
+                  : selected
+                    ? "border-red-500 text-red-600"
+                    : "border-border",
               )}
             >
               {selected && <span className="size-2 rounded-[2px] bg-current" />}
@@ -58,13 +67,17 @@ function ChoiceAnswer({ question }: { question: QuizAttemptQuestionBreakdown }) 
 }
 
 function ArrangeAnswer({ question }: { question: QuizAttemptQuestionBreakdown }) {
-  const items = [...(question.arrange_items ?? [])].sort((a, b) => (a.submitted_order ?? 0) - (b.submitted_order ?? 0));
+  const items = [...(question.arrange_items ?? [])].sort(
+    (a, b) => (a.submitted_order ?? 0) - (b.submitted_order ?? 0),
+  );
   if (items.length === 0) {
     return <p className="text-sm text-muted-foreground">No items recorded for this question.</p>;
   }
   return (
     <div className="space-y-2">
-      <p className="text-sm text-muted-foreground">Shown in the order you submitted. Green rows are in the correct position.</p>
+      <p className="text-sm text-muted-foreground">
+        Shown in the order you submitted. Green rows are in the correct position.
+      </p>
       {items.map((item, index) => {
         const placed = item.submitted_order === item.correct_order;
         return (
@@ -106,10 +119,15 @@ function FillAnswer({ question }: { question: QuizAttemptQuestionBreakdown }) {
       </div>
       {!question.is_correct && (question.fill_answers?.length ?? 0) > 0 && (
         <div className="space-y-1.5">
-          <Label className="text-green-600">Correct answer{(question.fill_answers.length ?? 0) > 1 ? "s" : ""}</Label>
+          <Label className="text-green-600">
+            Correct answer{(question.fill_answers.length ?? 0) > 1 ? "s" : ""}
+          </Label>
           <ul className="space-y-1">
             {question.fill_answers.map((answer, i) => (
-              <li key={i} className="rounded-md border border-green-500/60 bg-green-500/5 px-3 py-2 text-sm text-green-700">
+              <li
+                key={i}
+                className="rounded-md border border-green-500/60 bg-green-500/5 px-3 py-2 text-sm text-green-700"
+              >
                 {answer}
               </li>
             ))}
@@ -120,7 +138,13 @@ function FillAnswer({ question }: { question: QuizAttemptQuestionBreakdown }) {
   );
 }
 
-export function QuizAttemptBreakdown({ attemptId, onBack }: { attemptId: string; onBack: () => void }) {
+export function QuizAttemptBreakdown({
+  attemptId,
+  onBack,
+}: {
+  attemptId: string;
+  onBack: () => void;
+}) {
   const { data: raw, isLoading } = useQuizAttemptDetailQuery(attemptId);
   const detail = raw?.data;
 
@@ -132,7 +156,9 @@ export function QuizAttemptBreakdown({ attemptId, onBack }: { attemptId: string;
           Back
         </Button>
         {detail && (
-          <span className={cn("text-sm font-medium", detail.passed ? "text-green-600" : "text-red-600")}>
+          <span
+            className={cn("text-sm font-medium", detail.passed ? "text-green-600" : "text-red-600")}
+          >
             {Math.round(detail.total_score)}% &middot; {detail.passed ? "Passed" : "Not Passed"}
           </span>
         )}
@@ -157,7 +183,11 @@ export function QuizAttemptBreakdown({ attemptId, onBack }: { attemptId: string;
                         name={q.is_skipped ? "circle" : q.is_correct ? "check" : "x"}
                         className={cn(
                           "size-4",
-                          q.is_skipped ? "text-muted-foreground" : q.is_correct ? "text-green-600" : "text-red-600",
+                          q.is_skipped
+                            ? "text-muted-foreground"
+                            : q.is_correct
+                              ? "text-green-600"
+                              : "text-red-600",
                         )}
                       />
                     </span>
@@ -168,8 +198,12 @@ export function QuizAttemptBreakdown({ attemptId, onBack }: { attemptId: string;
                     <p className="text-sm text-muted-foreground">This question was skipped.</p>
                   ) : (
                     <div className="space-y-3">
-                      {q.question_type === QUESTION_TYPE.SINGLE_CHOICE && <ChoiceAnswer question={q} />}
-                      {q.question_type === QUESTION_TYPE.MULTI_CHOICE && <ChoiceAnswer question={q} />}
+                      {q.question_type === QUESTION_TYPE.SINGLE_CHOICE && (
+                        <ChoiceAnswer question={q} />
+                      )}
+                      {q.question_type === QUESTION_TYPE.MULTI_CHOICE && (
+                        <ChoiceAnswer question={q} />
+                      )}
                       {q.question_type === QUESTION_TYPE.ARRANGE && <ArrangeAnswer question={q} />}
                       {q.question_type === QUESTION_TYPE.FILL_BLANK && <FillAnswer question={q} />}
                     </div>

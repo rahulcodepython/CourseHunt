@@ -354,83 +354,147 @@ const (
 		JOIN quiz_questions qq ON qq.id = ar.question_id;
 	`
 
-	CheckQuestionOwner = `
-		SELECT
-			EXISTS(SELECT 1 FROM quiz_questions WHERE id = $1) AS question_exists,
-			EXISTS(
-				SELECT 1 FROM quiz_questions qq
-				JOIN quiz_metadata qm ON qm.id = qq.quiz_id
-				JOIN lessons l ON l.id = qm.lesson_id
-				JOIN chapters ch ON ch.id = l.chapter_id
-				JOIN courses c ON c.id = ch.course_id
-				WHERE qq.id = $1 AND c.tutor_id = $2
-			) AS is_owner;
-	`
-
-	UpdateQuestion = `
-		UPDATE quiz_questions
-		SET question_type = $2, question_text = $3, points = $4, fill_blank_hint = $5, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $1
-		RETURNING id, quiz_id, question_type, question_text, points, fill_blank_hint, created_at, updated_at;
-	`
-
-	DeleteQuestionOptions = `DELETE FROM quiz_options WHERE question_id = $1;`
-
-	DeleteQuestionArrangeItems = `DELETE FROM quiz_arrange_items WHERE question_id = $1;`
-
-	DeleteQuestionFillAnswers = `DELETE FROM quiz_fill_blank_answers WHERE question_id = $1;`
-
-	InsertQuestionOption = `INSERT INTO quiz_options (question_id, option_text, is_correct) VALUES ($1, $2, $3);`
-
-	InsertQuestionArrangeItem = `INSERT INTO quiz_arrange_items (question_id, item_text, correct_order) VALUES ($1, $2, $3);`
-
-	InsertQuestionFillAnswer = `INSERT INTO quiz_fill_blank_answers (question_id, answer) VALUES ($1, $2);`
-
-	CheckQuizEnrollment = `
-		SELECT EXISTS (
-			SELECT 1 FROM enrollments e
-			JOIN quiz_metadata qm ON qm.id = $1
+	// UpdateQuestionFull replaces a question's type/text/points/hint and its
+	// entire options/arrange-items/fill-answers set in one round trip: the
+	// ownership check, the UPDATE, the three DELETEs, and the three
+	// UNNEST-batched re-INSERTs all run as one statement, mirroring
+	// CreateQuestion's array-param shape instead of looping one Exec per
+	// row (see quiz.repository.management.go). delete_barrier forces the
+	// deletes to complete before the re-inserts: sibling data-modifying
+	// CTEs in Postgres have no guaranteed relative order unless one reads
+	// the other's output, and here the inserts and deletes target the same
+	// question_id — without the barrier a re-insert could race ahead of
+	// the delete and be wiped out by it.
+	UpdateQuestionFull = `
+		WITH question_auth AS (
+			SELECT c.tutor_id
+			FROM quiz_questions qq
+			JOIN quiz_metadata qm ON qm.id = qq.quiz_id
 			JOIN lessons l ON l.id = qm.lesson_id
 			JOIN chapters ch ON ch.id = l.chapter_id
-			WHERE e.user_id = $2 AND e.course_id = ch.course_id AND e.revoked = false
-		);
+			JOIN courses c ON c.id = ch.course_id
+			WHERE qq.id = $1
+		),
+		updated_question AS (
+			UPDATE quiz_questions SET
+				question_type = $3, question_text = $4, points = $5, fill_blank_hint = $6, updated_at = CURRENT_TIMESTAMP
+			WHERE id = $1 AND EXISTS (SELECT 1 FROM question_auth WHERE tutor_id = $2)
+			RETURNING id, quiz_id, question_type, question_text, points, fill_blank_hint, created_at, updated_at
+		),
+		deleted_options AS (
+			DELETE FROM quiz_options WHERE question_id IN (SELECT id FROM updated_question)
+			RETURNING 1
+		),
+		deleted_arrange AS (
+			DELETE FROM quiz_arrange_items WHERE question_id IN (SELECT id FROM updated_question)
+			RETURNING 1
+		),
+		deleted_fill AS (
+			DELETE FROM quiz_fill_blank_answers WHERE question_id IN (SELECT id FROM updated_question)
+			RETURNING 1
+		),
+		delete_barrier AS (
+			SELECT
+				(SELECT count(*) FROM deleted_options) +
+				(SELECT count(*) FROM deleted_arrange) +
+				(SELECT count(*) FROM deleted_fill) AS n
+		),
+		inserted_options AS (
+			INSERT INTO quiz_options (question_id, option_text, is_correct)
+			SELECT u.id, unnest($7::text[]), unnest($8::boolean[])
+			FROM updated_question u, delete_barrier
+			WHERE array_length($7::text[], 1) > 0
+		),
+		inserted_arrange_items AS (
+			INSERT INTO quiz_arrange_items (question_id, item_text, correct_order)
+			SELECT u.id, unnest($9::text[]), unnest($10::int8[])
+			FROM updated_question u, delete_barrier
+			WHERE array_length($9::text[], 1) > 0
+		),
+		inserted_fill_answers AS (
+			INSERT INTO quiz_fill_blank_answers (question_id, answer)
+			SELECT u.id, unnest($11::text[])
+			FROM updated_question u, delete_barrier
+			WHERE array_length($11::text[], 1) > 0
+		)
+		SELECT
+			EXISTS(SELECT 1 FROM question_auth) AS question_exists,
+			EXISTS(SELECT 1 FROM question_auth WHERE tutor_id = $2) AS is_owner,
+			(SELECT row_to_json(updated_question.*) FROM updated_question) AS question_data;
 	`
 
-	InsertQuizAttempt = `
-		INSERT INTO quiz_attempts (quiz_id, user_id, submitted_at, total_score, passed, correct_count, incorrect_count, skipped_count)
-		VALUES ($1, $2, NOW(), $3, $4, $5, $6, $7)
-		RETURNING id;
-	`
-
-	InsertSingleAnswer = `
-		INSERT INTO quiz_attempt_single_answers (attempt_id, question_id, selected_option_id, is_correct, is_skipped)
-		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (attempt_id, question_id) DO NOTHING;
-	`
-
-	InsertMultiAnswer = `
-		INSERT INTO quiz_attempt_multi_answers (attempt_id, question_id, is_correct, is_skipped)
-		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (attempt_id, question_id) DO UPDATE SET is_correct = EXCLUDED.is_correct
-		RETURNING id;
-	`
-
-	InsertMultiAnswerOption = `
-		INSERT INTO quiz_attempt_multi_answer_options (multi_answer_id, selected_option_id)
-		VALUES ($1, $2)
-		ON CONFLICT DO NOTHING;
-	`
-
-	InsertArrangeAnswer = `
-		INSERT INTO quiz_attempt_arrange_answers (attempt_id, question_id, arrange_item_id, submitted_order, is_correct, is_skipped)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		ON CONFLICT (attempt_id, question_id, arrange_item_id) DO NOTHING;
-	`
-
-	InsertFillAnswer = `
-		INSERT INTO quiz_attempt_fill_answers (attempt_id, question_id, fill_text, is_correct, is_skipped)
-		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (attempt_id, question_id) DO NOTHING;
+	// SaveQuizAttempt persists a full quiz submission — the enrollment
+	// check, the attempt row, and every answer across all four question
+	// types — in one round trip. Single/arrange/fill answers batch via
+	// parallel-array UNNEST (same technique as CreateQuestion); multi-select
+	// answers batch via a jsonb array parameter (one element per question,
+	// carrying its own option_ids array) since each answer fans out into a
+	// variable-length junction-table insert that a flat UNNEST can't express.
+	// Every insert branch reads from attempt_row, so none of them execute
+	// (and nothing is saved) unless the enrollment check passed.
+	SaveQuizAttempt = `
+		WITH enrollment_check AS (
+			SELECT EXISTS (
+				SELECT 1 FROM enrollments e
+				JOIN quiz_metadata qm ON qm.id = $1
+				JOIN lessons l ON l.id = qm.lesson_id
+				JOIN chapters ch ON ch.id = l.chapter_id
+				WHERE e.user_id = $2 AND e.course_id = ch.course_id AND e.revoked = false
+			) AS is_enrolled
+		),
+		attempt_row AS (
+			INSERT INTO quiz_attempts (quiz_id, user_id, submitted_at, total_score, passed, correct_count, incorrect_count, skipped_count)
+			SELECT $1, $2, NOW(), $3, $4, $5, $6, $7
+			FROM enrollment_check WHERE is_enrolled
+			RETURNING id
+		),
+		inserted_single AS (
+			INSERT INTO quiz_attempt_single_answers (attempt_id, question_id, selected_option_id, is_correct, is_skipped)
+			SELECT a.id, unnest($8::uuid[]), unnest($9::uuid[]), unnest($10::boolean[]), unnest($11::boolean[])
+			FROM attempt_row a
+			WHERE array_length($8::uuid[], 1) > 0
+			ON CONFLICT (attempt_id, question_id) DO NOTHING
+		),
+		multi_input AS (
+			SELECT
+				(elem->>'question_id')::uuid AS question_id,
+				(elem->>'is_correct')::boolean AS is_correct,
+				(elem->>'is_skipped')::boolean AS is_skipped,
+				elem->'option_ids' AS option_ids
+			FROM jsonb_array_elements($12::jsonb) AS elem
+		),
+		inserted_multi AS (
+			INSERT INTO quiz_attempt_multi_answers (attempt_id, question_id, is_correct, is_skipped)
+			SELECT a.id, mi.question_id, mi.is_correct, mi.is_skipped
+			FROM multi_input mi, attempt_row a
+			ON CONFLICT (attempt_id, question_id) DO UPDATE SET is_correct = EXCLUDED.is_correct
+			RETURNING id, question_id
+		),
+		inserted_multi_options AS (
+			INSERT INTO quiz_attempt_multi_answer_options (multi_answer_id, selected_option_id)
+			SELECT im.id, opt::uuid
+			FROM inserted_multi im
+			JOIN multi_input mi ON mi.question_id = im.question_id
+			CROSS JOIN LATERAL jsonb_array_elements_text(mi.option_ids) AS opt
+			ON CONFLICT DO NOTHING
+		),
+		inserted_arrange AS (
+			INSERT INTO quiz_attempt_arrange_answers (attempt_id, question_id, arrange_item_id, submitted_order, is_correct, is_skipped)
+			SELECT a.id, unnest($13::uuid[]), unnest($14::uuid[]), unnest($15::int[]), unnest($16::boolean[]), unnest($17::boolean[])
+			FROM attempt_row a
+			WHERE array_length($13::uuid[], 1) > 0
+			ON CONFLICT (attempt_id, question_id, arrange_item_id) DO NOTHING
+		),
+		inserted_fill AS (
+			INSERT INTO quiz_attempt_fill_answers (attempt_id, question_id, fill_text, is_correct, is_skipped)
+			SELECT a.id, unnest($18::uuid[]), unnest($19::text[]), unnest($20::boolean[]), unnest($21::boolean[])
+			FROM attempt_row a
+			WHERE array_length($18::uuid[], 1) > 0
+			ON CONFLICT (attempt_id, question_id) DO NOTHING
+		)
+		SELECT
+			(SELECT is_enrolled FROM enrollment_check) AS is_enrolled,
+			(SELECT id FROM attempt_row) AS attempt_id;
 	`
 )
 

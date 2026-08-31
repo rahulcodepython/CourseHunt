@@ -8,11 +8,17 @@ import * as React from "react";
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), { ssr: false });
 
 export function MarkdownContent({ content, className }: { content: string; className?: string }) {
-    const { theme, systemTheme } = useTheme();
-    const currentTheme = theme === "system" ? systemTheme : theme;
-    return (
-        <div className={cn("markdown-body bg-transparent", className)} data-color-mode={currentTheme || "light"}>
-            <MarkdownPreview source={content.replace(/\\n/g, '\n')} style={{ backgroundColor: 'transparent' }} />
-        </div>
-    );
+  const { theme, systemTheme } = useTheme();
+  const currentTheme = theme === "system" ? systemTheme : theme;
+  return (
+    <div
+      className={cn("markdown-body bg-transparent", className)}
+      data-color-mode={currentTheme || "light"}
+    >
+      <MarkdownPreview
+        source={content.replace(/\\n/g, "\n")}
+        style={{ backgroundColor: "transparent" }}
+      />
+    </div>
+  );
 }

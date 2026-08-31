@@ -22,7 +22,7 @@ func (a *App) CreateMetadata(ctx context.Context, lessonID, tutorID string, req 
 		}
 	}
 
-	a.Cache.InvalidateQuiz(ctx)
+	a.Cache.Invalidate(ctx, "quiz:*")
 
 	return qm, nil
 }
@@ -72,7 +72,7 @@ func (a *App) CreateQuestion(ctx context.Context, quizID, tutorID string, req Cr
 		}
 	}
 
-	a.Cache.InvalidateQuiz(ctx)
+	a.Cache.Invalidate(ctx, "quiz:*")
 
 	return q, nil
 }
@@ -90,7 +90,7 @@ func (a *App) UpdateQuestion(ctx context.Context, questionID, tutorID string, re
 		}
 	}
 
-	a.Cache.InvalidateQuiz(ctx)
+	a.Cache.Invalidate(ctx, "quiz:*")
 
 	return q, nil
 }
@@ -108,7 +108,7 @@ func (a *App) DeleteQuestion(ctx context.Context, id, tutorID string) (string, e
 		}
 	}
 
-	a.Cache.InvalidateQuiz(ctx)
+	a.Cache.Invalidate(ctx, "quiz:*")
 
 	return deletedID, nil
 }
@@ -164,7 +164,7 @@ func (a *App) Submit(ctx context.Context, quizID, userID string, req SubmitQuizR
 		}
 	}
 
-	a.Cache.InvalidateQuiz(ctx)
+	a.Cache.Invalidate(ctx, "quiz:*")
 
 	return resp, nil
 }

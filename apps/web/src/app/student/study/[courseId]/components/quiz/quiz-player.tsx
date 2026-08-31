@@ -39,7 +39,10 @@ export function QuizPlayer({
   const submit = React.useCallback(
     async (finalAnswers: AnswerDraft[]) => {
       setPhase("submitting");
-      const res = await submitQuiz.execute({ quizId: quiz.id, data: buildSubmitRequest(finalAnswers) });
+      const res = await submitQuiz.execute({
+        quizId: quiz.id,
+        data: buildSubmitRequest(finalAnswers),
+      });
       if (!res?.data) {
         setPhase("intro");
         return;
@@ -55,7 +58,10 @@ export function QuizPlayer({
   const fetchNext = React.useCallback(
     async (fetchedIds: string[], finalAnswers: AnswerDraft[]) => {
       setPhase("loading");
-      const res = await getQuestion.execute({ quizId: quiz.id, data: { fetched_question_ids: fetchedIds } });
+      const res = await getQuestion.execute({
+        quizId: quiz.id,
+        data: { fetched_question_ids: fetchedIds },
+      });
       if (!res?.data?.question) {
         await submit(finalAnswers);
         return;
@@ -96,11 +102,14 @@ export function QuizPlayer({
         <div>
           <p className="text-lg font-semibold">{quiz.title}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {quiz.total_questions} questions &middot; {formatDuration(quiz.time_limit_seconds)} time limit &middot; pass at {quiz.pass_score_percent}%
+            {quiz.total_questions} questions &middot; {formatDuration(quiz.time_limit_seconds)} time
+            limit &middot; pass at {quiz.pass_score_percent}%
           </p>
         </div>
         <Button onClick={handleStart}>Start Quiz</Button>
-        <p className="text-xs text-muted-foreground">Check the Attempts tab below to review your past results.</p>
+        <p className="text-xs text-muted-foreground">
+          Check the Attempts tab below to review your past results.
+        </p>
       </div>
     );
   }
@@ -119,7 +128,10 @@ export function QuizPlayer({
             <DialogHeader>
               <DialogTitle>Attempt Breakdown</DialogTitle>
             </DialogHeader>
-            <QuizAttemptBreakdown attemptId={result.attempt_id} onBack={() => setBreakdownOpen(false)} />
+            <QuizAttemptBreakdown
+              attemptId={result.attempt_id}
+              onBack={() => setBreakdownOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </>

@@ -2,6 +2,7 @@ package certificates
 
 import (
 	"context"
+	"errors"
 
 	"coursehunt/server/internals/pkg/postgres"
 )
@@ -39,9 +40,16 @@ func (a *App) ListRepository(ctx context.Context, userID string, page, limit int
 }
 
 // VerifyRepository is the public, unauthenticated lookup used by a certificate's QR code.
+// A bad/tampered/fake ID is an expected input here, not a failure — the query has no
+// EXISTS-wrapping to guarantee a row back, so a nonexistent ID surfaces as
+// postgres.ErrNotFound (zero rows) rather than a nil result; that case is the normal
+// "not a valid certificate" outcome and must resolve to {Valid: false}, not an error.
 func (a *App) VerifyRepository(ctx context.Context, id string) (*CertificateVerification, error) {
 	verification, err := postgres.QueryJSON[CertificateVerification](ctx, a.DB, VerifyCertificateJSON, id)
 	if err != nil {
+		if errors.Is(err, postgres.ErrNotFound) {
+			return &CertificateVerification{Valid: false}, nil
+		}
 		return nil, err
 	}
 	if verification == nil {

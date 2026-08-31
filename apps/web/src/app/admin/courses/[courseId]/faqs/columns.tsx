@@ -12,6 +12,8 @@ export const getColumns = () => [
   }),
   columnHelper.accessor("answer", {
     header: "Answer",
-    cell: ({ getValue }) => <p className="line-clamp-2 max-w-md text-muted-foreground">{getValue()}</p>,
+    cell: ({ getValue }) => (
+      <p className="line-clamp-2 max-w-md text-muted-foreground">{getValue()}</p>
+    ),
   }),
 ];

@@ -4,7 +4,11 @@ import * as React from "react";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuizMetadataQuery, useQuizQuestionsQuery, useDeleteQuestionMutation } from "@/query-hooks/quiz.api";
+import {
+  useQuizMetadataQuery,
+  useQuizQuestionsQuery,
+  useDeleteQuestionMutation,
+} from "@/query-hooks/quiz.api";
 import type { QuizMetadata, QuizQuestionDetail } from "@/schema/quiz.types";
 import { PageHeader } from "@/components/page-header";
 import { Icon } from "@/components/icon";
@@ -18,6 +22,7 @@ import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import { useChaptersQuery } from "@/query-hooks/chapters.api";
 import { useLessonsQuery } from "@/query-hooks/lessons.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { QuizSettingsForm } from "./quiz-settings-form";
 import { QuestionForm } from "./question-form";
 import { getColumns } from "./question-columns";
@@ -44,33 +49,42 @@ export default function TutorLessonQuizPage() {
     { label: "My Courses", href: "/tutor/courses" },
     { label: currentCourse?.title || "Course", href: `/tutor/courses/${courseId}` },
     { label: "Chapters", href: `/tutor/courses/${courseId}/chapters` },
-    { label: currentChapter?.title || "Chapter", href: `/tutor/courses/${courseId}/chapters/${chapterId}/lessons` },
+    {
+      label: currentChapter?.title || "Chapter",
+      href: `/tutor/courses/${courseId}/chapters/${chapterId}/lessons`,
+    },
     { label: currentLesson?.title || "Lesson" },
     { label: "Quiz" },
   ]);
 
   const { data: rawMetadata, isLoading: metadataLoading } = useQuizMetadataQuery(lessonId);
-  const metadata: QuizMetadata | null = rawMetadata?.success ? rawMetadata.data ?? null : null;
+  const metadata: QuizMetadata | null = rawMetadata?.success ? (rawMetadata.data ?? null) : null;
 
   const deleteMutation = useDeleteQuestionMutation();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
-  const [adding, setAdding] = React.useState(false);
-  const [editingQuestion, setEditingQuestion] = React.useState<QuizQuestionDetail | null>(null);
-  const [deleting, setDeleting] = React.useState<QuizQuestionDetail | null>(null);
+  const {
+    dialogOpen: questionDialogOpen,
+    setDialogOpen: setQuestionDialogOpen,
+    editing: editingQuestion,
+    openCreate: openAddQuestion,
+    openEdit: openEditQuestion,
+    deleting,
+    setDeleting,
+    requestDelete,
+    confirmDelete,
+  } = useCrudDialogState<QuizQuestionDetail>();
 
   const { data: rawQuestions, isLoading: questionsLoading } = useQuizQuestionsQuery(
     metadata?.id ?? "",
   );
   const questions: QuizQuestionDetail[] = rawQuestions?.success ? (rawQuestions.data ?? []) : [];
 
-  const handleDelete = async () => {
-    if (deleting && metadata) {
-      await deleteMutation.execute({ quizId: metadata.id, questionId: deleting.id });
-      setDeleting(null);
-    }
-  };
+  const handleDelete = () =>
+    confirmDelete((questionId) =>
+      metadata ? deleteMutation.execute({ quizId: metadata.id, questionId }) : Promise.resolve(),
+    );
 
-  const columns = getColumns(setEditingQuestion, setDeleting);
+  const columns = getColumns(openEditQuestion, requestDelete);
 
   return (
     <div className="space-y-6">
@@ -92,7 +106,7 @@ export default function TutorLessonQuizPage() {
                 <Icon name="settings" className="size-4" />
                 Settings
               </Button>
-              <Button onClick={() => setAdding(true)} disabled={!metadata}>
+              <Button onClick={openAddQuestion} disabled={!metadata}>
                 <Icon name="plus" className="size-4" />
                 Add Question
               </Button>
@@ -133,31 +147,33 @@ export default function TutorLessonQuizPage() {
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         title="Quiz Settings"
-        description={metadata ? "Update the quiz title, time limit and pass score" : "Set up the quiz for this lesson"}
+        description={
+          metadata
+            ? "Update the quiz title, time limit and pass score"
+            : "Set up the quiz for this lesson"
+        }
       >
-        <QuizSettingsForm lessonId={lessonId} metadata={metadata} onSuccess={() => setSettingsOpen(false)} />
+        <QuizSettingsForm
+          lessonId={lessonId}
+          metadata={metadata}
+          onSuccess={() => setSettingsOpen(false)}
+        />
       </FormDialog>
 
       <FormDialog
-        open={adding || !!editingQuestion}
-        onOpenChange={(open) => {
-          if (!open) {
-            setAdding(false);
-            setEditingQuestion(null);
-          }
-        }}
+        open={questionDialogOpen}
+        onOpenChange={setQuestionDialogOpen}
         title={editingQuestion ? "Edit Question" : "Add Question"}
-        description={editingQuestion ? "Update this question" : "Create a new question for this quiz"}
+        description={
+          editingQuestion ? "Update this question" : "Create a new question for this quiz"
+        }
         className="max-h-[90vh] overflow-y-auto"
       >
         {metadata && (
           <QuestionForm
             quizId={metadata.id}
             editingQuestion={editingQuestion}
-            onSuccess={() => {
-              setAdding(false);
-              setEditingQuestion(null);
-            }}
+            onSuccess={() => setQuestionDialogOpen(false)}
           />
         )}
       </FormDialog>

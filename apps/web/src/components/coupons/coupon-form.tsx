@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 
 import { useCreateCouponMutation, useUpdateCouponMutation } from "@/query-hooks/coupons.api";
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
@@ -22,18 +22,38 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-const couponSchema = z.object({
-  code: z.string().min(3, "Coupon code must be at least 3 characters"),
-  discount_percent: z.number().min(1, "Discount must be at least 1%").max(100, "Discount cannot exceed 100%"),
-  expires_at: z.string().min(1, "Expiry date is required"),
-  max_usage: z.number().min(0),
-  is_active: z.boolean(),
-  courseId: z.string().min(1, "Please select a course"),
-});
+const NO_COURSE = "none";
 
-type CouponFormData = z.infer<typeof couponSchema>;
+/**
+ * Admins can create a coupon valid on any course (courseId optional, "None"
+ * selectable); tutors can only create coupons for one of their own courses
+ * (courseId required). Everything else about the form is identical.
+ */
+function couponSchemaFor(scope: "admin" | "tutor") {
+  return z.object({
+    code: z.string().min(3, "Coupon code must be at least 3 characters"),
+    discount_percent: z
+      .number()
+      .min(1, "Discount must be at least 1%")
+      .max(100, "Discount cannot exceed 100%"),
+    expires_at: z.string().min(1, "Expiry date is required"),
+    max_usage: z.number().min(0),
+    is_active: z.boolean(),
+    courseId: scope === "tutor" ? z.string().min(1, "Please select a course") : z.string(),
+  });
+}
 
-export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon | null; onSuccess: () => void }) {
+type CouponFormData = z.infer<ReturnType<typeof couponSchemaFor>>;
+
+export function CouponForm({
+  editingCoupon,
+  onSuccess,
+  scope,
+}: {
+  editingCoupon: Coupon | null;
+  onSuccess: () => void;
+  scope: "admin" | "tutor";
+}) {
   const createMutation = useCreateCouponMutation();
   const updateMutation = useUpdateCouponMutation();
   const { data: rawCourses } = useManageCoursesQuery({ limit: 100 });
@@ -46,14 +66,14 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
     reset,
     formState: { errors },
   } = useForm<CouponFormData>({
-    resolver: zodResolver(couponSchema),
+    resolver: zodResolver(couponSchemaFor(scope)),
     defaultValues: {
       code: "",
       discount_percent: 10,
       expires_at: "",
       max_usage: 100,
       is_active: true,
-      courseId: "",
+      courseId: scope === "tutor" ? "" : NO_COURSE,
     },
   });
 
@@ -65,10 +85,15 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
         expires_at: editingCoupon.expires_at?.split("T")[0] || "",
         max_usage: editingCoupon.max_usage || 0,
         is_active: editingCoupon.is_active ?? true,
-        courseId: editingCoupon.course?.id ?? "",
+        // Admin coupons are optionally course-scoped and the selector is
+        // hidden while editing (see below), so there's nothing to
+        // pre-populate. Tutor coupons are always course-scoped — restore
+        // the coupon's own course so the (hidden-on-edit) field stays
+        // consistent with what was actually saved.
+        courseId: scope === "tutor" ? (editingCoupon.course?.id ?? "") : NO_COURSE,
       });
     }
-  }, [editingCoupon, reset]);
+  }, [editingCoupon, reset, scope]);
 
   const onSubmit = async (form: CouponFormData) => {
     const data = {
@@ -77,7 +102,13 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
       expires_at: new Date(form.expires_at).toISOString(),
       max_usage: form.max_usage || 0,
       is_active: form.is_active,
-      ...(editingCoupon ? {} : { course_id: form.courseId }),
+      ...(scope === "tutor"
+        ? editingCoupon
+          ? {}
+          : { course_id: form.courseId }
+        : form.courseId !== NO_COURSE
+          ? { course_id: form.courseId }
+          : {}),
     };
 
     if (editingCoupon) {
@@ -98,9 +129,7 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
           placeholder="e.g. SAVE50"
           className="font-mono uppercase tracking-wider"
         />
-        {errors.code && (
-          <p className="text-xs text-red-400">{errors.code.message}</p>
-        )}
+        {errors.code && <p className="text-xs text-red-400">{errors.code.message}</p>}
       </div>
       {!editingCoupon && (
         <div className="space-y-1.5">
@@ -114,6 +143,9 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  {scope === "admin" && (
+                    <SelectItem value={NO_COURSE}>None (valid on any course)</SelectItem>
+                  )}
                   {courses.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
@@ -123,8 +155,12 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
               </Select>
             )}
           />
-          {errors.courseId && (
-            <p className="text-xs text-red-400">{errors.courseId.message}</p>
+          {scope === "admin" ? (
+            <p className="text-xs text-muted-foreground">
+              Leave as &ldquo;None&rdquo; to create a coupon valid on any course.
+            </p>
+          ) : (
+            errors.courseId && <p className="text-xs text-red-400">{errors.courseId.message}</p>
           )}
         </div>
       )}
@@ -144,15 +180,8 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="coupon-expiry">Expiry Date</Label>
-          <Input
-            id="coupon-expiry"
-            type="date"
-            required
-            {...register("expires_at")}
-          />
-          {errors.expires_at && (
-            <p className="text-xs text-red-400">{errors.expires_at.message}</p>
-          )}
+          <Input id="coupon-expiry" type="date" required {...register("expires_at")} />
+          {errors.expires_at && <p className="text-xs text-red-400">{errors.expires_at.message}</p>}
         </div>
         {editingCoupon && (
           <div className="space-y-1.5">
@@ -184,22 +213,14 @@ export function CouponForm({ editingCoupon, onSuccess }: { editingCoupon: Coupon
         <Controller
           control={control}
           name="is_active"
-          render={({ field }) => (
-            <Switch
-              checked={field.value}
-              onCheckedChange={field.onChange}
-            />
-          )}
+          render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
         />
       </div>
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onSuccess}>
           Cancel
         </Button>
-        <LoadingButton
-          type="submit"
-          loading={createMutation.isPending || updateMutation.isPending}
-        >
+        <LoadingButton type="submit" loading={createMutation.isPending || updateMutation.isPending}>
           {editingCoupon ? "Save Changes" : "Create Coupon"}
         </LoadingButton>
       </div>

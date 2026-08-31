@@ -10,9 +10,9 @@ import (
 
 func (a *App) handleList(c *fiber.Ctx) error {
 	scope := middlewares.ResolveScope(c)
-	chapterID := c.Query("chapter_id")
-	if chapterID == "" {
-		return utils.ErrBadRequest("Chapter ID query param required.", nil)
+	chapterID, err := utils.RequireQuery(c, "chapter_id", "Chapter ID")
+	if err != nil {
+		return err
 	}
 
 	userID := middlewares.UserID(c)
@@ -30,9 +30,9 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 		return err
 	}
 
-	chapterID := c.Query("chapter_id")
-	if chapterID == "" {
-		return utils.ErrBadRequest("Chapter ID query param required.", nil)
+	chapterID, err := utils.RequireQuery(c, "chapter_id", "Chapter ID")
+	if err != nil {
+		return err
 	}
 
 	l, err := a.Create(c.Context(), middlewares.UserID(c), chapterID, req)

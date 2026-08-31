@@ -15,11 +15,15 @@ export const columns: ColumnDef<UpdateFeedItem, any>[] = [
   }),
   columnHelper.accessor("message", {
     header: "Message",
-    cell: ({ getValue }) => <p className="line-clamp-2 max-w-md text-muted-foreground">{getValue()}</p>,
+    cell: ({ getValue }) => (
+      <p className="line-clamp-2 max-w-md text-muted-foreground">{getValue()}</p>
+    ),
   }),
   columnHelper.accessor("created_at", {
     header: "Date",
-    cell: ({ getValue }) => <span className="text-muted-foreground">{formatDateTime(getValue())}</span>,
+    cell: ({ getValue }) => (
+      <span className="text-muted-foreground">{formatDateTime(getValue())}</span>
+    ),
   }),
   columnHelper.accessor("is_unseen", {
     header: "",

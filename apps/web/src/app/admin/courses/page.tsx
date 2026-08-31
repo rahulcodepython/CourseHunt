@@ -12,17 +12,11 @@ export default function CoursesPage() {
   const { data: rawCourses, isLoading } = useManageCoursesQuery();
   const courses = (rawCourses?.data?.data as any) ?? [];
   const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
-  const columns = React.useMemo(
-    () => getColumns({ onViewCourse: setSelectedCourse }),
-    [],
-  );
+  const columns = React.useMemo(() => getColumns({ onViewCourse: setSelectedCourse }), []);
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Courses"
-        subtitle="Search, filter and manage all platform courses"
-      />
+      <PageHeader title="Courses" subtitle="Search, filter and manage all platform courses" />
 
       <DataTable
         columns={columns}

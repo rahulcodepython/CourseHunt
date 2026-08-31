@@ -7,20 +7,20 @@ import { useBanUserMutation, useUnbanUserMutation } from "@/query-hooks/users.ap
 
 /** Shared ban/unban wiring for the users, tutors, and admins tables. */
 export function useUserBanActions() {
-    const permissions = useSessionStore((s) => s.permissions);
-    const currentUserId = useSessionStore((s) => s.user?.id);
-    const canBan = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_BAN);
+  const permissions = useSessionStore((s) => s.permissions);
+  const currentUserId = useSessionStore((s) => s.user?.id);
+  const canBan = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_BAN);
 
-    const banMutation = useBanUserMutation();
-    const unbanMutation = useUnbanUserMutation();
+  const banMutation = useBanUserMutation();
+  const unbanMutation = useUnbanUserMutation();
 
-    const handleBanToggle = (user: { id: string; banned?: boolean }) => {
-        if (user.banned) {
-            unbanMutation.execute({ userId: user.id });
-        } else {
-            banMutation.execute({ userId: user.id });
-        }
-    };
+  const handleBanToggle = (user: { id: string; banned?: boolean }) => {
+    if (user.banned) {
+      unbanMutation.execute({ userId: user.id });
+    } else {
+      banMutation.execute({ userId: user.id });
+    }
+  };
 
-    return { canBan, currentUserId, handleBanToggle };
+  return { canBan, currentUserId, handleBanToggle };
 }

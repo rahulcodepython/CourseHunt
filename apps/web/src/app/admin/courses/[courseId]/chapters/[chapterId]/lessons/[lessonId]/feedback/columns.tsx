@@ -25,9 +25,7 @@ function StarRating({ rating }: { rating: number }) {
           name="star"
           className={cn(
             "size-3.5",
-            i < rating
-              ? "fill-yellow-500 text-yellow-500"
-              : "text-muted-foreground/30",
+            i < rating ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground/30",
           )}
         />
       ))}
@@ -47,9 +45,7 @@ export const getColumns = (
   columnHelper.accessor((row) => row.course?.title ?? "Unknown", {
     id: "course",
     header: ({ column }) => <SortableColumnHeader column={column} label="Course" />,
-    cell: ({ getValue }) => (
-      <span className="text-muted-foreground">{getValue()}</span>
-    ),
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
   }),
   columnHelper.accessor("rating", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Rating" />,
@@ -58,9 +54,7 @@ export const getColumns = (
   columnHelper.accessor("content", {
     header: "Comment",
     cell: ({ getValue }) => (
-      <span className="line-clamp-2 max-w-xs text-muted-foreground">
-        {getValue() || "—"}
-      </span>
+      <span className="line-clamp-2 max-w-xs text-muted-foreground">{getValue() || "—"}</span>
     ),
   }),
   columnHelper.accessor("is_pinned", {
@@ -77,9 +71,7 @@ export const getColumns = (
   }),
   columnHelper.accessor("created_at", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Date" />,
-    cell: ({ getValue }) => (
-      <span className="text-muted-foreground">{formatDate(getValue())}</span>
-    ),
+    cell: ({ getValue }) => <span className="text-muted-foreground">{formatDate(getValue())}</span>,
   }),
   columnHelper.display({
     id: "actions",
@@ -95,7 +87,12 @@ export const getColumns = (
             className={cn(fb.is_pinned && "text-primary")}
             iconClassName={cn(fb.is_pinned && "rotate-45")}
           />
-          <RowActionButton icon="trash" label="Delete Feedback" onClick={() => onDelete(fb)} destructive />
+          <RowActionButton
+            icon="trash"
+            label="Delete Feedback"
+            onClick={() => onDelete(fb)}
+            destructive
+          />
         </RowActions>
       );
     },

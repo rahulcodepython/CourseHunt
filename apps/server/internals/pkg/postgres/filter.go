@@ -60,6 +60,17 @@ func (f *QueryFilter) AddArgs(args ...any) *QueryFilter {
 	return f
 }
 
+// Paginate appends LIMIT/OFFSET args (limit, then (page-1)*limit) and
+// returns the 1-based parameter index of the LIMIT argument, so callers
+// building "LIMIT $N OFFSET $N+1" style queries don't hand-compute the
+// offset or track the index separately.
+func (f *QueryFilter) Paginate(page, limit int) (limitIdx int) {
+	limitIdx = f.NextIdx()
+	offset := (page - 1) * limit
+	f.AddArgs(limit, offset)
+	return limitIdx
+}
+
 // Conditions returns all current conditions.
 func (f *QueryFilter) Conditions() []string {
 	return f.conditions

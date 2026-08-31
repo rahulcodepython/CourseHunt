@@ -2,8 +2,8 @@ package wishlist
 
 import (
 	"context"
-	"fmt"
 
+	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/postgres"
 )
 
@@ -15,7 +15,7 @@ type WishlistPayload struct {
 func (a *App) CreateRepository(ctx context.Context, userID, courseID string) (*WishlistItem, error) {
 	var count int
 	if err := a.DB.QueryRow(ctx, CountUserWishlist, userID).Scan(&count); err == nil && count >= 100 {
-		return nil, fmt.Errorf("wishlist limit reached (max 100 items)")
+		return nil, generic.ErrWishlistLimitReached
 	}
 
 	return postgres.QueryJSON[WishlistItem](ctx, a.DB, CreateWishlist, userID, courseID)

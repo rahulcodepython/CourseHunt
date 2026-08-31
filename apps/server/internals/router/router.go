@@ -27,6 +27,7 @@ import (
 	"coursehunt/server/internals/features/wishlist"
 	"coursehunt/server/internals/middlewares"
 	"coursehunt/server/internals/pkg/cache"
+	"coursehunt/server/internals/pkg/jwt"
 	"coursehunt/server/internals/pkg/minio"
 	"coursehunt/server/internals/pkg/razorpay"
 
@@ -40,11 +41,12 @@ import (
 )
 
 type Router struct {
-	App   *fiber.App
-	API   fiber.Router
-	DB    *pgxpool.Pool
-	CFG   *config.Config
-	Cache *cache.Cache
+	App      *fiber.App
+	API      fiber.Router
+	DB       *pgxpool.Pool
+	CFG      *config.Config
+	Cache    *cache.Cache
+	Verifier *jwt.Verifier
 
 	Categories    *categories.App
 	Certificates  *certificates.App
@@ -71,7 +73,7 @@ type Router struct {
 	Wishlist      *wishlist.App
 }
 
-func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Storage, cfg *config.Config) *Router {
+func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Storage, cfg *config.Config, verifier *jwt.Verifier) *Router {
 	cch := cache.NewCache(rdb)
 
 	rzp := razorpay.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
@@ -107,6 +109,7 @@ func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Sto
 		DB:            db,
 		CFG:           cfg,
 		Cache:         cch,
+		Verifier:      verifier,
 		Categories:    categoriesApp,
 		Certificates:  certificatesApp,
 		Chapters:      chaptersApp,
@@ -156,7 +159,7 @@ func (r *Router) SetUp() {
 	}))
 	r.App.Use(middlewares.RateLimiterMiddleware())
 
-	auth := middlewares.BaseAuthMiddleware(r.CFG, r.Cache, r.Users)
+	auth := middlewares.BaseAuthMiddleware(r.CFG, r.Cache, r.Users, r.Verifier)
 
 	r.Categories.RegisterRoutes(r.API, auth)
 	r.Certificates.RegisterRoutes(r.API, auth)

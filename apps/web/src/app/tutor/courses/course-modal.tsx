@@ -23,9 +23,7 @@ export function CourseModal({
       }}
       title={editingCourse ? "Edit Course" : "Create Course"}
       description={
-        editingCourse
-          ? "Update the course details"
-          : "Create a new course you want to teach"
+        editingCourse ? "Update the course details" : "Create a new course you want to teach"
       }
       className="max-h-[90vh] overflow-y-auto sm:max-w-4xl"
     >

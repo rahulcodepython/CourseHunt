@@ -3,11 +3,10 @@ package quiz
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/postgres"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (a *App) ReadNextQuestionUnifiedRepository(ctx context.Context, quizID, userID string, fetchedIDs []string) (*QuizQuestion, []QuizOption, []QuizArrangeItem, int, error) {
@@ -188,67 +187,86 @@ type QuizAnswersToSave struct {
 	FillAnswers    []QuizAttemptFillAnswer
 }
 
+// multiAnswerInput is the shape of one element of the jsonb array passed to
+// SaveQuizAttempt for multi-select answers — see that query's comment for
+// why multi-answers batch via JSON instead of parallel-array UNNEST like
+// every other answer type.
+type multiAnswerInput struct {
+	QuestionID string   `json:"question_id"`
+	IsCorrect  bool     `json:"is_correct"`
+	IsSkipped  bool     `json:"is_skipped"`
+	OptionIDs  []string `json:"option_ids"`
+}
+
+// SaveQuizAttemptRepository persists a full quiz submission in one round
+// trip via the SaveQuizAttempt query — see that query's comment for the
+// batching strategy per answer type.
 func (a *App) SaveQuizAttemptRepository(ctx context.Context, quizID, userID string, score float64, passed bool, correctCount, incorrectCount, skippedCount int, answers QuizAnswersToSave) (string, error) {
-	var attemptID string
+	var singleQIDs, singleOptIDs []string
+	var singleCorrects, singleSkips []bool
+	for _, sa := range answers.SingleAnswers {
+		singleQIDs = append(singleQIDs, sa.QuestionID)
+		singleOptIDs = append(singleOptIDs, sa.SelectedOptionID)
+		singleCorrects = append(singleCorrects, sa.IsCorrect)
+		singleSkips = append(singleSkips, sa.IsSkipped)
+	}
 
-	err := postgres.WithTx(ctx, a.DB, func(tx pgx.Tx) error {
-		var isEnrolled bool
-		if err := tx.QueryRow(ctx, CheckQuizEnrollment, quizID, userID).Scan(&isEnrolled); err != nil {
-			return err
-		}
-		if !isEnrolled {
-			return generic.ErrQuizNotEnrolled
-		}
-
-		if err := tx.QueryRow(ctx, InsertQuizAttempt, quizID, userID, score, passed, correctCount, incorrectCount, skippedCount).Scan(&attemptID); err != nil {
-			return err
-		}
-
-		// 1. Single answers
-		for _, sa := range answers.SingleAnswers {
-			_, err := tx.Exec(ctx, InsertSingleAnswer, attemptID, sa.QuestionID, sa.SelectedOptionID, sa.IsCorrect, sa.IsSkipped)
-			if err != nil {
-				return err
-			}
-		}
-
-		// 2. Multi answers + junction
-		for _, ma := range answers.MultiAnswers {
-			var multiAnswerID string
-			err := tx.QueryRow(ctx, InsertMultiAnswer, attemptID, ma.Answer.QuestionID, ma.Answer.IsCorrect, ma.Answer.IsSkipped).Scan(&multiAnswerID)
-			if err != nil {
-				return err
-			}
-
-			for _, optID := range ma.SelectedOptionIDs {
-				_, err := tx.Exec(ctx, InsertMultiAnswerOption, multiAnswerID, optID)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		// 3. Arrange answers
-		for _, aa := range answers.ArrangeAnswers {
-			_, err := tx.Exec(ctx, InsertArrangeAnswer, attemptID, aa.QuestionID, aa.ArrangeItemID, aa.SubmittedOrder, aa.IsCorrect, aa.IsSkipped)
-			if err != nil {
-				return err
-			}
-		}
-
-		// 4. Fill answers
-		for _, fa := range answers.FillAnswers {
-			_, err := tx.Exec(ctx, InsertFillAnswer, attemptID, fa.QuestionID, fa.FillText, fa.IsCorrect, fa.IsSkipped)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
+	multiInputs := make([]multiAnswerInput, 0, len(answers.MultiAnswers))
+	for _, ma := range answers.MultiAnswers {
+		multiInputs = append(multiInputs, multiAnswerInput{
+			QuestionID: ma.Answer.QuestionID,
+			IsCorrect:  ma.Answer.IsCorrect,
+			IsSkipped:  ma.Answer.IsSkipped,
+			OptionIDs:  ma.SelectedOptionIDs,
+		})
+	}
+	multiJSON, err := json.Marshal(multiInputs)
 	if err != nil {
 		return "", err
 	}
 
-	return attemptID, nil
+	var arrangeQIDs, arrangeItemIDs []string
+	var arrangeOrders []int
+	var arrangeCorrects, arrangeSkips []bool
+	for _, aa := range answers.ArrangeAnswers {
+		arrangeQIDs = append(arrangeQIDs, aa.QuestionID)
+		arrangeItemIDs = append(arrangeItemIDs, aa.ArrangeItemID)
+		arrangeOrders = append(arrangeOrders, aa.SubmittedOrder)
+		arrangeCorrects = append(arrangeCorrects, aa.IsCorrect)
+		arrangeSkips = append(arrangeSkips, aa.IsSkipped)
+	}
+
+	var fillQIDs, fillTexts []string
+	var fillCorrects, fillSkips []bool
+	for _, fa := range answers.FillAnswers {
+		fillQIDs = append(fillQIDs, fa.QuestionID)
+		fillTexts = append(fillTexts, fa.FillText)
+		fillCorrects = append(fillCorrects, fa.IsCorrect)
+		fillSkips = append(fillSkips, fa.IsSkipped)
+	}
+
+	var (
+		isEnrolled bool
+		attemptID  *string
+	)
+
+	err = a.DB.QueryRow(
+		ctx, SaveQuizAttempt,
+		quizID, userID, score, passed, correctCount, incorrectCount, skippedCount,
+		singleQIDs, singleOptIDs, singleCorrects, singleSkips,
+		string(multiJSON),
+		arrangeQIDs, arrangeItemIDs, arrangeOrders, arrangeCorrects, arrangeSkips,
+		fillQIDs, fillTexts, fillCorrects, fillSkips,
+	).Scan(&isEnrolled, &attemptID)
+	if err != nil {
+		return "", postgres.MapPgError(err)
+	}
+	if !isEnrolled {
+		return "", generic.ErrQuizNotEnrolled
+	}
+	if attemptID == nil {
+		return "", errors.New("failed to save quiz attempt")
+	}
+
+	return *attemptID, nil
 }

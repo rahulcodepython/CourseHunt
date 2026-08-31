@@ -19,16 +19,12 @@ const statusMap: Record<string, StatusBadgeEntry> = {
 export const columns = [
   columnHelper.accessor("id", {
     header: "Transaction ID",
-    cell: ({ getValue }) => (
-      <span className="font-mono text-xs">{truncate(getValue(), 14)}</span>
-    ),
+    cell: ({ getValue }) => <span className="font-mono text-xs">{truncate(getValue(), 14)}</span>,
   }),
   columnHelper.accessor("created_at", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Date" />,
     cell: ({ getValue }) => (
-      <span className="text-muted-foreground">
-        {formatDateTime(getValue())}
-      </span>
+      <span className="text-muted-foreground">{formatDateTime(getValue())}</span>
     ),
   }),
   columnHelper.accessor((row) => row.user.name, {
@@ -39,9 +35,7 @@ export const columns = [
   columnHelper.accessor((row) => row.course?.title ?? "—", {
     id: "course",
     header: "Course",
-    cell: ({ getValue }) => (
-      <span className="text-muted-foreground">{getValue()}</span>
-    ),
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
   }),
   columnHelper.accessor((row) => row.coupon?.code || "—", {
     id: "coupon",
@@ -58,9 +52,7 @@ export const columns = [
   columnHelper.accessor("amount", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Amount" />,
     cell: ({ getValue }) => (
-      <span className="font-medium tabular-nums">
-        {formatINR(getValue() || 0)}
-      </span>
+      <span className="font-medium tabular-nums">{formatINR(getValue() || 0)}</span>
     ),
   }),
   columnHelper.accessor("status", {

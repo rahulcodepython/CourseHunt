@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"time"
 
 	"coursehunt/server/internals/config"
+	"coursehunt/server/internals/pkg/retry"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -41,28 +43,27 @@ func Connect(cfg *config.Config) *pgxpool.Pool {
 	poolConfig.MaxConnIdleTime = time.Duration(cfg.DBConnMaxIdleTime) * time.Minute
 	poolConfig.HealthCheckPeriod = 1 * time.Minute
 
-	var pool *pgxpool.Pool
 	const maxAttempts = 5
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		pool, err = pgxpool.NewWithConfig(ctx, poolConfig)
-		if err == nil {
-			if pingErr := pool.Ping(ctx); pingErr == nil {
-				break
-			} else {
-				err = pingErr
-				pool.Close()
-			}
+	var pool *pgxpool.Pool
+	connectErr := retry.Connect("db", maxAttempts, 2*time.Second, func() error {
+		p, err := pgxpool.NewWithConfig(ctx, poolConfig)
+		if err != nil {
+			return err
 		}
-
-		if attempt == maxAttempts {
-			log.Fatalf("Failed to connect to database after %d attempts: %v", maxAttempts, err)
+		if err := p.Ping(ctx); err != nil {
+			p.Close()
+			return err
 		}
-		log.Printf("[db] ping attempt %d/%d failed: %v — retrying in 2s", attempt, maxAttempts, err)
-		time.Sleep(2 * time.Second)
+		pool = p
+		return nil
+	})
+	if connectErr != nil {
+		log.Fatalf("Failed to connect to database after %d attempts: %v", maxAttempts, connectErr)
 	}
 
-	log.Printf("[db] Connected to PostgreSQL via pgxpool (max conns: %d, min conns: %d, max lifetime: %dm, max idle time: %dm)",
-		cfg.DBMaxOpenConns, cfg.DBMaxIdleConns, cfg.DBConnMaxLifetime, cfg.DBConnMaxIdleTime)
+	slog.Info("connected to postgres",
+		"max_conns", cfg.DBMaxOpenConns, "min_conns", cfg.DBMaxIdleConns,
+		"max_lifetime_min", cfg.DBConnMaxLifetime, "max_idle_min", cfg.DBConnMaxIdleTime)
 
 	return pool
 }
@@ -71,7 +72,7 @@ func Connect(cfg *config.Config) *pgxpool.Pool {
 func Close(pool *pgxpool.Pool) {
 	if pool != nil {
 		pool.Close()
-		log.Println("[db] PostgreSQL connection pool closed.")
+		slog.Info("postgres connection pool closed")
 	}
 }
 

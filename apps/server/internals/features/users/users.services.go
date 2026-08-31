@@ -12,6 +12,7 @@ func (a *App) AssignRole(ctx context.Context, userID string, roleIDs []string) e
 	if err := a.AssignRoleRepository(ctx, userID, roleIDs); err != nil {
 		return utils.ErrInternal("Failed to assign roles.", err)
 	}
+	a.Cache.InvalidateUserAuthCache(ctx, userID)
 	return nil
 }
 
@@ -19,6 +20,7 @@ func (a *App) DeleteRole(ctx context.Context, userID string, roleIDs []string) e
 	if err := a.DeleteRoleRepository(ctx, userID, roleIDs); err != nil {
 		return utils.ErrInternal("Failed to revoke roles.", err)
 	}
+	a.Cache.InvalidateUserAuthCache(ctx, userID)
 	return nil
 }
 

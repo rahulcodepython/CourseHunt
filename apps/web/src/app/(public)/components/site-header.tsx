@@ -42,10 +42,16 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium sm:flex">
-          <Link href={ROUTES.HOME} className="text-muted-foreground transition-colors hover:text-foreground">
+          <Link
+            href={ROUTES.HOME}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
             Home
           </Link>
-          <Link href="/courses" className="text-muted-foreground transition-colors hover:text-foreground">
+          <Link
+            href="/courses"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
             Courses
           </Link>
         </nav>
@@ -60,7 +66,10 @@ export function SiteHeader() {
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative flex items-center gap-2 rounded-full h-9 px-2">
+                  <Button
+                    variant="ghost"
+                    className="relative flex items-center gap-2 rounded-full h-9 px-2"
+                  >
                     <UserAvatar name={user.name} image={user.image} className="size-7 border" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -77,7 +86,11 @@ export function SiteHeader() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive" onClick={handleLogout} className="cursor-pointer">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={handleLogout}
+                    className="cursor-pointer"
+                  >
                     <Icon name="logout" className="size-4 mr-2" />
                     Sign out
                   </DropdownMenuItem>

@@ -38,7 +38,9 @@ function ArrangeInput({
 
   return (
     <div className="space-y-2">
-      <p className="text-sm text-muted-foreground">Use the arrows to put these in the correct order.</p>
+      <p className="text-sm text-muted-foreground">
+        Use the arrows to put these in the correct order.
+      </p>
       {order.map((item, index) => (
         <div key={item.id} className="flex items-center gap-3 rounded-md border p-3">
           <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium tabular-nums">
@@ -46,10 +48,24 @@ function ArrangeInput({
           </span>
           <span className="min-w-0 flex-1">{item.item_text}</span>
           <div className="flex shrink-0 gap-1">
-            <Button type="button" variant="outline" size="icon" className="size-7" disabled={index === 0} onClick={() => move(index, -1)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-7"
+              disabled={index === 0}
+              onClick={() => move(index, -1)}
+            >
               <Icon name="chevron-up" className="size-4" />
             </Button>
-            <Button type="button" variant="outline" size="icon" className="size-7" disabled={index === order.length - 1} onClick={() => move(index, 1)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-7"
+              disabled={index === order.length - 1}
+              onClick={() => move(index, 1)}
+            >
               <Icon name="chevron-down" className="size-4" />
             </Button>
           </div>
@@ -76,25 +92,43 @@ export function QuizQuestionView({
   const [fillText, setFillText] = React.useState("");
 
   const canSubmit =
-    question.question_type === QUESTION_TYPE.SINGLE_CHOICE ? Boolean(selectedOption) :
-      question.question_type === QUESTION_TYPE.MULTI_CHOICE ? selectedOptions.length > 0 :
-        question.question_type === QUESTION_TYPE.FILL_BLANK ? fillText.trim().length > 0 :
-          true;
+    question.question_type === QUESTION_TYPE.SINGLE_CHOICE
+      ? Boolean(selectedOption)
+      : question.question_type === QUESTION_TYPE.MULTI_CHOICE
+        ? selectedOptions.length > 0
+        : question.question_type === QUESTION_TYPE.FILL_BLANK
+          ? fillText.trim().length > 0
+          : true;
 
   const submitAnswer = (skip: boolean) => {
     const question_id = question.id;
     switch (question.question_type) {
       case QUESTION_TYPE.SINGLE_CHOICE:
-        onSubmit({ type: "single_choice", question_id, selected_option_id: skip ? "" : selectedOption, is_skipped: skip });
+        onSubmit({
+          type: "single_choice",
+          question_id,
+          selected_option_id: skip ? "" : selectedOption,
+          is_skipped: skip,
+        });
         return;
       case QUESTION_TYPE.MULTI_CHOICE:
-        onSubmit({ type: "multi_choice", question_id, selected_option_ids: skip ? [] : selectedOptions, is_skipped: skip });
+        onSubmit({
+          type: "multi_choice",
+          question_id,
+          selected_option_ids: skip ? [] : selectedOptions,
+          is_skipped: skip,
+        });
         return;
       case QUESTION_TYPE.ARRANGE:
         onSubmit({ type: "arrange", question_id, items: arrangeItems, is_skipped: skip });
         return;
       case QUESTION_TYPE.FILL_BLANK:
-        onSubmit({ type: "fill_blank", question_id, fill_text: skip ? "" : fillText, is_skipped: skip });
+        onSubmit({
+          type: "fill_blank",
+          question_id,
+          fill_text: skip ? "" : fillText,
+          is_skipped: skip,
+        });
         return;
     }
   };
@@ -102,8 +136,12 @@ export function QuizQuestionView({
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>Question {index + 1} of {total}</span>
-        <span>{question.points} {question.points === 1 ? "point" : "points"}</span>
+        <span>
+          Question {index + 1} of {total}
+        </span>
+        <span>
+          {question.points} {question.points === 1 ? "point" : "points"}
+        </span>
       </div>
 
       <p className="text-base font-medium">{question.question_text}</p>
@@ -140,7 +178,9 @@ export function QuizQuestionView({
                 <Checkbox
                   checked={checked}
                   onCheckedChange={(v) =>
-                    setSelectedOptions((prev) => (v ? [...prev, opt.id] : prev.filter((id) => id !== opt.id)))
+                    setSelectedOptions((prev) =>
+                      v ? [...prev, opt.id] : prev.filter((id) => id !== opt.id),
+                    )
                   }
                 />
                 {opt.option_text}
@@ -156,8 +196,14 @@ export function QuizQuestionView({
 
       {question.question_type === QUESTION_TYPE.FILL_BLANK && (
         <div className="space-y-1.5">
-          {question.fill_blank_hint && <Label className="text-muted-foreground">{question.fill_blank_hint}</Label>}
-          <Input value={fillText} onChange={(e) => setFillText(e.target.value)} placeholder="Your answer" />
+          {question.fill_blank_hint && (
+            <Label className="text-muted-foreground">{question.fill_blank_hint}</Label>
+          )}
+          <Input
+            value={fillText}
+            onChange={(e) => setFillText(e.target.value)}
+            placeholder="Your answer"
+          />
         </div>
       )}
 

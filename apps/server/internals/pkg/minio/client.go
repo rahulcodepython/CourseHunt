@@ -3,13 +3,14 @@ package minio
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
 
 	"coursehunt/server/internals/config"
+	"coursehunt/server/internals/pkg/retry"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -58,20 +59,13 @@ const publicReadPolicyTemplate = `{"Version":"2012-10-17","Statement":[{"Effect"
 func Connect(cfg *config.Config) (*Storage, error) {
 	s := &Storage{cfg: cfg}
 
-	const maxRetries = 5
-	var lastErr error
-	for i := 1; i <= maxRetries; i++ {
-		if err := s.init(); err == nil {
-			log.Printf("[minio] Connected successfully to MinIO at %s (bucket: %s)", cfg.MinioEnd, cfg.MinioBucket)
-			return s, nil
-		} else {
-			lastErr = err
-			log.Printf("[minio] Connection attempt %d/%d failed: %v. Retrying in 1s...", i, maxRetries, err)
-			time.Sleep(1 * time.Second)
-		}
+	const maxAttempts = 5
+	if err := retry.Connect("minio", maxAttempts, 1*time.Second, s.init); err != nil {
+		return nil, fmt.Errorf("minio setup failed after %d retries: %w", maxAttempts, err)
 	}
 
-	return nil, fmt.Errorf("minio setup failed after %d retries: %w", maxRetries, lastErr)
+	slog.Info("connected to minio", "endpoint", cfg.MinioEnd, "bucket", cfg.MinioBucket)
+	return s, nil
 }
 
 func (s *Storage) init() error {
@@ -229,6 +223,6 @@ func (s *Storage) DeleteIfReplaced(ctx context.Context, oldURL *string, newURL s
 		return
 	}
 	if err := s.DeleteObject(ctx, objectName); err != nil {
-		log.Printf("[minio] failed to delete replaced object %q: %v", objectName, err)
+		slog.Error("failed to delete replaced minio object", "object", objectName, "error", err)
 	}
 }

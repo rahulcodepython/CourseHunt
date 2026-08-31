@@ -13,9 +13,9 @@ func (a *App) handleUpsert(c *fiber.Ctx) error {
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
-	lessonID := c.Query("lesson_id")
-	if lessonID == "" {
-		return utils.ErrBadRequest("Lesson ID query param required.", nil)
+	lessonID, err := utils.RequireQuery(c, "lesson_id", "Lesson ID")
+	if err != nil {
+		return err
 	}
 
 	n, err := a.Upsert(c.Context(), middlewares.UserID(c), lessonID, req.Content)
@@ -27,9 +27,9 @@ func (a *App) handleUpsert(c *fiber.Ctx) error {
 }
 
 func (a *App) handleRead(c *fiber.Ctx) error {
-	lessonID := c.Query("lesson_id")
-	if lessonID == "" {
-		return utils.ErrBadRequest("Lesson ID query param required.", nil)
+	lessonID, err := utils.RequireQuery(c, "lesson_id", "Lesson ID")
+	if err != nil {
+		return err
 	}
 
 	n, err := a.Read(c.Context(), middlewares.UserID(c), lessonID)
