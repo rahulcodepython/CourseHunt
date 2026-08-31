@@ -23,7 +23,11 @@ export const getColumns = (
   onManage: (tutor: TutorRow) => void,
   onBanToggle: (tutor: TutorRow) => void,
   onChangePassword: (tutor: TutorRow) => void,
-  { canBan, canChangePassword, currentUserId }: { canBan: boolean; canChangePassword: boolean; currentUserId?: string },
+  {
+    canBan,
+    canChangePassword,
+    currentUserId,
+  }: { canBan: boolean; canChangePassword: boolean; currentUserId?: string },
 ) => [
   columnHelper.accessor("name", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Tutor" />,
@@ -31,9 +35,7 @@ export const getColumns = (
   }),
   columnHelper.accessor("email", {
     header: "Email",
-    cell: ({ getValue }) => (
-      <span className="text-muted-foreground">{getValue()}</span>
-    ),
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
   }),
   columnHelper.accessor("roles", {
     header: "Roles",
@@ -48,9 +50,7 @@ export const getColumns = (
   columnHelper.accessor("total_students", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Students" />,
     cell: ({ getValue }) => (
-      <span className="tabular-nums">
-        {(getValue() ?? 0).toLocaleString()}
-      </span>
+      <span className="tabular-nums">{(getValue() ?? 0).toLocaleString()}</span>
     ),
   }),
   columnHelper.accessor("rating_avg", {
@@ -60,9 +60,7 @@ export const getColumns = (
       return (
         <div className="flex items-center gap-1">
           <Icon name="star" className="size-4 fill-yellow-500 text-yellow-500" />
-          <span className="font-medium tabular-nums">
-            {rating ? rating.toFixed(1) : "—"}
-          </span>
+          <span className="font-medium tabular-nums">{rating ? rating.toFixed(1) : "—"}</span>
         </div>
       );
     },
@@ -80,13 +78,13 @@ export const getColumns = (
       const tutor = row.original;
       return (
         <RowActions>
-          <RowActionButton
-            icon="users"
-            label="Manage Roles"
-            onClick={() => onManage(tutor)}
-          />
+          <RowActionButton icon="users" label="Manage Roles" onClick={() => onManage(tutor)} />
           {canChangePassword && (
-            <RowActionButton icon="lock" label="Change Password" onClick={() => onChangePassword(tutor)} />
+            <RowActionButton
+              icon="lock"
+              label="Change Password"
+              onClick={() => onChangePassword(tutor)}
+            />
           )}
           {canBan && tutor.id !== currentUserId && (
             <RowActionButton

@@ -25,9 +25,7 @@ export const getColumns = (
   }),
   columnHelper.accessor("description", {
     header: "Description",
-    cell: ({ getValue }) => (
-      <span className="text-muted-foreground">{getValue() ?? "—"}</span>
-    ),
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() ?? "—"}</span>,
   }),
   columnHelper.accessor("is_system", {
     header: "System",
@@ -71,7 +69,12 @@ export const getColumns = (
             />
           )}
           {!role.is_system && (
-            <RowActionButton icon="trash" label="Delete Role" onClick={() => onDelete(role)} destructive />
+            <RowActionButton
+              icon="trash"
+              label="Delete Role"
+              onClick={() => onDelete(role)}
+              destructive
+            />
           )}
         </RowActions>
       );

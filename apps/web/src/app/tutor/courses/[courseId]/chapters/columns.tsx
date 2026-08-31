@@ -27,9 +27,7 @@ export const getColumns = (
   }),
   columnHelper.accessor("total_lectures", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Lessons" />,
-    cell: ({ getValue }) => (
-      <span className="text-muted-foreground">{getValue()} lessons</span>
-    ),
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()} lessons</span>,
   }),
   columnHelper.accessor("total_duration_seconds", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Watch Time" />,

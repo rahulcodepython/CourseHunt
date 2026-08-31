@@ -17,7 +17,9 @@ export const getColumns = (onDelete: (resource: LessonResource) => void) => [
     cell: ({ getValue }) => {
       const type = getValue();
       return type ? (
-        <Badge variant="outline" className="uppercase">{type}</Badge>
+        <Badge variant="outline" className="uppercase">
+          {type}
+        </Badge>
       ) : (
         <span className="text-muted-foreground">—</span>
       );

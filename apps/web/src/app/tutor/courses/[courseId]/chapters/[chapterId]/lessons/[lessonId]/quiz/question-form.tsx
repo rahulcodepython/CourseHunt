@@ -29,18 +29,18 @@ const questionSchema = z.object({
   points: z.number().min(1, "Points must be at least 1"),
   fill_blank_hint: z.string().optional(),
   options: z.array(
-      z.object({
-        option_text: z.string(),
-        is_correct: z.boolean(),
-        sort_order: z.number(),
-      }),
-    ),
+    z.object({
+      option_text: z.string(),
+      is_correct: z.boolean(),
+      sort_order: z.number(),
+    }),
+  ),
   arrange_items: z.array(
-      z.object({
-        item_text: z.string(),
-        correct_order: z.number(),
-      }),
-    ),
+    z.object({
+      item_text: z.string(),
+      correct_order: z.number(),
+    }),
+  ),
   fill_answers: z.array(z.object({ value: z.string() })),
 });
 
@@ -117,8 +117,14 @@ export function QuestionForm({
   const correctOptionIndex = optionValues.findIndex((o) => o.is_correct);
 
   const optionsField = useFieldArray<QuestionFormData, "options">({ control, name: "options" });
-  const arrangeField = useFieldArray<QuestionFormData, "arrange_items">({ control, name: "arrange_items" });
-  const fillField = useFieldArray<QuestionFormData, "fill_answers">({ control, name: "fill_answers" });
+  const arrangeField = useFieldArray<QuestionFormData, "arrange_items">({
+    control,
+    name: "arrange_items",
+  });
+  const fillField = useFieldArray<QuestionFormData, "fill_answers">({
+    control,
+    name: "fill_answers",
+  });
 
   // Reset to the question being edited (or a blank form) every time the dialog opens.
   React.useEffect(() => {
@@ -154,7 +160,11 @@ export function QuestionForm({
     }
 
     if (editingQuestion) {
-      await updateMutation.execute({ quizId, questionId: editingQuestion.id, data: payload as never });
+      await updateMutation.execute({
+        quizId,
+        questionId: editingQuestion.id,
+        data: payload as never,
+      });
     } else {
       await createMutation.execute({ quizId, data: payload as never });
     }
@@ -201,7 +211,9 @@ export function QuestionForm({
           placeholder="Type the question..."
           {...register("question_text")}
         />
-        {errors.question_text && <p className="text-xs text-red-400">{errors.question_text.message}</p>}
+        {errors.question_text && (
+          <p className="text-xs text-red-400">{errors.question_text.message}</p>
+        )}
       </div>
 
       {(questionType === "single_choice" || questionType === "multi_choice") && (
@@ -218,7 +230,11 @@ export function QuestionForm({
               variant="outline"
               size="sm"
               onClick={() =>
-                optionsField.append({ option_text: "", is_correct: false, sort_order: optionsField.fields.length + 1 })
+                optionsField.append({
+                  option_text: "",
+                  is_correct: false,
+                  sort_order: optionsField.fields.length + 1,
+                })
               }
             >
               <Icon name="plus" className="size-3.5" />
@@ -273,7 +289,9 @@ export function QuestionForm({
               <RadioGroup
                 value={correctOptionIndex >= 0 ? String(correctOptionIndex) : undefined}
                 onValueChange={(val) => {
-                  optionsField.fields.forEach((_, i) => setValue(`options.${i}.is_correct`, i === Number(val)));
+                  optionsField.fields.forEach((_, i) =>
+                    setValue(`options.${i}.is_correct`, i === Number(val)),
+                  );
                 }}
                 className="space-y-2"
               >
@@ -292,7 +310,12 @@ export function QuestionForm({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => arrangeField.append({ item_text: "", correct_order: arrangeField.fields.length + 1 })}
+              onClick={() =>
+                arrangeField.append({
+                  item_text: "",
+                  correct_order: arrangeField.fields.length + 1,
+                })
+              }
             >
               <Icon name="plus" className="size-3.5" />
               Add Item

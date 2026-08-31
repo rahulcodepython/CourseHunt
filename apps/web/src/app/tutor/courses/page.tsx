@@ -62,11 +62,7 @@ export default function TutorCoursesPage() {
         loadingText="Loading courses..."
       />
 
-      <CourseModal
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        editingCourse={editing}
-      />
+      <CourseModal open={dialogOpen} onOpenChange={setDialogOpen} editingCourse={editing} />
 
       <CourseStatusDialog
         course={statusCourse}

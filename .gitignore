@@ -45,6 +45,8 @@ next-env.d.ts
 .turbo
 
 # Go backend binaries
+bin/
+apps/server/bin/
 apps/server/server
 apps/seeder/seeder
 apps/migrator/migrator

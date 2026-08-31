@@ -13,9 +13,7 @@ export const userGrowthColumns = [
   columnHelper.accessor("count", {
     header: () => <div className="text-right">New Users</div>,
     cell: ({ getValue }) => (
-      <div className="text-right tabular-nums">
-        {(getValue() ?? 0).toLocaleString()}
-      </div>
+      <div className="text-right tabular-nums">{(getValue() ?? 0).toLocaleString()}</div>
     ),
   }),
 ];

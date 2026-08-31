@@ -18,6 +18,7 @@ const (
 	PermAdminUsersCreate         = "admin:users:create"
 	PermAdminUsersRead           = "admin:users:read"
 	PermAdminUsersBan            = "admin:users:ban"
+	PermAdminUsersPasswordReset  = "admin:users:password:reset"
 	PermAdminRolesCreate         = "admin:roles:create"
 	PermAdminRolesRead           = "admin:roles:read"
 	PermAdminRolesUpdate         = "admin:roles:update"

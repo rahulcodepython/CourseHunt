@@ -37,7 +37,10 @@ export default function TutorLessonFeedbackPage() {
     { label: "My Courses", href: "/tutor/courses" },
     { label: currentCourse?.title || "Course", href: `/tutor/courses/${courseId}` },
     { label: "Chapters", href: `/tutor/courses/${courseId}/chapters` },
-    { label: currentChapter?.title || "Chapter", href: `/tutor/courses/${courseId}/chapters/${chapterId}/lessons` },
+    {
+      label: currentChapter?.title || "Chapter",
+      href: `/tutor/courses/${courseId}/chapters/${chapterId}/lessons`,
+    },
     { label: currentLesson?.title || "Lesson" },
     { label: "Feedbacks" },
   ]);
@@ -68,10 +71,7 @@ export default function TutorLessonFeedbackPage() {
             </span>
           </Link>
         </Button>
-        <PageHeader
-          title="Lesson Feedback"
-          subtitle="Review and moderate student feedback"
-        />
+        <PageHeader title="Lesson Feedback" subtitle="Review and moderate student feedback" />
       </div>
 
       <DataTable

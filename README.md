@@ -12,7 +12,7 @@ apps/
   seeder/     Local dev seed data
 infra/
   docker-compose.yml            production-base services (Traefik, web, server, postgres, redis, minio, migrator)
-  docker-compose.override.yml   local-dev-only additions (published DB/cache ports, whodb, mailpit, Traefik dashboard)
+  docker-compose.dev.yml   local-dev-only additions (published DB/cache ports, whodb, mailpit, Traefik dashboard)
   postgres/                     Postgres image build (adds pg_cron)
 ```
 
@@ -26,7 +26,7 @@ cd infra
 docker compose up -d --build
 ```
 
-Running from `infra/` auto-merges `docker-compose.override.yml`. The app is served through Traefik at `http://localhost`.
+Running from `infra/` auto-merges `docker-compose.dev.yml`. The app is served through Traefik at `http://localhost`.
 
 ## Deploying
 

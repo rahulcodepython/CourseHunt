@@ -43,7 +43,9 @@ function CorrectAnswers({ question }: { question: QuizQuestionDetail }) {
   }
 
   if (question.question_type === "arrange") {
-    const items = [...(question.arrange_items ?? [])].sort((a, b) => a.correct_order - b.correct_order);
+    const items = [...(question.arrange_items ?? [])].sort(
+      (a, b) => a.correct_order - b.correct_order,
+    );
     return (
       <span className="text-xs text-muted-foreground">
         {items.map((item, i) => `${i + 1}. ${item.item_text}`).join("  ·  ")}
@@ -102,11 +104,7 @@ export const getColumns = (
       const question = row.original;
       return (
         <RowActions>
-          <RowActionButton
-            icon="pencil"
-            label="Edit Question"
-            onClick={() => onEdit(question)}
-          />
+          <RowActionButton icon="pencil" label="Edit Question" onClick={() => onEdit(question)} />
           <RowActionButton
             icon="trash"
             label="Delete Question"

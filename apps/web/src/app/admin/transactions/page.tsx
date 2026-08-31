@@ -21,7 +21,9 @@ export default function TransactionsPage() {
     .filter((t) => t.status === "refunded" || t.status === "failed")
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  const refundsCount = transactions.filter((t) => t.status === "refunded" || t.status === "failed").length;
+  const refundsCount = transactions.filter(
+    (t) => t.status === "refunded" || t.status === "failed",
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -43,11 +45,7 @@ export default function TransactionsPage() {
           icon="arrow-back-up"
           iconClassName="text-red-600"
         />
-        <StatCard
-          title="Refund Requests"
-          value={refundsCount.toString()}
-          icon="receipt-refund"
-        />
+        <StatCard title="Refund Requests" value={refundsCount.toString()} icon="receipt-refund" />
       </div>
 
       <DataTable

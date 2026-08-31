@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Document, Page, Text, View, Image, StyleSheet, PDFDownloadLink } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  Image,
+  StyleSheet,
+  PDFDownloadLink,
+} from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import type { Certificate } from "@/schema/certificate.types";
 import { formatDate } from "@/lib/format";
@@ -131,8 +139,8 @@ function CertificateDocument({
           <Text style={styles.body}>for successfully completing the course</Text>
           <Text style={styles.course}>{certificate.course.title}</Text>
           <Text style={styles.remark}>
-            Awarded in recognition of the dedication, effort, and consistency shown throughout the course.
-            We commend this achievement and wish continued success ahead.
+            Awarded in recognition of the dedication, effort, and consistency shown throughout the
+            course. We commend this achievement and wish continued success ahead.
           </Text>
           {certificate.tutor?.name ? (
             <Text style={styles.tutor}>Instructed by {certificate.tutor.name}</Text>
@@ -145,7 +153,9 @@ function CertificateDocument({
               </View>
             </View>
             <View style={styles.signatureBlock}>
-              <Text style={{ fontSize: 11, marginBottom: 4 }}>{formatDate(certificate.issued_at)}</Text>
+              <Text style={{ fontSize: 11, marginBottom: 4 }}>
+                {formatDate(certificate.issued_at)}
+              </Text>
               <View style={styles.signatureLine}>
                 <Text style={styles.signatureLabel}>Date Issued</Text>
               </View>
@@ -157,7 +167,13 @@ function CertificateDocument({
   );
 }
 
-export function CertificateDownloadButton({ studentName, certificate }: { studentName: string; certificate: Certificate }) {
+export function CertificateDownloadButton({
+  studentName,
+  certificate,
+}: {
+  studentName: string;
+  certificate: Certificate;
+}) {
   const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
@@ -170,7 +186,13 @@ export function CertificateDownloadButton({ studentName, certificate }: { studen
 
   return (
     <PDFDownloadLink
-      document={<CertificateDocument studentName={studentName} certificate={certificate} qrDataUrl={qrDataUrl} />}
+      document={
+        <CertificateDocument
+          studentName={studentName}
+          certificate={certificate}
+          qrDataUrl={qrDataUrl}
+        />
+      }
       fileName={`certificate-${certificate.course.title.replace(/\s+/g, "-").toLowerCase()}.pdf`}
     >
       {({ loading }) => (

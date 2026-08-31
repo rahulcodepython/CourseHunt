@@ -6,8 +6,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// json is the canonical response helper used throughout all handlers.
-// Signature: utils.json(c, statusCode, success, message, data, errors)
+// json is the canonical response envelope used by every handler (success,
+// via OK/Created below) and by the central ErrorHandler (errors.go/
+// error.handler.go) for every failure. It's the one place the wire shape is
+// defined.
 func json[T any](c *fiber.Ctx, status int, success bool, message string, data T, err error) error {
 	var errStr string
 	if err != nil {
@@ -32,42 +34,4 @@ func OK[T any](c *fiber.Ctx, message string, data T) error {
 
 func Created[T any](c *fiber.Ctx, message string, data T) error {
 	return json(c, fiber.StatusCreated, true, message, data, nil)
-}
-
-func BadRequest(c *fiber.Ctx, message string, error error) error {
-	return json[any](c, fiber.StatusBadRequest, false, message, nil, error)
-}
-
-func Unauthorized(c *fiber.Ctx, message string, error error) error {
-	return json[any](c, fiber.StatusUnauthorized, false, message, nil, error)
-}
-
-func Forbidden(c *fiber.Ctx, message string, error error) error {
-	return json[any](c, fiber.StatusForbidden, false, message, nil, error)
-}
-
-func NotFound(c *fiber.Ctx, message string, error error) error {
-	return json[any](c, fiber.StatusNotFound, false, message, nil, error)
-}
-
-func UnprocessableEntity(c *fiber.Ctx, message string, error error) error {
-	return json[any](c, fiber.StatusUnprocessableEntity, false, message, nil, error)
-}
-
-func InternalError(c *fiber.Ctx, message string, err error) error {
-	if err != nil {
-		c.Locals("handler_error", err)
-	}
-	c.Locals("handler_error_msg", message)
-	body := generic.Response[any]{
-		Success: false,
-		Message: message,
-		Data:    nil,
-		Error:   generic.ErrMsgInternalServerError,
-	}
-	return c.Status(fiber.StatusInternalServerError).JSON(body)
-}
-
-func TooManyRequests(c *fiber.Ctx, message string, error error) error {
-	return json[any](c, fiber.StatusTooManyRequests, false, message, nil, error)
 }

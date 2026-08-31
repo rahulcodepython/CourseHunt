@@ -7,22 +7,22 @@ import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "@/components/ui/button";
 
 type LoadingButtonProps = ButtonProps & {
-    loading?: boolean;
-    loadingText?: string;
+  loading?: boolean;
+  loadingText?: string;
 };
 
 export function LoadingButton({
-    loading = false,
-    loadingText,
-    children,
-    disabled,
-    className,
-    ...props
+  loading = false,
+  loadingText,
+  children,
+  disabled,
+  className,
+  ...props
 }: LoadingButtonProps) {
-    return (
-        <Button disabled={disabled || loading} className={cn("relative", className)} {...props}>
-            {loading && <Loader2 className="animate-spin" />}
-            {loading && loadingText ? loadingText : children}
-        </Button>
-    );
+  return (
+    <Button disabled={disabled || loading} className={cn("relative", className)} {...props}>
+      {loading && <Loader2 className="animate-spin" />}
+      {loading && loadingText ? loadingText : children}
+    </Button>
+  );
 }

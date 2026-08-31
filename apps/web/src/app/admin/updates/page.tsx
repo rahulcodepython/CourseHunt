@@ -104,15 +104,8 @@ function UpdateDialog({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="upd-message">Message</Label>
-          <Textarea
-            id="upd-message"
-            placeholder="What's new?"
-            {...register("message")}
-            rows={4}
-          />
-          {errors.message && (
-            <p className="text-xs text-red-400">{errors.message.message}</p>
-          )}
+          <Textarea id="upd-message" placeholder="What's new?" {...register("message")} rows={4} />
+          {errors.message && <p className="text-xs text-red-400">{errors.message.message}</p>}
         </div>
         {!editing && (
           <div className="space-y-1.5">
@@ -136,17 +129,11 @@ function UpdateDialog({
                 </Select>
               )}
             />
-            {errors.courseId && (
-              <p className="text-xs text-red-400">{errors.courseId.message}</p>
-            )}
+            {errors.courseId && <p className="text-xs text-red-400">{errors.courseId.message}</p>}
           </div>
         )}
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <LoadingButton
@@ -213,11 +200,7 @@ export default function UpdatesPage() {
         loadingText="Loading updates..."
       />
 
-      <UpdateDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        editing={editing}
-      />
+      <UpdateDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} />
 
       <ConfirmDeleteDialog
         open={!!deleting}

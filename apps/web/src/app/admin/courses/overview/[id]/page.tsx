@@ -121,11 +121,7 @@ export default function CourseOverviewPage() {
             <TabsContent value="daily" className="mt-4">
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dailyRevenue}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--border)"
-                    vertical={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="day"
                     tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
@@ -146,22 +142,14 @@ export default function CourseOverviewPage() {
                     ]}
                     cursor={{ fill: "var(--muted)", opacity: 0.4 }}
                   />
-                  <Bar
-                    dataKey="revenue"
-                    fill="hsl(var(--primary))"
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </TabsContent>
             <TabsContent value="monthly" className="mt-4">
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={monthlyRevenue}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--border)"
-                    vertical={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="month"
                     tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
@@ -182,22 +170,14 @@ export default function CourseOverviewPage() {
                     ]}
                     cursor={{ fill: "var(--muted)", opacity: 0.4 }}
                   />
-                  <Bar
-                    dataKey="revenue"
-                    fill="hsl(var(--primary))"
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </TabsContent>
             <TabsContent value="enrollment" className="mt-4">
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={enrollments}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--border)"
-                    vertical={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="month"
                     tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
@@ -209,10 +189,7 @@ export default function CourseOverviewPage() {
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    cursor={{ stroke: "var(--border)" }}
-                  />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: "var(--border)" }} />
                   <Line
                     type="monotone"
                     dataKey="enrollments"

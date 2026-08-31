@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import { useChaptersQuery } from "@/query-hooks/chapters.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 import { LessonWizardDialog } from "./lesson-wizard-dialog";
 
@@ -40,28 +41,21 @@ export default function TutorChapterLessonsPage() {
   const deleteMutation = useDeleteLessonMutation(chapterId);
   const lessons: Lesson[] = rawLessons?.data ?? [];
 
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<Lesson | null>(null);
-  const [deleting, setDeleting] = React.useState<Lesson | null>(null);
+  const {
+    dialogOpen,
+    setDialogOpen,
+    editing,
+    openCreate,
+    openEdit,
+    deleting,
+    setDeleting,
+    requestDelete,
+    confirmDelete,
+  } = useCrudDialogState<Lesson>();
 
-  const openCreate = () => {
-    setEditing(null);
-    setDialogOpen(true);
-  };
+  const handleDelete = () => confirmDelete(deleteMutation.execute);
 
-  const openEdit = (lesson: Lesson) => {
-    setEditing(lesson);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (deleting) {
-      await deleteMutation.execute(deleting.id);
-      setDeleting(null);
-    }
-  };
-
-  const columns = getColumns(courseId, chapterId, openEdit, setDeleting);
+  const columns = getColumns(courseId, chapterId, openEdit, requestDelete);
 
   return (
     <div className="space-y-6">

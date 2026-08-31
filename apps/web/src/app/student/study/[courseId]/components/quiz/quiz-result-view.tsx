@@ -31,7 +31,9 @@ export function QuizResultView({
       </div>
 
       <div>
-        <p className={cn("text-xl font-semibold", result.passed ? "text-green-600" : "text-red-600")}>
+        <p
+          className={cn("text-xl font-semibold", result.passed ? "text-green-600" : "text-red-600")}
+        >
           {result.passed ? "Quiz Passed!" : "Quiz Not Passed"}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">

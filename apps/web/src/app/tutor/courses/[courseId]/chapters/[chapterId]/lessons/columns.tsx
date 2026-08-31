@@ -34,7 +34,7 @@ function formatTime(seconds: number): string {
 
 function QuizMetadataCell({ lessonId }: { lessonId: string }) {
   const { data: raw } = useQuizMetadataQuery(lessonId);
-  const metadata: QuizMetadata | null = raw?.success ? raw.data ?? null : null;
+  const metadata: QuizMetadata | null = raw?.success ? (raw.data ?? null) : null;
 
   if (!metadata) {
     return <span className="text-xs text-muted-foreground">Not configured</span>;
@@ -45,7 +45,9 @@ function QuizMetadataCell({ lessonId }: { lessonId: string }) {
       <Badge variant="outline" className="font-mono text-xs">
         {metadata.total_questions} questions
       </Badge>
-      <span className="text-xs text-muted-foreground">{formatTime(metadata.time_limit_seconds)}</span>
+      <span className="text-xs text-muted-foreground">
+        {formatTime(metadata.time_limit_seconds)}
+      </span>
       <span className="text-xs text-muted-foreground">Pass {metadata.pass_score_percent}%</span>
     </div>
   );

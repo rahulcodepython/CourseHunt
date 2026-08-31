@@ -10,6 +10,14 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 )
 
+// RateLimiterMiddleware caps requests per IP using Fiber's default in-memory
+// store — no `Storage` is configured, so each process instance tracks its
+// own independent budget. That's fine for a single instance, but the moment
+// this runs behind a load balancer with more than one instance, each one
+// gets its own 100/min allowance instead of a shared one, silently
+// weakening the limit by a factor of the instance count. Wiring a
+// Redis-backed fiber.Storage (the app already has a Redis client available
+// app-wide) is the fix if/when this scales horizontally.
 func RateLimiterMiddleware() fiber.Handler {
 	return limiter.New(limiter.Config{
 		Max:        100,
@@ -18,7 +26,7 @@ func RateLimiterMiddleware() fiber.Handler {
 			return c.IP()
 		},
 		LimitReached: func(c *fiber.Ctx) error {
-			return utils.TooManyRequests(c, generic.ErrMsgTooManyRequests, nil)
+			return utils.ErrTooManyRequests(generic.ErrMsgTooManyRequests, nil)
 		},
 		// docker-compose's own healthcheck polls this route from inside the
 		// container network every 15s; exempting it stops legitimate,

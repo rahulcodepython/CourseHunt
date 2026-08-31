@@ -3,20 +3,27 @@ package minio
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
 
 	"coursehunt/server/internals/config"
+	"coursehunt/server/internals/pkg/retry"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-// MinioStorage implements Storage interface using MinIO
-type MinioStorage struct {
+// Storage implements object storage on top of MinIO. Callers get one
+// instance from Connect and pass it into every feature that needs it
+// (upload, courses, lessons) via constructor injection — there is no
+// package-level singleton, so a feature's dependency on storage is visible
+// in its constructor signature instead of a hidden global read.
+type Storage struct {
+	mu sync.RWMutex
+
 	// client talks to MINIO_ENDPOINT — the internal/Docker-network address,
 	// used for server-side operations (bucket setup, health checks).
 	client *minio.Client
@@ -28,6 +35,8 @@ type MinioStorage struct {
 	publicClient *minio.Client
 	bucket       string
 	baseURL      string
+
+	cfg *config.Config // retained for Ping's auto-reconnect
 }
 
 // minioRegion is fixed rather than auto-discovered: without it, the SDK
@@ -43,13 +52,24 @@ const minioRegion = "us-east-1"
 // credentials. %s is substituted with the bucket name.
 const publicReadPolicyTemplate = `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::%s/*"]}]}`
 
-var (
-	MINIO    *MinioStorage
-	savedCfg *config.Config
-	mu       sync.RWMutex
-)
+// Connect initializes the MinIO client with retries and ensures the bucket
+// exists, returning a ready-to-use *Storage. Continuing without file
+// storage on failure (if desired) is the caller's decision, same as today —
+// this just returns the error instead of logging+swallowing it itself.
+func Connect(cfg *config.Config) (*Storage, error) {
+	s := &Storage{cfg: cfg}
 
-func initMinio(cfg *config.Config) error {
+	const maxAttempts = 5
+	if err := retry.Connect("minio", maxAttempts, 1*time.Second, s.init); err != nil {
+		return nil, fmt.Errorf("minio setup failed after %d retries: %w", maxAttempts, err)
+	}
+
+	slog.Info("connected to minio", "endpoint", cfg.MinioEnd, "bucket", cfg.MinioBucket)
+	return s, nil
+}
+
+func (s *Storage) init() error {
+	cfg := s.cfg
 	if cfg.MinioEnd == "" || cfg.MinioAccess == "" || cfg.MinioSecret == "" || cfg.MinioBucket == "" {
 		return fmt.Errorf("minio config is invalid")
 	}
@@ -94,12 +114,12 @@ func initMinio(cfg *config.Config) error {
 		return fmt.Errorf("failed to set public-read policy: %w", err)
 	}
 
-	MINIO = &MinioStorage{
-		client:       client,
-		publicClient: publicClient,
-		bucket:       cfg.MinioBucket,
-		baseURL:      cfg.MinioBaseURL,
-	}
+	s.mu.Lock()
+	s.client = client
+	s.publicClient = publicClient
+	s.bucket = cfg.MinioBucket
+	s.baseURL = cfg.MinioBaseURL
+	s.mu.Unlock()
 
 	return nil
 }
@@ -115,51 +135,30 @@ func publicEndpointFrom(baseURL, fallbackEndpoint string, fallbackSecure bool) (
 	return u.Host, u.Scheme == "https"
 }
 
-// SetupMinio initializes MinIO client with retries and ensures bucket exists
-func SetupMinio(cfg *config.Config) error {
-	mu.Lock()
-	defer mu.Unlock()
+// Ping checks health status of the MinIO connection, attempting
+// auto-reconnect if needed.
+func (s *Storage) Ping(ctx context.Context) error {
+	s.mu.RLock()
+	client, bucket := s.client, s.bucket
+	s.mu.RUnlock()
 
-	savedCfg = cfg
-
-	maxRetries := 5
-	var lastErr error
-	for i := 1; i <= maxRetries; i++ {
-		err := initMinio(cfg)
-		if err == nil {
-			log.Printf("[minio] Connected successfully to MinIO at %s (bucket: %s)", cfg.MinioEnd, cfg.MinioBucket)
-			return nil
+	if client == nil {
+		if err := s.init(); err != nil {
+			return fmt.Errorf("minio auto-reconnect failed: %w", err)
 		}
-		lastErr = err
-		log.Printf("[minio] Connection attempt %d/%d failed: %v. Retrying in 1s...", i, maxRetries, err)
-		time.Sleep(1 * time.Second)
+		s.mu.RLock()
+		client, bucket = s.client, s.bucket
+		s.mu.RUnlock()
 	}
 
-	return fmt.Errorf("minio setup failed after %d retries: %w", maxRetries, lastErr)
-}
-
-// Ping checks health status of MinIO connection, attempting auto-reconnect if needed
-func Ping(ctx context.Context) error {
-	mu.Lock()
-	defer mu.Unlock()
-
-	if MINIO == nil || MINIO.client == nil {
-		if savedCfg != nil {
-			if err := initMinio(savedCfg); err != nil {
-				return fmt.Errorf("minio auto-reconnect failed: %w", err)
-			}
-		} else {
-			return fmt.Errorf("minio storage is not initialized and no config available")
-		}
-	}
-
-	_, err := MINIO.client.BucketExists(ctx, MINIO.bucket)
+	_, err := client.BucketExists(ctx, bucket)
 	if err != nil {
-		// Attempt re-init once if bucket ping fails
-		if savedCfg != nil {
-			if reinitErr := initMinio(savedCfg); reinitErr == nil {
-				_, err = MINIO.client.BucketExists(ctx, MINIO.bucket)
-			}
+		// Attempt re-init once if bucket ping fails.
+		if reinitErr := s.init(); reinitErr == nil {
+			s.mu.RLock()
+			client, bucket = s.client, s.bucket
+			s.mu.RUnlock()
+			_, err = client.BucketExists(ctx, bucket)
 		}
 	}
 
@@ -170,7 +169,7 @@ func Ping(ctx context.Context) error {
 }
 
 // GetSignedURL generates a signed URL for uploading an object, valid for 1 hour
-func (s *MinioStorage) GetSignedURL(ctx context.Context, objectName string) (string, error) {
+func (s *Storage) GetSignedURL(ctx context.Context, objectName string) (string, error) {
 	if objectName == "" {
 		return "", fmt.Errorf("object name cannot be empty")
 	}
@@ -185,13 +184,13 @@ func (s *MinioStorage) GetSignedURL(ctx context.Context, objectName string) (str
 }
 
 // GetPublicURL returns the public URL for a given object name
-func (s *MinioStorage) GetPublicURL(objectName string) string {
+func (s *Storage) GetPublicURL(objectName string) string {
 	return fmt.Sprintf("%s/%s", s.baseURL, objectName)
 }
 
 // DeleteObject removes an object from the bucket. A no-op (not an error) for
 // an empty object name, so callers can pass through an "absent" value freely.
-func (s *MinioStorage) DeleteObject(ctx context.Context, objectName string) error {
+func (s *Storage) DeleteObject(ctx context.Context, objectName string) error {
 	if objectName == "" {
 		return nil
 	}
@@ -201,7 +200,7 @@ func (s *MinioStorage) DeleteObject(ctx context.Context, objectName string) erro
 // ObjectNameFromURL extracts the bucket-relative object name from a URL
 // previously handed out by GetPublicURL, or "" if the URL doesn't belong to
 // this bucket (e.g. empty, or an external URL that predates this storage).
-func (s *MinioStorage) ObjectNameFromURL(fileURL string) string {
+func (s *Storage) ObjectNameFromURL(fileURL string) string {
 	prefix := s.baseURL + "/"
 	if fileURL == "" || !strings.HasPrefix(fileURL, prefix) {
 		return ""
@@ -215,7 +214,7 @@ func (s *MinioStorage) ObjectNameFromURL(fileURL string) string {
 // swapped. Best-effort: storage errors are logged, not returned, since the
 // DB write this follows has already succeeded and shouldn't be undone over a
 // secondary cleanup failure.
-func (s *MinioStorage) DeleteIfReplaced(ctx context.Context, oldURL *string, newURL string) {
+func (s *Storage) DeleteIfReplaced(ctx context.Context, oldURL *string, newURL string) {
 	if oldURL == nil || *oldURL == "" || *oldURL == newURL {
 		return
 	}
@@ -224,6 +223,6 @@ func (s *MinioStorage) DeleteIfReplaced(ctx context.Context, oldURL *string, new
 		return
 	}
 	if err := s.DeleteObject(ctx, objectName); err != nil {
-		log.Printf("[minio] failed to delete replaced object %q: %v", objectName, err)
+		slog.Error("failed to delete replaced minio object", "object", objectName, "error", err)
 	}
 }

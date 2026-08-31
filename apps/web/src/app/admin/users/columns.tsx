@@ -28,9 +28,7 @@ export const getColumns = (
   }),
   columnHelper.accessor("email", {
     header: "Email",
-    cell: ({ getValue }) => (
-      <span className="text-muted-foreground">{getValue()}</span>
-    ),
+    cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
   }),
   columnHelper.accessor("roles", {
     header: "Role",
@@ -62,7 +60,11 @@ export const getColumns = (
       const user = row.original;
       return (
         <RowActions>
-          <RowActionButton icon="book" label="View Courses" href={`/admin/users/${user.id}/courses`} />
+          <RowActionButton
+            icon="book"
+            label="View Courses"
+            href={`/admin/users/${user.id}/courses`}
+          />
           {canBan && user.id !== currentUserId && (
             <RowActionButton
               icon="ban"

@@ -37,7 +37,12 @@ export default function TutorsPage() {
   };
 
   const columns = React.useMemo(
-    () => getColumns(handleManage, handleBanToggle, setPasswordTutor, { canBan, canChangePassword, currentUserId }),
+    () =>
+      getColumns(handleManage, handleBanToggle, setPasswordTutor, {
+        canBan,
+        canChangePassword,
+        currentUserId,
+      }),
     [canBan, canChangePassword, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps
   );
 

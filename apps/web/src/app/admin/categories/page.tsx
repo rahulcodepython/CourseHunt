@@ -94,23 +94,13 @@ function CategoryDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={editing ? "Edit Category" : "Create Category"}
-      description={
-        editing
-          ? "Update the category name"
-          : "Add a new course category"
-      }
+      description={editing ? "Update the category name" : "Add a new course category"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="cat-name">Name</Label>
-          <Input
-            id="cat-name"
-            placeholder="e.g. Web Development"
-            {...register("name")}
-          />
-          {errors.name && (
-            <p className="text-xs text-red-400">{errors.name.message}</p>
-          )}
+          <Input id="cat-name" placeholder="e.g. Web Development" {...register("name")} />
+          {errors.name && <p className="text-xs text-red-400">{errors.name.message}</p>}
         </div>
         {!editing && (
           <div className="space-y-1.5">
@@ -139,11 +129,7 @@ function CategoryDialog({
           </div>
         )}
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <LoadingButton
@@ -164,8 +150,17 @@ export default function CategoriesPage() {
     ? raw.data
     : ((raw?.data as { data?: Category[] } | undefined)?.data ?? []);
   const deleteMutation = useDeleteCategoryMutation();
-  const { dialogOpen, setDialogOpen, editing, openCreate, openEdit, deleting, setDeleting, requestDelete, confirmDelete } =
-    useCrudDialogState<Category>();
+  const {
+    dialogOpen,
+    setDialogOpen,
+    editing,
+    openCreate,
+    openEdit,
+    deleting,
+    setDeleting,
+    requestDelete,
+    confirmDelete,
+  } = useCrudDialogState<Category>();
 
   if (isLoading || (!raw?.data && !categories.length)) {
     return <Loading />;

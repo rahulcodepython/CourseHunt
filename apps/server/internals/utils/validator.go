@@ -4,28 +4,37 @@ import (
 	"errors"
 	"strings"
 
-	"coursehunt/server/internals/generic"
-
+	"github.com/go-playground/locales/en"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
+	entranslations "github.com/go-playground/validator/v10/translations/en"
 )
 
-var validate = validator.New()
+var (
+	validate  = validator.New()
+	validateT ut.Translator
+)
 
-// Validate parses the JSON body into dst, validates it, and writes error response if invalid.
-// Returns (true, nil) on success, (false, err) on validation failure.
-func Validate(c *fiber.Ctx, dst interface{}) (bool, error) {
-	if err := c.BodyParser(dst); err != nil {
-		err2 := BadRequest(c, generic.ErrMsgInvalidRequestBody, err)
-		return false, err2
-	}
-	if err := validate.Struct(dst); err != nil {
-		errs := []string{}
-		for _, fe := range err.(validator.ValidationErrors) {
-			errs = append(errs, fe.Field()+": "+fe.Tag())
+func init() {
+	locale := en.New()
+	translator := ut.New(locale, locale)
+	validateT, _ = translator.GetTranslator("en")
+	// Humanizes struct-tag validation errors ("Title is a required field")
+	// instead of the raw "Field: tag" pairing.
+	_ = entranslations.RegisterDefaultTranslations(validate, validateT)
+}
+
+// ValidateStruct validates a struct according to its struct tags and translates error messages.
+func ValidateStruct(s any) error {
+	if err := validate.Struct(s); err != nil {
+		var errs []string
+		if valErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, fe := range valErrors {
+				errs = append(errs, fe.Translate(validateT))
+			}
+			return errors.New(strings.Join(errs, "; "))
 		}
-		err2 := UnprocessableEntity(c, generic.ErrMsgValidationFailed, errors.New(strings.Join(errs, "; ")))
-		return false, err2
+		return err
 	}
-	return true, nil
+	return nil
 }

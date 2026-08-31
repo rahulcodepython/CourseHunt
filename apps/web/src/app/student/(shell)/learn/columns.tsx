@@ -42,7 +42,9 @@ export const columns: ColumnDef<EnrolledCourseResponse, any>[] = [
       return (
         <div className="flex items-center gap-2">
           <Progress value={percent} className="h-1.5 w-32" />
-          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{Math.round(percent)}%</span>
+          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+            {Math.round(percent)}%
+          </span>
         </div>
       );
     },

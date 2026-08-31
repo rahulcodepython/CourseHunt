@@ -17,80 +17,86 @@ import { Button } from "@/components/ui/button";
 import { getColumns } from "./columns";
 
 export default function AdminsPage() {
-    const permissions = useSessionStore((s) => s.permissions);
-    const canCreateAdmin = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_ROLE_ASSIGN);
-    const canChangePassword = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_PASSWORD_RESET);
-    const { canBan, currentUserId, handleBanToggle } = useUserBanActions();
+  const permissions = useSessionStore((s) => s.permissions);
+  const canCreateAdmin = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_ROLE_ASSIGN);
+  const canChangePassword = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_PASSWORD_RESET);
+  const { canBan, currentUserId, handleBanToggle } = useUserBanActions();
 
-    const { data: rawAdmins, isLoading } = useUsersQuery({ role: ROLES.ADMIN });
-    const [selectedUser, setSelectedUser] = React.useState<UserListResponse | null>(null);
-    const [dialogOpen, setDialogOpen] = React.useState(false);
-    const [createOpen, setCreateOpen] = React.useState(false);
-    const [passwordUser, setPasswordUser] = React.useState<UserListResponse | null>(null);
+  const { data: rawAdmins, isLoading } = useUsersQuery({ role: ROLES.ADMIN });
+  const [selectedUser, setSelectedUser] = React.useState<UserListResponse | null>(null);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [createOpen, setCreateOpen] = React.useState(false);
+  const [passwordUser, setPasswordUser] = React.useState<UserListResponse | null>(null);
 
-    const admins: UserListResponse[] = rawAdmins?.data?.data ?? [];
+  const admins: UserListResponse[] = rawAdmins?.data?.data ?? [];
 
-    const handleManage = (user: UserListResponse) => {
-        setSelectedUser(user);
-        setDialogOpen(true);
-    };
+  const handleManage = (user: UserListResponse) => {
+    setSelectedUser(user);
+    setDialogOpen(true);
+  };
 
-    const columns = React.useMemo(
-        () => getColumns(handleManage, handleBanToggle, setPasswordUser, { canBan, canChangePassword, currentUserId }),
-        [canBan, canChangePassword, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps
-    );
+  const columns = React.useMemo(
+    () =>
+      getColumns(handleManage, handleBanToggle, setPasswordUser, {
+        canBan,
+        canChangePassword,
+        currentUserId,
+      }),
+    [canBan, canChangePassword, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-    return (
-        <div className="space-y-6">
-            <PageHeader
-                title="Admin Users"
-                subtitle="View platform administrators and manage role assignments"
-                actions={
-                    canCreateAdmin ? <Button onClick={() => setCreateOpen(true)}>
-                        <Icon name="plus" className="size-4" />
-                        Create Admin
-                    </Button>
-                        : null
-                }
-            />
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Admin Users"
+        subtitle="View platform administrators and manage role assignments"
+        actions={
+          canCreateAdmin ? (
+            <Button onClick={() => setCreateOpen(true)}>
+              <Icon name="plus" className="size-4" />
+              Create Admin
+            </Button>
+          ) : null
+        }
+      />
 
-            <DataTable
-                columns={columns}
-                data={admins}
-                searchPlaceholder="Search by name..."
-                searchColumnKey="name"
-                exportFilename="admins"
-                emptyIcon="user-check"
-                emptyText="No admin users found"
-                isLoading={isLoading}
-                loadingText="Loading admin users..."
-            />
+      <DataTable
+        columns={columns}
+        data={admins}
+        searchPlaceholder="Search by name..."
+        searchColumnKey="name"
+        exportFilename="admins"
+        emptyIcon="user-check"
+        emptyText="No admin users found"
+        isLoading={isLoading}
+        loadingText="Loading admin users..."
+      />
 
-            <ManageRolesDialog
-                userId={selectedUser?.id ?? null}
-                userName={selectedUser?.name}
-                currentRoles={selectedUser?.roles ?? []}
-                open={dialogOpen}
-                onOpenChange={setDialogOpen}
-            />
+      <ManageRolesDialog
+        userId={selectedUser?.id ?? null}
+        userName={selectedUser?.name}
+        currentRoles={selectedUser?.roles ?? []}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
 
-            {canCreateAdmin && (
-                <CreateUserDialog
-                    open={createOpen}
-                    onOpenChange={setCreateOpen}
-                    title="Create Admin"
-                    authRole={ROLES.ADMIN}
-                />
-            )}
+      {canCreateAdmin && (
+        <CreateUserDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          title="Create Admin"
+          authRole={ROLES.ADMIN}
+        />
+      )}
 
-            <ChangePasswordDialog
-                open={!!passwordUser}
-                onOpenChange={(open) => !open && setPasswordUser(null)}
-                userId={passwordUser?.id ?? null}
-                userName={passwordUser?.name}
-                userEmail={passwordUser?.email}
-                role={ROLES.ADMIN}
-            />
-        </div>
-    );
+      <ChangePasswordDialog
+        open={!!passwordUser}
+        onOpenChange={(open) => !open && setPasswordUser(null)}
+        userId={passwordUser?.id ?? null}
+        userName={passwordUser?.name}
+        userEmail={passwordUser?.email}
+        role={ROLES.ADMIN}
+      />
+    </div>
+  );
 }

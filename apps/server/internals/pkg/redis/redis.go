@@ -3,10 +3,11 @@ package redis
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"coursehunt/server/internals/config"
+	"coursehunt/server/internals/pkg/retry"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -20,14 +21,19 @@ func Connect(cfg *config.Config) *redis.Client {
 		DB:       cfg.RedisDB,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-
-	defer cancel()
-
-	if err := client.Ping(ctx).Err(); err != nil {
-		log.Printf("[redis] Warning: Failed to connect to Redis at %s: %v (caching will fallback gracefully)", addr, err)
+	const maxAttempts = 3
+	err := retry.Connect("redis", maxAttempts, 1*time.Second, func() error {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		return client.Ping(ctx).Err()
+	})
+	if err != nil {
+		// Redis is a soft dependency — caching degrades gracefully rather
+		// than blocking boot, so a final failure here is a warning, not fatal.
+		slog.Warn("failed to connect to redis, caching will fallback gracefully",
+			"addr", addr, "attempts", maxAttempts, "error", err)
 	} else {
-		log.Printf("[redis] Connected successfully to Redis at %s", addr)
+		slog.Info("connected to redis", "addr", addr)
 	}
 
 	return client

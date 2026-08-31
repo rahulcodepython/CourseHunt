@@ -153,26 +153,31 @@ var (
 	ErrCertificateFailedToExecute = errors.New("failed to issue certificate")
 )
 
+// Wishlist errors
+var (
+	ErrWishlistLimitReached = errors.New("wishlist limit reached")
+)
+
 // Centralized Response Messages
 const (
-	MsgTransactionInitiated       = "Transaction initiated."
-	MsgTransactionStatusFetched   = "Transaction status fetched."
-	MsgCheckoutCourseFetched      = "Checkout course info fetched."
-	MsgTransactionsFetched        = "Transactions fetched."
-	MsgSignedURLGenerated         = "Signed URL generated successfully."
-	MsgEnrolledSuccessfully       = "Enrolled successfully."
-	MsgNoteSaved                  = "Note saved."
-	MsgNoteFetched                = "Note fetched."
-	MsgNoteUpdated                = "Note updated."
-	MsgNoteDeleted                = "Note deleted."
-	MsgFeedbackPosted             = "Feedback posted."
-	MsgFeedbackFetched            = "Feedbacks fetched."
-	MsgCouponCreated              = "Coupon created."
-	MsgCouponChecked              = "Coupon checked."
-	MsgQuizSubmitted              = "Quiz submitted successfully."
-	MsgCourseCreated              = "Course created successfully."
-	MsgCourseUpdated              = "Course updated successfully."
-	MsgCourseDeleted              = "Course deleted successfully."
+	MsgTransactionInitiated     = "Transaction initiated."
+	MsgTransactionStatusFetched = "Transaction status fetched."
+	MsgCheckoutCourseFetched    = "Checkout course info fetched."
+	MsgTransactionsFetched      = "Transactions fetched."
+	MsgSignedURLGenerated       = "Signed URL generated successfully."
+	MsgEnrolledSuccessfully     = "Enrolled successfully."
+	MsgNoteSaved                = "Note saved."
+	MsgNoteFetched              = "Note fetched."
+	MsgNoteUpdated              = "Note updated."
+	MsgNoteDeleted              = "Note deleted."
+	MsgFeedbackPosted           = "Feedback posted."
+	MsgFeedbackFetched          = "Feedbacks fetched."
+	MsgCouponCreated            = "Coupon created."
+	MsgCouponChecked            = "Coupon checked."
+	MsgQuizSubmitted            = "Quiz submitted successfully."
+	MsgCourseCreated            = "Course created successfully."
+	MsgCourseUpdated            = "Course updated successfully."
+	MsgCourseDeleted            = "Course deleted successfully."
 )
 
 // Centralized Error Response Messages

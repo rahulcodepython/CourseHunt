@@ -15,16 +15,12 @@ export const getColumns = (
 ) => [
   columnHelper.accessor("created_at", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Date" />,
-    cell: ({ getValue }) => (
-      <span className="text-muted-foreground">{formatDate(getValue())}</span>
-    ),
+    cell: ({ getValue }) => <span className="text-muted-foreground">{formatDate(getValue())}</span>,
   }),
   columnHelper.accessor("message", {
     header: "Message",
     cell: ({ getValue }) => (
-      <span className="block max-w-xs truncate text-muted-foreground">
-        {getValue()}
-      </span>
+      <span className="block max-w-xs truncate text-muted-foreground">{getValue()}</span>
     ),
   }),
   columnHelper.accessor("course", {
@@ -46,7 +42,12 @@ export const getColumns = (
       return (
         <RowActions>
           <RowActionButton icon="pencil" label="Edit Update" onClick={() => onEdit(update)} />
-          <RowActionButton icon="trash" label="Delete Update" onClick={() => onDelete(update)} destructive />
+          <RowActionButton
+            icon="trash"
+            label="Delete Update"
+            onClick={() => onDelete(update)}
+            destructive
+          />
         </RowActions>
       );
     },

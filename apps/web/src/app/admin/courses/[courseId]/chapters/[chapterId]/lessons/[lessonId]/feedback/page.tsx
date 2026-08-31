@@ -3,7 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useFeedbacksQuery, useUpdateFeedbackMutation, useDeleteFeedbackMutation } from "@/query-hooks/feedbacks.api";
+import {
+  useFeedbacksQuery,
+  useUpdateFeedbackMutation,
+  useDeleteFeedbackMutation,
+} from "@/query-hooks/feedbacks.api";
 import type { Feedback } from "@/schema/feedbacks.types";
 import { PageHeader } from "@/components/page-header";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
@@ -36,7 +40,10 @@ export default function LessonFeedbackPage() {
     { label: "Courses", href: "/admin/courses" },
     { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "Chapters", href: `/admin/courses/${courseId}/chapters` },
-    { label: currentChapter?.title || "Chapter", href: `/admin/courses/${courseId}/chapters/${chapterId}/lessons` },
+    {
+      label: currentChapter?.title || "Chapter",
+      href: `/admin/courses/${courseId}/chapters/${chapterId}/lessons`,
+    },
     { label: currentLesson?.title || "Lesson" },
     { label: "Feedbacks" },
   ]);

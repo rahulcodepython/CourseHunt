@@ -13,32 +13,33 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
  * (icon-only action columns) render as-is, untouched.
  */
 export function CopyableCell({ children }: { children: React.ReactNode }) {
-    const ref = React.useRef<HTMLDivElement>(null);
-    const [text, setText] = React.useState("");
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [text, setText] = React.useState("");
 
-    React.useLayoutEffect(() => {
-        setText(ref.current?.textContent?.trim() ?? "");
-    });
+  React.useLayoutEffect(() => {
+    setText(ref.current?.textContent?.trim() ?? "");
+  });
 
-    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if ((e.target as HTMLElement).closest("button, a, input, [role='button'], [role='menuitem']")) return;
-        if (!text) return;
-        navigator.clipboard.writeText(text);
-        toast.success("Copied to clipboard");
-    };
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("button, a, input, [role='button'], [role='menuitem']"))
+      return;
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
 
-    const content = (
-        <div ref={ref} onClick={handleClick} className={text ? "cursor-pointer" : undefined}>
-            {children}
-        </div>
-    );
+  const content = (
+    <div ref={ref} onClick={handleClick} className={text ? "cursor-pointer" : undefined}>
+      {children}
+    </div>
+  );
 
-    if (!text) return content;
+  if (!text) return content;
 
-    return (
-        <Tooltip>
-            <TooltipTrigger asChild>{content}</TooltipTrigger>
-            <TooltipContent>{text}</TooltipContent>
-        </Tooltip>
-    );
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent>{text}</TooltipContent>
+    </Tooltip>
+  );
 }

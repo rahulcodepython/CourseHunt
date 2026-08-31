@@ -31,7 +31,11 @@ export default function CheckoutPage() {
 
   const [couponInput, setCouponInput] = React.useState("");
   const [appliedCode, setAppliedCode] = React.useState<string | null>(null);
-  const { data: rawCoupon, isFetching: isCheckingCoupon } = useCheckCouponQuery(appliedCode ?? "", id, !!appliedCode);
+  const { data: rawCoupon, isFetching: isCheckingCoupon } = useCheckCouponQuery(
+    appliedCode ?? "",
+    id,
+    !!appliedCode,
+  );
   const couponCheck = rawCoupon?.data;
 
   const initiateTransaction = useInitiateTransactionMutation();
@@ -53,7 +57,9 @@ export default function CheckoutPage() {
   // exactly (discount off final_price, then tax on the discounted amount) —
   // this is a preview only; the server recomputes and never trusts it.
   const couponApplied = Boolean(appliedCode && couponCheck?.valid);
-  const discount = couponApplied ? (course.final_price * (couponCheck?.discount_percent ?? 0)) / 100 : 0;
+  const discount = couponApplied
+    ? (course.final_price * (couponCheck?.discount_percent ?? 0)) / 100
+    : 0;
   const discountedAmount = Math.max(0, course.final_price - discount);
   const tax = (discountedAmount * course.tax_percent) / 100;
   const total = discountedAmount + tax;
@@ -170,7 +176,11 @@ export default function CheckoutPage() {
                   <div className="h-15 w-20 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center text-muted-foreground">
                     {course.image_url ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={course.image_url} alt={course.title} className="size-full object-cover" />
+                      <img
+                        src={course.image_url}
+                        alt={course.title}
+                        className="size-full object-cover"
+                      />
                     ) : (
                       <Icon name="book" className="size-5 opacity-40" />
                     )}
@@ -188,7 +198,9 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{formatINR(course.final_price)}</span>
                         {course.final_price < course.actual_price && (
-                          <span className="text-xs text-muted-foreground line-through">{formatINR(course.actual_price)}</span>
+                          <span className="text-xs text-muted-foreground line-through">
+                            {formatINR(course.actual_price)}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -223,7 +235,11 @@ export default function CheckoutPage() {
                     </LoadingButton>
                   </div>
                   {appliedCode && !isCheckingCoupon && couponCheck && (
-                    <p className={couponCheck.valid ? "text-sm text-green-600" : "text-sm text-destructive"}>
+                    <p
+                      className={
+                        couponCheck.valid ? "text-sm text-green-600" : "text-sm text-destructive"
+                      }
+                    >
                       {couponCheck.valid
                         ? `Coupon applied: ${couponCheck.discount_percent}% off`
                         : `Coupon not applicable (${couponCheck.reason ?? "invalid"})`}
@@ -285,12 +301,17 @@ export default function CheckoutPage() {
                       <Icon name="lock" className="size-4" />
                       {user ? `Pay ${formatINR(total)}` : "Log in to Purchase"}
                     </LoadingButton>
-                    <p className="text-center text-xs text-muted-foreground">Secure payment processed by Razorpay</p>
+                    <p className="text-center text-xs text-muted-foreground">
+                      Secure payment processed by Razorpay
+                    </p>
                   </>
                 )}
                 {!user && (
                   <p className="text-center text-xs text-muted-foreground">
-                    <Link href={ROUTES.LOGIN} className="underline">Sign in</Link> to complete your purchase.
+                    <Link href={ROUTES.LOGIN} className="underline">
+                      Sign in
+                    </Link>{" "}
+                    to complete your purchase.
                   </p>
                 )}
               </CardContent>

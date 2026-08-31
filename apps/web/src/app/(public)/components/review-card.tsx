@@ -3,7 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from "@/components/icon";
 import UserAvatar from "@/components/user-avatar";
 
-export function ReviewCard({ feedback, showCourse = true }: { feedback: Feedback; showCourse?: boolean }) {
+export function ReviewCard({
+  feedback,
+  showCourse = true,
+}: {
+  feedback: Feedback;
+  showCourse?: boolean;
+}) {
   return (
     <Card>
       <CardContent className="space-y-4 pt-6">
@@ -12,7 +18,11 @@ export function ReviewCard({ feedback, showCourse = true }: { feedback: Feedback
             <Icon
               key={i}
               name="star"
-              className={i < feedback.rating ? "size-4 fill-yellow-400 text-yellow-400" : "size-4 text-muted-foreground"}
+              className={
+                i < feedback.rating
+                  ? "size-4 fill-yellow-400 text-yellow-400"
+                  : "size-4 text-muted-foreground"
+              }
             />
           ))}
         </div>

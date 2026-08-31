@@ -4,8 +4,8 @@ import type { RolesAndPermissionsResult } from "@/lib/auth.types";
 
 // Single PostgreSQL query using JSON builder to get roles, permissions, and credential status in 1 database call.
 export async function getRolesAndPermissions(userId: string): Promise<RolesAndPermissionsResult> {
-    try {
-        const res = await sql<{ data: RolesAndPermissionsResult }>`
+  try {
+    const res = await sql<{ data: RolesAndPermissionsResult }>`
             SELECT json_build_object(
                 'roles', COALESCE(
                     (SELECT json_agg(DISTINCT r.name)
@@ -25,19 +25,19 @@ export async function getRolesAndPermissions(userId: string): Promise<RolesAndPe
                 )
             ) AS data;
         `.execute(db);
-        const data = res.rows[0]?.data;
-        return {
-            roles: Array.isArray(data?.roles) ? data.roles : [],
-            permissions: Array.isArray(data?.permissions) ? data.permissions : [],
-            hasCredentialAccount: Boolean(data?.hasCredentialAccount),
-        };
-    } catch {
-        return { roles: [], permissions: [], hasCredentialAccount: false };
-    }
+    const data = res.rows[0]?.data;
+    return {
+      roles: Array.isArray(data?.roles) ? data.roles : [],
+      permissions: Array.isArray(data?.permissions) ? data.permissions : [],
+      hasCredentialAccount: Boolean(data?.hasCredentialAccount),
+    };
+  } catch {
+    return { roles: [], permissions: [], hasCredentialAccount: false };
+  }
 }
 
 export async function markPasswordChanged(userId: string): Promise<void> {
-    await sql`
+  await sql`
         UPDATE users SET "passwordChangedAt" = CURRENT_TIMESTAMP WHERE id = ${userId};
     `.execute(db);
 }

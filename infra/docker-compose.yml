@@ -58,7 +58,7 @@ services:
             # router to every defined entrypoint. In prod that's web(:80,
             # which the static config below redirects to websecure) and
             # websecure(:443, TLS-terminated via tls.certresolver); in local
-            # dev (docker-compose.override.yml) the redirect and ACME flags
+            # dev (docker-compose.dev.yml) the redirect and ACME flags
             # are absent, so :80 just serves plain HTTP as before.
             - "traefik.http.routers.web.rule=Host(`${DOMAIN}`) && PathPrefix(`/`)"
             - "traefik.http.routers.web.tls.certresolver=le"
@@ -145,15 +145,14 @@ services:
     # startup (docker-entrypoint-initdb.d only fires once, on an empty data
     # volume), so this dedicated service is the correct place for it.
     migrator:
-        build:
-            context: ..
-            dockerfile: ./apps/migrator/Dockerfile
+        image: migrate/migrate:latest
         container_name: ${MIGRATOR_CONTAINER_NAME:-coursehunt-migrator}
-        env_file:
-            - ../.env
-        environment:
-            - DATABASE_URL=${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coursehunt}?sslmode=disable}
-        command: [ "commit" ]
+        volumes:
+            - ../apps/server/internals/migrations:/migrations
+        command:
+            - -path=/migrations
+            - -database=${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coursehunt}?sslmode=disable}
+            - up
         restart: "no"
         depends_on:
             postgres:

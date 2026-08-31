@@ -4,7 +4,12 @@ import * as React from "react";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useChaptersQuery, useCreateChapterMutation, useUpdateChapterMutation, useDeleteChapterMutation } from "@/query-hooks/chapters.api";
+import {
+  useChaptersQuery,
+  useCreateChapterMutation,
+  useUpdateChapterMutation,
+  useDeleteChapterMutation,
+} from "@/query-hooks/chapters.api";
 import type { Chapter } from "@/schema/chapters.types";
 import { PageHeader } from "@/components/page-header";
 import { Icon } from "@/components/icon";
@@ -22,6 +27,7 @@ import { LoadingButton } from "@/components/loading-button";
 
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 
 const chapterSchema = z.object({
@@ -86,7 +92,10 @@ function ChapterDialog({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <LoadingButton type="submit" loading={createMutation.isPending || updateMutation.isPending}>
+          <LoadingButton
+            type="submit"
+            loading={createMutation.isPending || updateMutation.isPending}
+          >
             {editing ? "Save Changes" : "Create"}
           </LoadingButton>
         </DialogFooter>
@@ -112,28 +121,21 @@ export default function TutorCourseChaptersPage() {
   const deleteMutation = useDeleteChapterMutation(courseId);
   const chapters: Chapter[] = rawChapters?.data ?? [];
 
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<Chapter | null>(null);
-  const [deleting, setDeleting] = React.useState<Chapter | null>(null);
+  const {
+    dialogOpen,
+    setDialogOpen,
+    editing,
+    openCreate,
+    openEdit,
+    deleting,
+    setDeleting,
+    requestDelete,
+    confirmDelete,
+  } = useCrudDialogState<Chapter>();
 
-  const openCreate = () => {
-    setEditing(null);
-    setDialogOpen(true);
-  };
+  const handleDelete = () => confirmDelete(deleteMutation.execute);
 
-  const openEdit = (ch: Chapter) => {
-    setEditing(ch);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (deleting) {
-      await deleteMutation.execute(deleting.id);
-      setDeleting(null);
-    }
-  };
-
-  const columns = getColumns(courseId, openEdit, setDeleting);
+  const columns = getColumns(courseId, openEdit, requestDelete);
 
   return (
     <div className="space-y-6">

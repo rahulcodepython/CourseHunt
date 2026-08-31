@@ -16,16 +16,12 @@ export const courseStatsColumns = [
   }),
   columnHelper.accessor("title", {
     header: "Course",
-    cell: ({ getValue }) => (
-      <span className="max-w-70 truncate font-medium">{getValue()}</span>
-    ),
+    cell: ({ getValue }) => <span className="max-w-70 truncate font-medium">{getValue()}</span>,
   }),
   columnHelper.accessor("students", {
     header: () => <div className="text-right">Students</div>,
     cell: ({ getValue }) => (
-      <div className="text-right tabular-nums">
-        {(getValue() ?? 0).toLocaleString()}
-      </div>
+      <div className="text-right tabular-nums">{(getValue() ?? 0).toLocaleString()}</div>
     ),
   }),
   columnHelper.display({
