@@ -15,22 +15,40 @@ type TransactionListPayload struct {
 	Data  []Transaction `json:"data"`
 }
 
-func (a *App) GetPendingTransactionRepository(ctx context.Context, userID, courseID string) (*Transaction, error) {
-	return postgres.QueryJSON[Transaction](ctx, a.DB, GetPendingTransaction, userID, courseID)
+func (a *App) InitiateClaimRepository(ctx context.Context, userID, courseID, txID string) (alreadyEnrolled, claimed bool, err error) {
+	err = a.DB.QueryRow(ctx, InitiateClaim, userID, courseID, txID).Scan(&alreadyEnrolled, &claimed)
+	if err != nil {
+		return false, false, postgres.MapPgError(err)
+	}
+	return alreadyEnrolled, claimed, nil
 }
 
-func (a *App) CreateRepository(ctx context.Context, id, userID, courseID string, couponID *string, razorpayOrderID string, amount, actualPrice, offeredPrice, taxPercent, discountAmount float64) (*Transaction, error) {
-	return postgres.QueryJSON[Transaction](
-		ctx,
-		a.DB,
-		CreateTransaction,
-		id, userID, courseID, razorpayOrderID, amount, couponID, actualPrice, offeredPrice, taxPercent, discountAmount,
-	)
+func (a *App) FinalizeClaimedTransactionRepository(ctx context.Context, txID, razorpayOrderID string, amount, actualPrice, offeredPrice, taxPercent, discountAmount float64, couponID *string) error {
+	_, err := a.DB.Exec(ctx, FinalizeClaimedTransaction, txID, razorpayOrderID, amount, actualPrice, offeredPrice, taxPercent, discountAmount, couponID)
+	return postgres.MapPgError(err)
 }
 
-func (a *App) MarkPaymentCapturedRepository(ctx context.Context, razorpayPaymentID, razorpayOrderID, eventID string) error {
+func (a *App) MarkTransactionFailedRepository(ctx context.Context, txID, reason string) error {
+	_, err := a.DB.Exec(ctx, MarkTransactionFailed, txID, reason)
+	return postgres.MapPgError(err)
+}
+
+func (a *App) MarkPaymentCapturedRepository(ctx context.Context, razorpayPaymentID, razorpayOrderID, eventID string) (string, bool, string, string, error) {
+	var txID, refundID, retPaymentID string
+	var isDuplicate bool
+	err := a.DB.QueryRow(ctx, MarkPaymentCaptured, razorpayPaymentID, razorpayOrderID, eventID).Scan(&txID, &isDuplicate, &refundID, &retPaymentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", false, "", "", generic.ErrTransactionsNotFound
+		}
+		return "", false, "", "", postgres.MapPgError(err)
+	}
+	return txID, isDuplicate, refundID, retPaymentID, nil
+}
+
+func (a *App) MarkPaymentFailedRepository(ctx context.Context, errorDescription *string, razorpayOrderID, eventID string) error {
 	var txID string
-	err := a.DB.QueryRow(ctx, MarkPaymentCaptured, razorpayPaymentID, razorpayOrderID, eventID).Scan(&txID)
+	err := a.DB.QueryRow(ctx, MarkPaymentFailed, errorDescription, razorpayOrderID, eventID).Scan(&txID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return generic.ErrTransactionsNotFound
@@ -40,12 +58,34 @@ func (a *App) MarkPaymentCapturedRepository(ctx context.Context, razorpayPayment
 	return nil
 }
 
-func (a *App) MarkPaymentFailedRepository(ctx context.Context, errorDescription *string, razorpayOrderID, eventID string) error {
-	var txID string
-	err := a.DB.QueryRow(ctx, MarkPaymentFailed, errorDescription, razorpayOrderID, eventID).Scan(&txID)
+func (a *App) MarkRefundPendingRepository(ctx context.Context, refundID, razorpayRefundID string) error {
+	_, err := a.DB.Exec(ctx, MarkRefundPending, refundID, razorpayRefundID)
+	return postgres.MapPgError(err)
+}
+
+func (a *App) MarkRefundProcessedRepository(ctx context.Context, razorpayRefundID, razorpayPaymentID, eventID string) error {
+	var id string
+	err := a.DB.QueryRow(ctx, MarkRefundProcessed, razorpayRefundID, razorpayPaymentID, eventID).Scan(&id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return generic.ErrTransactionsNotFound
+			return nil
+		}
+		return postgres.MapPgError(err)
+	}
+	return nil
+}
+
+func (a *App) MarkRefundFailedRepository(ctx context.Context, refundID, errorDescription string) error {
+	_, err := a.DB.Exec(ctx, MarkRefundFailed, refundID, errorDescription)
+	return postgres.MapPgError(err)
+}
+
+func (a *App) MarkRefundFailedByRazorpayIDRepository(ctx context.Context, razorpayRefundID, eventID string) error {
+	var id string
+	err := a.DB.QueryRow(ctx, MarkRefundFailedByRazorpayID, razorpayRefundID, eventID).Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
 		}
 		return postgres.MapPgError(err)
 	}
@@ -88,6 +128,43 @@ func (a *App) ListRepository(ctx context.Context, page, limit int, userID, tutor
 	}
 	if payload.Data == nil {
 		payload.Data = []Transaction{}
+	}
+	return payload.Data, payload.Total, nil
+}
+
+func (a *App) ListRefundsRepository(ctx context.Context, page, limit int, userID, status, courseID, dateFrom, dateTo string) ([]RefundTransaction, int, error) {
+	filter := postgres.NewFilter()
+
+	if userID != "" {
+		filter.Add("r.user_id = $%d", userID)
+	}
+	if status != "" {
+		filter.Add("r.refund_status = $%d", status)
+	}
+	if courseID != "" {
+		filter.Add("r.course_id = $%d", courseID)
+	}
+	if dateFrom != "" {
+		filter.Add("r.created_at >= $%d", dateFrom)
+	}
+	if dateTo != "" {
+		filter.Add("r.created_at <= $%d", dateTo)
+	}
+
+	limitParam := filter.Paginate(page, limit)
+	offsetParam := limitParam + 1
+
+	query := BuildListRefundsQuery(filter.Where(""), limitParam, offsetParam)
+
+	payload, err := postgres.QueryJSON[RefundListPayload](ctx, a.DB, query, filter.Args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	if payload == nil {
+		return []RefundTransaction{}, 0, nil
+	}
+	if payload.Data == nil {
+		payload.Data = []RefundTransaction{}
 	}
 	return payload.Data, payload.Total, nil
 }

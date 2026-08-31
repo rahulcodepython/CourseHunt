@@ -61,3 +61,29 @@ export const CheckoutCourseResponseZod = z.object({
   tax_percent: z.number(),
 });
 export type CheckoutCourseResponse = z.infer<typeof CheckoutCourseResponseZod>;
+
+export const RefundUserZod = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().nullable().optional(),
+  image: z.string().nullable().optional(),
+});
+export type RefundUser = z.infer<typeof RefundUserZod>;
+
+export const RefundTransactionZod = z.object({
+  id: z.string(),
+  transaction_id: z.string(),
+  duplicate_of: z.string().nullable().optional(),
+  user: RefundUserZod,
+  course: CourseInfoZod,
+  amount: z.number(),
+  currency: z.string(),
+  reason: z.string(),
+  refund_status: z.string(),
+  razorpay_refund_id: z.string().nullable().optional(),
+  razorpay_payment_id: z.string().nullable().optional(),
+  error_description: z.string().nullable().optional(),
+  created_at: z.string(),
+  refunded_at: z.string().nullable().optional(),
+});
+export type RefundTransaction = z.infer<typeof RefundTransactionZod>;

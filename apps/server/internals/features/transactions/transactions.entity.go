@@ -68,6 +68,29 @@ type WebhookPayload struct {
 	Event            string
 	OrderID          string
 	PaymentID        string
+	RefundID         string
 	Status           string
 	ErrorDescription string
+}
+
+type RefundTransaction struct {
+	ID                string             `json:"id" db:"id"`
+	TransactionID     string             `json:"transaction_id" db:"transaction_id"`
+	DuplicateOf       *string            `json:"duplicate_of" db:"duplicate_of"`
+	User              generic.UserInfo   `json:"user" db:"user"`
+	Course            generic.CourseInfo `json:"course" db:"course"`
+	Amount            float64            `json:"amount" db:"amount"`
+	Currency          string             `json:"currency" db:"currency"`
+	Reason            string             `json:"reason" db:"reason"`
+	RefundStatus      string             `json:"refund_status" db:"refund_status"`
+	RazorpayRefundID  *string            `json:"razorpay_refund_id" db:"razorpay_refund_id"`
+	RazorpayPaymentID *string            `json:"razorpay_payment_id" db:"razorpay_payment_id"`
+	ErrorDescription  *string            `json:"error_description" db:"error_description"`
+	CreatedAt         time.Time          `json:"created_at" db:"created_at"`
+	RefundedAt        *time.Time         `json:"refunded_at" db:"refunded_at"`
+}
+
+type RefundListPayload struct {
+	Total int                 `json:"total"`
+	Data  []RefundTransaction `json:"data"`
 }

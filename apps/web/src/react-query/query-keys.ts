@@ -63,4 +63,8 @@ export const queryKeys = {
   roles: () => ["roles"] as const,
   permissions: () => ["permissions"] as const,
   wishlist: () => ["wishlist"] as const,
+  refunds: (params?: Record<string, string | number>) =>
+    params ? (["refunds", params] as const) : (["refunds"] as const),
+  myRefunds: (params?: Record<string, string | number>) =>
+    params ? (["refunds", "me", params] as const) : (["refunds", "me"] as const),
 };

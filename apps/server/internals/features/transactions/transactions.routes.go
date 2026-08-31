@@ -20,5 +20,7 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	g.Post("/initiate", a.handleCreate)
 	g.Get("/checkout/course/:courseId", a.handleCheckout)
 	g.Get("/:id/status", a.handleStatus)
-	g.Get("/", middlewares.ScopeGuard(generic.PermAdminTransactionsReadAll), a.handleList)
+	g.Get("/refunds/me", a.handleListRefunds)
+	g.Get("/refunds", middlewares.ScopeGuard(generic.PermAdminTransactionsReadAll), a.handleListRefunds)
+	g.Get("/", a.handleList)
 }

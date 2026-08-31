@@ -14,6 +14,7 @@ import {
   InitiateTransactionResponseZod,
   CheckoutCourseResponseZod,
   TransactionStatusResponseZod,
+  RefundTransactionZod,
 } from "@/schema/transactions.types";
 
 export function useTransactionsQuery(params?: { page?: number; limit?: number }) {
@@ -21,6 +22,30 @@ export function useTransactionsQuery(params?: { page?: number; limit?: number })
     apiRequest(
       { url: API_ENDPOINTS.TRANSACTIONS, method: "GET", params: compactParams(params) },
       PaginatedResponseZod(TransactionZod),
+    ),
+  );
+}
+
+export function useRefundsQuery(params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  user_id?: string;
+  course_id?: string;
+}) {
+  return useAppQuery(queryKeys.refunds(params as Record<string, string | number>), () =>
+    apiRequest(
+      { url: `${API_ENDPOINTS.TRANSACTIONS}/refunds`, method: "GET", params: compactParams(params) },
+      PaginatedResponseZod(RefundTransactionZod),
+    ),
+  );
+}
+
+export function useMyRefundsQuery(params?: { page?: number; limit?: number }) {
+  return useAppQuery(queryKeys.myRefunds(params as Record<string, string | number>), () =>
+    apiRequest(
+      { url: `${API_ENDPOINTS.TRANSACTIONS}/refunds/me`, method: "GET", params: compactParams(params) },
+      PaginatedResponseZod(RefundTransactionZod),
     ),
   );
 }

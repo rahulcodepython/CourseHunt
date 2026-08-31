@@ -124,8 +124,17 @@ type RazorpayOrderResponse struct {
 	Status   string `json:"status"`
 }
 
+type RazorpayRefundResponse struct {
+	ID        string `json:"id"`
+	Entity    string `json:"entity"`
+	Amount    int64  `json:"amount"`
+	Currency  string `json:"currency"`
+	PaymentID string `json:"payment_id"`
+	Status    string `json:"status"`
+}
+
 // RazorpayWebhookPayload is the (small, relevant-fields-only) shape of a Razorpay
-// payment webhook event body.
+// payment / refund webhook event body.
 type RazorpayWebhookPayload struct {
 	Event   string `json:"event"`
 	Payload struct {
@@ -137,5 +146,13 @@ type RazorpayWebhookPayload struct {
 				ErrorDescription string `json:"error_description"`
 			} `json:"entity"`
 		} `json:"payment"`
+		Refund struct {
+			Entity struct {
+				ID        string `json:"id"`
+				PaymentID string `json:"payment_id"`
+				Status    string `json:"status"`
+				Amount    int64  `json:"amount"`
+			} `json:"entity"`
+		} `json:"refund"`
 	} `json:"payload"`
 }

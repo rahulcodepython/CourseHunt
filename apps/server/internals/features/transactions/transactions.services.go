@@ -16,10 +16,7 @@ import (
 // Initiate is the sole place the paid amount is ever computed — the client
 // never supplies (or can influence) it. Order: start from the course's
 // final_price, apply the coupon discount (if any and valid) on top of that,
-// then apply tax on the discounted amount. This same computation is what
-// gets sent to Razorpay and snapshotted onto the transaction row, so an
-// invoice generated later reflects exactly what was charged even if the
-// course's price or the platform's tax rate changes afterward.
+// then apply tax on the discounted amount.
 func (a *App) Initiate(ctx context.Context, userID string, req InitiateTransactionRequest) (*InitiateTransactionResponse, error) {
 	resp, err := a.initiate(ctx, userID, req)
 	if err != nil {
@@ -35,37 +32,37 @@ func (a *App) Initiate(ctx context.Context, userID string, req InitiateTransacti
 		if errors.Is(err, generic.ErrTransactionsCourseIsFree) {
 			return nil, utils.ErrBadRequest(generic.ErrMsgFreeCourseDirect, err)
 		}
+		if errors.Is(err, generic.ErrTransactionsPendingExists) {
+			return nil, utils.ErrConflict("You already have a payment in progress for this course. Please wait for it to complete, or try again in a moment.", err)
+		}
 		return nil, utils.ErrInternal("Failed to initiate transaction.", err)
 	}
 	return resp, nil
 }
 
 func (a *App) initiate(ctx context.Context, userID string, req InitiateTransactionRequest) (*InitiateTransactionResponse, error) {
-	// ISSUE-027: Check if user is already enrolled before initiating payment
-	if a.Enrollments != nil {
-		isEnrolled, err := a.Enrollments.IsEnrolled(ctx, userID, req.CourseID)
-		if err == nil && isEnrolled {
-			return nil, generic.ErrTransactionsAlreadyEnrolled
-		}
-	}
+	txID := uuid.NewString()
 
-	if existing, err := a.GetPendingTransactionRepository(ctx, userID, req.CourseID); err == nil && existing != nil && existing.RazorpayOrderID != nil {
-		return &InitiateTransactionResponse{
-			TransactionID:   existing.ID,
-			RazorpayOrderID: *existing.RazorpayOrderID,
-			Amount:          existing.Amount,
-			Currency:        existing.Currency,
-			RazorpayKey:     a.Cfg.RazorpayKeyID,
-		}, nil
+	alreadyEnrolled, claimed, err := a.InitiateClaimRepository(ctx, userID, req.CourseID, txID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check purchase eligibility: %w", err)
+	}
+	if alreadyEnrolled {
+		return nil, generic.ErrTransactionsAlreadyEnrolled
+	}
+	if !claimed {
+		return nil, generic.ErrTransactionsPendingExists
 	}
 
 	pricing, err := a.GetCoursePricingRepository(ctx, req.CourseID)
 	if err != nil {
+		_ = a.MarkTransactionFailedRepository(ctx, txID, "course lookup failed")
 		return nil, generic.ErrCoursesCourseNotFound
 	}
 
-	// ISSUE-028: Prevent creating paid transactions for free courses
+	// Prevent creating paid transactions for free courses
 	if pricing.FinalPrice <= 0 {
+		_ = a.MarkTransactionFailedRepository(ctx, txID, "free course direct enrollment required")
 		return nil, generic.ErrTransactionsCourseIsFree
 	}
 
@@ -75,9 +72,11 @@ func (a *App) initiate(ctx context.Context, userID string, req InitiateTransacti
 	if req.CouponCode != nil && *req.CouponCode != "" {
 		check, coupon, err := a.Coupons.ValidateAndFetchCoupon(ctx, *req.CouponCode, req.CourseID)
 		if err != nil {
+			_ = a.MarkTransactionFailedRepository(ctx, txID, "failed to load coupon")
 			return nil, fmt.Errorf("failed to load coupon: %w", err)
 		}
 		if !check.Valid {
+			_ = a.MarkTransactionFailedRepository(ctx, txID, "invalid coupon")
 			reason := "invalid coupon"
 			if check.Reason != nil {
 				reason = *check.Reason
@@ -88,7 +87,7 @@ func (a *App) initiate(ctx context.Context, userID string, req InitiateTransacti
 			discountAmount = discountedAmount * check.DiscountPercent / 100
 			discountedAmount -= discountAmount
 			if discountedAmount < 0 {
-				discountAmount += discountedAmount // shrink the recorded discount to match what was actually applied
+				discountAmount += discountedAmount
 				discountedAmount = 0
 			}
 			couponID = &coupon.ID
@@ -103,20 +102,19 @@ func (a *App) initiate(ctx context.Context, userID string, req InitiateTransacti
 		amountPaise = 100
 	}
 
-	txID := uuid.NewString()
-
 	order, err := a.Rzp.CreateOrder(ctx, amountPaise, "INR", txID)
 	if err != nil {
+		// Release the claimed slot on order creation failure
+		_ = a.MarkTransactionFailedRepository(ctx, txID, "failed to create razorpay order")
 		return nil, fmt.Errorf("failed to create payment order: %w", err)
 	}
 
-	tx, err := a.CreateRepository(ctx, txID, userID, req.CourseID, couponID, order.ID, amount, pricing.ActualPrice, pricing.FinalPrice, a.Cfg.TaxPercent, discountAmount)
-	if err != nil {
+	if err := a.FinalizeClaimedTransactionRepository(ctx, txID, order.ID, amount, pricing.ActualPrice, pricing.FinalPrice, a.Cfg.TaxPercent, discountAmount, couponID); err != nil {
 		return nil, fmt.Errorf("failed to persist transaction: %w", err)
 	}
 
 	return &InitiateTransactionResponse{
-		TransactionID:   tx.ID,
+		TransactionID:   txID,
 		RazorpayOrderID: order.ID,
 		Amount:          amount,
 		Currency:        "INR",
@@ -150,13 +148,27 @@ func (a *App) processWebhook(ctx context.Context, rawBody []byte, signature stri
 
 	switch payload.Event {
 	case "payment.captured":
-		if err := a.MarkPaymentCapturedRepository(ctx, payload.PaymentID, payload.OrderID, payload.EventID); err != nil {
+		_, isDuplicate, refundID, paymentID, err := a.MarkPaymentCapturedRepository(ctx, payload.PaymentID, payload.OrderID, payload.EventID)
+		if err != nil {
 			return fmt.Errorf("failed to mark payment captured for order %s: %w", payload.OrderID, err)
+		}
+		if isDuplicate {
+			a.enqueueDuplicateRefund(refundID, paymentID)
 		}
 
 	case "payment.failed":
 		if err := a.MarkPaymentFailedRepository(ctx, &payload.ErrorDescription, payload.OrderID, payload.EventID); err != nil {
 			return fmt.Errorf("failed to mark payment failed for order %s: %w", payload.OrderID, err)
+		}
+
+	case "refund.processed":
+		if err := a.MarkRefundProcessedRepository(ctx, payload.RefundID, payload.PaymentID, payload.EventID); err != nil {
+			return fmt.Errorf("failed to mark refund processed for refund %s: %w", payload.RefundID, err)
+		}
+
+	case "refund.failed":
+		if err := a.MarkRefundFailedByRazorpayIDRepository(ctx, payload.RefundID, payload.EventID); err != nil {
+			return fmt.Errorf("failed to mark refund failed for refund %s: %w", payload.RefundID, err)
 		}
 
 	default:
@@ -182,14 +194,20 @@ func (a *App) Checkout(ctx context.Context, courseID string) (*CheckoutCourseRes
 	if err != nil {
 		return nil, utils.ErrInternal("Failed to fetch checkout course info.", err)
 	}
-	// Informational only — the authoritative amount (and tax) is always
-	// (re)computed server-side in Initiate, never trusted from here.
 	resp.TaxPercent = a.Cfg.TaxPercent
 	return resp, nil
 }
 
 func (a *App) List(ctx context.Context, page, limit int, userID, tutorID, status, courseID, dateFrom, dateTo, errMsg string) ([]Transaction, int, error) {
 	list, total, err := a.ListRepository(ctx, page, limit, userID, tutorID, status, courseID, dateFrom, dateTo)
+	if err != nil {
+		return nil, 0, utils.ErrInternal(errMsg, err)
+	}
+	return list, total, nil
+}
+
+func (a *App) ListRefunds(ctx context.Context, page, limit int, userID, status, courseID, dateFrom, dateTo, errMsg string) ([]RefundTransaction, int, error) {
+	list, total, err := a.ListRefundsRepository(ctx, page, limit, userID, status, courseID, dateFrom, dateTo)
 	if err != nil {
 		return nil, 0, utils.ErrInternal(errMsg, err)
 	}

@@ -130,6 +130,7 @@ var (
 	ErrTransactionsNotFound         = errors.New("transaction not found for this order")
 	ErrTransactionsAlreadyEnrolled  = errors.New("user is already enrolled in this course")
 	ErrTransactionsCourseIsFree     = errors.New("free courses must be enrolled directly via free enrollment")
+	ErrTransactionsPendingExists    = errors.New("a previous purchase attempt is still pending")
 )
 
 // Feedbacks errors
