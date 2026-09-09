@@ -17,7 +17,7 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := a.Initiate(c.Context(), middlewares.UserID(c), req)
+	resp, err := a.Initiate(c.UserContext(), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (a *App) handleWebhook(c *fiber.Ctx) error {
 		ErrorDescription: raw.Payload.Payment.Entity.ErrorDescription,
 	}
 
-	if err := a.HandleWebhook(c.Context(), body, signature, webhookPayload); err != nil {
+	if err := a.HandleWebhook(c.UserContext(), body, signature, webhookPayload); err != nil {
 		return err
 	}
 
@@ -60,7 +60,7 @@ func (a *App) handleWebhook(c *fiber.Ctx) error {
 }
 
 func (a *App) handleStatus(c *fiber.Ctx) error {
-	resp, err := a.Status(c.Context(), c.Params("id"), middlewares.UserID(c))
+	resp, err := a.Status(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (a *App) handleStatus(c *fiber.Ctx) error {
 }
 
 func (a *App) handleCheckout(c *fiber.Ctx) error {
-	resp, err := a.Checkout(c.Context(), c.Params("courseId"))
+	resp, err := a.Checkout(c.UserContext(), c.Params("courseId"))
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 		}
 	}
 
-	list, total, err := a.List(c.Context(), page, limit, c.Query("user_id"), "", status, c.Query("course_id"), dateFrom, dateTo, "Failed to fetch transactions.")
+	list, total, err := a.List(c.UserContext(), page, limit, c.Query("user_id"), "", status, c.Query("course_id"), dateFrom, dateTo, "Failed to fetch transactions.")
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (a *App) handleAdminListRefunds(c *fiber.Ctx) error {
 		}
 	}
 
-	list, total, err := a.ListRefunds(c.Context(), page, limit, targetUserID, status, c.Query("course_id"), dateFrom, dateTo, "Failed to fetch refunds.")
+	list, total, err := a.ListRefunds(c.UserContext(), page, limit, targetUserID, status, c.Query("course_id"), dateFrom, dateTo, "Failed to fetch refunds.")
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (a *App) handleAdminListRefunds(c *fiber.Ctx) error {
 func (a *App) handleStudentList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 
-	list, total, err := a.List(c.Context(), page, limit, middlewares.UserID(c), "", "", "", "", "", "Failed to fetch your transactions.")
+	list, total, err := a.List(c.UserContext(), page, limit, middlewares.UserID(c), "", "", "", "", "", "Failed to fetch your transactions.")
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (a *App) handleStudentListRefunds(c *fiber.Ctx) error {
 		}
 	}
 
-	list, total, err := a.ListRefunds(c.Context(), page, limit, targetUserID, status, c.Query("course_id"), dateFrom, dateTo, "Failed to fetch refunds.")
+	list, total, err := a.ListRefunds(c.UserContext(), page, limit, targetUserID, status, c.Query("course_id"), dateFrom, dateTo, "Failed to fetch refunds.")
 	if err != nil {
 		return err
 	}

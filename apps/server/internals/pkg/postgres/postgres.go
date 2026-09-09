@@ -43,6 +43,15 @@ func Connect(cfg *config.Config) *pgxpool.Pool {
 	poolConfig.MaxConnIdleTime = time.Duration(cfg.DBConnMaxIdleTime) * time.Minute
 	poolConfig.HealthCheckPeriod = 1 * time.Minute
 
+	if poolConfig.ConnConfig.RuntimeParams == nil {
+		poolConfig.ConnConfig.RuntimeParams = make(map[string]string)
+	}
+	stmtTimeoutMs := 15000
+	if cfg.DBStatementTimeoutSec > 0 {
+		stmtTimeoutMs = cfg.DBStatementTimeoutSec * 1000
+	}
+	poolConfig.ConnConfig.RuntimeParams["statement_timeout"] = fmt.Sprintf("%d", stmtTimeoutMs)
+
 	const maxAttempts = 5
 	var pool *pgxpool.Pool
 	connectErr := retry.Connect("db", maxAttempts, 2*time.Second, func() error {
@@ -97,6 +106,8 @@ func MapPgError(err error) error {
 			return fmt.Errorf("%w: %s", ErrConflict, pgErr.Message)
 		case "P0001", "P0002": // CUSTOM DOMAIN EXCEPTION / UNPROCESSABLE
 			return fmt.Errorf("%w: %s", ErrInvalidState, pgErr.Message)
+		case "57014": // QUERY CANCELED / STATEMENT TIMEOUT
+			return fmt.Errorf("%w: %s", context.DeadlineExceeded, pgErr.Message)
 		default:
 			return fmt.Errorf("%w [SQLSTATE %s]: %s", ErrInternalDB, pgErr.Code, pgErr.Message)
 		}

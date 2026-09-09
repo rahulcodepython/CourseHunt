@@ -15,7 +15,7 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 	}
 	userID := middlewares.UserID(c)
 
-	f, err := a.Create(c.Context(), userID, req.CourseID, req)
+	f, err := a.Create(c.UserContext(), userID, req.CourseID, req)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func (a *App) handleListPinned(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	courseID := c.Query("course_id")
 
-	list, total, err := a.ListPinned(c.Context(), page, limit, courseID)
+	list, total, err := a.ListPinned(c.UserContext(), page, limit, courseID)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 	userEmail := c.Query("user_email")
 	courseID := c.Query("course_id")
 
-	list, total, err := a.AdminList(c.Context(), page, limit, isPinned, userName, userEmail, courseID)
+	list, total, err := a.AdminList(c.UserContext(), page, limit, isPinned, userName, userEmail, courseID)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
 		return err
 	}
 
-	f, err := a.AdminUpdate(c.Context(), c.Params("id"), req.IsPinned)
+	f, err := a.AdminUpdate(c.UserContext(), c.Params("id"), req.IsPinned)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
 }
 
 func (a *App) handleAdminDelete(c *fiber.Ctx) error {
-	id, err := a.AdminDelete(c.Context(), c.Params("id"))
+	id, err := a.AdminDelete(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	userEmail := c.Query("user_email")
 	courseID := c.Query("course_id")
 
-	list, total, err := a.TutorList(c.Context(), userID, page, limit, isPinned, userName, userEmail, courseID)
+	list, total, err := a.TutorList(c.UserContext(), userID, page, limit, isPinned, userName, userEmail, courseID)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 func (a *App) handleTutorDelete(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
 
-	id, err := a.TutorDelete(c.Context(), c.Params("id"), userID)
+	id, err := a.TutorDelete(c.UserContext(), c.Params("id"), userID)
 	if err != nil {
 		return err
 	}

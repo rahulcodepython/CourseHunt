@@ -75,7 +75,7 @@ func main() {
 	})
 
 	// Setup router composition root
-	r := router.New(app, db, rdb, storage, cfg, verifier)
+	r := router.New(app, db, rdb, storage, cfg, verifier, ctx)
 	r.SetUp()
 
 	// Gracefully stop the server on SIGINT or SIGTERM.

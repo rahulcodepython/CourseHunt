@@ -12,7 +12,7 @@ func (a *App) handleList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	userID := middlewares.UserID(c)
 
-	list, total, err := a.List(c.Context(), userID, page, limit)
+	list, total, err := a.List(c.UserContext(), userID, page, limit)
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 	}
 	userID := middlewares.UserID(c)
 
-	item, err := a.Create(c.Context(), userID, req.CourseID)
+	item, err := a.Create(c.UserContext(), userID, req.CourseID)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 func (a *App) handleDelete(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
 
-	id, err := a.Delete(c.Context(), userID, c.Params("id"))
+	id, err := a.Delete(c.UserContext(), userID, c.Params("id"))
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (a *App) handleDelete(c *fiber.Ctx) error {
 func (a *App) handleClear(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
 
-	if err := a.Clear(c.Context(), userID); err != nil {
+	if err := a.Clear(c.UserContext(), userID); err != nil {
 		return err
 	}
 

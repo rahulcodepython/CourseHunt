@@ -16,7 +16,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 	isActive := c.Query("is_active")
 	code := c.Query("code")
 
-	list, total, err := a.AdminList(c.Context(), page, limit, status, isActive, code)
+	list, total, err := a.AdminList(c.UserContext(), page, limit, status, isActive, code)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (a *App) handleAdminCreate(c *fiber.Ctx) error {
 	}
 	userID := middlewares.UserID(c)
 
-	coupon, err := a.AdminCreate(c.Context(), userID, req)
+	coupon, err := a.AdminCreate(c.UserContext(), userID, req)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
 		return err
 	}
 
-	coupon, err := a.AdminUpdate(c.Context(), c.Params("id"), req)
+	coupon, err := a.AdminUpdate(c.UserContext(), c.Params("id"), req)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
 }
 
 func (a *App) handleAdminDelete(c *fiber.Ctx) error {
-	id, err := a.AdminDelete(c.Context(), c.Params("id"))
+	id, err := a.AdminDelete(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	isActive := c.Query("is_active")
 	code := c.Query("code")
 
-	list, total, err := a.TutorList(c.Context(), page, limit, userID, status, isActive, code)
+	list, total, err := a.TutorList(c.UserContext(), page, limit, userID, status, isActive, code)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (a *App) handleTutorCreate(c *fiber.Ctx) error {
 	}
 	userID := middlewares.UserID(c)
 
-	coupon, err := a.TutorCreate(c.Context(), userID, req)
+	coupon, err := a.TutorCreate(c.UserContext(), userID, req)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (a *App) handleTutorUpdate(c *fiber.Ctx) error {
 	}
 	userID := middlewares.UserID(c)
 
-	coupon, err := a.TutorUpdate(c.Context(), c.Params("id"), userID, req)
+	coupon, err := a.TutorUpdate(c.UserContext(), c.Params("id"), userID, req)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (a *App) handleTutorUpdate(c *fiber.Ctx) error {
 func (a *App) handleTutorDelete(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
 
-	id, err := a.TutorDelete(c.Context(), c.Params("id"), userID)
+	id, err := a.TutorDelete(c.UserContext(), c.Params("id"), userID)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (a *App) handleCheck(c *fiber.Ctx) error {
 		return utils.ErrBadRequest("Invalid coupon code.", nil)
 	}
 
-	resp := a.Check(c.Context(), code, courseID)
+	resp := a.Check(c.UserContext(), code, courseID)
 
 	return utils.OK(c, "Coupon checked.", resp)
 }

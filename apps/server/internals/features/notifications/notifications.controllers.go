@@ -20,7 +20,7 @@ func (a *App) handleList(c *fiber.Ctx) error {
 
 	afterID, beforeID, limit := utils.CursorParams(c)
 
-	list, err := a.List(c.Context(), user.UserID, user.Role, afterID, beforeID, limit)
+	list, err := a.List(c.UserContext(), user.UserID, user.Role, afterID, beforeID, limit)
 	if err != nil {
 		return err
 	}

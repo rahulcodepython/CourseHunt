@@ -9,7 +9,7 @@ import (
 )
 
 func (a *App) handleClaim(c *fiber.Ctx) error {
-	cert, err := a.Claim(c.Context(), middlewares.UserID(c), c.Params("courseID"))
+	cert, err := a.Claim(c.UserContext(), middlewares.UserID(c), c.Params("courseID"))
 	if err != nil {
 		return err
 	}
@@ -18,7 +18,7 @@ func (a *App) handleClaim(c *fiber.Ctx) error {
 
 func (a *App) handleList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := a.List(c.Context(), middlewares.UserID(c), page, limit)
+	list, total, err := a.List(c.UserContext(), middlewares.UserID(c), page, limit)
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (a *App) handleList(c *fiber.Ctx) error {
 // certificate's QR code. Always 200s; legitimacy is carried in the `valid`
 // field of the response body, not the HTTP status.
 func (a *App) handleVerify(c *fiber.Ctx) error {
-	verification, err := a.Verify(c.Context(), c.Params("id"))
+	verification, err := a.Verify(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}

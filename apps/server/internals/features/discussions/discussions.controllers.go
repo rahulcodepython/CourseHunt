@@ -15,7 +15,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 	lessonID := c.Params("lessonId")
 	userID := middlewares.UserID(c)
 
-	list, total, err := a.List(c.Context(), lessonID, "", userID, generic.ScopeAdmin, page, limit)
+	list, total, err := a.List(c.UserContext(), lessonID, "", userID, generic.ScopeAdmin, page, limit)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (a *App) handleAdminListReplies(c *fiber.Ctx) error {
 	parentID := c.Params("id")
 	userID := middlewares.UserID(c)
 
-	list, total, err := a.List(c.Context(), "", parentID, userID, generic.ScopeAdmin, page, limit)
+	list, total, err := a.List(c.UserContext(), "", parentID, userID, generic.ScopeAdmin, page, limit)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (a *App) handleAdminCreate(c *fiber.Ctx) error {
 	}
 
 	userID := middlewares.UserID(c)
-	d, err := a.Create(c.Context(), userID, req, generic.ScopeAdmin)
+	d, err := a.Create(c.UserContext(), userID, req, generic.ScopeAdmin)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
 	}
 
 	userID := middlewares.UserID(c)
-	d, err := a.Update(c.Context(), c.Params("id"), userID, req, generic.ScopeAdmin)
+	d, err := a.Update(c.UserContext(), c.Params("id"), userID, req, generic.ScopeAdmin)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
 
 func (a *App) handleAdminDelete(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
-	id, err := a.Delete(c.Context(), c.Params("id"), userID, generic.ScopeAdmin)
+	id, err := a.Delete(c.UserContext(), c.Params("id"), userID, generic.ScopeAdmin)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	lessonID := c.Params("lessonId")
 	userID := middlewares.UserID(c)
 
-	list, total, err := a.List(c.Context(), lessonID, "", userID, generic.ScopeTutor, page, limit)
+	list, total, err := a.List(c.UserContext(), lessonID, "", userID, generic.ScopeTutor, page, limit)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (a *App) handleTutorListReplies(c *fiber.Ctx) error {
 	parentID := c.Params("id")
 	userID := middlewares.UserID(c)
 
-	list, total, err := a.List(c.Context(), "", parentID, userID, generic.ScopeTutor, page, limit)
+	list, total, err := a.List(c.UserContext(), "", parentID, userID, generic.ScopeTutor, page, limit)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (a *App) handleTutorCreate(c *fiber.Ctx) error {
 	}
 
 	userID := middlewares.UserID(c)
-	d, err := a.Create(c.Context(), userID, req, generic.ScopeTutor)
+	d, err := a.Create(c.UserContext(), userID, req, generic.ScopeTutor)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (a *App) handleTutorUpdate(c *fiber.Ctx) error {
 	}
 
 	userID := middlewares.UserID(c)
-	d, err := a.Update(c.Context(), c.Params("id"), userID, req, generic.ScopeTutor)
+	d, err := a.Update(c.UserContext(), c.Params("id"), userID, req, generic.ScopeTutor)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (a *App) handleTutorUpdate(c *fiber.Ctx) error {
 
 func (a *App) handleTutorDelete(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
-	id, err := a.Delete(c.Context(), c.Params("id"), userID, generic.ScopeTutor)
+	id, err := a.Delete(c.UserContext(), c.Params("id"), userID, generic.ScopeTutor)
 	if err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func (a *App) handleStudentList(c *fiber.Ctx) error {
 	lessonID := c.Params("lessonId")
 	userID := middlewares.UserID(c)
 
-	list, total, err := a.List(c.Context(), lessonID, "", userID, generic.ScopeUser, page, limit)
+	list, total, err := a.List(c.UserContext(), lessonID, "", userID, generic.ScopeUser, page, limit)
 	if err != nil {
 		return err
 	}
@@ -174,7 +174,7 @@ func (a *App) handleStudentListReplies(c *fiber.Ctx) error {
 	parentID := c.Params("id")
 	userID := middlewares.UserID(c)
 
-	list, total, err := a.List(c.Context(), "", parentID, userID, generic.ScopeUser, page, limit)
+	list, total, err := a.List(c.UserContext(), "", parentID, userID, generic.ScopeUser, page, limit)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (a *App) handleStudentCreate(c *fiber.Ctx) error {
 	}
 
 	userID := middlewares.UserID(c)
-	d, err := a.Create(c.Context(), userID, req, generic.ScopeUser)
+	d, err := a.Create(c.UserContext(), userID, req, generic.ScopeUser)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (a *App) handleStudentUpdate(c *fiber.Ctx) error {
 	}
 
 	userID := middlewares.UserID(c)
-	d, err := a.Update(c.Context(), c.Params("id"), userID, req, generic.ScopeUser)
+	d, err := a.Update(c.UserContext(), c.Params("id"), userID, req, generic.ScopeUser)
 	if err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func (a *App) handleStudentUpdate(c *fiber.Ctx) error {
 
 func (a *App) handleStudentDelete(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
-	id, err := a.Delete(c.Context(), c.Params("id"), userID, generic.ScopeUser)
+	id, err := a.Delete(c.UserContext(), c.Params("id"), userID, generic.ScopeUser)
 	if err != nil {
 		return err
 	}

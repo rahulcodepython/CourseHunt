@@ -1,6 +1,9 @@
 package router
 
 import (
+	"context"
+	"time"
+
 	"coursehunt/server/internals/config"
 	"coursehunt/server/internals/features/categories"
 	"coursehunt/server/internals/features/certificates"
@@ -47,6 +50,7 @@ type Router struct {
 	CFG      *config.Config
 	Cache    *cache.Cache
 	Verifier *jwt.Verifier
+	RootCtx  context.Context
 
 	Categories    *categories.App
 	Certificates  *certificates.App
@@ -73,7 +77,7 @@ type Router struct {
 	Wishlist      *wishlist.App
 }
 
-func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Storage, cfg *config.Config, verifier *jwt.Verifier) *Router {
+func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Storage, cfg *config.Config, verifier *jwt.Verifier, rootCtx context.Context) *Router {
 	cch := cache.NewCache(rdb)
 
 	rzp := razorpay.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
@@ -110,6 +114,7 @@ func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Sto
 		CFG:           cfg,
 		Cache:         cch,
 		Verifier:      verifier,
+		RootCtx:       rootCtx,
 		Categories:    categoriesApp,
 		Certificates:  certificatesApp,
 		Chapters:      chaptersApp,
@@ -137,6 +142,7 @@ func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Sto
 }
 
 func (r *Router) SetUp() {
+	r.App.Use(middlewares.RequestContextMiddleware(r.RootCtx, time.Duration(r.CFG.RequestTimeoutSec)*time.Second))
 	r.App.Use(middlewares.LoggerMiddleware(r.DB))
 	r.App.Use(recover.New())
 	r.App.Use(helmet.New())

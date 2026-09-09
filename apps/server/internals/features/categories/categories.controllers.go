@@ -11,7 +11,7 @@ func (a *App) handleList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	name := c.Query("name")
 
-	cats, total, err := a.List(c.Context(), page, limit, name)
+	cats, total, err := a.List(c.UserContext(), page, limit, name)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 		return err
 	}
 
-	cat, err := a.Create(c.Context(), req)
+	cat, err := a.Create(c.UserContext(), req)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 		return err
 	}
 
-	cat, err := a.Update(c.Context(), c.Params("id"), req)
+	cat, err := a.Update(c.UserContext(), c.Params("id"), req)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 }
 
 func (a *App) handleDelete(c *fiber.Ctx) error {
-	id, err := a.Delete(c.Context(), c.Params("id"))
+	id, err := a.Delete(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}

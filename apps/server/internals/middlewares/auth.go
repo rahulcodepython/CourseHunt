@@ -68,11 +68,11 @@ func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo UsersLoo
 			cacheKey := cache.AuthCacheKey(claims.Subject)
 
 			var cached generic.RolesAndPermissionsResult
-			if hit, _ := cch.Get(c.Context(), cacheKey, &cached); hit {
+			if hit, _ := cch.Get(c.UserContext(), cacheKey, &cached); hit {
 				role, roles, permissions, banned = cached.Role, cached.Roles, cached.Permissions, cached.Banned
-			} else if fresh, err := usersRepo.GetRolesAndPermissions(c.Context(), claims.Subject); err == nil {
+			} else if fresh, err := usersRepo.GetRolesAndPermissions(c.UserContext(), claims.Subject); err == nil {
 				role, roles, permissions, banned = fresh.Role, fresh.Roles, fresh.Permissions, fresh.Banned
-				_ = cch.Set(c.Context(), cacheKey, fresh, authCacheTTL)
+				_ = cch.Set(c.UserContext(), cacheKey, fresh, authCacheTTL)
 			}
 		}
 

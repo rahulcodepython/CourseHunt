@@ -13,7 +13,7 @@ import (
 func (a *App) handlePublicList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 
-	cards, total, err := a.PublicList(c.Context(), page, limit, c.Query("category_id"), c.Query("subcategory_id"), c.Query("level"), c.Query("search"))
+	cards, total, err := a.PublicList(c.UserContext(), page, limit, c.Query("category_id"), c.Query("subcategory_id"), c.Query("level"), c.Query("search"))
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func (a *App) handlePublicList(c *fiber.Ctx) error {
 }
 
 func (a *App) handlePublicSingle(c *fiber.Ctx) error {
-	resp, err := a.PublicSingle(c.Context(), c.Params("slug"), middlewares.UserID(c))
+	resp, err := a.PublicSingle(c.UserContext(), c.Params("slug"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (a *App) handlePublicSingle(c *fiber.Ctx) error {
 }
 
 func (a *App) handleStudy(c *fiber.Ctx) error {
-	resp, err := a.Study(c.Context(), c.Params("id"), middlewares.UserID(c))
+	resp, err := a.Study(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (a *App) handleStudy(c *fiber.Ctx) error {
 }
 
 func (a *App) handleEnrollFree(c *fiber.Ctx) error {
-	if err := a.EnrollFree(c.Context(), middlewares.UserID(c), c.Params("id")); err != nil {
+	if err := a.EnrollFree(c.UserContext(), middlewares.UserID(c), c.Params("id")); err != nil {
 		return err
 	}
 	return utils.OK[any](c, "Enrolled successfully.", nil)
@@ -48,7 +48,7 @@ func (a *App) handleEnrollFree(c *fiber.Ctx) error {
 
 func (a *App) handleEnrolledList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := a.EnrolledList(c.Context(), middlewares.UserID(c), page, limit)
+	list, total, err := a.EnrolledList(c.UserContext(), middlewares.UserID(c), page, limit)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (a *App) handleEnrolledList(c *fiber.Ctx) error {
 func (a *App) handleAdminList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 
-	list, total, err := a.AdminList(c.Context(), page, limit,
+	list, total, err := a.AdminList(c.UserContext(), page, limit,
 		c.Query("category_id"),
 		c.Query("subcategory_id"),
 		c.Query("level"),
@@ -79,7 +79,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 }
 
 func (a *App) handleAdminGetByID(c *fiber.Ctx) error {
-	course, err := a.AdminGetByID(c.Context(), c.Params("id"))
+	course, err := a.AdminGetByID(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	userID := middlewares.UserID(c)
 
-	list, total, err := a.TutorList(c.Context(), page, limit,
+	list, total, err := a.TutorList(c.UserContext(), page, limit,
 		userID,
 		c.Query("category_id"),
 		c.Query("subcategory_id"),
@@ -110,7 +110,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 
 func (a *App) handleTutorGetByID(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
-	course, err := a.TutorGetByID(c.Context(), c.Params("id"), userID)
+	course, err := a.TutorGetByID(c.UserContext(), c.Params("id"), userID)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := a.Create(c.Context(), middlewares.UserID(c), req)
+	resp, err := a.Create(c.UserContext(), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 		return err
 	}
 
-	course, err := a.Update(c.Context(), c.Params("id"), middlewares.UserID(c), req)
+	course, err := a.Update(c.UserContext(), c.Params("id"), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 }
 
 func (a *App) handleDelete(c *fiber.Ctx) error {
-	id, err := a.Delete(c.Context(), c.Params("id"), middlewares.UserID(c))
+	id, err := a.Delete(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}

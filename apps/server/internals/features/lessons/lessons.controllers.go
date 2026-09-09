@@ -16,7 +16,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 		return err
 	}
 
-	lessons, err := a.AdminList(c.Context(), chapterID)
+	lessons, err := a.AdminList(c.UserContext(), chapterID)
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 }
 
 func (a *App) handleAdminReadContent(c *fiber.Ctx) error {
-	resp, err := a.AdminReadContent(c.Context(), c.Params("id"))
+	resp, err := a.AdminReadContent(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (a *App) handleAdminReadContent(c *fiber.Ctx) error {
 }
 
 func (a *App) handleAdminReadResources(c *fiber.Ctx) error {
-	resources, err := a.AdminReadResources(c.Context(), c.Params("id"))
+	resources, err := a.AdminReadResources(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	}
 
 	userID := middlewares.UserID(c)
-	lessons, err := a.TutorList(c.Context(), chapterID, userID)
+	lessons, err := a.TutorList(c.UserContext(), chapterID, userID)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (a *App) handleTutorReadContent(c *fiber.Ctx) error {
 	lessonID := c.Params("id")
 	userID := middlewares.UserID(c)
 
-	resp, err := a.TutorReadContent(c.Context(), lessonID, userID)
+	resp, err := a.TutorReadContent(c.UserContext(), lessonID, userID)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (a *App) handleTutorReadContent(c *fiber.Ctx) error {
 }
 
 func (a *App) handleTutorReadResources(c *fiber.Ctx) error {
-	resources, err := a.TutorReadResources(c.Context(), c.Params("id"), middlewares.UserID(c))
+	resources, err := a.TutorReadResources(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 		return err
 	}
 
-	l, err := a.Create(c.Context(), middlewares.UserID(c), chapterID, req)
+	l, err := a.Create(c.UserContext(), middlewares.UserID(c), chapterID, req)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 		return err
 	}
 
-	l, err := a.Update(c.Context(), c.Params("id"), middlewares.UserID(c), req)
+	l, err := a.Update(c.UserContext(), c.Params("id"), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 }
 
 func (a *App) handleDelete(c *fiber.Ctx) error {
-	id, err := a.Delete(c.Context(), c.Params("id"), middlewares.UserID(c))
+	id, err := a.Delete(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (a *App) handleUpsertVideoContent(c *fiber.Ctx) error {
 		return err
 	}
 
-	vc, err := a.UpsertVideoContent(c.Context(), c.Params("id"), middlewares.UserID(c), req)
+	vc, err := a.UpsertVideoContent(c.UserContext(), c.Params("id"), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (a *App) handleUpsertDocumentContent(c *fiber.Ctx) error {
 		return err
 	}
 
-	dc, err := a.UpsertDocumentContent(c.Context(), c.Params("id"), middlewares.UserID(c), req.Content)
+	dc, err := a.UpsertDocumentContent(c.UserContext(), c.Params("id"), middlewares.UserID(c), req.Content)
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func (a *App) handleCreateResource(c *fiber.Ctx) error {
 		return err
 	}
 
-	res, err := a.CreateResource(c.Context(), c.Params("id"), middlewares.UserID(c), req)
+	res, err := a.CreateResource(c.UserContext(), c.Params("id"), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func (a *App) handleCreateResource(c *fiber.Ctx) error {
 }
 
 func (a *App) handleDeleteResource(c *fiber.Ctx) error {
-	id, err := a.DeleteResource(c.Context(), c.Params("resourceID"), middlewares.UserID(c))
+	id, err := a.DeleteResource(c.UserContext(), c.Params("resourceID"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (a *App) handleStudentReadContent(c *fiber.Ctx) error {
 	lessonID := c.Params("id")
 	userID := middlewares.UserID(c)
 
-	resp, err := a.StudentReadContent(c.Context(), lessonID, userID)
+	resp, err := a.StudentReadContent(c.UserContext(), lessonID, userID)
 	if err != nil {
 		return err
 	}
@@ -188,7 +188,7 @@ func (a *App) handleStudentReadContent(c *fiber.Ctx) error {
 }
 
 func (a *App) handleStudentReadResources(c *fiber.Ctx) error {
-	resources, err := a.StudentReadResources(c.Context(), c.Params("id"), middlewares.UserID(c))
+	resources, err := a.StudentReadResources(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func (a *App) handleUpdateComplete(c *fiber.Ctx) error {
 	lessonID := c.Params("id")
 	userID := middlewares.UserID(c)
 
-	if err := a.UpdateComplete(c.Context(), lessonID, userID); err != nil {
+	if err := a.UpdateComplete(c.UserContext(), lessonID, userID); err != nil {
 		return err
 	}
 

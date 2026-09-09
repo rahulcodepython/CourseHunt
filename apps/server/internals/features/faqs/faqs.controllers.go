@@ -14,7 +14,7 @@ func (a *App) handlePublicList(c *fiber.Ctx) error {
 		return err
 	}
 
-	faqs, err := a.PublicList(c.Context(), courseID)
+	faqs, err := a.PublicList(c.UserContext(), courseID)
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 		return err
 	}
 
-	faqs, err := a.AdminList(c.Context(), courseID)
+	faqs, err := a.AdminList(c.UserContext(), courseID)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	}
 
 	userID := middlewares.UserID(c)
-	faqs, err := a.TutorList(c.Context(), courseID, userID)
+	faqs, err := a.TutorList(c.UserContext(), courseID, userID)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (a *App) handleCreate(c *fiber.Ctx) error {
 		return err
 	}
 
-	faq, err := a.Create(c.Context(), middlewares.UserID(c), courseID, req)
+	faq, err := a.Create(c.UserContext(), middlewares.UserID(c), courseID, req)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 		return err
 	}
 
-	faq, err := a.Update(c.Context(), c.Params("id"), middlewares.UserID(c), req)
+	faq, err := a.Update(c.UserContext(), c.Params("id"), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 }
 
 func (a *App) handleDelete(c *fiber.Ctx) error {
-	id, err := a.Delete(c.Context(), c.Params("id"), middlewares.UserID(c))
+	id, err := a.Delete(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}

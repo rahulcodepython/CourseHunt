@@ -10,7 +10,7 @@ import (
 func (a *App) handleGetSignedURL(c *fiber.Ctx) error {
 	fileName := c.Query("file_name")
 
-	resp, err := a.GetSignedURL(c.Context(), fileName)
+	resp, err := a.GetSignedURL(c.UserContext(), fileName)
 	if err != nil {
 		return err
 	}

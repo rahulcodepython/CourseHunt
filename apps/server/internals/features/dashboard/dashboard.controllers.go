@@ -8,7 +8,7 @@ import (
 )
 
 func (a *App) handleUserDashboard(c *fiber.Ctx) error {
-	d, err := a.UserDashboard(c.Context(), middlewares.UserID(c))
+	d, err := a.UserDashboard(c.UserContext(), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -16,7 +16,7 @@ func (a *App) handleUserDashboard(c *fiber.Ctx) error {
 }
 
 func (a *App) handleTutorDashboard(c *fiber.Ctx) error {
-	d, err := a.TutorDashboard(c.Context(), middlewares.UserID(c))
+	d, err := a.TutorDashboard(c.UserContext(), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func (a *App) handleTutorDashboard(c *fiber.Ctx) error {
 }
 
 func (a *App) handleAdminDashboard(c *fiber.Ctx) error {
-	d, err := a.AdminDashboard(c.Context())
+	d, err := a.AdminDashboard(c.UserContext())
 	if err != nil {
 		return err
 	}

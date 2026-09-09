@@ -9,7 +9,7 @@ import (
 func (a *App) handleList(c *fiber.Ctx) error {
 	afterID, beforeID, limit := utils.CursorParams(c)
 
-	list, err := a.List(c.Context(), afterID, beforeID, limit)
+	list, err := a.List(c.UserContext(), afterID, beforeID, limit)
 	if err != nil {
 		return err
 	}

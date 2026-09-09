@@ -16,7 +16,7 @@ func (a *App) handleAdminReadMetadata(c *fiber.Ctx) error {
 		return err
 	}
 
-	qm, err := a.AdminReadMetadata(c.Context(), lessonID)
+	qm, err := a.AdminReadMetadata(c.UserContext(), lessonID)
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (a *App) handleAdminListQuestions(c *fiber.Ctx) error {
 		return err
 	}
 
-	questions, err := a.AdminListQuestions(c.Context(), quizID)
+	questions, err := a.AdminListQuestions(c.UserContext(), quizID)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (a *App) handleCreateMetadata(c *fiber.Ctx) error {
 		return err
 	}
 
-	qm, err := a.CreateMetadata(c.Context(), lessonID, middlewares.UserID(c), req)
+	qm, err := a.CreateMetadata(c.UserContext(), lessonID, middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (a *App) handleTutorReadMetadata(c *fiber.Ctx) error {
 	}
 	userID := middlewares.UserID(c)
 
-	qm, err := a.TutorReadMetadata(c.Context(), lessonID, userID)
+	qm, err := a.TutorReadMetadata(c.UserContext(), lessonID, userID)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (a *App) handleTutorListQuestions(c *fiber.Ctx) error {
 	}
 	userID := middlewares.UserID(c)
 
-	questions, err := a.TutorListQuestions(c.Context(), quizID, userID)
+	questions, err := a.TutorListQuestions(c.UserContext(), quizID, userID)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (a *App) handleCreateQuestion(c *fiber.Ctx) error {
 		return err
 	}
 
-	q, err := a.CreateQuestion(c.Context(), quizID, middlewares.UserID(c), req)
+	q, err := a.CreateQuestion(c.UserContext(), quizID, middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (a *App) handleUpdateQuestion(c *fiber.Ctx) error {
 		return err
 	}
 
-	q, err := a.UpdateQuestion(c.Context(), c.Params("id"), middlewares.UserID(c), req)
+	q, err := a.UpdateQuestion(c.UserContext(), c.Params("id"), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (a *App) handleUpdateQuestion(c *fiber.Ctx) error {
 }
 
 func (a *App) handleDeleteQuestion(c *fiber.Ctx) error {
-	id, err := a.DeleteQuestion(c.Context(), c.Params("id"), middlewares.UserID(c))
+	id, err := a.DeleteQuestion(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (a *App) handleGetQuestion(c *fiber.Ctx) error {
 		return err
 	}
 
-	q, err := a.GetQuestion(c.Context(), quizID, middlewares.UserID(c), req)
+	q, err := a.GetQuestion(c.UserContext(), quizID, middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (a *App) handleCreateSubmit(c *fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := a.Submit(c.Context(), quizID, middlewares.UserID(c), req)
+	resp, err := a.Submit(c.UserContext(), quizID, middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func (a *App) handleListAttempts(c *fiber.Ctx) error {
 		return err
 	}
 
-	attempts, err := a.ListAttempts(c.Context(), quizID, middlewares.UserID(c))
+	attempts, err := a.ListAttempts(c.UserContext(), quizID, middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (a *App) handleListAttempts(c *fiber.Ctx) error {
 }
 
 func (a *App) handleGetAttemptDetail(c *fiber.Ctx) error {
-	detail, err := a.GetAttemptDetail(c.Context(), c.Params("id"), middlewares.UserID(c))
+	detail, err := a.GetAttemptDetail(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}

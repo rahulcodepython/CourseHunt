@@ -13,7 +13,7 @@ import (
 func (a *App) handleAdminList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 
-	list, total, err := a.AdminList(c.Context(), page, limit)
+	list, total, err := a.AdminList(c.UserContext(), page, limit)
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (a *App) handleAdminCreate(c *fiber.Ctx) error {
 		return err
 	}
 
-	u, err := a.AdminCreate(c.Context(), middlewares.UserID(c), req)
+	u, err := a.AdminCreate(c.UserContext(), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
 		return err
 	}
 
-	u, err := a.AdminUpdate(c.Context(), c.Params("id"), req.Message)
+	u, err := a.AdminUpdate(c.UserContext(), c.Params("id"), req.Message)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
 }
 
 func (a *App) handleAdminDelete(c *fiber.Ctx) error {
-	id, err := a.AdminDelete(c.Context(), c.Params("id"))
+	id, err := a.AdminDelete(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	userID := middlewares.UserID(c)
 
-	list, total, err := a.TutorList(c.Context(), page, limit, userID)
+	list, total, err := a.TutorList(c.UserContext(), page, limit, userID)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (a *App) handleTutorCreate(c *fiber.Ctx) error {
 		return err
 	}
 
-	u, err := a.TutorCreate(c.Context(), middlewares.UserID(c), req)
+	u, err := a.TutorCreate(c.UserContext(), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (a *App) handleTutorUpdate(c *fiber.Ctx) error {
 		return err
 	}
 
-	u, err := a.TutorUpdate(c.Context(), c.Params("id"), req.Message, middlewares.UserID(c))
+	u, err := a.TutorUpdate(c.UserContext(), c.Params("id"), req.Message, middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (a *App) handleTutorUpdate(c *fiber.Ctx) error {
 func (a *App) handleTutorDelete(c *fiber.Ctx) error {
 	userID := middlewares.UserID(c)
 
-	id, err := a.TutorDelete(c.Context(), c.Params("id"), userID)
+	id, err := a.TutorDelete(c.UserContext(), c.Params("id"), userID)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (a *App) handleFeed(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	userID := middlewares.UserID(c)
 
-	feed, err := a.FeedRepository(c.Context(), userID, page, limit)
+	feed, err := a.FeedRepository(c.UserContext(), userID, page, limit)
 	if err != nil {
 		return err
 	}

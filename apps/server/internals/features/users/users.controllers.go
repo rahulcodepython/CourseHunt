@@ -13,7 +13,7 @@ func (a *App) handleAssignRole(c *fiber.Ctx) error {
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
-	if err := a.AssignRole(c.Context(), c.Params("id"), req.RoleIDs); err != nil {
+	if err := a.AssignRole(c.UserContext(), c.Params("id"), req.RoleIDs); err != nil {
 		return err
 	}
 	return utils.OK(c, "Roles assigned.", RoleAssignmentResponse{UserID: c.Params("id"), RoleIDs: req.RoleIDs})
@@ -24,7 +24,7 @@ func (a *App) handleDeleteRole(c *fiber.Ctx) error {
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
-	if err := a.DeleteRole(c.Context(), c.Params("id"), req.RoleIDs); err != nil {
+	if err := a.DeleteRole(c.UserContext(), c.Params("id"), req.RoleIDs); err != nil {
 		return err
 	}
 	return utils.OK(c, "Roles revoked.", RoleAssignmentResponse{UserID: c.Params("id"), RoleIDs: req.RoleIDs})
@@ -32,7 +32,7 @@ func (a *App) handleDeleteRole(c *fiber.Ctx) error {
 
 func (a *App) handleList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := a.List(c.Context(), page, limit, c.Query("name"), c.Query("email"), c.Query("role"))
+	list, total, err := a.List(c.UserContext(), page, limit, c.Query("name"), c.Query("email"), c.Query("role"))
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (a *App) handleList(c *fiber.Ctx) error {
 // URL paths.
 
 func (a *App) handleReadProfile(c *fiber.Ctx) error {
-	p, err := a.ReadProfile(c.Context(), middlewares.UserID(c))
+	p, err := a.ReadProfile(c.UserContext(), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (a *App) handleUpsertProfile(c *fiber.Ctx) error {
 	if err := utils.BindAndValidate(c, &req); err != nil {
 		return err
 	}
-	p, err := a.UpsertProfile(c.Context(), middlewares.UserID(c), req)
+	p, err := a.UpsertProfile(c.UserContext(), middlewares.UserID(c), req)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (a *App) handleUpsertProfile(c *fiber.Ctx) error {
 
 func (a *App) handleAdminListProfiles(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
-	list, total, err := a.AdminListProfiles(c.Context(), page, limit)
+	list, total, err := a.AdminListProfiles(c.UserContext(), page, limit)
 	if err != nil {
 		return err
 	}

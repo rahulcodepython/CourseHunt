@@ -18,7 +18,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 
 	page, limit := utils.PaginationParams(c)
 
-	list, total, err := a.AdminList(c.Context(), page, limit, courseID, targetUserID,
+	list, total, err := a.AdminList(c.UserContext(), page, limit, courseID, targetUserID,
 		c.Query("user_name"), c.Query("user_email"), c.Query("revoked"))
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	callerID := middlewares.UserID(c)
 
-	list, total, err := a.TutorList(c.Context(), page, limit, courseID, callerID,
+	list, total, err := a.TutorList(c.UserContext(), page, limit, courseID, callerID,
 		c.Query("user_name"), c.Query("user_email"), c.Query("revoked"))
 	if err != nil {
 		return err
@@ -48,14 +48,14 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 }
 
 func (a *App) handleRevoke(c *fiber.Ctx) error {
-	if err := a.Revoke(c.Context(), c.Params("userId"), c.Params("courseId")); err != nil {
+	if err := a.Revoke(c.UserContext(), c.Params("userId"), c.Params("courseId")); err != nil {
 		return err
 	}
 	return utils.OK[any](c, "Course access revoked.", nil)
 }
 
 func (a *App) handleRegain(c *fiber.Ctx) error {
-	if err := a.Regain(c.Context(), c.Params("userId"), c.Params("courseId")); err != nil {
+	if err := a.Regain(c.UserContext(), c.Params("userId"), c.Params("courseId")); err != nil {
 		return err
 	}
 	return utils.OK[any](c, "Course access regained.", nil)

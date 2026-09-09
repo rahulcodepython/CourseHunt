@@ -8,7 +8,7 @@ import (
 )
 
 func (a *App) handleListRoles(c *fiber.Ctx) error {
-	rolesList, err := a.List(c.Context())
+	rolesList, err := a.List(c.UserContext())
 	if err != nil {
 		return err
 	}
@@ -21,7 +21,7 @@ func (a *App) handleCreateRole(c *fiber.Ctx) error {
 		return err
 	}
 
-	role, err := a.Create(c.Context(), req)
+	role, err := a.Create(c.UserContext(), req)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (a *App) handleUpdateRole(c *fiber.Ctx) error {
 		return err
 	}
 
-	role, err := a.Update(c.Context(), roleID, req)
+	role, err := a.Update(c.UserContext(), roleID, req)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (a *App) handleUpdateRole(c *fiber.Ctx) error {
 }
 
 func (a *App) handleDeleteRole(c *fiber.Ctx) error {
-	deletedID, err := a.Delete(c.Context(), c.Params("id"))
+	deletedID, err := a.Delete(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (a *App) handleDeleteRole(c *fiber.Ctx) error {
 }
 
 func (a *App) handleGetRolePermissions(c *fiber.Ctx) error {
-	permissions, err := a.GetPermissions(c.Context(), c.Params("id"))
+	permissions, err := a.GetPermissions(c.UserContext(), c.Params("id"))
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (a *App) handleSetRolePermissions(c *fiber.Ctx) error {
 		return err
 	}
 
-	if err := a.SetPermissions(c.Context(), roleID, req); err != nil {
+	if err := a.SetPermissions(c.UserContext(), roleID, req); err != nil {
 		return err
 	}
 
@@ -77,7 +77,7 @@ func (a *App) handleSetRolePermissions(c *fiber.Ctx) error {
 }
 
 func (a *App) handleListPermissions(c *fiber.Ctx) error {
-	permissions, err := a.ListPermissions(c.Context())
+	permissions, err := a.ListPermissions(c.UserContext())
 	if err != nil {
 		return err
 	}

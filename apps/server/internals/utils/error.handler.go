@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +15,24 @@ import (
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	var apiErr *APIError
 	if errors.As(err, &apiErr) {
+		if errors.Is(apiErr.Err, context.Canceled) {
+			c.Locals("handler_error", apiErr.Err)
+			return json[any](c, 499, false, "Request was canceled.", nil, apiErr.Err)
+		}
+		if errors.Is(apiErr.Err, context.DeadlineExceeded) {
+			c.Locals("handler_error", apiErr.Err)
+			return json[any](c, fiber.StatusGatewayTimeout, false, "Request timed out.", nil, apiErr.Err)
+		}
 		return json(c, apiErr.Status, false, apiErr.Message, apiErr.Data, apiErr.Err)
+	}
+
+	if errors.Is(err, context.Canceled) {
+		c.Locals("handler_error", err)
+		return json[any](c, 499, false, "Request was canceled.", nil, err)
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		c.Locals("handler_error", err)
+		return json[any](c, fiber.StatusGatewayTimeout, false, "Request timed out.", nil, err)
 	}
 
 	code := fiber.StatusInternalServerError

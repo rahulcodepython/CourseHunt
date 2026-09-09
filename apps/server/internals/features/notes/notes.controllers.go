@@ -18,7 +18,7 @@ func (a *App) handleUpsert(c *fiber.Ctx) error {
 		return err
 	}
 
-	n, err := a.Upsert(c.Context(), middlewares.UserID(c), lessonID, req.Content)
+	n, err := a.Upsert(c.UserContext(), middlewares.UserID(c), lessonID, req.Content)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (a *App) handleRead(c *fiber.Ctx) error {
 		return err
 	}
 
-	n, err := a.Read(c.Context(), middlewares.UserID(c), lessonID)
+	n, err := a.Read(c.UserContext(), middlewares.UserID(c), lessonID)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 		return err
 	}
 
-	n, err := a.Update(c.Context(), c.Params("id"), middlewares.UserID(c), req.Content)
+	n, err := a.Update(c.UserContext(), c.Params("id"), middlewares.UserID(c), req.Content)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (a *App) handleUpdate(c *fiber.Ctx) error {
 }
 
 func (a *App) handleDelete(c *fiber.Ctx) error {
-	id, err := a.Delete(c.Context(), c.Params("id"), middlewares.UserID(c))
+	id, err := a.Delete(c.UserContext(), c.Params("id"), middlewares.UserID(c))
 	if err != nil {
 		return err
 	}

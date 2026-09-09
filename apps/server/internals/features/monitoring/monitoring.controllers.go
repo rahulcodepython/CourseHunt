@@ -9,7 +9,7 @@ import (
 )
 
 func (a *App) handleHealth(c *fiber.Ctx) error {
-	healthData, allHealthy := a.HealthCheck(c.Context())
+	healthData, allHealthy := a.HealthCheck(c.UserContext())
 
 	if !allHealthy {
 		return &utils.APIError{
@@ -24,5 +24,5 @@ func (a *App) handleHealth(c *fiber.Ctx) error {
 }
 
 func (a *App) handleSnapshot(c *fiber.Ctx) error {
-	return utils.OK(c, "Monitoring snapshot fetched.", a.Snapshot(c.Context()))
+	return utils.OK(c, "Monitoring snapshot fetched.", a.Snapshot(c.UserContext()))
 }
