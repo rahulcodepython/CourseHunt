@@ -26,8 +26,8 @@ export default function TutorChapterLessonsPage() {
 
   const { data: rawCourses } = useManageCoursesQuery();
   const { data: chaptersData } = useChaptersQuery(courseId);
-  const currentCourse = (rawCourses?.data?.data as any[])?.find((c: any) => c.id === courseId);
-  const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
+  const currentCourse = rawCourses?.data?.data?.find((c) => c.id === courseId);
+  const currentChapter = chaptersData?.data?.find((ch) => ch.id === chapterId);
 
   useSetBreadcrumbs([
     { label: "My Courses", href: "/tutor/courses" },

@@ -133,8 +133,9 @@ export function CreateUserDialog({
       );
       queryClient.invalidateQueries({ queryKey: queryKeys.users() });
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create user");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create user";
+      toast.error(message);
     } finally {
       setIsCreating(false);
     }

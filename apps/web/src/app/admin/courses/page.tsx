@@ -10,7 +10,7 @@ import { CourseDetailsModal } from "@/components/course-details-modal";
 
 export default function CoursesPage() {
   const { data: rawCourses, isLoading } = useManageCoursesQuery();
-  const courses = (rawCourses?.data?.data as any) ?? [];
+  const courses: Course[] = rawCourses?.data?.data ?? [];
   const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
   const columns = React.useMemo(() => getColumns({ onViewCourse: setSelectedCourse }), []);
 

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import type { QueryKey } from "@tanstack/react-query";
 
 import { useAppQuery } from "@/react-query/query";
 import type { ApiResponse } from "@/schema/common.types";
@@ -29,7 +30,7 @@ export interface CursorPageParams {
  * the server for "what's new since the last thing I saw".
  */
 export function useCursorFeed<T extends FeedItem>(
-  queryKey: readonly unknown[],
+  queryKey: QueryKey,
   fetchPage: (params: CursorPageParams) => Promise<ApiResponse<T[]>>,
   opts?: { limit?: number; refetchInterval?: number },
 ) {

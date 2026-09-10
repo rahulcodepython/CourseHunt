@@ -43,7 +43,7 @@ func (a *App) handleEnrollFree(c *fiber.Ctx) error {
 	if err := a.EnrollFree(c.UserContext(), middlewares.UserID(c), c.Params("id")); err != nil {
 		return err
 	}
-	return utils.OK[any](c, "Enrolled successfully.", nil)
+	return utils.OKEmpty(c, "Enrolled successfully.")
 }
 
 func (a *App) handleEnrolledList(c *fiber.Ctx) error {

@@ -18,7 +18,7 @@ import { CourseDetailsModal } from "@/components/course-details-modal";
 export default function TutorCoursesPage() {
   const { data: rawCourses, isLoading } = useManageCoursesQuery();
   const deleteMutation = useDeleteCourseMutation();
-  const courses: Course[] = (rawCourses?.data?.data as any) ?? [];
+  const courses: Course[] = rawCourses?.data?.data ?? [];
 
   const {
     dialogOpen,

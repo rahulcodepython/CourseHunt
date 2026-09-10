@@ -15,8 +15,8 @@ export default function TransactionsPage() {
     const { data: rawTx, isLoading: txLoading } = useTransactionsQuery(undefined, "admin");
     const { data: rawRefunds, isLoading: refundsLoading } = useRefundsQuery();
 
-    const transactions: Transaction[] = (rawTx?.data?.data as any) ?? [];
-    const refunds: RefundTransaction[] = (rawRefunds?.data?.data as any) ?? [];
+    const transactions: Transaction[] = rawTx?.data?.data ?? [];
+    const refunds: RefundTransaction[] = rawRefunds?.data?.data ?? [];
 
     const totalRevenue = transactions
         .filter((t) => t.status === "confirmed" || t.status === "success")

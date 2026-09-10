@@ -25,7 +25,7 @@ type PublicListPayload struct {
 
 func (a *App) PublicListRepository(ctx context.Context, page, limit int, categoryID, subcategoryID, level, search string) ([]CoursePublicResponse, int, error) {
 	filter := postgres.NewFilter()
-	filter.AddRaw("c.status = 'published'")
+	filter.AddRawCondition("c.status = 'published'")
 
 	targetCatID := categoryID
 	if targetCatID == "" && subcategoryID != "" {
@@ -33,13 +33,13 @@ func (a *App) PublicListRepository(ctx context.Context, page, limit int, categor
 	}
 
 	if targetCatID != "" {
-		filter.Add("c.category_id = NULLIF($%d, '')::uuid", targetCatID)
+		filter.AddCondition("c.category_id = NULLIF($%d, '')::uuid", targetCatID)
 	}
 	if level != "" {
-		filter.Add("c.level = $%d", level)
+		filter.AddCondition("c.level = $%d", level)
 	}
 	if search != "" {
-		filter.Add2("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", "%"+search+"%")
+		filter.AddWithReusedArg("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", "%"+search+"%")
 	}
 
 	limitIdx := filter.Paginate(page, limit)

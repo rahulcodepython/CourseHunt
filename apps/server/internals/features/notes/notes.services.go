@@ -35,12 +35,12 @@ func (a *App) Upsert(ctx context.Context, userID, lessonID, content string) (*No
 // cache is filled with the wider value, but only the narrower one is ever
 // read back out. Preserved as-is rather than "fixed" here, since normalizing
 // it is a behavior change outside the scope of this reorganization.
-func (a *App) Read(ctx context.Context, userID, lessonID string) (any, error) {
+func (a *App) Read(ctx context.Context, userID, lessonID string) (*NoteResponse, error) {
 	cacheKey := fmt.Sprintf("notes:read:u:%s:l:%s", userID, lessonID)
 
 	var cached NoteResponse
 	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
-		return cached, nil
+		return &cached, nil
 	}
 
 	n, err := a.ReadRepository(ctx, userID, lessonID)
@@ -57,9 +57,15 @@ func (a *App) Read(ctx context.Context, userID, lessonID string) (any, error) {
 		}
 	}
 
-	_ = a.Cache.Set(ctx, cacheKey, n, 10*time.Minute)
+	resp := &NoteResponse{
+		ID:        n.ID,
+		Content:   n.Content,
+		UpdatedAt: n.UpdatedAt,
+	}
 
-	return n, nil
+	_ = a.Cache.Set(ctx, cacheKey, resp, 10*time.Minute)
+
+	return resp, nil
 }
 
 func (a *App) Update(ctx context.Context, id, userID, content string) (*NoteResponse, error) {

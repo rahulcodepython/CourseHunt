@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { TableColumn } from "@/components/data-table";
 import type { EnrolledCourseResponse } from "@/schema/courses.types";
 import { Icon } from "@/components/icon";
 import { Progress } from "@/components/ui/progress";
@@ -15,7 +16,7 @@ const statusMap: Record<string, StatusBadgeEntry> = {
   "in-progress": { label: "In Progress", variant: "outline" },
 };
 
-export const columns: ColumnDef<EnrolledCourseResponse, any>[] = [
+export const columns: TableColumn<EnrolledCourseResponse>[] = [
   columnHelper.accessor("title", {
     header: "Course",
     cell: ({ row }) => {

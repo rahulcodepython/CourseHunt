@@ -65,13 +65,13 @@ func (a *App) ListRepository(ctx context.Context, page, limit int, name, email, 
 	filter := postgres.NewFilter(limit, offset)
 
 	if name != "" {
-		filter.Add("u.name ILIKE $%d", "%"+name+"%")
+		filter.AddCondition("u.name ILIKE $%d", "%"+name+"%")
 	}
 	if email != "" {
-		filter.Add("u.email ILIKE $%d", "%"+email+"%")
+		filter.AddCondition("u.email ILIKE $%d", "%"+email+"%")
 	}
 	if role != "" {
-		filter.Add2(UserRoleFilterTemplate, role)
+		filter.AddWithReusedArg(UserRoleFilterTemplate, role)
 	}
 
 	query := BuildListUsersQuery(filter.Where(""))

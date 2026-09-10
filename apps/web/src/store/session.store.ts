@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import type { SessionData, SessionUser } from "@/schema/session.schema";
+import type { SessionData, SessionRecord, SessionUser } from "@/schema/session.schema";
 
 export interface SessionPayload {
   user: SessionUser | null;
-  session: Record<string, unknown> | null;
+  session: SessionRecord | null;
   roles: string[];
   permissions: string[];
   token: string | null;

@@ -74,7 +74,7 @@ export function useTransactionStatusQuery(
         { url: `${API_ENDPOINTS.TRANSACTIONS}/${txId}/status`, method: "GET" },
         TransactionStatusResponseZod,
       ),
-    options as any,
+    options,
   );
 }
 

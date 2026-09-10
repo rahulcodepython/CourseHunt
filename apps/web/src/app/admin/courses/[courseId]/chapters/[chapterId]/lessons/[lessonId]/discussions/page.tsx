@@ -26,8 +26,8 @@ export default function AdminLessonDiscussionsPage() {
   const { data: lessonsData } = useLessonsQuery(chapterId, "admin");
 
   const currentCourse = rawCourses?.data;
-  const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
-  const currentLesson = (lessonsData?.data as any[])?.find((l: any) => l.id === lessonId);
+  const currentChapter = chaptersData?.data?.find((ch) => ch.id === chapterId);
+  const currentLesson = lessonsData?.data?.find((l) => l.id === lessonId);
 
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },

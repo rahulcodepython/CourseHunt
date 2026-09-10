@@ -104,7 +104,7 @@ export async function apiRequest<T>(
  * ?search=" for an empty string. This keeps that exact behavior while
  * letting axios handle the actual serialization.
  */
-export function compactParams<T extends Record<string, unknown>>(
+export function compactParams<T extends Record<string, string | number | boolean | null | undefined>>(
   params?: T,
 ): Partial<T> | undefined {
   if (!params) return undefined;

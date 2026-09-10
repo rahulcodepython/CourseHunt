@@ -109,9 +109,9 @@ func isSensitiveKey(k string) bool {
 }
 
 // sanitizeJSON recursively redacts sensitive fields in-place without duplicating untouched subtrees.
-func sanitizeJSON(val any) {
+func sanitizeJSON(val interface{}) {
 	switch v := val.(type) {
-	case map[string]any:
+	case map[string]interface{}:
 		for k, item := range v {
 			if isSensitiveKey(k) {
 				v[k] = "[REDACTED]"
@@ -119,7 +119,7 @@ func sanitizeJSON(val any) {
 				sanitizeJSON(item)
 			}
 		}
-	case []any:
+	case []interface{}:
 		for _, item := range v {
 			sanitizeJSON(item)
 		}
@@ -139,7 +139,7 @@ func sanitizeRequestBody(body []byte) string {
 
 	// Only parse as JSON if it begins with an object or array character
 	if trimmed[0] == '{' || trimmed[0] == '[' {
-		var parsed any
+		var parsed interface{}
 		if err := json.Unmarshal(trimmed, &parsed); err == nil {
 			sanitizeJSON(parsed)
 			if out, err := json.Marshal(parsed); err == nil {

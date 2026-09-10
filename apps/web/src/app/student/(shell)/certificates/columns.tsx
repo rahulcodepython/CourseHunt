@@ -1,20 +1,24 @@
 "use client";
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { TableColumn } from "@/components/data-table";
 import type { Certificate } from "@/schema/certificate.types";
 import { formatDate, truncate } from "@/lib/format";
 import { Icon } from "@/components/icon";
 import { CertificateDownloadButton } from "./certificate-pdf";
 import { Button } from "@/components/ui/button";
 
-type ExtendedCertificate = Certificate & { isClaimable?: boolean };
+export type ExtendedCertificate = Certificate & { isClaimable?: boolean };
 
 const columnHelper = createColumnHelper<ExtendedCertificate>();
 
 export const getColumns = (
   studentName: string,
-  claimMutation: any,
-): ColumnDef<ExtendedCertificate, any>[] => [
+  claimMutation: {
+    isPending: boolean;
+    execute: (courseId: string) => Promise<object | void | boolean | null> | void;
+  },
+): TableColumn<ExtendedCertificate>[] => [
   columnHelper.accessor((row) => row.course.title, {
     id: "course",
     header: "Course",

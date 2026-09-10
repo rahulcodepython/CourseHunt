@@ -37,9 +37,9 @@ func (a *App) CreateRepository(ctx context.Context, userID, courseID string, req
 
 func (a *App) ListPinnedRepository(ctx context.Context, page, limit int, courseID string) ([]Feedback, int, error) {
 	filter := postgres.NewFilter()
-	filter.AddRaw("f.is_pinned = true")
+	filter.AddRawCondition("f.is_pinned = true")
 	if courseID != "" {
-		filter.Add("f.course_id = $%d", courseID)
+		filter.AddCondition("f.course_id = $%d", courseID)
 	}
 
 	limitIdx := filter.Paginate(page, limit)
@@ -59,16 +59,16 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int, isPinned
 	filter := postgres.NewFilter()
 
 	if isPinned == "true" || isPinned == "false" {
-		filter.AddRaw(fmt.Sprintf("f.is_pinned = %s", isPinned))
+		filter.AddRawCondition(fmt.Sprintf("f.is_pinned = %s", isPinned))
 	}
 	if userName != "" {
-		filter.Add("u.name ILIKE $%d", "%"+userName+"%")
+		filter.AddCondition("u.name ILIKE $%d", "%"+userName+"%")
 	}
 	if userEmail != "" {
-		filter.Add("u.email ILIKE $%d", "%"+userEmail+"%")
+		filter.AddCondition("u.email ILIKE $%d", "%"+userEmail+"%")
 	}
 	if courseID != "" {
-		filter.Add("f.course_id = $%d", courseID)
+		filter.AddCondition("f.course_id = $%d", courseID)
 	}
 
 	limitIdx := filter.Paginate(page, limit)
@@ -87,18 +87,18 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int, isPinned
 func (a *App) TutorListRepository(ctx context.Context, userID string, page, limit int, isPinned, userName, userEmail, courseID string) ([]Feedback, int, error) {
 	filter := postgres.NewFilter()
 
-	filter.Add("c.tutor_id = $%d", userID)
+	filter.AddCondition("c.tutor_id = $%d", userID)
 	if isPinned == "true" || isPinned == "false" {
-		filter.AddRaw(fmt.Sprintf("f.is_pinned = %s", isPinned))
+		filter.AddRawCondition(fmt.Sprintf("f.is_pinned = %s", isPinned))
 	}
 	if userName != "" {
-		filter.Add("u.name ILIKE $%d", "%"+userName+"%")
+		filter.AddCondition("u.name ILIKE $%d", "%"+userName+"%")
 	}
 	if userEmail != "" {
-		filter.Add("u.email ILIKE $%d", "%"+userEmail+"%")
+		filter.AddCondition("u.email ILIKE $%d", "%"+userEmail+"%")
 	}
 	if courseID != "" {
-		filter.Add("f.course_id = $%d", courseID)
+		filter.AddCondition("f.course_id = $%d", courseID)
 	}
 
 	limitIdx := filter.Paginate(page, limit)

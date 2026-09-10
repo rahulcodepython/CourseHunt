@@ -75,7 +75,7 @@ func (c *Cache) SetGraceTokens(ctx context.Context, oldRefreshToken string, payl
 }
 
 // Get fetches data from Redis and unmarshals it into dest.
-func (c *Cache) Get(ctx context.Context, key string, dest any) (bool, error) {
+func (c *Cache) Get(ctx context.Context, key string, dest interface{}) (bool, error) {
 	if c == nil || c.client == nil {
 		return false, nil
 	}
@@ -94,12 +94,12 @@ func (c *Cache) Get(ctx context.Context, key string, dest any) (bool, error) {
 }
 
 // GetGeneric fetches data from Redis into a pointer of generic type T.
-func Get[T any](c *Cache, ctx context.Context, key string, dest *T) (bool, error) {
+func Get[T interface{}](c *Cache, ctx context.Context, key string, dest *T) (bool, error) {
 	return c.Get(ctx, key, dest)
 }
 
 // Set marshals value into JSON and stores it in Redis with the given TTL.
-func (c *Cache) Set(ctx context.Context, key string, val any, ttl time.Duration) error {
+func (c *Cache) Set(ctx context.Context, key string, val interface{}, ttl time.Duration) error {
 	if c == nil || c.client == nil {
 		return nil
 	}
@@ -116,14 +116,14 @@ func (c *Cache) Set(ctx context.Context, key string, val any, ttl time.Duration)
 }
 
 // SetGeneric stores a generic value of type T in Redis with given TTL.
-func Set[T any](c *Cache, ctx context.Context, key string, val T, ttl time.Duration) error {
+func Set[T interface{}](c *Cache, ctx context.Context, key string, val T, ttl time.Duration) error {
 	return c.Set(ctx, key, val, ttl)
 }
 
 // Fetch returns the cached value at key if present; otherwise it calls fn,
 // caches the result for ttl, and returns it — the read-check-set pattern
 // otherwise hand-written at the top of most cached service methods.
-func Fetch[T any](ctx context.Context, c *Cache, key string, ttl time.Duration, fn func() (T, error)) (T, error) {
+func Fetch[T interface{}](ctx context.Context, c *Cache, key string, ttl time.Duration, fn func() (T, error)) (T, error) {
 	var cached T
 	if hit, _ := c.Get(ctx, key, &cached); hit {
 		return cached, nil

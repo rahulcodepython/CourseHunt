@@ -15,7 +15,7 @@ import "github.com/gofiber/fiber/v2"
 type APIError struct {
 	Status  int
 	Message string
-	Data    any
+	Data    interface{}
 	Err     error
 }
 

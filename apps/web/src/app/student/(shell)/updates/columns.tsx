@@ -1,13 +1,14 @@
 "use client";
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { TableColumn } from "@/components/data-table";
 import type { UpdateFeedItem } from "@/schema/updates.types";
 import { formatDateTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 
 const columnHelper = createColumnHelper<UpdateFeedItem>();
 
-export const columns: ColumnDef<UpdateFeedItem, any>[] = [
+export const columns: TableColumn<UpdateFeedItem>[] = [
   columnHelper.accessor((row) => row.course?.title || "Platform-wide", {
     id: "course",
     header: "Course",

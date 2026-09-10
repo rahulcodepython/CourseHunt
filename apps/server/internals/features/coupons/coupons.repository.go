@@ -37,13 +37,13 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int, status, 
 	filter := postgres.NewFilter(limit, offset)
 
 	if status != "" {
-		filter.Add("c.is_active = $%d::boolean", status)
+		filter.AddCondition("c.is_active = $%d::boolean", status)
 	}
 	if isActive == "true" || isActive == "false" {
-		filter.Add("c.is_active = $%d", isActive == "true")
+		filter.AddCondition("c.is_active = $%d", isActive == "true")
 	}
 	if code != "" {
-		filter.Add("c.code ILIKE $%d", "%"+code+"%")
+		filter.AddCondition("c.code ILIKE $%d", "%"+code+"%")
 	}
 
 	payload, err := postgres.QueryJSON[CouponListPayload](ctx, a.DB, BuildListQuery(filter.Join("1=1")), filter.Args...)
@@ -61,15 +61,15 @@ func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID, 
 	offset := (page - 1) * limit
 	filter := postgres.NewFilter(limit, offset)
 
-	filter.Add("c.created_by = $%d", userID)
+	filter.AddCondition("c.created_by = $%d", userID)
 	if status != "" {
-		filter.Add("c.is_active = $%d::boolean", status)
+		filter.AddCondition("c.is_active = $%d::boolean", status)
 	}
 	if isActive == "true" || isActive == "false" {
-		filter.Add("c.is_active = $%d", isActive == "true")
+		filter.AddCondition("c.is_active = $%d", isActive == "true")
 	}
 	if code != "" {
-		filter.Add("c.code ILIKE $%d", "%"+code+"%")
+		filter.AddCondition("c.code ILIKE $%d", "%"+code+"%")
 	}
 
 	payload, err := postgres.QueryJSON[CouponListPayload](ctx, a.DB, BuildListQuery(filter.Join("1=1")), filter.Args...)

@@ -11,7 +11,7 @@ import { DataTable } from "@/components/data-table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icon";
-import { getColumns } from "./columns";
+import { getColumns, type ExtendedCertificate } from "./columns";
 
 export default function StudentCertificatesPage() {
   const { user } = useSession();
@@ -27,16 +27,25 @@ export default function StudentCertificatesPage() {
     (c) => c.completion_percent >= 100 && !certifiedCourseIds.has(c.id),
   );
 
-  const claimableCerts = claimable.map((c) => ({
+  const claimableCerts: ExtendedCertificate[] = claimable.map((c) => ({
     id: `claimable_${c.id}`,
     user_id: user?.id ?? "",
-    course: c as any,
-    tutor: (c as any).tutor,
+    course: {
+      id: c.id,
+      title: c.title,
+      slug: c.slug,
+      thumbnail: c.image_url ?? null,
+    },
+    tutor: {
+      id: "",
+      name: "",
+      email: "",
+    },
     issued_at: new Date().toISOString(),
     isClaimable: true,
   }));
 
-  const allCerts = [...claimableCerts, ...certificates];
+  const allCerts: ExtendedCertificate[] = [...claimableCerts, ...certificates];
 
   const columns = React.useMemo(
     () => getColumns(user?.name ?? "Student", claimMutation),
@@ -49,7 +58,7 @@ export default function StudentCertificatesPage() {
 
       <DataTable
         columns={columns}
-        data={allCerts as any[]}
+        data={allCerts}
         showColumnToggle={false}
         emptyIcon="shield-check"
         emptyText="No certificates yet — complete a course to earn one."

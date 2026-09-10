@@ -24,10 +24,10 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int, courseID
 	offset := (page - 1) * limit
 	filter := postgres.NewFilter(limit, offset)
 	if courseID != "" {
-		filter.Add("e.course_id = NULLIF($%d, '')::uuid", courseID)
+		filter.AddCondition("e.course_id = NULLIF($%d, '')::uuid", courseID)
 	}
 	if targetUserID != "" {
-		filter.Add("e.user_id = NULLIF($%d, '')::uuid", targetUserID)
+		filter.AddCondition("e.user_id = NULLIF($%d, '')::uuid", targetUserID)
 	}
 
 	applyCommonFilters(filter, userName, userEmail, revoked)
@@ -76,12 +76,12 @@ func (a *App) TutorListRepository(ctx context.Context, page, limit int, courseID
 
 func applyCommonFilters(filter *postgres.QueryFilter, userName, userEmail, revoked string) {
 	if userName != "" {
-		filter.Add("u.name ILIKE $%d", "%"+userName+"%")
+		filter.AddCondition("u.name ILIKE $%d", "%"+userName+"%")
 	}
 	if userEmail != "" {
-		filter.Add("u.email ILIKE $%d", "%"+userEmail+"%")
+		filter.AddCondition("u.email ILIKE $%d", "%"+userEmail+"%")
 	}
 	if revoked != "" {
-		filter.Add("e.revoked = $%d::boolean", revoked)
+		filter.AddCondition("e.revoked = $%d::boolean", revoked)
 	}
 }

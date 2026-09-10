@@ -96,22 +96,22 @@ func (a *App) ListRepository(ctx context.Context, page, limit int, userID, tutor
 	filter := postgres.NewFilter()
 
 	if userID != "" {
-		filter.Add("t.user_id = $%d", userID)
+		filter.AddCondition("t.user_id = $%d", userID)
 	}
 	if tutorID != "" {
-		filter.Add("c.tutor_id = $%d", tutorID)
+		filter.AddCondition("c.tutor_id = $%d", tutorID)
 	}
 	if status != "" {
-		filter.Add("t.status = $%d", status)
+		filter.AddCondition("t.status = $%d", status)
 	}
 	if courseID != "" {
-		filter.Add("t.course_id = $%d", courseID)
+		filter.AddCondition("t.course_id = $%d", courseID)
 	}
 	if dateFrom != "" {
-		filter.Add("t.created_at >= $%d", dateFrom)
+		filter.AddCondition("t.created_at >= $%d", dateFrom)
 	}
 	if dateTo != "" {
-		filter.Add("t.created_at <= $%d", dateTo)
+		filter.AddCondition("t.created_at <= $%d", dateTo)
 	}
 
 	limitParam := filter.Paginate(page, limit)
@@ -136,19 +136,19 @@ func (a *App) ListRefundsRepository(ctx context.Context, page, limit int, userID
 	filter := postgres.NewFilter()
 
 	if userID != "" {
-		filter.Add("r.user_id = $%d", userID)
+		filter.AddCondition("r.user_id = $%d", userID)
 	}
 	if status != "" {
-		filter.Add("r.refund_status = $%d", status)
+		filter.AddCondition("r.refund_status = $%d", status)
 	}
 	if courseID != "" {
-		filter.Add("r.course_id = $%d", courseID)
+		filter.AddCondition("r.course_id = $%d", courseID)
 	}
 	if dateFrom != "" {
-		filter.Add("r.created_at >= $%d", dateFrom)
+		filter.AddCondition("r.created_at >= $%d", dateFrom)
 	}
 	if dateTo != "" {
-		filter.Add("r.created_at <= $%d", dateTo)
+		filter.AddCondition("r.created_at <= $%d", dateTo)
 	}
 
 	limitParam := filter.Paginate(page, limit)

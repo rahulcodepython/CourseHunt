@@ -75,8 +75,10 @@ export function ChangePasswordDialog({
         typeof window !== "undefined" ? window.location.origin : "http://localhost:3000",
       );
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to change password");
+      reset();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to change password";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

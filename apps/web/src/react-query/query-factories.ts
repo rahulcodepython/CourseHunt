@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { QueryKey } from "@tanstack/react-query";
 
 import { apiRequest, compactParams } from "@/react-query/client";
 import { useAppQuery } from "@/react-query/query";
@@ -16,7 +17,7 @@ import { PaginatedResponseZod } from "@/schema/common.types";
 export function createListQuery<
   T,
   P extends Record<string, string | number> = Record<string, string | number>,
->(endpoint: string, queryKeyFn: (params?: P) => readonly unknown[], itemSchema: z.ZodType<T>) {
+>(endpoint: string, queryKeyFn: (params?: P) => QueryKey, itemSchema: z.ZodType<T>) {
   return function useListQuery(params?: P) {
     return useAppQuery(queryKeyFn(params), () =>
       apiRequest(

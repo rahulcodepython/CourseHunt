@@ -1,6 +1,7 @@
 "use client";
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { TableColumn } from "@/components/data-table";
 import type { Transaction } from "@/schema/transactions.types";
 import { formatDateTime, formatINR, truncate } from "@/lib/format";
 import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
@@ -16,7 +17,7 @@ const statusMap: Record<string, StatusBadgeEntry> = {
   pending: { variant: "outline" },
 };
 
-export const columns: ColumnDef<Transaction, any>[] = [
+export const columns: TableColumn<Transaction>[] = [
   columnHelper.accessor((row) => row.razorpay_order_id || row.id, {
     id: "transaction_id",
     header: "Transaction ID",

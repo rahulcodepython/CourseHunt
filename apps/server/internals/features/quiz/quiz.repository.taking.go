@@ -11,7 +11,7 @@ import (
 
 func (a *App) ReadNextQuestionUnifiedRepository(ctx context.Context, quizID, userID string, fetchedIDs []string) (*QuizQuestion, []QuizOption, []QuizArrangeItem, int, error) {
 	exclude := ""
-	args := []any{quizID, userID}
+	args := []interface{}{quizID, userID}
 	countParam := "$3"
 	if len(fetchedIDs) > 0 {
 		exclude = " AND qq.id != ALL($3)"

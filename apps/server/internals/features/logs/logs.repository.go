@@ -11,12 +11,12 @@ func (a *App) ListRepository(ctx context.Context, afterID, beforeID *int64, limi
 
 	switch {
 	case beforeID != nil:
-		filter.Add("WHERE id < $%d", *beforeID)
+		filter.AddCondition("WHERE id < $%d", *beforeID)
 	case afterID != nil:
-		filter.Add("WHERE id > $%d", *afterID)
+		filter.AddCondition("WHERE id > $%d", *afterID)
 	}
 
-	limitParam := filter.NextIdx()
+	limitParam := filter.NextIndex()
 	filter.AddArgs(limit)
 
 	query := BuildListQuery(filter.Join(""), limitParam)

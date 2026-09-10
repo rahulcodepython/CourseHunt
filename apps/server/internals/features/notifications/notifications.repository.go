@@ -28,14 +28,14 @@ func (a *App) ListRepository(ctx context.Context, userID, role string, afterID, 
 
 	switch {
 	case beforeID != nil:
-		filter.Add("AND n.id < $%d", *beforeID)
+		filter.AddCondition("AND n.id < $%d", *beforeID)
 	case afterID != nil:
-		filter.Add("AND n.id > $%d", *afterID)
+		filter.AddCondition("AND n.id > $%d", *afterID)
 	default:
-		filter.AddRaw(DefaultCursorClause)
+		filter.AddRawCondition(DefaultCursorClause)
 	}
 
-	limitParam := filter.NextIdx()
+	limitParam := filter.NextIndex()
 	filter.AddArgs(limit)
 
 	query := BuildListQuery(roleCol, filter.Join(""), limitParam)

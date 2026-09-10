@@ -51,12 +51,12 @@ func (a *App) handleRevoke(c *fiber.Ctx) error {
 	if err := a.Revoke(c.UserContext(), c.Params("userId"), c.Params("courseId")); err != nil {
 		return err
 	}
-	return utils.OK[any](c, "Course access revoked.", nil)
+	return utils.OKEmpty(c, "Course access revoked.")
 }
 
 func (a *App) handleRegain(c *fiber.Ctx) error {
 	if err := a.Regain(c.UserContext(), c.Params("userId"), c.Params("courseId")); err != nil {
 		return err
 	}
-	return utils.OK[any](c, "Course access regained.", nil)
+	return utils.OKEmpty(c, "Course access regained.")
 }

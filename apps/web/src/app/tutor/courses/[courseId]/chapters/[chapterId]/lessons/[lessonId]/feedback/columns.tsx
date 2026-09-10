@@ -1,6 +1,7 @@
 "use client";
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { TableColumn } from "@/components/data-table";
 import type { Feedback } from "@/schema/feedbacks.types";
 import { formatDate } from "@/lib/format";
 import { Icon } from "@/components/icon";
@@ -33,7 +34,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export const getColumns = (onDelete: (feedback: Feedback) => void): ColumnDef<Feedback, any>[] => [
+export const getColumns = (onDelete: (feedback: Feedback) => void): TableColumn<Feedback>[] => [
   columnHelper.accessor((row) => row.user?.name || "Anonymous", {
     id: "user",
     header: ({ column }) => <SortableColumnHeader column={column} label="User" />,

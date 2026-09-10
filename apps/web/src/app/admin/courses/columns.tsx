@@ -1,6 +1,7 @@
 "use client";
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { TableColumn } from "@/components/data-table";
 import type { Course } from "@/schema/courses.types";
 import { formatINR } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,7 @@ export const getColumns = ({
   onViewCourse,
 }: {
   onViewCourse: (course: Course) => void;
-}): ColumnDef<Course, any>[] => [
+}): TableColumn<Course>[] => [
   columnHelper.accessor("title", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Course" />,
     cell: ({ row }) => {

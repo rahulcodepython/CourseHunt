@@ -153,7 +153,7 @@ export default function TutorUpdatesPage() {
   const { data: rawUpdates, isLoading } = useUpdatesQuery("tutor");
   const deleteMutation = useDeleteUpdateMutation("tutor");
 
-  const updates: CourseUpdate[] = (rawUpdates?.data?.data as any) ?? [];
+  const updates: CourseUpdate[] = rawUpdates?.data?.data ?? [];
 
   const {
     dialogOpen,

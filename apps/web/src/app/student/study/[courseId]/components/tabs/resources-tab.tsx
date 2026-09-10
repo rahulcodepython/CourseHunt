@@ -1,16 +1,16 @@
 "use client";
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
 
 import { useStudyLessonResourcesQuery } from "@/query-hooks/lessons.api";
 import type { LessonResource } from "@/schema/lessons.types";
-import { DataTable } from "@/components/data-table";
+import { DataTable, type TableColumn } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icon";
 
 const columnHelper = createColumnHelper<LessonResource>();
 
-const columns: ColumnDef<LessonResource, any>[] = [
+const columns: TableColumn<LessonResource>[] = [
   columnHelper.accessor("title", {
     header: "Title",
     cell: ({ getValue }) => <span className="font-medium">{getValue()}</span>,

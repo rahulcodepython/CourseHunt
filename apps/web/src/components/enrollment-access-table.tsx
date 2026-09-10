@@ -1,6 +1,7 @@
 "use client";
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { TableColumn } from "@/components/data-table";
 import type { ListEnrollmentResponse } from "@/schema/enrollments.types";
 import {
   useEnrollmentsQuery,
@@ -61,7 +62,7 @@ export function EnrollmentAccessTable({
 
   const enrollments = raw?.data?.data ?? [];
 
-  const columns: ColumnDef<ListEnrollmentResponse, any>[] = [
+  const columns: TableColumn<ListEnrollmentResponse>[] = [
     columnHelper.accessor((row) => row.course.title, {
       id: "course",
       header: "Course",

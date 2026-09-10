@@ -10,16 +10,16 @@ func (a *App) ListEventsRepository(ctx context.Context, eventType string, afterI
 	filter := postgres.NewFilter()
 
 	if eventType != "" {
-		filter.Add("event_type = $%d", eventType)
+		filter.AddCondition("event_type = $%d", eventType)
 	}
 	switch {
 	case beforeID != nil:
-		filter.Add("id < $%d", *beforeID)
+		filter.AddCondition("id < $%d", *beforeID)
 	case afterID != nil:
-		filter.Add("id > $%d", *afterID)
+		filter.AddCondition("id > $%d", *afterID)
 	}
 
-	limitParam := filter.NextIdx()
+	limitParam := filter.NextIndex()
 	filter.AddArgs(limit)
 
 	query := BuildListEventsQuery(filter.Where(""), limitParam)

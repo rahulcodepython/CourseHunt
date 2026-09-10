@@ -10,7 +10,7 @@ import (
 // via OK/Created below) and by the central ErrorHandler (errors.go/
 // error.handler.go) for every failure. It's the one place the wire shape is
 // defined.
-func json[T any](c *fiber.Ctx, status int, success bool, message string, data T, err error) error {
+func json[T interface{}](c *fiber.Ctx, status int, success bool, message string, data T, err error) error {
 	var errStr string
 	if err != nil {
 		errStr = err.Error()
@@ -28,10 +28,14 @@ func json[T any](c *fiber.Ctx, status int, success bool, message string, data T,
 	return c.Status(status).JSON(body)
 }
 
-func OK[T any](c *fiber.Ctx, message string, data T) error {
+func OK[T interface{}](c *fiber.Ctx, message string, data T) error {
 	return json(c, fiber.StatusOK, true, message, data, nil)
 }
 
-func Created[T any](c *fiber.Ctx, message string, data T) error {
+func OKEmpty(c *fiber.Ctx, message string) error {
+	return json[*struct{}](c, fiber.StatusOK, true, message, nil, nil)
+}
+
+func Created[T interface{}](c *fiber.Ctx, message string, data T) error {
 	return json(c, fiber.StatusCreated, true, message, data, nil)
 }

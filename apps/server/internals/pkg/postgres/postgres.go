@@ -118,11 +118,11 @@ func MapPgError(err error) error {
 
 // QueryJSON executes a query that returns a single JSONB document
 // and deserializes it directly into the domain type T.
-func QueryJSON[T any](
+func QueryJSON[T interface{}](
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	sqlQuery string,
-	args ...any,
+	args ...interface{},
 ) (*T, error) {
 	var rawJSON []byte
 
@@ -136,11 +136,11 @@ func QueryJSON[T any](
 
 // QueryJSONSlice executes a query that returns a JSONB array document
 // and deserializes it directly into a slice of domain type T ([]T).
-func QueryJSONSlice[T any](
+func QueryJSONSlice[T interface{}](
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	sqlQuery string,
-	args ...any,
+	args ...interface{},
 ) ([]T, error) {
 	var rawJSON []byte
 
@@ -157,18 +157,18 @@ func Exec(
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	sqlQuery string,
-	args ...any,
+	args ...interface{},
 ) error {
 	_, err := pool.Exec(ctx, sqlQuery, args...)
 	return MapPgError(err)
 }
 
 // ExecuteDBFunction is an alias for QueryJSON for backward compatibility.
-func ExecuteDBFunction[T any](
+func ExecuteDBFunction[T interface{}](
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	sqlQuery string,
-	args ...any,
+	args ...interface{},
 ) (*T, error) {
 	return QueryJSON[T](ctx, pool, sqlQuery, args...)
 }
@@ -196,12 +196,12 @@ type StatusErrorMap map[int]error
 
 // QueryWithStatus executes a query returning (status_code int, json_data jsonb),
 // checks against the provided StatusErrorMap, and deserializes json_data into *T.
-func QueryWithStatus[T any](
+func QueryWithStatus[T interface{}](
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	sqlQuery string,
 	errMap StatusErrorMap,
-	args ...any,
+	args ...interface{},
 ) (*T, error) {
 	var statusFlag int
 	var dataJSON []byte
@@ -221,12 +221,12 @@ func QueryWithStatus[T any](
 // QuerySliceWithStatus executes a query returning (status_code int, json_data jsonb),
 // checks against the provided StatusErrorMap, and deserializes json_data into []T.
 // If data is empty or null, it returns an empty slice []T{}.
-func QuerySliceWithStatus[T any](
+func QuerySliceWithStatus[T interface{}](
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	sqlQuery string,
 	errMap StatusErrorMap,
-	args ...any,
+	args ...interface{},
 ) ([]T, error) {
 	var statusFlag int
 	var dataJSON []byte
@@ -250,7 +250,7 @@ func QueryIDWithStatus(
 	pool *pgxpool.Pool,
 	sqlQuery string,
 	errMap StatusErrorMap,
-	args ...any,
+	args ...interface{},
 ) (string, error) {
 	var statusFlag int
 	var rawData []byte
@@ -284,7 +284,7 @@ func QueryStatusOnly(
 	pool *pgxpool.Pool,
 	sqlQuery string,
 	errMap StatusErrorMap,
-	args ...any,
+	args ...interface{},
 ) error {
 	var statusCode int
 	err := pool.QueryRow(ctx, sqlQuery, args...).Scan(&statusCode)
@@ -300,7 +300,7 @@ func QueryStatusOnly(
 }
 
 // DecodeJSON safely deserializes raw JSON bytes into *T.
-func DecodeJSON[T any](raw []byte) (*T, error) {
+func DecodeJSON[T interface{}](raw []byte) (*T, error) {
 	if len(raw) == 0 || string(raw) == "null" {
 		return nil, nil
 	}
@@ -314,7 +314,7 @@ func DecodeJSON[T any](raw []byte) (*T, error) {
 }
 
 // DecodeJSONSlice safely deserializes raw JSON bytes into []T, returning a non-nil empty slice on empty data.
-func DecodeJSONSlice[T any](raw []byte) ([]T, error) {
+func DecodeJSONSlice[T interface{}](raw []byte) ([]T, error) {
 	if len(raw) == 0 || string(raw) == "null" {
 		return []T{}, nil
 	}

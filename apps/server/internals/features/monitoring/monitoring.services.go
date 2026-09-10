@@ -11,7 +11,7 @@ import (
 )
 
 // HealthCheck reports up/down status for every dependent service.
-func (a *App) HealthCheck(ctx context.Context) (map[string]any, bool) {
+func (a *App) HealthCheck(ctx context.Context) (HealthResponse, bool) {
 	services, allHealthy := a.checkServices(ctx)
 
 	statusStr := "healthy"
@@ -19,11 +19,11 @@ func (a *App) HealthCheck(ctx context.Context) (map[string]any, bool) {
 		statusStr = "unhealthy"
 	}
 
-	return map[string]any{
-		"status":    statusStr,
-		"timestamp": time.Now().Format(time.RFC3339),
-		"version":   "1.0.0",
-		"services":  services,
+	return HealthResponse{
+		Status:    statusStr,
+		Timestamp: time.Now().Format(time.RFC3339),
+		Version:   "1.0.0",
+		Services:  services,
 	}, allHealthy
 }
 
@@ -31,7 +31,7 @@ func (a *App) HealthCheck(ctx context.Context) (map[string]any, bool) {
 // it's computed fresh on every call, which is exactly what a 5-second
 // polling admin page wants (a history table would just be write
 // amplification for data nobody looks back at).
-func (a *App) Snapshot(ctx context.Context) map[string]any {
+func (a *App) Snapshot(ctx context.Context) SnapshotResponse {
 	t := telemetry{}
 
 	if percents, err := cpu.Percent(0, false); err == nil && len(percents) > 0 {
@@ -56,9 +56,9 @@ func (a *App) Snapshot(ctx context.Context) map[string]any {
 
 	services, allHealthy := a.checkServices(ctx)
 
-	return map[string]any{
-		"telemetry":   t,
-		"services":    services,
-		"all_healthy": allHealthy,
+	return SnapshotResponse{
+		Telemetry:  t,
+		Services:   services,
+		AllHealthy: allHealthy,
 	}
 }

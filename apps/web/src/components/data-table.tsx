@@ -37,8 +37,11 @@ import { CopyableCell } from "@/components/copyable-cell";
 import { ExportTableButton } from "@/components/export-table-button";
 import { useDebounce } from "@/hooks/use-debounce";
 
+export type TableColumns<TData> = Parameters<typeof useReactTable<TData>>[0]["columns"];
+export type TableColumn<TData> = TableColumns<TData>[number];
+
 export interface DataTableProps<TData> {
-  columns: ColumnDef<TData, any>[];
+  columns: TableColumns<TData>;
   data: TData[];
   searchPlaceholder?: string;
   searchColumnKey?: string;

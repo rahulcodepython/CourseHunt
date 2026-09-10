@@ -5,6 +5,8 @@ import { jwtDecode } from "jwt-decode";
 import authClient from "@/lib/auth-client";
 import { useSessionStore, type SessionPayload } from "@/store/session.store";
 
+import type { SessionRecord, SessionUser } from "@/schema/session.schema";
+
 interface CustomJwtPayload {
   sub?: string;
   user_id?: string;
@@ -32,19 +34,19 @@ const EMPTY_SESSION: SessionPayload = {
  * plugin attaches it (no JWT size constraint there).
  */
 export function buildSessionPayload(params: {
-  user: unknown;
-  session?: unknown;
+  user: (Partial<SessionUser> & { id: string; name: string; email: string }) | null | undefined;
+  session?: SessionRecord | null;
   jwtToken?: string | null;
 }): SessionPayload {
   const { user, session, jwtToken } = params;
   if (!user) return EMPTY_SESSION;
 
   const payload = jwtToken ? jwtDecode<CustomJwtPayload>(jwtToken) : null;
-  const permissions = (user as { permissions?: string[] }).permissions;
+  const permissions = user.permissions;
 
   return {
-    user: user as SessionPayload["user"],
-    session: (session as SessionPayload["session"]) ?? null,
+    user: user as SessionUser,
+    session: session ?? null,
     roles: payload?.roles ?? [],
     permissions: permissions ?? [],
     token: jwtToken ?? null,

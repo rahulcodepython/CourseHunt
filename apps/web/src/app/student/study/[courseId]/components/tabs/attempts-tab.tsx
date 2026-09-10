@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
 
 import { useQuizAttemptsQuery } from "@/query-hooks/quiz.api";
 import type { QuizAttemptSummary } from "@/schema/quiz.types";
-import { DataTable } from "@/components/data-table";
+import { DataTable, type TableColumn } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
@@ -23,7 +23,7 @@ export function AttemptsTab({ quizId }: { quizId: string }) {
   const [selectedAttemptId, setSelectedAttemptId] = React.useState<string | null>(null);
 
   const columnHelper = React.useMemo(() => createColumnHelper<QuizAttemptSummary>(), []);
-  const columns: ColumnDef<QuizAttemptSummary, any>[] = React.useMemo(
+  const columns: TableColumn<QuizAttemptSummary>[] = React.useMemo(
     () => [
       columnHelper.accessor("submitted_at", {
         header: "Date",

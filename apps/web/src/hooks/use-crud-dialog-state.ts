@@ -27,7 +27,9 @@ export function useCrudDialogState<T extends { id: string }>() {
   }, []);
 
   const confirmDelete = React.useCallback(
-    async (deleteFn: (id: string) => Promise<unknown>) => {
+    async (
+      deleteFn: (id: string) => Promise<object | boolean | string | number | void | null | undefined>,
+    ) => {
       if (!deleting) return;
       await deleteFn(deleting.id);
       setDeleting(null);

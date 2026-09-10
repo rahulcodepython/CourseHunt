@@ -56,7 +56,7 @@ func (a *App) handleWebhook(c *fiber.Ctx) error {
 		return err
 	}
 
-	return utils.OK[any](c, "Webhook processed", nil)
+	return utils.OKEmpty(c, "Webhook processed")
 }
 
 func (a *App) handleStatus(c *fiber.Ctx) error {

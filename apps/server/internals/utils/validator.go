@@ -25,7 +25,7 @@ func init() {
 }
 
 // ValidateStruct validates a struct according to its struct tags and translates error messages.
-func ValidateStruct(s any) error {
+func ValidateStruct(s interface{}) error {
 	if err := validate.Struct(s); err != nil {
 		var errs []string
 		if valErrors, ok := err.(validator.ValidationErrors); ok {

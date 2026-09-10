@@ -1,6 +1,7 @@
 "use client";
 
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { TableColumn } from "@/components/data-table";
 import type { Coupon } from "@/schema/coupons.types";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +25,8 @@ export const getColumns = (
   onToggleActive: (coupon: Coupon) => void,
   onDelete: (coupon: Coupon) => void,
   scope: "admin" | "tutor",
-): ColumnDef<Coupon, any>[] => {
-  const cols: ColumnDef<Coupon, any>[] = [
+): TableColumn<Coupon>[] => {
+  const cols: TableColumn<Coupon>[] = [
     columnHelper.accessor("code", {
       header: ({ column }) => <SortableColumnHeader column={column} label="Code" />,
       cell: ({ getValue }) => (

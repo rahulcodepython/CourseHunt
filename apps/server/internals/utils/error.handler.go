@@ -17,22 +17,22 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 	if errors.As(err, &apiErr) {
 		if errors.Is(apiErr.Err, context.Canceled) {
 			c.Locals("handler_error", apiErr.Err)
-			return json[any](c, 499, false, "Request was canceled.", nil, apiErr.Err)
+			return json[*struct{}](c, 499, false, "Request was canceled.", nil, apiErr.Err)
 		}
 		if errors.Is(apiErr.Err, context.DeadlineExceeded) {
 			c.Locals("handler_error", apiErr.Err)
-			return json[any](c, fiber.StatusGatewayTimeout, false, "Request timed out.", nil, apiErr.Err)
+			return json[*struct{}](c, fiber.StatusGatewayTimeout, false, "Request timed out.", nil, apiErr.Err)
 		}
 		return json(c, apiErr.Status, false, apiErr.Message, apiErr.Data, apiErr.Err)
 	}
 
 	if errors.Is(err, context.Canceled) {
 		c.Locals("handler_error", err)
-		return json[any](c, 499, false, "Request was canceled.", nil, err)
+		return json[*struct{}](c, 499, false, "Request was canceled.", nil, err)
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
 		c.Locals("handler_error", err)
-		return json[any](c, fiber.StatusGatewayTimeout, false, "Request timed out.", nil, err)
+		return json[*struct{}](c, fiber.StatusGatewayTimeout, false, "Request timed out.", nil, err)
 	}
 
 	code := fiber.StatusInternalServerError
@@ -43,11 +43,11 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 	c.Locals("handler_error", err)
 
 	if code == fiber.StatusNotFound {
-		return json[any](c, fiber.StatusNotFound, false, "Requested resource not found.", nil, err)
+		return json[*struct{}](c, fiber.StatusNotFound, false, "Requested resource not found.", nil, err)
 	}
 
 	// Anything else (a framework-level error such as a body-size limit, or a
 	// recovered panic) falls back to a generic message — the raw error text
 	// is logged via handler_error above but never leaked to the client.
-	return json[any](c, code, false, "An unexpected error occurred.", nil, nil)
+	return json[*struct{}](c, code, false, "An unexpected error occurred.", nil, nil)
 }

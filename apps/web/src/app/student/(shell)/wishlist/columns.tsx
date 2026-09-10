@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import type { TableColumn } from "@/components/data-table";
 import type { WishlistItem } from "@/schema/wishlist.types";
 import { Icon } from "@/components/icon";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ const columnHelper = createColumnHelper<WishlistItem>();
 
 export const getColumns = (
   onRemove: (item: WishlistItem) => void,
-): ColumnDef<WishlistItem, any>[] => [
+): TableColumn<WishlistItem>[] => [
   columnHelper.accessor((row) => row.course.title, {
     id: "course",
     header: "Course",

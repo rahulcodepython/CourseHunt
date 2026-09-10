@@ -152,7 +152,7 @@ export default function UpdatesPage() {
   const { data: rawUpdates, isLoading } = useUpdatesQuery("admin");
   const deleteMutation = useDeleteUpdateMutation("admin");
 
-  const updates: CourseUpdate[] = (rawUpdates?.data?.data as any) ?? [];
+  const updates: CourseUpdate[] = rawUpdates?.data?.data ?? [];
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<CourseUpdate | null>(null);

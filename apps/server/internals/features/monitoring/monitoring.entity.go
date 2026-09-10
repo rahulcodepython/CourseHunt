@@ -15,3 +15,16 @@ type telemetry struct {
 	DiskPercent   float64 `json:"disk_percent"`
 	UptimeSeconds uint64  `json:"uptime_seconds"`
 }
+
+type HealthResponse struct {
+	Status    string                   `json:"status"`
+	Timestamp string                   `json:"timestamp"`
+	Version   string                   `json:"version"`
+	Services  map[string]ServiceStatus `json:"services"`
+}
+
+type SnapshotResponse struct {
+	Telemetry  telemetry                `json:"telemetry"`
+	Services   map[string]ServiceStatus `json:"services"`
+	AllHealthy bool                     `json:"all_healthy"`
+}

@@ -26,17 +26,17 @@ func (a *App) UpdateRoleRepository(ctx context.Context, roleID string, req Updat
 	filter := postgres.NewFilter()
 
 	if req.Name != nil {
-		filter.Add("name = $%d", *req.Name)
+		filter.AddCondition("name = $%d", *req.Name)
 	}
 	if req.Description != nil {
-		filter.Add("description = $%d", *req.Description)
+		filter.AddCondition("description = $%d", *req.Description)
 	}
 
 	if len(filter.Conditions()) == 0 {
 		return a.GetRoleRepository(ctx, roleID)
 	}
 
-	roleIDIdx := filter.NextIdx()
+	roleIDIdx := filter.NextIndex()
 	filter.AddArgs(roleID)
 
 	query := BuildUpdateRoleQuery(strings.Join(filter.Conditions(), ", "), roleIDIdx)
@@ -74,7 +74,7 @@ func (a *App) SetRolePermissionsRepository(ctx context.Context, roleID string, p
 
 		if len(permissionIDs) > 0 {
 			values := []string{}
-			args := []any{roleID}
+			args := []interface{}{roleID}
 			for i, pid := range permissionIDs {
 				idx := i + 2
 				values = append(values, fmt.Sprintf("($1, $%d)", idx))

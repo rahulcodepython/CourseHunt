@@ -16,7 +16,7 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int, category
 	filter := postgres.NewFilter()
 
 	if status != "" {
-		filter.Add("c.status = $%d", status)
+		filter.AddCondition("c.status = $%d", status)
 	}
 
 	targetCatID := categoryID
@@ -24,16 +24,16 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int, category
 		targetCatID = subcategoryID
 	}
 	if targetCatID != "" {
-		filter.Add("c.category_id = NULLIF($%d, '')::uuid", targetCatID)
+		filter.AddCondition("c.category_id = NULLIF($%d, '')::uuid", targetCatID)
 	}
 	if level != "" {
-		filter.Add("c.level = $%d", level)
+		filter.AddCondition("c.level = $%d", level)
 	}
 	if search != "" {
-		filter.Add2("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", "%"+search+"%")
+		filter.AddWithReusedArg("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", "%"+search+"%")
 	}
 	if filterTutorID != "" {
-		filter.Add("c.tutor_id = NULLIF($%d, '')::uuid", filterTutorID)
+		filter.AddCondition("c.tutor_id = NULLIF($%d, '')::uuid", filterTutorID)
 	}
 
 	limitIdx := filter.Paginate(page, limit)
@@ -51,9 +51,9 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int, category
 func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID string, categoryID, subcategoryID, level, search, status string) ([]Course, int, error) {
 	filter := postgres.NewFilter()
 
-	filter.Add("c.tutor_id = NULLIF($%d, '')::uuid", userID)
+	filter.AddCondition("c.tutor_id = NULLIF($%d, '')::uuid", userID)
 	if status != "" {
-		filter.Add("c.status = $%d", status)
+		filter.AddCondition("c.status = $%d", status)
 	}
 
 	targetCatID := categoryID
@@ -61,13 +61,13 @@ func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID s
 		targetCatID = subcategoryID
 	}
 	if targetCatID != "" {
-		filter.Add("c.category_id = NULLIF($%d, '')::uuid", targetCatID)
+		filter.AddCondition("c.category_id = NULLIF($%d, '')::uuid", targetCatID)
 	}
 	if level != "" {
-		filter.Add("c.level = $%d", level)
+		filter.AddCondition("c.level = $%d", level)
 	}
 	if search != "" {
-		filter.Add2("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", "%"+search+"%")
+		filter.AddWithReusedArg("(c.title ILIKE $%d OR c.short_description ILIKE $%d)", "%"+search+"%")
 	}
 
 	limitIdx := filter.Paginate(page, limit)

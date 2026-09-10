@@ -41,9 +41,9 @@ export default function TutorLessonQuizPage() {
   const { data: chaptersData } = useChaptersQuery(courseId);
   const { data: lessonsData } = useLessonsQuery(chapterId);
 
-  const currentCourse = (rawCourses?.data?.data as any[])?.find((c: any) => c.id === courseId);
-  const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
-  const currentLesson = (lessonsData?.data as any[])?.find((l: any) => l.id === lessonId);
+  const currentCourse = rawCourses?.data?.data?.find((c) => c.id === courseId);
+  const currentChapter = chaptersData?.data?.find((ch) => ch.id === chapterId);
+  const currentLesson = lessonsData?.data?.find((l) => l.id === lessonId);
 
   useSetBreadcrumbs([
     { label: "My Courses", href: "/tutor/courses" },

@@ -21,7 +21,7 @@ export default function ChapterLessonsPage() {
 
   const { data: courseData } = useManageCourseQuery(courseId, "admin");
   const { data: chaptersData } = useChaptersQuery(courseId, "admin");
-  const currentChapter = (chaptersData?.data as any[])?.find((ch: any) => ch.id === chapterId);
+  const currentChapter = chaptersData?.data?.find((ch) => ch.id === chapterId);
 
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },

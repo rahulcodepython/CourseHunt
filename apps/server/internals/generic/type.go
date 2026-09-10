@@ -3,7 +3,7 @@ package generic
 import "github.com/golang-jwt/jwt/v5"
 
 // PaginatedResponse is a generic paginated list wrapper.
-type PaginatedResponse[T any] struct {
+type PaginatedResponse[T interface{}] struct {
 	Data  T   `json:"data"`
 	Total int `json:"total"`
 	Page  int `json:"page"`
@@ -93,7 +93,7 @@ type SuccessResponse struct {
 	Success bool `json:"success"`
 }
 
-type Response[T any] struct {
+type Response[T interface{}] struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Data    T      `json:"data,omitempty"`

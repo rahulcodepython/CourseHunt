@@ -114,8 +114,9 @@ export default function StudentProfilePage() {
         bio: data.bio || null,
         website: data.website || null,
       });
-    } catch (error: any) {
-      toast.error(error.message || "Failed to save profile changes");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save profile changes";
+      toast.error(message);
     }
   };
 
@@ -182,7 +183,7 @@ export default function StudentProfilePage() {
             <div className="mt-3 flex items-center gap-2">
               <h2 className="text-lg font-semibold">{user.name}</h2>
               <Badge variant="default" className="capitalize">
-                {(user as any).role ?? "admin"}
+                {user.role ?? "student"}
               </Badge>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>

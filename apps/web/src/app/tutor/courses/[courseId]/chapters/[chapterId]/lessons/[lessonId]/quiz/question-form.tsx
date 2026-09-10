@@ -3,7 +3,7 @@
 import React from "react";
 
 import { useCreateQuestionMutation, useUpdateQuestionMutation } from "@/query-hooks/quiz.api";
-import type { QuizQuestionDetail } from "@/schema/quiz.types";
+import type { QuizQuestionDetail, CreateQuestionRequest } from "@/schema/quiz.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,7 +133,7 @@ export function QuestionForm({
   }, [editingQuestion, reset]);
 
   const onSubmit = async (data: QuestionFormData) => {
-    const payload: Record<string, unknown> = {
+    const payload: CreateQuestionRequest = {
       question_type: data.question_type,
       question_text: data.question_text.trim(),
       points: data.points,
