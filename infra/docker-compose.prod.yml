@@ -3,6 +3,7 @@ name: coursehunt
 services:
     traefik:
         image: traefik:latest
+        container_name: coursehunt-traefik
         command:
             - "--providers.docker=true"
             - "--providers.docker.exposedbydefault=false"
@@ -41,7 +42,7 @@ services:
 
     web:
         build:
-            context: ../apps/web
+            context: ./apps/web
             dockerfile: Dockerfile
             args:
                 NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost}
@@ -49,7 +50,7 @@ services:
         container_name: coursehunt-web
         restart: unless-stopped
         env_file:
-            - ../.env
+            - .env
         environment:
             - DATABASE_URL=${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coursehunt}?sslmode=disable}
         depends_on:
@@ -81,16 +82,14 @@ services:
 
     postgres:
         build:
-            context: ./postgres
+            context: ./infra/postgres
         container_name: ${POSTGRES_CONTAINER_NAME:-coursehunt-postgres}
         env_file:
-            - ../.env
+            - .env
         environment:
             POSTGRES_USER: ${POSTGRES_USER:-postgres}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
             POSTGRES_DB: ${POSTGRES_DB:-coursehunt}
-        # pg_cron only activates via shared_preload_libraries, set at server
-        # start — see apps/migrator/migrations/000054_ops_retention_cron.up.sql.
         command: [ "postgres", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.database_name=${POSTGRES_DB:-coursehunt}" ]
         restart: unless-stopped
         deploy:
@@ -115,7 +114,7 @@ services:
         image: ${REDIS_IMAGE:-redis:7-alpine}
         container_name: ${REDIS_CONTAINER_NAME:-coursehunt-redis}
         env_file:
-            - ../.env
+            - .env
         command: [ "redis-server", "--requirepass", "${REDIS_PASSWORD}" ]
         restart: unless-stopped
         deploy:
@@ -140,7 +139,7 @@ services:
         image: ${MINIO_IMAGE:-minio/minio:latest}
         container_name: ${MINIO_CONTAINER_NAME:-coursehunt-minio}
         env_file:
-            - ../.env
+            - .env
         command: server /data --console-address ":${MINIO_CONSOLE_PORT:-9001}"
         environment:
             MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
@@ -172,16 +171,11 @@ services:
             retries: 5
             start_period: 10s
 
-    # One-shot: brings the schema to the latest version, then exits. `backend`
-    # only starts once this completes successfully — see its depends_on below.
-    # Postgres itself has no hook that can run a foreign binary on every
-    # startup (docker-entrypoint-initdb.d only fires once, on an empty data
-    # volume), so this dedicated service is the correct place for it.
     migrator:
         image: migrate/migrate:latest
         container_name: ${MIGRATOR_CONTAINER_NAME:-coursehunt-migrator}
         volumes:
-            - ../apps/server/internals/migrations:/migrations
+            - ./apps/server/internals/migrations:/migrations
         command:
             - -path=/migrations
             - -database=${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coursehunt}?sslmode=disable}
@@ -195,12 +189,12 @@ services:
 
     backend:
         build:
-            context: ..
+            context: .
             dockerfile: ./apps/server/Dockerfile
         container_name: ${BACKEND_CONTAINER_NAME:-coursehunt-backend}
         restart: unless-stopped
         env_file:
-            - ../.env
+            - .env
         environment:
             - PORT=${PORT:-8080}
             - DATABASE_URL=${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-coursehunt}?sslmode=disable}
@@ -209,14 +203,11 @@ services:
             - MINIO_ENDPOINT=${DOCKER_MINIO_ENDPOINT:-minio:9000}
             - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
             - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
-            - MINIO_BUCKET=${MINIO_BUCKET:-coursehunt}
-            - MINIO_BASE_URL=${MINIO_BASE_URL:-http://localhost:9000/coursehunt}
-            - MINIO_SECURE=${MINIO_SECURE:-false}
-            - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost,http://localhost:80}
-            # web (the Next.js app, which serves /api/auth/[...all] including
-            # JWKS) is itself a container here — there is no host-level dev
-            # server on :3000 in this deployment, so JWKS must be fetched from
-            # the `web` service over the internal network, not host.docker.internal.
+            - MINIO_BUCKET=${MINIO_BUCKET:-coursehunt-private}
+            - MINIO_PUBLIC_BUCKET=${MINIO_PUBLIC_BUCKET:-coursehunt-public}
+            - MINIO_BASE_URL=${MINIO_BASE_URL:-https://${DOMAIN}/coursehunt-private}
+            - MINIO_SECURE=${MINIO_SECURE:-true}
+            - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://${DOMAIN}}
             - JWKS_URL=${DOCKER_JWKS_URL:-${JWKS_URL:-http://web:3000/api/auth/jwks}}
         depends_on:
             postgres:
@@ -257,7 +248,7 @@ services:
             - "3100:3100"
         command: -config.file=/etc/loki/local-config.yaml
         volumes:
-            - ./loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+            - ./infra/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
             - loki-data:/loki
         deploy:
             resources:
