@@ -2,7 +2,6 @@ package discussions
 
 import (
 	"context"
-	"errors"
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/utils"
@@ -50,22 +49,4 @@ func (a *App) Delete(ctx context.Context, id, userID string, scope generic.AuthS
 		return "", mapDiscussionError(err)
 	}
 	return deletedID, nil
-}
-
-func mapDiscussionError(err error) error {
-	switch {
-	case errors.Is(err, generic.ErrDiscussionsTargetNotFound),
-		errors.Is(err, generic.ErrDiscussionsLessonNotFound),
-		errors.Is(err, generic.ErrDiscussionsDiscussionNotFound),
-		errors.Is(err, generic.ErrDiscussionsParentNotFound):
-		return utils.ErrNotFound("Resource not found.", err)
-	case errors.Is(err, generic.ErrDiscussionsNotEnrolled),
-		errors.Is(err, generic.ErrDiscussionsAccessDenied),
-		errors.Is(err, generic.ErrDiscussionsParentInvalid):
-		return utils.ErrForbidden(err.Error(), err)
-	case errors.Is(err, generic.ErrDiscussionsMissingTarget):
-		return utils.ErrBadRequest(err.Error(), err)
-	default:
-		return utils.ErrInternal("Operation failed.", err)
-	}
 }

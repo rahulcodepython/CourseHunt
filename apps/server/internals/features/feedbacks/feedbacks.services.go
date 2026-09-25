@@ -11,11 +11,6 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-type feedbackListCacheData struct {
-	Data  []Feedback `json:"data"`
-	Total int        `json:"total"`
-}
-
 func (a *App) Create(ctx context.Context, userID, courseID string, req CreateFeedbackRequest) (*Feedback, error) {
 	req.Content = utils.SanitizeUGCPtr(req.Content)
 

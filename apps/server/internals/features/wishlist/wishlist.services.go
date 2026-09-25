@@ -12,11 +12,6 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-type wishlistListCacheData struct {
-	Data  []WishlistItem `json:"data"`
-	Total int            `json:"total"`
-}
-
 func (a *App) List(ctx context.Context, userID string, page, limit int) ([]WishlistItem, int, error) {
 	cacheKey := fmt.Sprintf("wishlist:user:%s:p:%d:l:%d", userID, page, limit)
 

@@ -9,11 +9,6 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-type categoryListCacheData struct {
-	Cats  []Category `json:"cats"`
-	Total int        `json:"total"`
-}
-
 func (a *App) List(ctx context.Context, page, limit int, name string) ([]Category, int, error) {
 	cacheKey := fmt.Sprintf("categories:list:page:%d:limit:%d:name:%s", page, limit, name)
 

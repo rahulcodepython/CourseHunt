@@ -78,14 +78,6 @@ type CreateCourseRequest struct {
 	IsFree           bool     `json:"is_free"`
 }
 
-// CourseFileCleanup carries the pre-update file URLs out of
-// App.UpdateRepository so the service can delete any object a course update
-// just replaced or cleared. Never serialized to a response.
-type CourseFileCleanup struct {
-	OldImageURL        *string
-	OldPreviewVideoURL *string
-}
-
 type UpdateCourseRequest struct {
 	Title            *string   `json:"title" validate:"omitempty,min=3,max=200"`
 	ShortDescription *string   `json:"short_description" validate:"omitempty,max=500"`

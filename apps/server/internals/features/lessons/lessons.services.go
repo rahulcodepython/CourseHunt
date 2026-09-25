@@ -225,19 +225,6 @@ func (a *App) StudentReadContent(ctx context.Context, lessonID, userID string) (
 	return a.signVideoContent(ctx, res), nil
 }
 
-func (a *App) signVideoContent(ctx context.Context, res *AggregatedLessonContentResponse) *AggregatedLessonContentResponse {
-	if res == nil || res.VideoContent == nil || res.VideoContent.VideoURL == "" || a.Storage == nil {
-		return res
-	}
-	cloned := *res
-	videoCopy := *res.VideoContent
-	if signedURL, signErr := a.Storage.GeneratePresignedStreamingURL(ctx, videoCopy.VideoURL, 15*time.Minute); signErr == nil && signedURL != "" {
-		videoCopy.VideoURL = signedURL
-	}
-	cloned.VideoContent = &videoCopy
-	return &cloned
-}
-
 func (a *App) UpdateComplete(ctx context.Context, lessonID, userID string) error {
 	if err := a.UpdateCompleteRepository(ctx, lessonID, userID); err != nil {
 		if errors.Is(err, generic.ErrLessonsLessonNotFound) {

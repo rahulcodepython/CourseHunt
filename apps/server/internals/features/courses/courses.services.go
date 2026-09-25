@@ -12,11 +12,6 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-type publicCoursesCacheData struct {
-	Cards []CoursePublicResponse `json:"cards"`
-	Total int                    `json:"total"`
-}
-
 func (a *App) PublicList(ctx context.Context, page, limit int, catID, subID, lvl, search string) ([]CoursePublicResponse, int, error) {
 	if len(search) > 200 {
 		search = search[:200]

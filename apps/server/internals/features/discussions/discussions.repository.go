@@ -143,14 +143,3 @@ func (a *App) DeleteRepository(ctx context.Context, id, userID string, scope gen
 
 	return *deletedID, nil
 }
-
-func errorForScopeAuth(scope generic.AuthScope) error {
-	switch scope {
-	case generic.ScopeUser:
-		return generic.ErrDiscussionsNotEnrolled
-	case generic.ScopeTutor:
-		return generic.ErrDiscussionsAccessDenied
-	default:
-		return generic.ErrDiscussionsAccessDenied
-	}
-}

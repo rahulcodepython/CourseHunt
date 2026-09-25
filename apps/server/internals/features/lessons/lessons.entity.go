@@ -44,21 +44,6 @@ type LessonResource struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
-type LessonFileCleanup struct {
-	OldPreviewVideoURL *string
-	OldVideoURL        *string
-}
-
-type LessonVideoContentCleanup struct {
-	OldVideoURL *string
-}
-
-type LessonDeleteCleanup struct {
-	OldPreviewVideoURL *string
-	VideoURL           *string
-	ResourceURLs       []string
-}
-
 // ── Lessons ──
 
 type CreateLessonRequest struct {

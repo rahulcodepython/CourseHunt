@@ -11,11 +11,6 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-type updatesCacheData struct {
-	Data  []CourseUpdate `json:"data"`
-	Total int            `json:"total"`
-}
-
 func (a *App) AdminList(ctx context.Context, page, limit int) ([]CourseUpdate, int, error) {
 	cacheKey := fmt.Sprintf("updates:admin:list:p:%d:l:%d", page, limit)
 
