@@ -117,10 +117,10 @@ export default function useSession() {
     if (hydratedRef.current) return;
     hydratedRef.current = true;
 
-    if (!token) {
-      refreshSession();
-    }
-  }, [token, refreshSession]);
+    // Trigger non-blocking background validation against the backend session endpoint
+    // to refresh permissions and verify token validity without blocking initial render.
+    refreshSession();
+  }, [refreshSession]);
 
   return {
     user,

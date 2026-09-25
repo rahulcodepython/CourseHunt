@@ -1,6 +1,6 @@
 "use client";
 
-import { apiRequest } from "@/react-query/client";
+import { apiRequest, ApiError } from "@/react-query/client";
 import { z } from "zod";
 
 import { useSimpleMutation } from "@/react-query/mutation";
@@ -9,12 +9,21 @@ import { queryKeys } from "@/react-query/query-keys";
 import { UpsertNoteRequestZod, NoteResponseZod } from "@/schema/notes.types";
 import { DeleteResponseZod } from "@/schema/common.types";
 
-// Returns success:false (data: null) when the lesson has no note yet — the
-// backend 404s in that case, which apiRequest already normalizes for us.
+// Returns data: null when the lesson has no note yet (the backend 404s in that case).
 export function useNotesQuery(lessonId: string) {
-  return useAppQuery(queryKeys.notes(lessonId), () =>
-    apiRequest({ url: `/api/v1/notes?lesson_id=${lessonId}`, method: "GET" }, NoteResponseZod),
-  );
+  return useAppQuery(queryKeys.notes(lessonId), async () => {
+    try {
+      return await apiRequest(
+        { url: `/api/v1/notes?lesson_id=${lessonId}`, method: "GET" },
+        NoteResponseZod,
+      );
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return { success: true, message: "No note yet", data: null };
+      }
+      throw err;
+    }
+  });
 }
 
 export function useCreateNoteMutation(lessonId: string) {

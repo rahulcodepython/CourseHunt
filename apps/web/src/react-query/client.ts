@@ -38,16 +38,28 @@ api.interceptors.response.use(
 );
 
 // =============================================================================
-// Request Handler
+// Request Handler & ApiError
 // =============================================================================
+
+export class ApiError extends Error {
+  constructor(
+    public override message: string,
+    public statusCode: number,
+    public rawError?: unknown,
+  ) {
+    super(message);
+    this.name = "ApiError";
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
 
 /**
  * Makes an API request and validates the response using the ApiResponseZod schema.
+ * Throws ApiError on HTTP failure or schema validation failure.
  *
  * Backend response shape:
  * { success: boolean, message: string, data?: T }
  */
-
 export async function apiRequest<T>(
   config: AxiosRequestConfig,
   schema: z.ZodType<T>,
@@ -65,29 +77,27 @@ export async function apiRequest<T>(
     return responseSchema.parse(response.data);
   } catch (error) {
     let message: string = ERROR_MESSAGES.UNEXPECTED;
+    let statusCode = 500;
     let detailedError = String(error);
 
     // 1. Handle Axios Network/HTTP Errors
     if (axios.isAxiosError(error)) {
+      statusCode = error.response?.status || 500;
       message = error.response?.data?.message || error.message;
       detailedError = error.response?.data?.error || error.code || detailedError;
     }
     // 2. Handle Zod Schema Validation Errors
     else if (error instanceof z.ZodError) {
+      statusCode = 422;
       message = ERROR_MESSAGES.VALIDATION_FAILED;
+      detailedError = JSON.stringify(error.flatten());
     }
     // 3. Handle Standard JS Errors
     else if (error instanceof Error) {
       message = error.message;
     }
 
-    // Return the exact same shape as a successful response
-    return {
-      success: false,
-      message,
-      data: null,
-      error: detailedError,
-    };
+    throw new ApiError(message, statusCode, error);
   }
 }
 
