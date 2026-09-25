@@ -13,6 +13,6 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	manage := middlewares.PermissionGuard(generic.PermAdminCategoriesManage)
 	g := router.Group("/v1/categories", auth, manage)
 	g.Post("/", a.handleCreate)
-	g.Patch("/:id", a.handleUpdate)
-	g.Delete("/:id", a.handleDelete)
+	g.Patch("/:id", middlewares.ValidateUUIDParams("id"), a.handleUpdate)
+	g.Delete("/:id", middlewares.ValidateUUIDParams("id"), a.handleDelete)
 }

@@ -8,6 +8,7 @@ import (
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/cache"
+	"coursehunt/server/internals/pkg/postgres"
 	"coursehunt/server/internals/utils"
 )
 
@@ -55,7 +56,7 @@ func (a *App) Create(ctx context.Context, userID, chapterID string, req CreateLe
 		return nil, utils.ErrInternal("Failed to create lesson.", err)
 	}
 
-	a.Cache.Invalidate(ctx, "lessons:*", "chapters:*", "courses:*")
+	a.Cache.Invalidate(ctx, "lessons:*", "chapters:*", "courses:study:*")
 
 	return l, nil
 }
@@ -80,7 +81,7 @@ func (a *App) Update(ctx context.Context, id, userID string, req UpdateLessonReq
 		a.Storage.DeleteIfReplaced(ctx, cleanup.OldPreviewVideoURL, *req.PreviewVideoURL)
 	}
 
-	a.Cache.Invalidate(ctx, "lessons:*", "chapters:*", "courses:*")
+	a.Cache.Invalidate(ctx, "lessons:*", "chapters:*", "courses:study:*")
 
 	return l, nil
 }
@@ -110,7 +111,7 @@ func (a *App) Delete(ctx context.Context, id, userID string) (string, error) {
 		}
 	}
 
-	a.Cache.Invalidate(ctx, "lessons:*", "chapters:*", "courses:*")
+	a.Cache.Invalidate(ctx, "lessons:*", "chapters:*", "courses:study:*")
 
 	return deletedID, nil
 }
@@ -165,18 +166,20 @@ func (a *App) UpsertDocumentContent(ctx context.Context, lessonID, userID, conte
 func (a *App) AdminReadContent(ctx context.Context, lessonID string) (*AggregatedLessonContentResponse, error) {
 	cacheKey := fmt.Sprintf("lessons:admin:content:%s", lessonID)
 
-	res, err := cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AggregatedLessonContentResponse, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrLessonsLessonNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*AggregatedLessonContentResponse, error) {
 		resp, err := a.AdminReadContentRepository(ctx, lessonID)
 		if err != nil {
-			if errors.Is(err, generic.ErrLessonsLessonNotFound) {
-				return nil, utils.ErrNotFound("Lesson not found.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch lesson content.", err)
+			return nil, err
 		}
 		return resp, nil
 	})
 	if err != nil {
-		return nil, err
+		if errors.Is(err, generic.ErrLessonsLessonNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Lesson not found.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch lesson content.", err)
 	}
 	return a.signVideoContent(ctx, res), nil
 }
@@ -184,21 +187,23 @@ func (a *App) AdminReadContent(ctx context.Context, lessonID string) (*Aggregate
 func (a *App) TutorReadContent(ctx context.Context, lessonID, userID string) (*AggregatedLessonContentResponse, error) {
 	cacheKey := fmt.Sprintf("lessons:tutor:content:%s:u:%s", lessonID, userID)
 
-	res, err := cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AggregatedLessonContentResponse, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrLessonsLessonNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*AggregatedLessonContentResponse, error) {
 		resp, err := a.ReadContentForTutorRepository(ctx, lessonID, userID)
 		if err != nil {
-			if errors.Is(err, generic.ErrLessonsLessonNotFound) {
-				return nil, utils.ErrNotFound("Lesson not found.", err)
-			}
-			if errors.Is(err, generic.ErrLessonsAccessDenied) {
-				return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch lesson content.", err)
+			return nil, err
 		}
 		return resp, nil
 	})
 	if err != nil {
-		return nil, err
+		if errors.Is(err, generic.ErrLessonsLessonNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Lesson not found.", err)
+		}
+		if errors.Is(err, generic.ErrLessonsAccessDenied) {
+			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch lesson content.", err)
 	}
 	return a.signVideoContent(ctx, res), nil
 }
@@ -206,21 +211,23 @@ func (a *App) TutorReadContent(ctx context.Context, lessonID, userID string) (*A
 func (a *App) StudentReadContent(ctx context.Context, lessonID, userID string) (*AggregatedLessonContentResponse, error) {
 	cacheKey := fmt.Sprintf("lessons:student:content:%s:u:%s", lessonID, userID)
 
-	res, err := cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AggregatedLessonContentResponse, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrLessonsLessonNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*AggregatedLessonContentResponse, error) {
 		resp, err := a.StudentReadContentRepository(ctx, lessonID, userID)
 		if err != nil {
-			if errors.Is(err, generic.ErrLessonsLessonNotFound) {
-				return nil, utils.ErrNotFound("Lesson not found.", err)
-			}
-			if errors.Is(err, generic.ErrLessonsNotEnrolled) {
-				return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch lesson content.", err)
+			return nil, err
 		}
 		return resp, nil
 	})
 	if err != nil {
-		return nil, err
+		if errors.Is(err, generic.ErrLessonsLessonNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Lesson not found.", err)
+		}
+		if errors.Is(err, generic.ErrLessonsNotEnrolled) {
+			return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch lesson content.", err)
 	}
 	return a.signVideoContent(ctx, res), nil
 }
@@ -236,7 +243,7 @@ func (a *App) UpdateComplete(ctx context.Context, lessonID, userID string) error
 		return utils.ErrInternal("Failed to mark lesson complete.", err)
 	}
 
-	a.Cache.Invalidate(ctx, "courses:*")
+	a.Cache.Invalidate(ctx, "courses:study:*", "lessons:*")
 
 	return nil
 }
@@ -282,50 +289,68 @@ func (a *App) DeleteResource(ctx context.Context, resourceID, userID string) (st
 func (a *App) AdminReadResources(ctx context.Context, lessonID string) ([]LessonResource, error) {
 	cacheKey := fmt.Sprintf("lessons:admin:resources:%s", lessonID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]LessonResource, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrLessonsLessonNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() ([]LessonResource, error) {
 		resources, err := a.AdminReadResourcesRepository(ctx, lessonID)
 		if err != nil {
-			if errors.Is(err, generic.ErrLessonsLessonNotFound) {
-				return nil, utils.ErrNotFound("Lesson not found.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch resources.", err)
+			return nil, err
 		}
 		return resources, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrLessonsLessonNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Lesson not found.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch resources.", err)
+	}
+	return res, nil
 }
 
 func (a *App) TutorReadResources(ctx context.Context, lessonID, userID string) ([]LessonResource, error) {
 	cacheKey := fmt.Sprintf("lessons:tutor:resources:%s:u:%s", lessonID, userID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]LessonResource, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrLessonsLessonNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() ([]LessonResource, error) {
 		resources, err := a.ReadResourcesForTutorRepository(ctx, lessonID, userID)
 		if err != nil {
-			if errors.Is(err, generic.ErrLessonsLessonNotFound) {
-				return nil, utils.ErrNotFound("Lesson not found.", err)
-			}
-			if errors.Is(err, generic.ErrLessonsAccessDenied) {
-				return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch resources.", err)
+			return nil, err
 		}
 		return resources, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrLessonsLessonNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Lesson not found.", err)
+		}
+		if errors.Is(err, generic.ErrLessonsAccessDenied) {
+			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch resources.", err)
+	}
+	return res, nil
 }
 
 func (a *App) StudentReadResources(ctx context.Context, lessonID, userID string) ([]LessonResource, error) {
 	cacheKey := fmt.Sprintf("lessons:student:resources:%s:u:%s", lessonID, userID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]LessonResource, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrLessonsLessonNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() ([]LessonResource, error) {
 		resources, err := a.StudentReadResourcesRepository(ctx, lessonID, userID)
 		if err != nil {
-			if errors.Is(err, generic.ErrLessonsLessonNotFound) {
-				return nil, utils.ErrNotFound("Lesson not found.", err)
-			}
-			if errors.Is(err, generic.ErrLessonsNotEnrolled) {
-				return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch resources.", err)
+			return nil, err
 		}
 		return resources, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrLessonsLessonNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Lesson not found.", err)
+		}
+		if errors.Is(err, generic.ErrLessonsNotEnrolled) {
+			return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch resources.", err)
+	}
+	return res, nil
 }

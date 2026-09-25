@@ -3,6 +3,8 @@ package certificates
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/utils"
@@ -35,9 +37,23 @@ func (a *App) List(ctx context.Context, userID string, page, limit int) ([]Certi
 // code — always returns a value (Valid=false for a bad id), never an
 // APIError, so the handler always 200s.
 func (a *App) Verify(ctx context.Context, id string) (*CertificateVerification, error) {
+	cacheKey := fmt.Sprintf("cert:verify:%s", id)
+
+	var cached CertificateVerification
+	if hit, _ := a.Cache.Get(ctx, cacheKey, &cached); hit {
+		return &cached, nil
+	}
+
 	verification, err := a.VerifyRepository(ctx, id)
 	if err != nil {
 		return nil, utils.ErrInternal("Failed to verify certificate.", err)
 	}
+
+	ttl := 2 * time.Hour
+	if !verification.Valid {
+		ttl = 60 * time.Second
+	}
+	_ = a.Cache.Set(ctx, cacheKey, verification, ttl)
+
 	return verification, nil
 }

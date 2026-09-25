@@ -24,3 +24,11 @@ func (c *Cache) Ping(ctx context.Context) error {
 	}
 	return c.client.Ping(ctx).Err()
 }
+
+// Client returns the underlying Redis client instance.
+func (c *Cache) Client() *redis.Client {
+	if c == nil {
+		return nil
+	}
+	return c.client
+}

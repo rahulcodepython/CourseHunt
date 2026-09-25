@@ -9,6 +9,7 @@ import (
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/cache"
+	"coursehunt/server/internals/pkg/postgres"
 	"coursehunt/server/internals/utils"
 )
 
@@ -32,73 +33,97 @@ func (a *App) CreateMetadata(ctx context.Context, lessonID, userID string, req C
 func (a *App) AdminReadMetadata(ctx context.Context, lessonID string) (*QuizMetadata, error) {
 	cacheKey := fmt.Sprintf("quiz:admin:meta:%s", lessonID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*QuizMetadata, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrQuizLessonNotFound) || errors.Is(e, generic.ErrQuizNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*QuizMetadata, error) {
 		qm, err := a.AdminReadMetadataRepository(ctx, lessonID)
 		if err != nil {
-			if errors.Is(err, generic.ErrQuizLessonNotFound) {
-				return nil, utils.ErrNotFound("Lesson not found.", err)
-			}
-			if errors.Is(err, generic.ErrQuizNotFound) {
-				return nil, utils.ErrNotFound("Quiz not found.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch quiz metadata.", err)
+			return nil, err
 		}
 		return qm, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrQuizLessonNotFound) {
+			return nil, utils.ErrNotFound("Lesson not found.", err)
+		}
+		if errors.Is(err, generic.ErrQuizNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Quiz not found.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch quiz metadata.", err)
+	}
+	return res, nil
 }
 
 func (a *App) TutorReadMetadata(ctx context.Context, lessonID, userID string) (*QuizMetadata, error) {
 	cacheKey := fmt.Sprintf("quiz:tutor:meta:%s:u:%s", lessonID, userID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*QuizMetadata, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrQuizLessonNotFound) || errors.Is(e, generic.ErrQuizNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*QuizMetadata, error) {
 		qm, err := a.TutorReadMetadataRepository(ctx, lessonID, userID)
 		if err != nil {
-			if errors.Is(err, generic.ErrQuizLessonNotFound) {
-				return nil, utils.ErrNotFound("Lesson not found.", err)
-			}
-			if errors.Is(err, generic.ErrQuizAccessDenied) {
-				return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
-			}
-			if errors.Is(err, generic.ErrQuizNotFound) {
-				return nil, utils.ErrNotFound("Quiz not found.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch quiz metadata.", err)
+			return nil, err
 		}
 		return qm, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrQuizLessonNotFound) {
+			return nil, utils.ErrNotFound("Lesson not found.", err)
+		}
+		if errors.Is(err, generic.ErrQuizAccessDenied) {
+			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+		}
+		if errors.Is(err, generic.ErrQuizNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Quiz not found.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch quiz metadata.", err)
+	}
+	return res, nil
 }
 
 func (a *App) AdminListQuestions(ctx context.Context, quizID string) ([]QuizQuestionDetail, error) {
 	cacheKey := fmt.Sprintf("quiz:admin:questions:%s", quizID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]QuizQuestionDetail, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrQuizNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() ([]QuizQuestionDetail, error) {
 		questions, err := a.AdminListQuestionsRepository(ctx, quizID)
 		if err != nil {
-			if errors.Is(err, generic.ErrQuizNotFound) {
-				return nil, utils.ErrNotFound("Quiz not found.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch questions.", err)
+			return nil, err
 		}
 		return questions, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrQuizNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Quiz not found.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch questions.", err)
+	}
+	return res, nil
 }
 
 func (a *App) TutorListQuestions(ctx context.Context, quizID, userID string) ([]QuizQuestionDetail, error) {
 	cacheKey := fmt.Sprintf("quiz:tutor:questions:%s:u:%s", quizID, userID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]QuizQuestionDetail, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrQuizNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() ([]QuizQuestionDetail, error) {
 		questions, err := a.TutorListQuestionsRepository(ctx, quizID, userID)
 		if err != nil {
-			if errors.Is(err, generic.ErrQuizNotFound) {
-				return nil, utils.ErrNotFound("Quiz not found.", err)
-			}
-			if errors.Is(err, generic.ErrQuizAccessDenied) {
-				return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch questions.", err)
+			return nil, err
 		}
 		return questions, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrQuizNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Quiz not found.", err)
+		}
+		if errors.Is(err, generic.ErrQuizAccessDenied) {
+			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch questions.", err)
+	}
+	return res, nil
 }
 
 func (a *App) CreateQuestion(ctx context.Context, quizID, tutorID string, req CreateQuestionRequest) (*QuizQuestion, error) {

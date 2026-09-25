@@ -94,7 +94,7 @@ func (a *App) GetPermissions(ctx context.Context, roleID string) ([]Permission, 
 	}
 
 	cacheKey := fmt.Sprintf("roles:permissions:role:%s", roleID)
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]Permission, error) {
+	return cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, nil, func() ([]Permission, error) {
 		permissions, err := a.GetRolePermissionsRepository(ctx, roleID)
 		if err != nil {
 			return nil, utils.ErrInternal("Failed to fetch role permissions.", err)

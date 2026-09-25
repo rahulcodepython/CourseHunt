@@ -84,12 +84,12 @@ func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Sto
 
 	// Construct feature apps in dependency order
 	categoriesApp := categories.New(db, cch, cfg)
-	certificatesApp := certificates.New(db, cfg)
+	certificatesApp := certificates.New(db, cch, cfg)
 	chaptersApp := chapters.New(db, cch, cfg)
 	couponsApp := coupons.New(db, cch, cfg)
 	coursesApp := courses.New(db, cch, cfg, storage)
-	dashboardApp := dashboard.New(db, cfg)
-	discussionsApp := discussions.New(db, cfg)
+	dashboardApp := dashboard.New(db, cch, cfg)
+	discussionsApp := discussions.New(db, cch, cfg)
 	enrollmentsApp := enrollments.New(db, cfg)
 	faqsApp := faqs.New(db, cch, cfg)
 	feedbacksApp := feedbacks.New(db, cch, cfg)
@@ -163,7 +163,7 @@ func (r *Router) SetUp() {
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
 		AllowCredentials: true,
 	}))
-	r.App.Use(middlewares.RateLimiterMiddleware())
+	r.App.Use(middlewares.RateLimiterMiddleware(r.Cache.Client()))
 
 	auth := middlewares.BaseAuthMiddleware(r.CFG, r.Cache, r.Users, r.Verifier)
 
