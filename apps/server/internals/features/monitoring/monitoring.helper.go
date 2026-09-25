@@ -34,3 +34,16 @@ func (a *App) checkServices(ctx context.Context) (map[string]ServiceStatus, bool
 
 	return services, allHealthy
 }
+
+type LokiQueryResultStream struct {
+	Stream map[string]string `json:"stream"`
+	Values [][]string        `json:"values"`
+}
+
+type LokiQueryResponse struct {
+	Status string `json:"status"`
+	Data   struct {
+		ResultType string                  `json:"resultType"`
+		Result     []LokiQueryResultStream `json:"result"`
+	} `json:"data"`
+}

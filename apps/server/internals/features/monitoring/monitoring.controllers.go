@@ -26,3 +26,18 @@ func (a *App) handleHealth(c *fiber.Ctx) error {
 func (a *App) handleSnapshot(c *fiber.Ctx) error {
 	return utils.OK(c, "Monitoring snapshot fetched.", a.Snapshot(c.UserContext()))
 }
+
+func (a *App) handleLokiQuery(c *fiber.Ctx) error {
+	limit := c.QueryInt("limit", 50)
+	level := c.Query("level", "all")
+	search := c.Query("search", "")
+	start := c.Query("start", "")
+	end := c.Query("end", "")
+
+	logs, err := a.QueryLokiLogs(c.UserContext(), limit, level, search, start, end)
+	if err != nil {
+		return utils.ErrInternal("Failed to query Loki logs.", err)
+	}
+
+	return utils.OK(c, "Loki logs fetched.", logs)
+}
