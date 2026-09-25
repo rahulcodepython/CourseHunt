@@ -13,16 +13,16 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	gAdmin := router.Group("/v1/admin/updates", auth, adminGuard)
 	gAdmin.Get("/", a.handleAdminList)
 	gAdmin.Post("/", a.handleAdminCreate)
-	gAdmin.Patch("/:id", a.handleAdminUpdate)
-	gAdmin.Delete("/:id", a.handleAdminDelete)
+	gAdmin.Patch("/:id", middlewares.ValidateUUIDParams("id"), a.handleAdminUpdate)
+	gAdmin.Delete("/:id", middlewares.ValidateUUIDParams("id"), a.handleAdminDelete)
 
 	// Tutor Updates Management: strictly single permission PermTutorUpdatesManage
 	tutorGuard := middlewares.PermissionGuard(generic.PermTutorUpdatesManage)
 	gTutor := router.Group("/v1/tutor/updates", auth, tutorGuard)
 	gTutor.Get("/", a.handleTutorList)
 	gTutor.Post("/", a.handleTutorCreate)
-	gTutor.Patch("/:id", a.handleTutorUpdate)
-	gTutor.Delete("/:id", a.handleTutorDelete)
+	gTutor.Patch("/:id", middlewares.ValidateUUIDParams("id"), a.handleTutorUpdate)
+	gTutor.Delete("/:id", middlewares.ValidateUUIDParams("id"), a.handleTutorDelete)
 
 	// Student Updates Feed
 	router.Get("/v1/updates/feed", auth, a.handleFeed)

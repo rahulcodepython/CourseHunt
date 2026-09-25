@@ -10,11 +10,11 @@ import {
   useDeleteQuestionMutation,
 } from "@/query-hooks/quiz.api";
 import type { QuizMetadata, QuizQuestionDetail } from "@/schema/quiz.types";
-import { PageHeader } from "@/components/page-header";
-import { Icon } from "@/components/icon";
-import { DataTable } from "@/components/data-table";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { FormDialog } from "@/components/form-dialog";
+import { PageHeader } from "@/components/layout/page-header";
+import { Icon } from "@/components/common/icon";
+import { DataTable } from "@/components/table/data-table";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import { FormDialog } from "@/components/dialogs/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 

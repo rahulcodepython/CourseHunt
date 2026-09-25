@@ -1,4 +1,4 @@
-import type { StatusBadgeEntry } from "@/components/status-badge";
+import type { StatusBadgeEntry } from "@/components/common/status-badge";
 
 /** Shared banned/active status map for the users, tutors, and admins tables. */
 export const bannedStatusMap: Record<string, StatusBadgeEntry> = {

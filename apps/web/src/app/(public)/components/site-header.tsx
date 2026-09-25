@@ -4,8 +4,8 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-import { Icon } from "@/components/icon";
-import UserAvatar from "@/components/user-avatar";
+import { Icon } from "@/components/common/icon";
+import UserAvatar from "@/components/common/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import useSession from "@/hooks/use-session";
-import { getDashboardURI, ROUTES } from "@/lib/const";
+import { getDashboardURI, ROUTES } from "@/lib/constants/const";
 
 export function SiteHeader() {
   const router = useRouter();

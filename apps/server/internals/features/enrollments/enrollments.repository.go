@@ -7,11 +7,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type EnrollmentListPayload struct {
-	Total int                      `json:"total"`
-	Data  []ListEnrollmentResponse `json:"data"`
-}
-
 func (a *App) RevokeRepository(ctx context.Context, userID, courseID string) error {
 	return postgres.Exec(ctx, a.DB, RevokeEnrollment, userID, courseID)
 }

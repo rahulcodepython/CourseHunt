@@ -11,7 +11,7 @@ import {
 } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import { FaqZod, CreateFaqRequestZod, UpdateFaqRequestZod } from "@/schema/faqs.types";
 import { DeleteResponseZod } from "@/schema/common.types";
 
@@ -19,7 +19,7 @@ export function useFaqsQuery(courseId: string, scope: "admin" | "tutor" = "tutor
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_FAQS : API_ENDPOINTS.TUTOR_FAQS;
   return useAppQuery(
     queryKeys.faqs(courseId, scope),
-    () => apiRequest({ url: `${endpoint}?course_id=${courseId}`, method: "GET" }, z.array(FaqZod)),
+    () => apiRequest({ url: endpoint, method: "GET", params: { course_id: courseId } }, z.array(FaqZod)),
     { enabled: !!courseId },
   );
 }
@@ -29,7 +29,7 @@ export function usePublicFaqsQuery(courseId: string) {
     queryKeys.faqsPublic(courseId),
     () =>
       apiRequest(
-        { url: `${API_ENDPOINTS.FAQS_PUBLIC}?course_id=${courseId}`, method: "GET" },
+        { url: API_ENDPOINTS.FAQS_PUBLIC, method: "GET", params: { course_id: courseId } },
         z.array(FaqZod),
       ),
     { enabled: !!courseId },
@@ -39,7 +39,7 @@ export function usePublicFaqsQuery(courseId: string) {
 export function useCreateFaqMutation(courseId: string) {
   return useArrayMutation({
     mutationFn: (data: z.infer<typeof CreateFaqRequestZod>) =>
-      apiRequest({ url: `${API_ENDPOINTS.TUTOR_FAQS}?course_id=${courseId}`, method: "POST", data }, FaqZod),
+      apiRequest({ url: API_ENDPOINTS.TUTOR_FAQS, method: "POST", params: { course_id: courseId }, data }, FaqZod),
     queryKey: queryKeys.faqs(courseId, "tutor"),
     updater: (faq) => appendToArray(faq),
     invalidateKeys: [queryKeys.faqs(courseId, "tutor"), queryKeys.faqs(courseId, "admin")],

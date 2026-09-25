@@ -3,6 +3,7 @@ package roles
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"coursehunt/server/internals/pkg/cache"
@@ -124,7 +125,8 @@ func (a *App) SetPermissions(ctx context.Context, roleID string, req UpdateRoleP
 	// Every user holding this role now has different effective permissions —
 	// bust the per-user auth cache app-wide since it's unknown which users
 	// hold it (see internals/middlewares/auth.go's authCacheTTL fallback).
-	a.Cache.InvalidateAllUserAuthCache(ctx)
+	slog.Info("invalidating all per-user auth cache")
+	_ = a.Cache.DeleteByPattern(ctx, "auth:roles_permissions:*")
 
 	return nil
 }

@@ -3,9 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ROUTES } from "@/lib/const";
+import { ROUTES } from "@/lib/constants/const";
 
-import { Icon, type IconName } from "@/components/icon";
+import { Icon, type IconName } from "@/components/common/icon";
 import {
   Sidebar,
   SidebarContent,

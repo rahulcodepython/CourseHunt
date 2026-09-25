@@ -9,11 +9,6 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-type cachedDiscussionsList struct {
-	Data  []Discussion `json:"data"`
-	Total int          `json:"total"`
-}
-
 func (a *App) List(ctx context.Context, lessonID, parentID, userID string, scope generic.AuthScope, page, limit int) ([]Discussion, int, error) {
 	cacheKey := fmt.Sprintf("discussions:l:%s:par:%s:p:%d:lim:%d:sc:%s", lessonID, parentID, page, limit, scope)
 	var cached cachedDiscussionsList

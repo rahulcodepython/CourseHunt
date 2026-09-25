@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { COOKIES, ROUTES } from "@/lib/const";
-import { isPublicPath } from "@/lib/public-routes";
+import { COOKIES, ROUTES } from "@/lib/constants/const";
+import { isPublicPath } from "@/lib/auth/public-routes";
 
 export default function proxy(request: NextRequest) {
   const sessionToken = request.cookies.get(COOKIES.SESSION_TOKEN)?.value;

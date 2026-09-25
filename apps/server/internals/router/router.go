@@ -144,7 +144,7 @@ func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Sto
 func (r *Router) SetUp() {
 	r.App.Use(middlewares.RequestContextMiddleware(r.RootCtx, time.Duration(r.CFG.RequestTimeoutSec)*time.Second))
 	r.App.Use(middlewares.LoggerMiddleware(r.DB))
-	r.App.Use(middlewares.LokiLoggerMiddleware())
+	r.App.Use(middlewares.LokiLoggerMiddleware(r.CFG.LokiURL, r.CFG.Environment))
 	r.App.Use(recover.New())
 	r.App.Use(helmet.New())
 	r.App.Use(compress.New())

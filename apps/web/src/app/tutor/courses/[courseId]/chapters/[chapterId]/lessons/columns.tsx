@@ -1,30 +1,15 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import type { Lesson } from "@/schema/lessons.types";
+import { type Lesson, LESSON_TYPE_BADGES } from "@/schema/lessons.types";
 import type { QuizMetadata } from "@/schema/quiz.types";
 import { useQuizMetadataQuery } from "@/query-hooks/quiz.api";
 import { Badge } from "@/components/ui/badge";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { RowActions, RowActionButton } from "@/components/row-actions";
-import { cn } from "@/lib/utils";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
+import { cn } from "@/lib/utils/utils";
 
 const columnHelper = createColumnHelper<Lesson>();
-
-const lessonTypeBadge: Record<string, { label: string; className: string }> = {
-  video: {
-    label: "Video",
-    className: "bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-400",
-  },
-  document: {
-    label: "Document",
-    className: "bg-green-100 text-green-800 dark:bg-green-500/15 dark:text-green-400",
-  },
-  quiz: {
-    label: "Quiz",
-    className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400",
-  },
-};
 
 function formatTime(seconds: number): string {
   if (!seconds) return "No limit";
@@ -74,8 +59,8 @@ export const getColumns = (
       return (
         <div className="flex items-center gap-2">
           <span className="font-medium">{lesson.title}</span>
-          <Badge className={cn("shrink-0", lessonTypeBadge[lesson.lesson_type]?.className)}>
-            {lessonTypeBadge[lesson.lesson_type]?.label ?? lesson.lesson_type}
+          <Badge className={cn("shrink-0", LESSON_TYPE_BADGES[lesson.lesson_type]?.className)}>
+            {LESSON_TYPE_BADGES[lesson.lesson_type]?.label ?? lesson.lesson_type}
           </Badge>
         </div>
       );

@@ -6,8 +6,8 @@ import { useParams } from "next/navigation";
 
 import { useTransactionStatusQuery } from "@/query-hooks/transactions.api";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
-import { ROUTES } from "@/lib/const";
+import { Icon } from "@/components/common/icon";
+import { ROUTES } from "@/lib/constants/const";
 
 const MAX_ATTEMPTS = 20;
 const POLL_INTERVAL_MS = 1500;

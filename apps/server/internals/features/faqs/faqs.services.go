@@ -59,6 +59,12 @@ func (a *App) TutorList(ctx context.Context, courseID, userID string) ([]Faq, er
 }
 
 func (a *App) Create(ctx context.Context, userID, courseID string, req CreateFaqRequest) (*Faq, error) {
+	req.Question = utils.SanitizeUGC(req.Question)
+	req.Answer = utils.SanitizeUGC(req.Answer)
+	if req.Question == "" || req.Answer == "" {
+		return nil, utils.ErrBadRequest("Question and answer cannot be empty after sanitization.", nil)
+	}
+
 	faq, err := a.CreateRepository(ctx, userID, courseID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrFaqsCourseNotFound) {
@@ -76,6 +82,21 @@ func (a *App) Create(ctx context.Context, userID, courseID string, req CreateFaq
 }
 
 func (a *App) Update(ctx context.Context, id, userID string, req UpdateFaqRequest) (*Faq, error) {
+	if req.Question != nil {
+		sanitized := utils.SanitizeUGC(*req.Question)
+		if sanitized == "" {
+			return nil, utils.ErrBadRequest("Question cannot be empty after sanitization.", nil)
+		}
+		req.Question = &sanitized
+	}
+	if req.Answer != nil {
+		sanitized := utils.SanitizeUGC(*req.Answer)
+		if sanitized == "" {
+			return nil, utils.ErrBadRequest("Answer cannot be empty after sanitization.", nil)
+		}
+		req.Answer = &sanitized
+	}
+
 	faq, err := a.UpdateRepository(ctx, id, userID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrFaqsFaqNotFound) {

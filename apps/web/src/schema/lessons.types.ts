@@ -14,6 +14,21 @@ export const LessonZod = z.object({
 });
 export type Lesson = z.infer<typeof LessonZod>;
 
+export const LESSON_TYPE_BADGES: Record<string, { label: string; className: string }> = {
+  video: {
+    label: "Video",
+    className: "bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-400",
+  },
+  document: {
+    label: "Document",
+    className: "bg-green-100 text-green-800 dark:bg-green-500/15 dark:text-green-400",
+  },
+  quiz: {
+    label: "Quiz",
+    className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400",
+  },
+};
+
 export const LessonVideoContentZod = z.object({
   lesson_id: z.string(),
   video_url: z.string(),

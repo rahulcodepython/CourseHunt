@@ -6,16 +6,16 @@ import { toast } from "sonner";
 
 import { useUserProfileQuery, useCreateUserProfileMutation } from "@/query-hooks/users.api";
 import { useUploadMediaMutation } from "@/query-hooks/upload.api";
-import authClient from "@/lib/auth-client";
+import authClient from "@/lib/auth/auth-client";
 import { useSessionStore } from "@/store/session.store";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 
 import { TwoFactorSettings } from "@/components/auth/two-factor-settings";
-import { PageHeader } from "@/components/page-header";
-import { Loading } from "@/components/loading";
-import { LoadingButton } from "@/components/loading-button";
-import { Icon } from "@/components/icon";
-import UserAvatar from "@/components/user-avatar";
+import { PageHeader } from "@/components/layout/page-header";
+import { Loading } from "@/components/common/loading";
+import { LoadingButton } from "@/components/common/loading-button";
+import { Icon } from "@/components/common/icon";
+import UserAvatar from "@/components/common/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

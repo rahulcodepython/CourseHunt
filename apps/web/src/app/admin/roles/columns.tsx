@@ -3,10 +3,10 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Role } from "@/schema/roles.types";
 import { Badge } from "@/components/ui/badge";
-import { Icon } from "@/components/icon";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { RowActions, RowActionButton } from "@/components/row-actions";
-import { cn } from "@/lib/utils";
+import { Icon } from "@/components/common/icon";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
+import { cn } from "@/lib/utils/utils";
 
 const columnHelper = createColumnHelper<Role>();
 

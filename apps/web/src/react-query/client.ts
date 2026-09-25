@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { z } from "zod";
 import { ApiResponse, ApiResponseZod } from "@/schema/common.types";
-import { API_CONFIG, ERROR_MESSAGES } from "@/lib/const";
+import { API_CONFIG, ERROR_MESSAGES } from "@/lib/constants/const";
 import { useSessionStore } from "@/store/session.store";
 
 // =============================================================================
@@ -9,7 +9,7 @@ import { useSessionStore } from "@/store/session.store";
 // =============================================================================
 
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? API_CONFIG.DEFAULT_URL,
+  baseURL: API_CONFIG.DEFAULT_URL,
   withCredentials: true,
 });
 
@@ -120,9 +120,12 @@ export function compactParams<T extends Record<string, string | number | boolean
   if (!params) return undefined;
   const out: Partial<T> = {};
   for (const key of Object.keys(params) as (keyof T)[]) {
-    if (params[key]) out[key] = params[key];
+    const val = params[key];
+    if (val !== undefined && val !== null && val !== "") {
+      out[key] = val;
+    }
   }
-  return out;
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 export default api;

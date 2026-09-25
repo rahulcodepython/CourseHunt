@@ -5,11 +5,11 @@ import { createColumnHelper } from "@tanstack/react-table";
 
 import { useQuizAttemptsQuery } from "@/query-hooks/quiz.api";
 import type { QuizAttemptSummary } from "@/schema/quiz.types";
-import { DataTable, type TableColumn } from "@/components/data-table";
+import { DataTable, type TableColumn } from "@/components/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
-import { formatDateTime } from "@/lib/format";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/common/status-badge";
+import { formatDateTime } from "@/lib/utils/format";
 import { QuizAttemptBreakdown } from "../quiz/quiz-attempt-breakdown";
 
 const statusMap: Record<string, StatusBadgeEntry> = {

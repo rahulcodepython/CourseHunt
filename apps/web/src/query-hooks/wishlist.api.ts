@@ -11,18 +11,17 @@ import {
 } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import { WishlistItemZod } from "@/schema/wishlist.types";
 import { SuccessResponseZod, DeleteResponseZod, PaginatedResponseZod } from "@/schema/common.types";
 
-export function useWishlistQuery() {
-  return useAppQuery(queryKeys.wishlist(), () =>
-    apiRequest(
-      { url: API_ENDPOINTS.WISHLIST, method: "GET" },
-      PaginatedResponseZod(WishlistItemZod),
-    ),
-  );
-}
+import { createListQuery } from "@/react-query/factory";
+
+export const useWishlistQuery = createListQuery(
+  API_ENDPOINTS.WISHLIST,
+  queryKeys.wishlist,
+  WishlistItemZod,
+);
 
 export function useAddCourseToWishlistMutation() {
   return usePaginatedMutation({

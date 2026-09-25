@@ -3,10 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { PageHeader } from "@/components/page-header";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import { useChaptersQuery } from "@/query-hooks/chapters.api";
 import { useLessonsQuery } from "@/query-hooks/lessons.api";

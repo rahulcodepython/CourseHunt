@@ -1,4 +1,4 @@
-import { LOCALE_CONFIG } from "@/lib/const";
+import { LOCALE_CONFIG } from "@/lib/constants/const";
 
 export function formatINR(value: number): string {
   return LOCALE_CONFIG.CURRENCY_SYMBOL + value.toLocaleString(LOCALE_CONFIG.LOCALE);

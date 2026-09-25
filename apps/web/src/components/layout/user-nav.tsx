@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 
-import { Icon } from "@/components/icon";
-import UserAvatar from "@/components/user-avatar";
+import { Icon } from "@/components/common/icon";
+import UserAvatar from "@/components/common/user-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSessionStore } from "@/store/session.store";
 import { Button } from "@/components/ui/button";
-import { ROUTES, ROLES } from "@/lib/const";
+import { ROUTES, ROLES } from "@/lib/constants/const";
 import useSession from "@/hooks/use-session";
 
 export function UserNav() {

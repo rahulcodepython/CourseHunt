@@ -18,12 +18,12 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	adminGuard := middlewares.PermissionGuard(generic.PermAdminFeedbackInspect)
 	gAdmin := router.Group("/v1/admin/feedbacks", auth, adminGuard)
 	gAdmin.Get("/", a.handleAdminList)
-	gAdmin.Patch("/:id", a.handleAdminUpdate)
-	gAdmin.Delete("/:id", a.handleAdminDelete)
+	gAdmin.Patch("/:id", middlewares.ValidateUUIDParams("id"), a.handleAdminUpdate)
+	gAdmin.Delete("/:id", middlewares.ValidateUUIDParams("id"), a.handleAdminDelete)
 
 	// Tutor feedbacks management: strictly single permission PermTutorFeedbackManage
 	tutorGuard := middlewares.PermissionGuard(generic.PermTutorFeedbackManage)
 	gTutor := router.Group("/v1/tutor/feedbacks", auth, tutorGuard)
 	gTutor.Get("/", a.handleTutorList)
-	gTutor.Delete("/:id", a.handleTutorDelete)
+	gTutor.Delete("/:id", middlewares.ValidateUUIDParams("id"), a.handleTutorDelete)
 }

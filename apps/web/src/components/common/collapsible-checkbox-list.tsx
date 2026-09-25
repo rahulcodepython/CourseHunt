@@ -3,8 +3,8 @@
 import * as React from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Icon } from "@/components/icon";
-import { cn } from "@/lib/utils";
+import { Icon } from "@/components/common/icon";
+import { cn } from "@/lib/utils/utils";
 
 export interface CollapsibleCheckboxListItem {
   id: string;

@@ -1,4 +1,4 @@
-import type { NavGroup, NavItem } from "@/components/app-sidebar";
+import type { NavGroup, NavItem } from "@/components/layout/app-sidebar";
 
 /**
  * Generic permission-gating helpers driven entirely by nav-config data

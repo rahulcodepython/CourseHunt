@@ -8,218 +8,82 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// --- Admin Handlers ---
+func (a *App) handleList(scope generic.AuthScope) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		page, limit := utils.PaginationParams(c)
+		lessonID := c.Params("lessonId")
+		userID := middlewares.UserID(c)
 
-func (a *App) handleAdminList(c *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(c)
-	lessonID := c.Params("lessonId")
-	userID := middlewares.UserID(c)
+		list, total, err := a.List(c.UserContext(), lessonID, "", userID, scope, page, limit)
+		if err != nil {
+			return err
+		}
 
-	list, total, err := a.List(c.UserContext(), lessonID, "", userID, generic.ScopeAdmin, page, limit)
-	if err != nil {
-		return err
+		return utils.OK(c, "Discussions fetched.", generic.PaginatedResponse[[]Discussion]{
+			Data: list, Total: total, Page: page, Limit: limit,
+		})
 	}
-
-	return utils.OK(c, "Discussions fetched.", generic.PaginatedResponse[[]Discussion]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	})
 }
 
-func (a *App) handleAdminListReplies(c *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(c)
-	parentID := c.Params("id")
-	userID := middlewares.UserID(c)
+func (a *App) handleListReplies(scope generic.AuthScope) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		page, limit := utils.PaginationParams(c)
+		parentID := c.Params("id")
+		userID := middlewares.UserID(c)
 
-	list, total, err := a.List(c.UserContext(), "", parentID, userID, generic.ScopeAdmin, page, limit)
-	if err != nil {
-		return err
+		list, total, err := a.List(c.UserContext(), "", parentID, userID, scope, page, limit)
+		if err != nil {
+			return err
+		}
+
+		return utils.OK(c, "Replies fetched.", generic.PaginatedResponse[[]Discussion]{
+			Data: list, Total: total, Page: page, Limit: limit,
+		})
 	}
-
-	return utils.OK(c, "Replies fetched.", generic.PaginatedResponse[[]Discussion]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	})
 }
 
-func (a *App) handleAdminCreate(c *fiber.Ctx) error {
-	var req CreateDiscussionRequest
-	if err := utils.BindAndValidate(c, &req); err != nil {
-		return err
-	}
+func (a *App) handleCreate(scope generic.AuthScope) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req CreateDiscussionRequest
+		if err := utils.BindAndValidate(c, &req); err != nil {
+			return err
+		}
 
-	userID := middlewares.UserID(c)
-	d, err := a.Create(c.UserContext(), userID, req, generic.ScopeAdmin)
-	if err != nil {
-		return err
-	}
+		userID := middlewares.UserID(c)
+		d, err := a.Create(c.UserContext(), userID, req, scope)
+		if err != nil {
+			return err
+		}
 
-	return utils.Created(c, "Discussion posted.", d)
+		return utils.Created(c, "Discussion posted.", d)
+	}
 }
 
-func (a *App) handleAdminUpdate(c *fiber.Ctx) error {
-	var req UpdateDiscussionRequest
-	if err := utils.BindAndValidate(c, &req); err != nil {
-		return err
-	}
+func (a *App) handleUpdate(scope generic.AuthScope) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req UpdateDiscussionRequest
+		if err := utils.BindAndValidate(c, &req); err != nil {
+			return err
+		}
 
-	userID := middlewares.UserID(c)
-	d, err := a.Update(c.UserContext(), c.Params("id"), userID, req, generic.ScopeAdmin)
-	if err != nil {
-		return err
-	}
+		userID := middlewares.UserID(c)
+		d, err := a.Update(c.UserContext(), c.Params("id"), userID, req, scope)
+		if err != nil {
+			return err
+		}
 
-	return utils.OK(c, "Discussion updated.", d)
+		return utils.OK(c, "Discussion updated.", d)
+	}
 }
 
-func (a *App) handleAdminDelete(c *fiber.Ctx) error {
-	userID := middlewares.UserID(c)
-	id, err := a.Delete(c.UserContext(), c.Params("id"), userID, generic.ScopeAdmin)
-	if err != nil {
-		return err
+func (a *App) handleDelete(scope generic.AuthScope) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID := middlewares.UserID(c)
+		id, err := a.Delete(c.UserContext(), c.Params("id"), userID, scope)
+		if err != nil {
+			return err
+		}
+
+		return utils.OK(c, "Discussion deleted.", generic.DeleteResponse{ID: id})
 	}
-
-	return utils.OK(c, "Discussion deleted.", generic.DeleteResponse{ID: id})
-}
-
-// --- Tutor Handlers ---
-
-func (a *App) handleTutorList(c *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(c)
-	lessonID := c.Params("lessonId")
-	userID := middlewares.UserID(c)
-
-	list, total, err := a.List(c.UserContext(), lessonID, "", userID, generic.ScopeTutor, page, limit)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Discussions fetched.", generic.PaginatedResponse[[]Discussion]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	})
-}
-
-func (a *App) handleTutorListReplies(c *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(c)
-	parentID := c.Params("id")
-	userID := middlewares.UserID(c)
-
-	list, total, err := a.List(c.UserContext(), "", parentID, userID, generic.ScopeTutor, page, limit)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Replies fetched.", generic.PaginatedResponse[[]Discussion]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	})
-}
-
-func (a *App) handleTutorCreate(c *fiber.Ctx) error {
-	var req CreateDiscussionRequest
-	if err := utils.BindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	userID := middlewares.UserID(c)
-	d, err := a.Create(c.UserContext(), userID, req, generic.ScopeTutor)
-	if err != nil {
-		return err
-	}
-
-	return utils.Created(c, "Discussion posted.", d)
-}
-
-func (a *App) handleTutorUpdate(c *fiber.Ctx) error {
-	var req UpdateDiscussionRequest
-	if err := utils.BindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	userID := middlewares.UserID(c)
-	d, err := a.Update(c.UserContext(), c.Params("id"), userID, req, generic.ScopeTutor)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Discussion updated.", d)
-}
-
-func (a *App) handleTutorDelete(c *fiber.Ctx) error {
-	userID := middlewares.UserID(c)
-	id, err := a.Delete(c.UserContext(), c.Params("id"), userID, generic.ScopeTutor)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Discussion deleted.", generic.DeleteResponse{ID: id})
-}
-
-// --- Student Handlers ---
-
-func (a *App) handleStudentList(c *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(c)
-	lessonID := c.Params("lessonId")
-	userID := middlewares.UserID(c)
-
-	list, total, err := a.List(c.UserContext(), lessonID, "", userID, generic.ScopeUser, page, limit)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Discussions fetched.", generic.PaginatedResponse[[]Discussion]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	})
-}
-
-func (a *App) handleStudentListReplies(c *fiber.Ctx) error {
-	page, limit := utils.PaginationParams(c)
-	parentID := c.Params("id")
-	userID := middlewares.UserID(c)
-
-	list, total, err := a.List(c.UserContext(), "", parentID, userID, generic.ScopeUser, page, limit)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Replies fetched.", generic.PaginatedResponse[[]Discussion]{
-		Data: list, Total: total, Page: page, Limit: limit,
-	})
-}
-
-func (a *App) handleStudentCreate(c *fiber.Ctx) error {
-	var req CreateDiscussionRequest
-	if err := utils.BindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	userID := middlewares.UserID(c)
-	d, err := a.Create(c.UserContext(), userID, req, generic.ScopeUser)
-	if err != nil {
-		return err
-	}
-
-	return utils.Created(c, "Discussion posted.", d)
-}
-
-func (a *App) handleStudentUpdate(c *fiber.Ctx) error {
-	var req UpdateDiscussionRequest
-	if err := utils.BindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	userID := middlewares.UserID(c)
-	d, err := a.Update(c.UserContext(), c.Params("id"), userID, req, generic.ScopeUser)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Discussion updated.", d)
-}
-
-func (a *App) handleStudentDelete(c *fiber.Ctx) error {
-	userID := middlewares.UserID(c)
-	id, err := a.Delete(c.UserContext(), c.Params("id"), userID, generic.ScopeUser)
-	if err != nil {
-		return err
-	}
-
-	return utils.OK(c, "Discussion deleted.", generic.DeleteResponse{ID: id})
 }

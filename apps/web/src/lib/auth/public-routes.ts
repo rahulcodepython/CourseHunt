@@ -1,4 +1,4 @@
-import { ROUTES } from "@/lib/const";
+import { ROUTES } from "@/lib/constants/const";
 
 // Routes visible without a session: the marketing/browse site and checkout
 // (which gates only the purchase action itself, not the page). Shared

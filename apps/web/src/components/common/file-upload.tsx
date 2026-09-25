@@ -3,10 +3,10 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Icon, type IconName } from "@/components/icon";
+import { Icon, type IconName } from "@/components/common/icon";
 import { getSignedUrl } from "@/query-hooks/upload.api";
-import { registerPendingUpload, removePendingUpload } from "@/lib/pending-uploads";
-import { cn } from "@/lib/utils";
+import { registerPendingUpload, removePendingUpload } from "@/lib/utils/pending-uploads";
+import { cn } from "@/lib/utils/utils";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 

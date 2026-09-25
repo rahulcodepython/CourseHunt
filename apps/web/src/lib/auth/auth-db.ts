@@ -1,6 +1,6 @@
-import { db } from "@/lib/db";
+import { db } from "@/lib/services/db";
 import { sql } from "kysely";
-import type { RolesAndPermissionsResult } from "@/lib/auth.types";
+import type { RolesAndPermissionsResult } from "@/lib/auth/auth.types";
 
 // Single PostgreSQL query using JSON builder to get roles, permissions, and credential status in 1 database call.
 export async function getRolesAndPermissions(userId: string): Promise<RolesAndPermissionsResult> {

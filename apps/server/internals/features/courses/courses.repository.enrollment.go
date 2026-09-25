@@ -48,11 +48,6 @@ func (a *App) EnrollFreeRepository(ctx context.Context, userID, courseID string)
 	)
 }
 
-type EnrolledListPayload struct {
-	Total int                      `json:"total"`
-	Data  []EnrolledCourseResponse `json:"data"`
-}
-
 func (a *App) EnrolledCoursesRepository(ctx context.Context, userID string, page, limit int) ([]EnrolledCourseResponse, int, error) {
 	offset := (page - 1) * limit
 

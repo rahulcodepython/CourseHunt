@@ -1,5 +1,5 @@
-import UserAvatar from "@/components/user-avatar";
-import { cn } from "@/lib/utils";
+import UserAvatar from "@/components/common/user-avatar";
+import { cn } from "@/lib/utils/utils";
 
 export interface UserCellProps {
   name?: string | null;

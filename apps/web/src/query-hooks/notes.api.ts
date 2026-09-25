@@ -14,7 +14,7 @@ export function useNotesQuery(lessonId: string) {
   return useAppQuery(queryKeys.notes(lessonId), async () => {
     try {
       return await apiRequest(
-        { url: `/api/v1/notes?lesson_id=${lessonId}`, method: "GET" },
+        { url: "/api/v1/notes", method: "GET", params: { lesson_id: lessonId } },
         NoteResponseZod,
       );
     } catch (err) {
@@ -30,7 +30,7 @@ export function useCreateNoteMutation(lessonId: string) {
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof UpsertNoteRequestZod>) =>
       apiRequest(
-        { url: `/api/v1/notes?lesson_id=${lessonId}`, method: "POST", data },
+        { url: "/api/v1/notes", method: "POST", params: { lesson_id: lessonId }, data },
         NoteResponseZod,
       ),
     invalidateKeys: [queryKeys.notes(lessonId)],

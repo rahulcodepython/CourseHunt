@@ -1,9 +1,9 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import type { TableColumn } from "@/components/data-table";
+import type { TableColumn } from "@/components/table/data-table";
 import type { UpdateFeedItem } from "@/schema/updates.types";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
 
 const columnHelper = createColumnHelper<UpdateFeedItem>();

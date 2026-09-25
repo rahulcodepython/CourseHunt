@@ -6,11 +6,11 @@ import {
   twoFactorClient,
 } from "better-auth/client/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
-import { AUTH_CONFIG, ROLES } from "@/lib/const";
-import type { auth } from "@/lib/auth";
+import { AUTH_CONFIG, ROLES } from "@/lib/constants/const";
+import type { auth } from "@/lib/auth/auth";
 
 const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL ?? AUTH_CONFIG.DEFAULT_APP_URL,
+  baseURL: AUTH_CONFIG.DEFAULT_APP_URL,
 
   plugins: [
     adminClient({

@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { PageHeader } from "@/components/page-header";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
-import { EnrollmentAccessTable } from "@/components/enrollment-access-table";
+import { EnrollmentAccessTable } from "@/components/table/enrollment-access-table";
 
 import { useManageCourseQuery } from "@/query-hooks/courses.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";

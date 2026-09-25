@@ -5,12 +5,9 @@ import (
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/postgres"
-	"coursehunt/server/internals/utils"
 )
 
-func (a *App) CreateRepository(ctx context.Context, tutorID string, req CreateCourseRequest) (*Course, error) {
-	slug := utils.Slugify(req.Title)
-
+func (a *App) CreateRepository(ctx context.Context, tutorID, slug string, req CreateCourseRequest) (*Course, error) {
 	return postgres.QueryJSON[Course](
 		ctx,
 		a.DB,

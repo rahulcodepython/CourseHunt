@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { CSV_CONFIG } from "@/lib/const";
+import { CSV_CONFIG } from "@/lib/constants/const";
 
 function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);

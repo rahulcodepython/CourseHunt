@@ -7,11 +7,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type ManageListPayload struct {
-	Total int      `json:"total"`
-	Data  []Course `json:"data"`
-}
-
 func (a *App) AdminListRepository(ctx context.Context, page, limit int, categoryID, subcategoryID, level, search, status, filterTutorID string) ([]Course, int, error) {
 	filter := postgres.NewFilter()
 

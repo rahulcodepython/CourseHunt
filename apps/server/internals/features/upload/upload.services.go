@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/utils"
 
 	"github.com/google/uuid"
@@ -17,11 +16,6 @@ func (a *App) GetSignedURL(ctx context.Context, userID, userRole, rawFileName st
 	cleanName, err := sanitizeFileName(rawFileName)
 	if err != nil {
 		return nil, err
-	}
-
-	// Role Guard: Only instructors and administrators can upload curriculum assets
-	if userRole != generic.RoleTutor && userRole != generic.RoleAdmin {
-		return nil, utils.ErrForbidden("Only tutors and administrators can upload files.", nil)
 	}
 
 	ext := strings.ToLower(filepath.Ext(cleanName))

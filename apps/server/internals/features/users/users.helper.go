@@ -6,6 +6,16 @@ import (
 	"time"
 )
 
+type UserListPayload struct {
+	Total int                `json:"total"`
+	Data  []UserListResponse `json:"data"`
+}
+
+type AdminProfileListPayload struct {
+	Total int                `json:"total"`
+	Data  []AdminProfileItem `json:"data"`
+}
+
 // ShouldRecordUserActivity debounces user activity logging in Redis with a 15-minute TTL
 // to eliminate repetitive write amplification on frequent logins/pings.
 func (a *App) ShouldRecordUserActivity(ctx context.Context, userID string) (bool, error) {

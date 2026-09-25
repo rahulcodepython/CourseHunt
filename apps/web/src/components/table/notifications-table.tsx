@@ -2,15 +2,15 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 
-import { DataTable } from "@/components/data-table";
+import { DataTable } from "@/components/table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Icon, type IconName } from "@/components/icon";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
+import { Icon, type IconName } from "@/components/common/icon";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
 import { useCursorFeed } from "@/hooks/use-cursor-feed";
 import { fetchNotifications } from "@/query-hooks/notifications.api";
 import { queryKeys } from "@/react-query/query-keys";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/utils/format";
 import type { Notification } from "@/schema/notifications.types";
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;

@@ -2,9 +2,9 @@
 
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink } from "@react-pdf/renderer";
 import type { Transaction } from "@/schema/transactions.types";
-import { formatDate, formatINR } from "@/lib/format";
+import { formatDate, formatINR } from "@/lib/utils/format";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 
 const styles = StyleSheet.create({
   page: {

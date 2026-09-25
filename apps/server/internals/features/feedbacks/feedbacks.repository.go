@@ -9,11 +9,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type FeedbackListPayload struct {
-	Total int        `json:"total"`
-	Data  []Feedback `json:"data"`
-}
-
 func (a *App) CreateRepository(ctx context.Context, userID, courseID string, req CreateFeedbackRequest) (*Feedback, error) {
 	var (
 		isEnrolled   bool

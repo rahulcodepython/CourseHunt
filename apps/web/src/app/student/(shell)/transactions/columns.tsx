@@ -1,10 +1,10 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import type { TableColumn } from "@/components/data-table";
+import type { TableColumn } from "@/components/table/data-table";
 import type { Transaction } from "@/schema/transactions.types";
-import { formatDateTime, formatINR, truncate } from "@/lib/format";
-import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
+import { formatDateTime, formatINR, truncate } from "@/lib/utils/format";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/common/status-badge";
 import { InvoiceDownloadButton } from "./invoice-pdf";
 
 const columnHelper = createColumnHelper<Transaction>();

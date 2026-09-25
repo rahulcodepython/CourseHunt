@@ -2,7 +2,7 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Faq } from "@/schema/faqs.types";
-import { RowActions, RowActionButton } from "@/components/row-actions";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
 
 const columnHelper = createColumnHelper<Faq>();
 

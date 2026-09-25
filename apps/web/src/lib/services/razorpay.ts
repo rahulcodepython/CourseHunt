@@ -1,6 +1,6 @@
 // Dynamically injects Razorpay's Checkout.js — loaded once, reused across
 
-import { RAZORPAY_SCRIPT_URL } from "@/lib/const";
+import { RAZORPAY_SCRIPT_URL } from "@/lib/constants/const";
 
 // checkout attempts within the same page session.
 export function loadRazorpayScript(): Promise<boolean> {

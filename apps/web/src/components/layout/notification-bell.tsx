@@ -9,13 +9,13 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import { useCursorFeed } from "@/hooks/use-cursor-feed";
 import { fetchNotifications } from "@/query-hooks/notifications.api";
 import { queryKeys } from "@/react-query/query-keys";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/utils/format";
 import useSession from "@/hooks/use-session";
-import { ROLES } from "@/lib/const";
+import { ROLES } from "@/lib/constants/const";
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 

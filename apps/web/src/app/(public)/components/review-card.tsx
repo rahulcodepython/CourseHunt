@@ -1,7 +1,7 @@
 import type { Feedback } from "@/schema/feedbacks.types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Icon } from "@/components/icon";
-import UserAvatar from "@/components/user-avatar";
+import { Icon } from "@/components/common/icon";
+import UserAvatar from "@/components/common/user-avatar";
 
 export function ReviewCard({
   feedback,

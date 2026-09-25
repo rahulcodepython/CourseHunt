@@ -4,13 +4,13 @@ import useSession from "@/hooks/use-session";
 import { Loader2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ROUTES, getDashboardURI } from "@/lib/const";
-import { buildRoutePermissionMap, isRouteAllowed } from "@/lib/permissions";
-import { isPublicPath } from "@/lib/public-routes";
+import { ROUTES, getDashboardURI } from "@/lib/constants/const";
+import { buildRoutePermissionMap, isRouteAllowed } from "@/lib/auth/permissions";
+import { isPublicPath } from "@/lib/auth/public-routes";
 import navAdminGroups from "@/config/nav-admin.json";
 import navTutorGroups from "@/config/nav-tutor.json";
 import navStudentGroups from "@/config/nav-student.json";
-import type { NavGroup } from "@/components/app-sidebar";
+import type { NavGroup } from "@/components/layout/app-sidebar";
 
 const routePermissionMap = {
   ...buildRoutePermissionMap(navAdminGroups as NavGroup[]),

@@ -4,7 +4,10 @@ export const API_CONFIG = {
 } as const;
 
 export const AUTH_CONFIG = {
-  DEFAULT_APP_URL: "http://localhost:3000",
+  DEFAULT_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",")
+    : ["http://localhost:3000"]) as string[],
 } as const;
 
 export const ERROR_MESSAGES = {

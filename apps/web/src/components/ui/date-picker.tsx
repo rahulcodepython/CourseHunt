@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 interface DatePickerProps {
   value: string;

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { usePaginatedMutation } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import { ListEnrollmentResponseZod, type ListEnrollmentResponse } from "@/schema/enrollments.types";
 import { PaginatedResponseZod, type PaginatedResponse } from "@/schema/common.types";
 

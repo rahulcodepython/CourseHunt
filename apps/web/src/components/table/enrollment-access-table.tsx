@@ -1,20 +1,20 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import type { TableColumn } from "@/components/data-table";
+import type { TableColumn } from "@/components/table/data-table";
 import type { ListEnrollmentResponse } from "@/schema/enrollments.types";
 import {
   useEnrollmentsQuery,
   useRevokeEnrollmentMutation,
   useRegainEnrollmentMutation,
 } from "@/query-hooks/enrollments.api";
-import { formatDate } from "@/lib/format";
-import { DataTable } from "@/components/data-table";
-import UserCell from "@/components/user-cell";
-import { Icon } from "@/components/icon";
-import { RowActions, RowActionButton } from "@/components/row-actions";
-import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
-import { ENROLLMENT_STATUS } from "@/lib/const";
+import { formatDate } from "@/lib/utils/format";
+import { DataTable } from "@/components/table/data-table";
+import UserCell from "@/components/table/user-cell";
+import { Icon } from "@/components/common/icon";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/common/status-badge";
+import { ENROLLMENT_STATUS } from "@/lib/constants/const";
 
 const columnHelper = createColumnHelper<ListEnrollmentResponse>();
 

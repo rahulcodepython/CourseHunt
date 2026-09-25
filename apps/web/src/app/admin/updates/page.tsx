@@ -9,12 +9,12 @@ import {
 } from "@/query-hooks/updates.api";
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import type { CourseUpdate } from "@/schema/updates.types";
-import { PageHeader } from "@/components/page-header";
-import { LoadingButton } from "@/components/loading-button";
-import { DataTable } from "@/components/data-table";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { FormDialog } from "@/components/form-dialog";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { LoadingButton } from "@/components/common/loading-button";
+import { DataTable } from "@/components/table/data-table";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import { FormDialog } from "@/components/dialogs/form-dialog";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,7 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 
 // Sentinel Select value standing in for "no course" (course_id omitted from
@@ -154,28 +155,21 @@ export default function UpdatesPage() {
 
   const updates: CourseUpdate[] = rawUpdates?.data?.data ?? [];
 
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<CourseUpdate | null>(null);
-  const [deleting, setDeleting] = React.useState<CourseUpdate | null>(null);
+  const {
+    dialogOpen,
+    setDialogOpen,
+    editing,
+    openCreate,
+    openEdit,
+    deleting,
+    setDeleting,
+    requestDelete,
+    confirmDelete,
+  } = useCrudDialogState<CourseUpdate>();
 
-  const openCreate = () => {
-    setEditing(null);
-    setDialogOpen(true);
-  };
+  const handleDelete = () => confirmDelete(deleteMutation.execute);
 
-  const openEdit = (u: CourseUpdate) => {
-    setEditing(u);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (deleting) {
-      await deleteMutation.execute(deleting.id);
-      setDeleting(null);
-    }
-  };
-
-  const columns = getColumns(openEdit, setDeleting);
+  const columns = getColumns(openEdit, requestDelete);
 
   return (
     <div className="space-y-6">

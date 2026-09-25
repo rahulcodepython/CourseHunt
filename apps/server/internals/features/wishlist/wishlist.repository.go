@@ -7,11 +7,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type WishlistPayload struct {
-	Total int            `json:"total"`
-	Data  []WishlistItem `json:"data"`
-}
-
 func (a *App) CreateRepository(ctx context.Context, userID, courseID string) (*WishlistItem, error) {
 	var count int
 	if err := a.DB.QueryRow(ctx, CountUserWishlist, userID).Scan(&count); err == nil && count >= 100 {

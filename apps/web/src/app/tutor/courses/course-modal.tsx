@@ -1,8 +1,8 @@
 "use client";
 
-import { FormDialog } from "@/components/form-dialog";
+import { FormDialog } from "@/components/dialogs/form-dialog";
 import type { Course } from "@/schema/courses.types";
-import { clearPendingUploads } from "@/lib/pending-uploads";
+import { clearPendingUploads } from "@/lib/utils/pending-uploads";
 import { CourseForm } from "./course-form";
 
 export function CourseModal({

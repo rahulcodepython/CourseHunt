@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useSimpleMutation } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import { PaginatedResponseZod } from "@/schema/common.types";
 import {
   TransactionZod,
@@ -16,6 +16,8 @@ import {
   TransactionStatusResponseZod,
   RefundTransactionZod,
 } from "@/schema/transactions.types";
+
+import { createListQuery } from "@/react-query/factory";
 
 export function useTransactionsQuery(
   params?: { page?: number; limit?: number },
@@ -30,29 +32,26 @@ export function useTransactionsQuery(
   );
 }
 
-export function useRefundsQuery(params?: {
+export const useRefundsQuery = createListQuery<{ id: string } & z.infer<typeof RefundTransactionZod>, {
   page?: number;
   limit?: number;
   status?: string;
   user_id?: string;
   course_id?: string;
-}) {
-  return useAppQuery(queryKeys.refunds(params as Record<string, string | number>), () =>
-    apiRequest(
-      { url: `${API_ENDPOINTS.ADMIN_TRANSACTIONS}/refunds`, method: "GET", params: compactParams(params) },
-      PaginatedResponseZod(RefundTransactionZod),
-    ),
-  );
-}
+}>(
+  `${API_ENDPOINTS.ADMIN_TRANSACTIONS}/refunds`,
+  (params) => queryKeys.refunds(params as Record<string, string | number>),
+  RefundTransactionZod,
+);
 
-export function useMyRefundsQuery(params?: { page?: number; limit?: number }) {
-  return useAppQuery(queryKeys.myRefunds(params as Record<string, string | number>), () =>
-    apiRequest(
-      { url: `${API_ENDPOINTS.TRANSACTIONS}/refunds/me`, method: "GET", params: compactParams(params) },
-      PaginatedResponseZod(RefundTransactionZod),
-    ),
-  );
-}
+export const useMyRefundsQuery = createListQuery<
+  { id: string } & z.infer<typeof RefundTransactionZod>,
+  { page?: number; limit?: number }
+>(
+  `${API_ENDPOINTS.TRANSACTIONS}/refunds/me`,
+  (params) => queryKeys.myRefunds(params as Record<string, string | number>),
+  RefundTransactionZod,
+);
 
 export function useCheckoutCourseQuery(courseId: string) {
   return useAppQuery(queryKeys.transactionsCheckout(courseId), () =>

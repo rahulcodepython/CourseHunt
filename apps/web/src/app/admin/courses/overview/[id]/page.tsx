@@ -16,10 +16,10 @@ import {
 } from "recharts";
 
 import { useManageCourseQuery } from "@/query-hooks/courses.api";
-import { PageHeader } from "@/components/page-header";
-import { Loading } from "@/components/loading";
-import { StatCard } from "@/components/stat-card";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { Loading } from "@/components/common/loading";
+import { StatCard } from "@/components/common/stat-card";
+import { Icon } from "@/components/common/icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

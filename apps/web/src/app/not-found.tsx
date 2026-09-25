@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
-import { ROUTES } from "@/lib/const";
+import { Icon } from "@/components/common/icon";
+import { ROUTES } from "@/lib/constants/const";
 
 export default function NotFound() {
   return (

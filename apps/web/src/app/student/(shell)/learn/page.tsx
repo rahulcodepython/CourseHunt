@@ -2,8 +2,8 @@
 
 import { useEnrolledCoursesQuery } from "@/query-hooks/courses.api";
 import type { EnrolledCourseResponse } from "@/schema/courses.types";
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
 import { columns } from "./columns";
 
 export default function StudentLearnPage() {

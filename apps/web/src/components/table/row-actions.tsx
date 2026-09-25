@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Icon, type IconName } from "@/components/icon";
-import { cn } from "@/lib/utils";
+import { Icon, type IconName } from "@/components/common/icon";
+import { cn } from "@/lib/utils/utils";
 
 /** Right-aligned row of icon action buttons for a DataTable "actions" column. */
 export function RowActions({ children }: { children: React.ReactNode }) {

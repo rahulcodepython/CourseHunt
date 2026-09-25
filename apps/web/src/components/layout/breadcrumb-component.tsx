@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { usePathname } from "next/navigation";
 import { useBreadcrumbStore } from "@/store/breadcrumb.store";
-import { ROUTES } from "@/lib/const";
+import { ROUTES } from "@/lib/constants/const";
 
 export default function BreadcrumbComponent() {
   const items = useBreadcrumbStore((s) => s.items);

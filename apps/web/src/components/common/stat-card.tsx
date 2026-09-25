@@ -1,6 +1,6 @@
-import { Icon, type IconName } from "@/components/icon";
+import { Icon, type IconName } from "@/components/common/icon";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 interface StatCardProps {
   title: string;

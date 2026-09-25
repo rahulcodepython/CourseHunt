@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { LoadingButton } from "@/components/loading-button";
-import FileUpload from "@/components/file-upload";
+import { LoadingButton } from "@/components/common/loading-button";
+import FileUpload from "@/components/common/file-upload";
 import {
   Select,
   SelectContent,
@@ -24,7 +24,7 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { flushPendingUploads } from "@/lib/pending-uploads";
+import { flushPendingUploads } from "@/lib/utils/pending-uploads";
 
 const NO_CATEGORY = "none";
 

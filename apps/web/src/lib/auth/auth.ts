@@ -1,12 +1,12 @@
-import { db } from "@/lib/db";
+import { db } from "@/lib/services/db";
 import { kyselyAdapter } from "@better-auth/kysely-adapter";
 import { betterAuth } from "better-auth";
 import { jwt, admin, emailOTP, twoFactor, customSession } from "better-auth/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
-import { ROLES } from "@/lib/const";
-import { getRolesAndPermissions, markPasswordChanged } from "@/lib/auth-db";
-import { sendOTPEmail } from "@/lib/mailer";
-import type { AuthUser } from "@/lib/auth.types";
+import { ROLES } from "@/lib/constants/const";
+import { getRolesAndPermissions, markPasswordChanged } from "@/lib/auth/auth-db";
+import { sendOTPEmail } from "@/lib/services/mailer";
+import type { AuthUser } from "@/lib/auth/auth.types";
 
 const AUTH_SECRET = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
 

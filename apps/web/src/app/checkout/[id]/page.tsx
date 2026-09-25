@@ -10,16 +10,16 @@ import { useInitiateTransactionMutation } from "@/query-hooks/transactions.api";
 import { useEnrollFreeMutation } from "@/query-hooks/courses.api";
 import { useCheckCouponQuery } from "@/query-hooks/coupons.api";
 import useSession from "@/hooks/use-session";
-import { loadRazorpayScript } from "@/lib/razorpay";
-import { PAYMENT_CONFIG, ROUTES } from "@/lib/const";
-import { formatINR } from "@/lib/format";
+import { loadRazorpayScript } from "@/lib/services/razorpay";
+import { PAYMENT_CONFIG, ROUTES } from "@/lib/constants/const";
+import { formatINR } from "@/lib/utils/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Icon } from "@/components/icon";
-import { Loading } from "@/components/loading";
-import { LoadingButton } from "@/components/loading-button";
+import { Icon } from "@/components/common/icon";
+import { Loading } from "@/components/common/loading";
+import { LoadingButton } from "@/components/common/loading-button";
 
 export default function CheckoutPage() {
   const { id } = useParams<{ id: string }>();

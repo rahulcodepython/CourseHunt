@@ -13,3 +13,18 @@ type CourseFileCleanup struct {
 	OldImageURL        *string
 	OldPreviewVideoURL *string
 }
+
+type EnrolledListPayload struct {
+	Total int                      `json:"total"`
+	Data  []EnrolledCourseResponse `json:"data"`
+}
+
+type PublicListPayload struct {
+	Total int                    `json:"total"`
+	Data  []CoursePublicResponse `json:"data"`
+}
+
+type ManageListPayload struct {
+	Total int      `json:"total"`
+	Data  []Course `json:"data"`
+}

@@ -7,11 +7,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type updatesPayload struct {
-	Total int            `json:"total"`
-	Data  []CourseUpdate `json:"data"`
-}
-
 func (a *App) AdminListRepository(ctx context.Context, page, limit int) ([]CourseUpdate, int, error) {
 	offset := (page - 1) * limit
 	query := BuildListUpdatesQuery(DefaultUpdatesWhere)

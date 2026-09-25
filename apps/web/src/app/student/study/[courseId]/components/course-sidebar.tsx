@@ -11,10 +11,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
-import { Icon, type IconName } from "@/components/icon";
-import { LESSON_TYPE } from "@/lib/const";
-import { formatDuration } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { Icon, type IconName } from "@/components/common/icon";
+import { LESSON_TYPE } from "@/lib/constants/const";
+import { formatDuration } from "@/lib/utils/format";
+import { cn } from "@/lib/utils/utils";
 
 const LESSON_TYPE_ICON: Record<string, IconName> = {
   [LESSON_TYPE.VIDEO]: "video",

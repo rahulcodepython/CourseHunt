@@ -9,7 +9,7 @@ import {
   getPaginationRowModel,
   getExpandedRowModel,
   flexRender,
-  type ColumnDef,
+  type Table as TanStackTable,
   type SortingState,
   type ColumnFiltersState,
   type VisibilityState,
@@ -31,11 +31,16 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Icon, type IconName } from "@/components/icon";
-import { DataTablePagination } from "@/components/data-table-pagination";
-import { CopyableCell } from "@/components/copyable-cell";
-import { ExportTableButton } from "@/components/export-table-button";
+import { Icon, type IconName } from "@/components/common/icon";
 import { useDebounce } from "@/hooks/use-debounce";
+import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { FormDialog } from "@/components/dialogs/form-dialog";
+import { DialogFooter } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { LoadingButton } from "@/components/common/loading-button";
+import { exportToCSV, exportToXLSX } from "@/lib/utils/csv";
 
 export type TableColumns<TData> = Parameters<typeof useReactTable<TData>>[0]["columns"];
 export type TableColumn<TData> = TableColumns<TData>[number];
@@ -60,34 +65,171 @@ export interface DataTableProps<TData> {
   getSubRows?: (row: TData) => TData[] | undefined;
 }
 
+/** Wraps a DataTable cell's content with click-to-copy and tooltip preview. */
+function CopyableCell({ children }: { children: React.ReactNode }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [text, setText] = React.useState("");
+
+  React.useLayoutEffect(() => {
+    setText(ref.current?.textContent?.trim() ?? "");
+  });
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("button, a, input, [role='button'], [role='menuitem']"))
+      return;
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
+
+  const content = (
+    <div ref={ref} onClick={handleClick} className={text ? "cursor-pointer" : undefined}>
+      {children}
+    </div>
+  );
+
+  if (!text) return content;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent>{text}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+type ExportFormat = "csv" | "xlsx";
+
+/** Exports displayed DataTable rows as CSV or XLSX. */
+function ExportTableButton({
+  containerRef,
+  filename,
+}: {
+  containerRef: React.RefObject<HTMLElement | null>;
+  filename: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [format, setFormat] = React.useState<ExportFormat>("csv");
+  const [isExporting, setIsExporting] = React.useState(false);
+
+  const handleExport = async () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const headers = Array.from(container.querySelectorAll("thead th")).map(
+      (th) => th.textContent?.trim() ?? "",
+    );
+    const rows = Array.from(container.querySelectorAll("tbody tr")).map((tr) =>
+      Array.from(tr.querySelectorAll("td")).map((td) => td.textContent?.trim() ?? ""),
+    );
+
+    setIsExporting(true);
+    try {
+      if (format === "csv") {
+        exportToCSV(filename, headers, rows);
+      } else {
+        await exportToXLSX(filename, headers, rows);
+      }
+      setOpen(false);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <>
+      <Button variant="outline" size="sm" className="flex gap-2" onClick={() => setOpen(true)}>
+        <Icon name="download" className="size-4" />
+        <span>Export</span>
+      </Button>
+      <FormDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Export Table"
+        description="Choose a file format to download the currently displayed rows."
+      >
+        <RadioGroup
+          value={format}
+          onValueChange={(v) => setFormat(v as ExportFormat)}
+          className="py-2"
+        >
+          <div className="flex items-center gap-2">
+            <RadioGroupItem value="csv" id="export-format-csv" />
+            <Label htmlFor="export-format-csv">CSV (.csv)</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <RadioGroupItem value="xlsx" id="export-format-xlsx" />
+            <Label htmlFor="export-format-xlsx">Excel (.xlsx)</Label>
+          </div>
+        </RadioGroup>
+        <DialogFooter className="mt-2">
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={isExporting}>
+            Cancel
+          </Button>
+          <LoadingButton onClick={handleExport} loading={isExporting}>
+            Download
+          </LoadingButton>
+        </DialogFooter>
+      </FormDialog>
+    </>
+  );
+}
+
+/** Row-count status line for DataTable. */
+function DataTablePagination<TData>({
+  table,
+  visibleCount,
+}: {
+  table: TanStackTable<TData>;
+  visibleCount: number;
+}) {
+  const total = table.getFilteredRowModel().rows.length;
+  if (total === 0) return null;
+
+  return (
+    <div className="flex items-center justify-center px-4 py-3">
+      <p className="text-xs text-muted-foreground">
+        Showing <span className="font-medium text-foreground">{Math.min(visibleCount, total)}</span>{" "}
+        of <span className="font-medium text-foreground">{total}</span> results
+      </p>
+    </div>
+  );
+}
+
 export function DataTable<TData>({
   columns,
   data,
-  searchPlaceholder,
+  searchPlaceholder = "Filter records...",
   searchColumnKey,
   showColumnToggle = true,
   showPagination = true,
   pageSize = 10,
   emptyIcon = "file-text",
-  emptyText = "No items found",
+  emptyText = "No results found",
   isLoading = false,
   loadingText = "Loading...",
   toolbarActions,
-  exportFilename = "export",
+  exportFilename,
   getSubRows,
 }: DataTableProps<TData>) {
-  const tableContainerRef = React.useRef<HTMLDivElement>(null);
-  const resolvedEmptyText = isLoading ? loadingText : emptyText;
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
 
-  // The input updates instantly; the table's filter state (which drives
-  // the actual re-filter/re-render) only picks up the debounced value.
-  const [searchInput, setSearchInput] = React.useState("");
-  const debouncedSearch = useDebounce(searchInput, 300);
+  const [filterInput, setFilterInput] = React.useState("");
+  const debouncedFilter = useDebounce(filterInput, 300);
+
+  React.useEffect(() => {
+    if (searchColumnKey) {
+      table.getColumn(searchColumnKey)?.setFilterValue(debouncedFilter);
+    } else {
+      setGlobalFilter(debouncedFilter);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedFilter, searchColumnKey]);
 
   const table = useReactTable({
     data,
@@ -105,64 +247,49 @@ export function DataTable<TData>({
     onGlobalFilterChange: setGlobalFilter,
     onExpandedChange: setExpanded,
     getSubRows,
-    paginateExpandedRows: false,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     initialState: {
-      pagination: {
-        pageSize,
-      },
+      pagination: { pageSize },
     },
   });
 
-  React.useEffect(() => {
-    if (searchColumnKey) {
-      table.getColumn(searchColumnKey)?.setFilterValue(debouncedSearch);
-    } else {
-      setGlobalFilter(debouncedSearch);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, searchColumnKey]);
-
-  // Cumulative "Load More" reveal instead of a page switcher: every row up
-  // through the current page is rendered at once, so pageIndex/pageSize
-  // stay the source of truth (sorting/filtering untouched) while the
-  // visible slice only grows.
-  const { pageIndex, pageSize: currentPageSize } = table.getState().pagination;
-  const filteredRows = table.getPrePaginationRowModel().rows;
-  const visibleCount = Math.min((pageIndex + 1) * currentPageSize, filteredRows.length);
-  const visibleRows = filteredRows.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredRows.length;
-
-  const showSearch = Boolean(searchPlaceholder || searchColumnKey);
-  const showHeaderBar = showSearch || showColumnToggle || toolbarActions || hasMore;
+  const pageIndex = table.getState().pagination.pageIndex;
+  const canLoadMore = table.getCanNextPage();
+  const visibleRows = table.getRowModel().rows;
+  const visibleCount = (pageIndex + 1) * pageSize;
+  const resolvedEmptyText = isLoading ? loadingText : emptyText;
 
   return (
     <div className="space-y-4">
-      {showHeaderBar && (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {showSearch && (
-            <div className="relative max-w-sm flex-1">
-              <Icon
-                name="search"
-                className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-              />
-              <Input
-                placeholder={searchPlaceholder ?? "Search..."}
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 ml-auto">
+      {(searchPlaceholder || showColumnToggle || toolbarActions || exportFilename) && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-1 items-center gap-2">
+            {searchPlaceholder && (
+              <div className="relative max-w-sm flex-1">
+                <Icon
+                  name="search"
+                  className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  placeholder={searchPlaceholder}
+                  value={filterInput}
+                  onChange={(e) => setFilterInput(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            )}
             {toolbarActions}
-            <ExportTableButton containerRef={tableContainerRef} filename={exportFilename} />
-            {hasMore && (
+          </div>
+
+          <div className="flex items-center gap-2">
+            {exportFilename && (
+              <ExportTableButton containerRef={tableContainerRef} filename={exportFilename} />
+            )}
+            {showPagination && canLoadMore && (
               <Button
                 variant="outline"
                 size="sm"

@@ -8,11 +8,11 @@ import { useCourseStudyQuery } from "@/query-hooks/courses.api";
 import { useStudyLessonContentQuery, useCompleteLessonMutation } from "@/query-hooks/lessons.api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
-import { Loading } from "@/components/loading";
-import { LESSON_TYPE, ROUTES } from "@/lib/const";
+import { Icon } from "@/components/common/icon";
+import { Loading } from "@/components/common/loading";
+import { LESSON_TYPE, ROUTES } from "@/lib/constants/const";
 import { LessonVideoPlayer } from "./components/lesson-video-player";
-import { MarkdownContent } from "@/components/markdown-content";
+import { MarkdownContent } from "@/components/common/markdown-content";
 import { QuizPlayer } from "./components/quiz/quiz-player";
 import { LessonTabs } from "./components/lesson-tabs";
 

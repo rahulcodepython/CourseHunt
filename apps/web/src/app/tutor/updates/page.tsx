@@ -9,12 +9,12 @@ import {
 } from "@/query-hooks/updates.api";
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import type { CourseUpdate } from "@/schema/updates.types";
-import { PageHeader } from "@/components/page-header";
-import { LoadingButton } from "@/components/loading-button";
-import { DataTable } from "@/components/data-table";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { FormDialog } from "@/components/form-dialog";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { LoadingButton } from "@/components/common/loading-button";
+import { DataTable } from "@/components/table/data-table";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import { FormDialog } from "@/components/dialogs/form-dialog";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";

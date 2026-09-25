@@ -6,11 +6,11 @@ import { useCertificatesQuery, useClaimCertificateMutation } from "@/query-hooks
 import { useEnrolledCoursesQuery } from "@/query-hooks/courses.api";
 import useSession from "@/hooks/use-session";
 import type { Certificate } from "@/schema/certificate.types";
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import { getColumns, type ExtendedCertificate } from "./columns";
 
 export default function StudentCertificatesPage() {

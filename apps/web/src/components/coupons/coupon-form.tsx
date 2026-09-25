@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { LoadingButton } from "@/components/loading-button";
+import { LoadingButton } from "@/components/common/loading-button";
 import {
   Select,
   SelectContent,

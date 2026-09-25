@@ -6,7 +6,7 @@ import { useCoursesQuery } from "@/query-hooks/courses.api";
 import { usePinnedFeedbacksQuery } from "@/query-hooks/feedbacks.api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import { CourseCard } from "./components/course-card";
 import { ReviewCard } from "./components/review-card";
 

@@ -2,11 +2,11 @@
 import * as React from "react";
 
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
 import type { Course } from "@/schema/courses.types";
 import { getColumns } from "./columns";
-import { CourseDetailsModal } from "@/components/course-details-modal";
+import { CourseDetailsModal } from "@/components/dialogs/course-details-modal";
 
 export default function CoursesPage() {
   const { data: rawCourses, isLoading } = useManageCoursesQuery();

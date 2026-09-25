@@ -12,10 +12,10 @@ import {
 } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import type { Certificate } from "@/schema/certificate.types";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/utils/format";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
-import { AUTH_CONFIG, CERTIFICATE_SIGNATURE_FILENAME } from "@/lib/const";
+import { Icon } from "@/components/common/icon";
+import { AUTH_CONFIG, CERTIFICATE_SIGNATURE_FILENAME } from "@/lib/constants/const";
 
 const styles = StyleSheet.create({
   page: {
@@ -177,7 +177,7 @@ export function CertificateDownloadButton({
   const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
-    const origin = process.env.NEXT_PUBLIC_APP_URL ?? AUTH_CONFIG.DEFAULT_APP_URL;
+    const origin = AUTH_CONFIG.DEFAULT_APP_URL;
     const verifyUrl = `${origin}/certificates/verify/${certificate.id}`;
     QRCode.toDataURL(verifyUrl, { margin: 1, width: 256 })
       .then(setQrDataUrl)

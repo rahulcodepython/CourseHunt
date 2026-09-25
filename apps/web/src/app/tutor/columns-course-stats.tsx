@@ -2,7 +2,7 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import type { TutorCourseStat } from "@/schema/dashboard.types";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 
 const columnHelper = createColumnHelper<TutorCourseStat>();
 

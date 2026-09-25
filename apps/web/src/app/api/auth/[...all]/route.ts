@@ -1,6 +1,6 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { toNextJsHandler } from "better-auth/next-js";
-import { AUTH_CONFIG } from "@/lib/const";
+import { AUTH_CONFIG } from "@/lib/constants/const";
 
 export const { GET, POST } = toNextJsHandler(auth);
 
@@ -8,12 +8,7 @@ export const { GET, POST } = toNextJsHandler(auth);
 export async function OPTIONS(req: Request) {
   const origin = req.headers.get("origin") || "";
 
-  // Check if origin is allowed
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(",")
-    : [AUTH_CONFIG.DEFAULT_APP_URL, "http://localhost:3000"];
-
-  const allowed = allowedOrigins.includes(origin);
+  const allowed = AUTH_CONFIG.ALLOWED_ORIGINS.includes(origin);
 
   return new Response(null, {
     status: 204,

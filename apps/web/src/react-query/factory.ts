@@ -16,12 +16,17 @@ import { PaginatedResponseZod } from "@/schema/common.types";
  */
 export function createListQuery<
   T,
-  P extends Record<string, string | number> = Record<string, string | number>,
->(endpoint: string, queryKeyFn: (params?: P) => QueryKey, itemSchema: z.ZodType<T>) {
+  P extends Record<string, string | number | boolean | null | undefined> = Record<string, string | number | boolean | null | undefined>,
+>(
+  endpoint: string | ((params?: P) => string),
+  queryKeyFn: (params?: P) => QueryKey,
+  itemSchema: z.ZodType<T>,
+) {
   return function useListQuery(params?: P) {
+    const url = typeof endpoint === "function" ? endpoint(params) : endpoint;
     return useAppQuery(queryKeyFn(params), () =>
       apiRequest(
-        { url: endpoint, method: "GET", params: compactParams(params) },
+        { url, method: "GET", params: compactParams(params) },
         PaginatedResponseZod(itemSchema),
       ),
     );

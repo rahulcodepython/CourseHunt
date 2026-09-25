@@ -8,11 +8,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type AdminProfileListPayload struct {
-	Total int                `json:"total"`
-	Data  []AdminProfileItem `json:"data"`
-}
-
 func (a *App) ReadProfileRepository(ctx context.Context, userID string) (*Profile, error) {
 	return postgres.QueryJSON[Profile](ctx, a.DB, ReadProfile, userID)
 }

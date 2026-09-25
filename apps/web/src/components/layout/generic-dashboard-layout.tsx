@@ -3,16 +3,16 @@
 import { useTheme } from "next-themes";
 import * as React from "react";
 
-import { AppSidebar, type NavGroup } from "@/components/app-sidebar";
-import BreadcrumbComponent from "@/components/breadcrumb-component";
-import { Icon } from "@/components/icon";
+import { AppSidebar, type NavGroup } from "@/components/layout/app-sidebar";
+import BreadcrumbComponent from "@/components/layout/breadcrumb-component";
+import { Icon } from "@/components/common/icon";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { filterNavGroups } from "@/lib/permissions";
+import { filterNavGroups } from "@/lib/auth/permissions";
 import { useSessionStore } from "@/store/session.store";
-import { UserNav } from "@/components/user-nav";
-import { NotificationBell } from "@/components/notification-bell";
+import { UserNav } from "@/components/layout/user-nav";
+import { NotificationBell } from "@/components/layout/notification-bell";
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();

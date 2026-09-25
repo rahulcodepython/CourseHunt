@@ -3,118 +3,10 @@ package postgres
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
-	"log/slog"
-	"time"
 
-	"coursehunt/server/internals/config"
-	"coursehunt/server/internals/pkg/retry"
-
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-// Standard Domain Errors for HTTP Handlers / Controllers
-var (
-	ErrNotFound     = errors.New("requested resource not found")
-	ErrForbidden    = errors.New("access denied for entity")
-	ErrInvalidState = errors.New("invalid state machine transition")
-	ErrConflict     = errors.New("resource conflict or constraint violation")
-	ErrInternalDB   = errors.New("unexpected database error")
-)
-
-// Connect creates and returns a configured pgx connection pool.
-func Connect(cfg *config.Config) *pgxpool.Pool {
-	ctx := context.Background()
-
-	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
-	if err != nil {
-		log.Fatalf("Failed to parse database configuration: %v", err)
-	}
-
-	poolConfig.MaxConns = int32(cfg.DBMaxOpenConns)
-	if cfg.DBMaxIdleConns > 0 {
-		poolConfig.MinConns = int32(cfg.DBMaxIdleConns)
-	}
-	poolConfig.MaxConnLifetime = time.Duration(cfg.DBConnMaxLifetime) * time.Minute
-	poolConfig.MaxConnIdleTime = time.Duration(cfg.DBConnMaxIdleTime) * time.Minute
-	poolConfig.HealthCheckPeriod = 1 * time.Minute
-
-	if poolConfig.ConnConfig.RuntimeParams == nil {
-		poolConfig.ConnConfig.RuntimeParams = make(map[string]string)
-	}
-	stmtTimeoutMs := 15000
-	if cfg.DBStatementTimeoutSec > 0 {
-		stmtTimeoutMs = cfg.DBStatementTimeoutSec * 1000
-	}
-	poolConfig.ConnConfig.RuntimeParams["statement_timeout"] = fmt.Sprintf("%d", stmtTimeoutMs)
-
-	const maxAttempts = 5
-	var pool *pgxpool.Pool
-	connectErr := retry.Connect("db", maxAttempts, 2*time.Second, func() error {
-		p, err := pgxpool.NewWithConfig(ctx, poolConfig)
-		if err != nil {
-			return err
-		}
-		if err := p.Ping(ctx); err != nil {
-			p.Close()
-			return err
-		}
-		pool = p
-		return nil
-	})
-	if connectErr != nil {
-		log.Fatalf("Failed to connect to database after %d attempts: %v", maxAttempts, connectErr)
-	}
-
-	slog.Info("connected to postgres",
-		"max_conns", cfg.DBMaxOpenConns, "min_conns", cfg.DBMaxIdleConns,
-		"max_lifetime_min", cfg.DBConnMaxLifetime, "max_idle_min", cfg.DBConnMaxIdleTime)
-
-	return pool
-}
-
-// Close closes the pgx connection pool cleanly.
-func Close(pool *pgxpool.Pool) {
-	if pool != nil {
-		pool.Close()
-		slog.Info("postgres connection pool closed")
-	}
-}
-
-// MapPgError maps PostgreSQL SQLSTATE error codes to standardized domain errors.
-func MapPgError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrNotFound
-	}
-
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		switch pgErr.Code {
-		case "02000": // NO DATA FOUND
-			return fmt.Errorf("%w: %s", ErrNotFound, pgErr.Message)
-		case "42501": // INSUFFICIENT PRIVILEGE / FORBIDDEN
-			return fmt.Errorf("%w: %s", ErrForbidden, pgErr.Message)
-		case "23505": // UNIQUE VIOLATION / CONFLICT
-			return fmt.Errorf("%w: %s", ErrConflict, pgErr.Message)
-		case "P0001", "P0002": // CUSTOM DOMAIN EXCEPTION / UNPROCESSABLE
-			return fmt.Errorf("%w: %s", ErrInvalidState, pgErr.Message)
-		case "57014": // QUERY CANCELED / STATEMENT TIMEOUT
-			return fmt.Errorf("%w: %s", context.DeadlineExceeded, pgErr.Message)
-		default:
-			return fmt.Errorf("%w [SQLSTATE %s]: %s", ErrInternalDB, pgErr.Code, pgErr.Message)
-		}
-	}
-
-	return err
-}
 
 // QueryJSON executes a query that returns a single JSONB document
 // and deserializes it directly into the domain type T.
@@ -161,34 +53,6 @@ func Exec(
 ) error {
 	_, err := pool.Exec(ctx, sqlQuery, args...)
 	return MapPgError(err)
-}
-
-// ExecuteDBFunction is an alias for QueryJSON for backward compatibility.
-func ExecuteDBFunction[T interface{}](
-	ctx context.Context,
-	pool *pgxpool.Pool,
-	sqlQuery string,
-	args ...interface{},
-) (*T, error) {
-	return QueryJSON[T](ctx, pool, sqlQuery, args...)
-}
-
-// WithTx runs fn inside a database transaction managed by pgxpool.
-func WithTx(ctx context.Context, pool *pgxpool.Pool, fn func(tx pgx.Tx) error) error {
-	tx, err := pool.Begin(ctx)
-	if err != nil {
-		return MapPgError(err)
-	}
-	defer tx.Rollback(ctx) //nolint:errcheck // Rollback after Commit is a no-op
-
-	if err := fn(tx); err != nil {
-		return MapPgError(err)
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return MapPgError(err)
-	}
-	return nil
 }
 
 // StatusErrorMap maps non-success status codes (e.g., 0, 1, 3) to domain errors.

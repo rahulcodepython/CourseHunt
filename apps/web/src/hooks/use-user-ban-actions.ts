@@ -1,8 +1,8 @@
 "use client";
 
 import { useSessionStore } from "@/store/session.store";
-import { hasPermission } from "@/lib/permissions";
-import { PERMISSIONS } from "@/lib/const";
+import { hasPermission } from "@/lib/auth/permissions";
+import { PERMISSIONS } from "@/lib/constants/const";
 import { useBanUserMutation, useUnbanUserMutation } from "@/query-hooks/users.api";
 
 /** Shared ban/unban wiring for the users, tutors, and admins tables. */

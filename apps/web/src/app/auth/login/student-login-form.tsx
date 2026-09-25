@@ -5,14 +5,14 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import authClient from "@/lib/auth-client";
+import authClient from "@/lib/auth/auth-client";
 import useSession from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
-import { LoadingButton } from "@/components/loading-button";
+import { LoadingButton } from "@/components/common/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { getDashboardURI } from "@/lib/const";
+import { getDashboardURI } from "@/lib/constants/const";
 
 const inputClass =
   "border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30";

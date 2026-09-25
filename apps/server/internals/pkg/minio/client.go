@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -18,9 +17,7 @@ import (
 
 // Storage implements object storage on top of MinIO. Callers get one
 // instance from Connect and pass it into every feature that needs it
-// (upload, courses, lessons) via constructor injection — there is no
-// package-level singleton, so a feature's dependency on storage is visible
-// in its constructor signature instead of a hidden global read.
+// (upload, courses, lessons) via constructor injection.
 type Storage struct {
 	mu sync.RWMutex
 
@@ -41,14 +38,11 @@ type Storage struct {
 // minioRegion is fixed rather than auto-discovered: without it, the SDK
 // issues a live GetBucketLocation call the first time a client signs
 // anything, using that client's own configured endpoint. publicClient is
-// only ever reachable from the browser (that's the whole point of it), so
-// from inside the server that lookup would fail outright — pinning the
-// region up front means presigned-URL generation never needs network I/O.
+// only ever reachable from the browser, so region pinning prevents network I/O.
 const minioRegion = "us-east-1"
 
 // publicReadPolicyTemplate allows anonymous GetObject so direct public URLs
-// persisted in the DB (GetPublicURL) can be fetched by the browser without
-// credentials. %s is substituted with the bucket name.
+// persisted in the DB (GetPublicURL) can be fetched by the browser without credentials.
 const publicReadPolicyTemplate = `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::%s/*"]}]}`
 
 // Connect initializes the MinIO client with retries and ensures both private
@@ -81,6 +75,7 @@ func (s *Storage) init() error {
 	}
 
 	publicEndpoint, publicSecure := publicEndpointFrom(cfg.MinioBaseURL, cfg.MinioEnd, cfg.MinioSecure)
+
 	publicClient, err := minio.New(publicEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.MinioAccess, cfg.MinioSecret, ""),
 		Secure: publicSecure,
@@ -152,8 +147,7 @@ func publicEndpointFrom(baseURL, fallbackEndpoint string, fallbackSecure bool) (
 	return u.Host, u.Scheme == "https"
 }
 
-// Ping checks health status of the MinIO connection, attempting
-// auto-reconnect if needed.
+// Ping checks health status of the MinIO connection, attempting auto-reconnect if needed.
 func (s *Storage) Ping(ctx context.Context) error {
 	s.mu.RLock()
 	client, bucket := s.client, s.bucket
@@ -183,178 +177,4 @@ func (s *Storage) Ping(ctx context.Context) error {
 		return fmt.Errorf("minio bucket check failed: %w", err)
 	}
 	return nil
-}
-
-// GeneratePresignedStreamingURL generates a short-lived presigned URL for private video streaming
-// enforcing inline content disposition to support browser byte-range seek requests.
-func (s *Storage) GeneratePresignedStreamingURL(ctx context.Context, objectKey string, expires time.Duration) (string, error) {
-	s.mu.RLock()
-	client := s.publicClient
-	bucket := s.bucket
-	baseURL := s.baseURL
-	s.mu.RUnlock()
-
-	if client == nil {
-		return "", fmt.Errorf("storage client is not initialized")
-	}
-
-	key := s.CleanKey(objectKey, baseURL)
-	if key == "" {
-		return "", fmt.Errorf("empty object key")
-	}
-
-	if expires <= 0 {
-		expires = 15 * time.Minute
-	}
-
-	reqParams := make(url.Values)
-	// Enforce byte-range requests for seamless video seek operations
-	reqParams.Set("response-content-disposition", "inline")
-
-	u, err := client.PresignedGetObject(ctx, bucket, key, expires, reqParams)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate secure streaming url: %w", err)
-	}
-	return u.String(), nil
-}
-
-// GeneratePresignedDownloadURL generates a secure download URL with attachment disposition.
-func (s *Storage) GeneratePresignedDownloadURL(ctx context.Context, objectKey string, expires time.Duration) (string, error) {
-	s.mu.RLock()
-	client := s.publicClient
-	bucket := s.bucket
-	baseURL := s.baseURL
-	s.mu.RUnlock()
-
-	if client == nil {
-		return "", fmt.Errorf("storage client is not initialized")
-	}
-
-	key := s.CleanKey(objectKey, baseURL)
-	if key == "" {
-		return "", fmt.Errorf("empty object key")
-	}
-
-	if expires <= 0 {
-		expires = 15 * time.Minute
-	}
-
-	reqParams := make(url.Values)
-	reqParams.Set("response-content-disposition", "attachment")
-
-	u, err := client.PresignedGetObject(ctx, bucket, key, expires, reqParams)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate secure download url: %w", err)
-	}
-	return u.String(), nil
-}
-
-// GetSignedUploadURL generates a signed PUT URL for uploading an object, valid for the specified duration.
-func (s *Storage) GetSignedUploadURL(ctx context.Context, objectName string, expires time.Duration) (string, error) {
-	s.mu.RLock()
-	client := s.publicClient
-	bucket := s.bucket
-	s.mu.RUnlock()
-
-	if client == nil {
-		return "", fmt.Errorf("storage client is not initialized")
-	}
-	if objectName == "" {
-		return "", fmt.Errorf("object name cannot be empty")
-	}
-
-	if expires <= 0 {
-		expires = 15 * time.Minute
-	}
-
-	signedURL, err := client.PresignedPutObject(ctx, bucket, objectName, expires)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate signed upload URL: %w", err)
-	}
-
-	return signedURL.String(), nil
-}
-
-// GetSignedURL generates a signed URL for uploading an object, valid for 15 minutes.
-func (s *Storage) GetSignedURL(ctx context.Context, objectName string) (string, error) {
-	return s.GetSignedUploadURL(ctx, objectName, 15*time.Minute)
-}
-
-// GetPublicURL returns the public URL for a given object name in the public bucket.
-func (s *Storage) GetPublicURL(objectName string) string {
-	s.mu.RLock()
-	baseURL := s.publicBaseURL
-	if baseURL == "" {
-		baseURL = s.baseURL
-	}
-	s.mu.RUnlock()
-	return fmt.Sprintf("%s/%s", baseURL, objectName)
-}
-
-// CleanKey extracts the bucket-relative object key from a full URL or key string.
-func (s *Storage) CleanKey(objectKey, baseURL string) string {
-	key := objectKey
-	if strings.HasPrefix(key, baseURL+"/") {
-		key = strings.TrimPrefix(key, baseURL+"/")
-	} else if u, err := url.Parse(key); err == nil && u.Path != "" {
-		trimmed := strings.TrimPrefix(u.Path, "/")
-		parts := strings.SplitN(trimmed, "/", 2)
-		if len(parts) == 2 {
-			key = parts[1]
-		}
-	}
-	return key
-}
-
-// DeleteObject removes an object from the bucket.
-func (s *Storage) DeleteObject(ctx context.Context, objectName string) error {
-	if objectName == "" {
-		return nil
-	}
-	s.mu.RLock()
-	client, bucket := s.client, s.bucket
-	s.mu.RUnlock()
-
-	if client == nil {
-		return fmt.Errorf("storage client is not initialized")
-	}
-	return client.RemoveObject(ctx, bucket, objectName, minio.RemoveObjectOptions{})
-}
-
-// ObjectNameFromURL extracts the bucket-relative object name from a URL
-// previously handed out by GetPublicURL, or "" if the URL doesn't belong to
-// this bucket.
-func (s *Storage) ObjectNameFromURL(fileURL string) string {
-	s.mu.RLock()
-	baseURL := s.baseURL
-	pubBaseURL := s.publicBaseURL
-	s.mu.RUnlock()
-
-	if fileURL == "" {
-		return ""
-	}
-
-	if strings.HasPrefix(fileURL, baseURL+"/") {
-		return strings.TrimPrefix(fileURL, baseURL+"/")
-	}
-	if pubBaseURL != "" && strings.HasPrefix(fileURL, pubBaseURL+"/") {
-		return strings.TrimPrefix(fileURL, pubBaseURL+"/")
-	}
-
-	return s.CleanKey(fileURL, baseURL)
-}
-
-// DeleteIfReplaced deletes the object behind oldURL when a file field is
-// being replaced or cleared (newURL differs from it).
-func (s *Storage) DeleteIfReplaced(ctx context.Context, oldURL *string, newURL string) {
-	if oldURL == nil || *oldURL == "" || *oldURL == newURL {
-		return
-	}
-	objectName := s.ObjectNameFromURL(*oldURL)
-	if objectName == "" {
-		return
-	}
-	if err := s.DeleteObject(ctx, objectName); err != nil {
-		slog.Error("failed to delete replaced minio object", "object", objectName, "error", err)
-	}
 }

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
-import type { TableColumn } from "@/components/data-table";
+import type { TableColumn } from "@/components/table/data-table";
 import type { WishlistItem } from "@/schema/wishlist.types";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 
 const columnHelper = createColumnHelper<WishlistItem>();

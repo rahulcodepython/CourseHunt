@@ -3,18 +3,24 @@ package transactions
 import (
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/middlewares"
+	"coursehunt/server/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
+const maxWebhookBodyBytes = 64 * 1024
+
+// webhookPayloadLimit rejects webhook payloads exceeding 64KB before unmarshaling.
+func webhookPayloadLimit(c *fiber.Ctx) error {
+	if len(c.Body()) > maxWebhookBodyBytes {
+		return utils.ErrPayloadTooLarge("Payload too large", nil)
+	}
+	return c.Next()
+}
+
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	// Public webhook
-	router.Post("/v1/transactions/webhook", func(c *fiber.Ctx) error {
-		if len(c.Body()) > 64*1024 {
-			return c.Status(fiber.StatusRequestEntityTooLarge).JSON(fiber.Map{"error": "Payload too large"})
-		}
-		return c.Next()
-	}, a.handleWebhook)
+	router.Post("/v1/transactions/webhook", webhookPayloadLimit, a.handleWebhook)
 
 	// Admin transactions inspection: strictly single permission PermAdminTransactionsReadAll
 	adminGuard := middlewares.PermissionGuard(generic.PermAdminTransactionsReadAll)
@@ -27,6 +33,6 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	gStudent.Get("/", a.handleStudentList)
 	gStudent.Get("/refunds/me", a.handleStudentListRefunds)
 	gStudent.Post("/initiate", a.handleCreate)
-	gStudent.Get("/checkout/course/:courseId", a.handleCheckout)
-	gStudent.Get("/:id/status", a.handleStatus)
+	gStudent.Get("/checkout/course/:courseId", middlewares.ValidateUUIDParams("courseId"), a.handleCheckout)
+	gStudent.Get("/:id/status", middlewares.ValidateUUIDParams("id"), a.handleStatus)
 }

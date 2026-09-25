@@ -3,8 +3,8 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import type { QuizQuestionDetail } from "@/schema/quiz.types";
 import { Badge } from "@/components/ui/badge";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { RowActions, RowActionButton } from "@/components/row-actions";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
 
 const columnHelper = createColumnHelper<QuizQuestionDetail>();
 

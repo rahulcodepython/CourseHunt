@@ -1,10 +1,10 @@
 "use server";
 
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-import { getRolesAndPermissions } from "@/lib/auth-db";
-import { hasPermission } from "@/lib/permissions";
-import { PERMISSIONS } from "@/lib/const";
+import { auth } from "@/lib/auth/auth";
+import { getRolesAndPermissions } from "@/lib/auth/auth-db";
+import { hasPermission } from "@/lib/auth/permissions";
+import { PERMISSIONS } from "@/lib/constants/const";
 import type { ApiResponse } from "@/schema/common.types";
 
 // Custom RBAC permissions (roles/permissions/roles_user) are entirely

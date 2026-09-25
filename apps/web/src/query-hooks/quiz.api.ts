@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useSimpleMutation } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
   CreateQuizRequestZod,
   NextQuestionRequestZod,
@@ -28,7 +28,7 @@ export function useQuizMetadataQuery(lessonId: string, scope: "admin" | "tutor" 
     queryKeys.quizMetadata(lessonId, scope),
     () =>
       apiRequest(
-        { url: `${endpoint}/metadata?lesson_id=${lessonId}`, method: "GET" },
+        { url: `${endpoint}/metadata`, method: "GET", params: { lesson_id: lessonId } },
         QuizMetadataZod,
       ),
     { enabled: !!lessonId },
@@ -39,7 +39,7 @@ export function useQuizQuestionsQuery(quizId: string, scope: "admin" | "tutor" =
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_QUIZ : API_ENDPOINTS.TUTOR_QUIZ;
   return useAppQuery(queryKeys.quizQuestions(quizId, scope), () =>
     apiRequest(
-      { url: `${endpoint}/questions?quiz_id=${quizId}`, method: "GET" },
+      { url: `${endpoint}/questions`, method: "GET", params: { quiz_id: quizId } },
       z.array(QuizQuestionDetailZod),
     ),
   );
@@ -55,7 +55,7 @@ export function useCreateQuizMutation() {
       data: z.infer<typeof CreateQuizRequestZod>;
     }) =>
       apiRequest(
-        { url: `${API_ENDPOINTS.TUTOR_QUIZ}/metadata?lesson_id=${lessonId}`, method: "POST", data },
+        { url: `${API_ENDPOINTS.TUTOR_QUIZ}/metadata`, method: "POST", params: { lesson_id: lessonId }, data },
         QuizMetadataZod,
       ),
     invalidateKeys: (_data, vars) => [
@@ -78,7 +78,7 @@ export function useCreateQuestionMutation() {
       data: z.infer<typeof CreateQuestionRequestZod>;
     }) =>
       apiRequest(
-        { url: `${API_ENDPOINTS.TUTOR_QUIZ}/questions?quiz_id=${quizId}`, method: "POST", data },
+        { url: `${API_ENDPOINTS.TUTOR_QUIZ}/questions`, method: "POST", params: { quiz_id: quizId }, data },
         QuizQuestionZod,
       ),
     invalidateKeys: (_data, vars) => [
@@ -137,7 +137,7 @@ export function useGetQuestionMutation() {
       data: z.infer<typeof NextQuestionRequestZod>;
     }) =>
       apiRequest(
-        { url: `${API_ENDPOINTS.QUIZ}/question?quiz_id=${quizId}`, method: "POST", data },
+        { url: `${API_ENDPOINTS.QUIZ}/question`, method: "POST", params: { quiz_id: quizId }, data },
         NextQuestionResponseZod,
       ),
     showToast: false,
@@ -154,7 +154,7 @@ export function useSubmitQuizMutation() {
       data: z.infer<typeof SubmitQuizRequestZod>;
     }) =>
       apiRequest(
-        { url: `${API_ENDPOINTS.QUIZ}/submit?quiz_id=${quizId}`, method: "POST", data },
+        { url: `${API_ENDPOINTS.QUIZ}/submit`, method: "POST", params: { quiz_id: quizId }, data },
         SubmitQuizResponseZod,
       ),
     invalidateKeys: (_data, vars) => [queryKeys.quizAttempts(vars.quizId)],
@@ -167,7 +167,7 @@ export function useQuizAttemptsQuery(quizId: string) {
     queryKeys.quizAttempts(quizId),
     () =>
       apiRequest(
-        { url: `${API_ENDPOINTS.QUIZ}/attempts?quiz_id=${quizId}`, method: "GET" },
+        { url: `${API_ENDPOINTS.QUIZ}/attempts`, method: "GET", params: { quiz_id: quizId } },
         z.array(QuizAttemptSummaryZod),
       ),
     { enabled: !!quizId },

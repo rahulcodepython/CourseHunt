@@ -16,20 +16,21 @@ import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import { useChaptersQuery } from "@/query-hooks/chapters.api";
 import { useLessonsQuery } from "@/query-hooks/lessons.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import type { LessonResource } from "@/schema/lessons.types";
 
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { FormDialog } from "@/components/form-dialog";
+import { FormDialog } from "@/components/dialogs/form-dialog";
 import { DialogFooter } from "@/components/ui/dialog";
-import { LoadingButton } from "@/components/loading-button";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import FileUpload from "@/components/file-upload";
-import { flushPendingUploads, clearPendingUploads } from "@/lib/pending-uploads";
+import { LoadingButton } from "@/components/common/loading-button";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import FileUpload from "@/components/common/file-upload";
+import { flushPendingUploads, clearPendingUploads } from "@/lib/utils/pending-uploads";
 import { getColumns } from "./columns";
 
 const resourceSchema = z.object({ title: z.string().min(1, "Title is required") });
@@ -148,16 +149,11 @@ export default function LessonResourcesPage() {
   const deleteResourceMutation = useDeleteResourceMutation(lessonId);
 
   const [addOpen, setAddOpen] = React.useState(false);
-  const [deleting, setDeleting] = React.useState<LessonResource | null>(null);
+  const { deleting, setDeleting, requestDelete, confirmDelete } = useCrudDialogState<LessonResource>();
 
-  const handleDelete = async () => {
-    if (deleting) {
-      await deleteResourceMutation.execute(deleting.id);
-      setDeleting(null);
-    }
-  };
+  const handleDelete = () => confirmDelete(deleteResourceMutation.execute);
 
-  const columns = getColumns(setDeleting);
+  const columns = getColumns(requestDelete);
 
   return (
     <div className="space-y-6">

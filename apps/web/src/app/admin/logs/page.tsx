@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { PageHeader } from "@/components/page-header";
+import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import { useSessionStore } from "@/store/session.store";
 
 interface StructuredLog {

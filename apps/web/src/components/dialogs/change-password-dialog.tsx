@@ -6,15 +6,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 
-import authClient from "@/lib/auth-client";
-import { downloadCredentialsCSV } from "@/lib/csv";
-import { FormDialog } from "@/components/form-dialog";
-import { LoadingButton } from "@/components/loading-button";
+import authClient from "@/lib/auth/auth-client";
+import { downloadCredentialsCSV } from "@/lib/utils/csv";
+import { FormDialog } from "@/components/dialogs/form-dialog";
+import { LoadingButton } from "@/components/common/loading-button";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
-import { PasswordInput } from "@/components/password-input";
+import { PasswordInput } from "@/components/common/password-input";
 import { Label } from "@/components/ui/label";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 
 const changePasswordSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),

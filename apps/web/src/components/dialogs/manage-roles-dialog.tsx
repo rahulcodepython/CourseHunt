@@ -2,11 +2,11 @@
 
 import * as React from "react";
 
-import { FormDialog } from "@/components/form-dialog";
-import { LoadingButton } from "@/components/loading-button";
+import { FormDialog } from "@/components/dialogs/form-dialog";
+import { LoadingButton } from "@/components/common/loading-button";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
-import { CollapsibleCheckboxList } from "@/components/collapsible-checkbox-list";
+import { CollapsibleCheckboxList } from "@/components/common/collapsible-checkbox-list";
 import { useRolesQuery } from "@/query-hooks/roles.api";
 import { useAssignRoleMutation, useRevokeRoleMutation } from "@/query-hooks/users.api";
 import type { Role } from "@/schema/roles.types";

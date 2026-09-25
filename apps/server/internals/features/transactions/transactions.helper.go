@@ -13,6 +13,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type TransactionListPayload struct {
+	Total int           `json:"total"`
+	Data  []Transaction `json:"data"`
+}
+
 // ProcessPendingRefundsCron polls the transaction_refunds table using PostgreSQL SKIP LOCKED
 // to safely process any pending duplicate payment refunds without ephemeral queue drops.
 func (a *App) ProcessPendingRefundsCron(ctx context.Context) {

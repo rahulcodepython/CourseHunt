@@ -4,13 +4,13 @@ import * as React from "react";
 
 import { useUpdateCourseMutation } from "@/query-hooks/courses.api";
 import type { Course } from "@/schema/courses.types";
-import { COURSE_STATUS } from "@/lib/const";
-import { FormDialog } from "@/components/form-dialog";
+import { COURSE_STATUS } from "@/lib/constants/const";
+import { FormDialog } from "@/components/dialogs/form-dialog";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { LoadingButton } from "@/components/loading-button";
+import { LoadingButton } from "@/components/common/loading-button";
 
 const STATUS_OPTIONS = [
   { value: COURSE_STATUS.DRAFT, label: "Draft", description: "Only visible to you" },

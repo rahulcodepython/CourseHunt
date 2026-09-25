@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 
 export default function GlobalError({
   error,

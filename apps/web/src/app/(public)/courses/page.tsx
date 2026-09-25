@@ -9,7 +9,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import {
   Select,
   SelectContent,

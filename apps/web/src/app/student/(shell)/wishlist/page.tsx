@@ -8,11 +8,11 @@ import {
   useClearWishlistMutation,
 } from "@/query-hooks/wishlist.api";
 import type { WishlistItem } from "@/schema/wishlist.types";
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { Icon } from "@/components/common/icon";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
 import { getColumns } from "./columns";
 
 export default function StudentWishlistPage() {

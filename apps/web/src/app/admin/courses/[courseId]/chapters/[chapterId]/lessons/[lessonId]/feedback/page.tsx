@@ -9,10 +9,10 @@ import {
   useDeleteFeedbackMutation,
 } from "@/query-hooks/feedbacks.api";
 import type { Feedback } from "@/schema/feedbacks.types";
-import { PageHeader } from "@/components/page-header";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { DataTable } from "@/components/data-table";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import { DataTable } from "@/components/table/data-table";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 import { getColumns } from "./columns";
 
@@ -20,6 +20,7 @@ import { useManageCourseQuery } from "@/query-hooks/courses.api";
 import { useChaptersQuery } from "@/query-hooks/chapters.api";
 import { useLessonsQuery } from "@/query-hooks/lessons.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 
 export default function LessonFeedbackPage() {
   const params = useParams<{
@@ -53,7 +54,7 @@ export default function LessonFeedbackPage() {
   const deleteMutation = useDeleteFeedbackMutation("admin");
 
   const feedbacks: Feedback[] = rawFeedbacks?.data?.data ?? [];
-  const [deleting, setDeleting] = React.useState<Feedback | null>(null);
+  const { deleting, setDeleting, requestDelete, confirmDelete } = useCrudDialogState<Feedback>();
 
   const handlePinToggle = async (feedback: Feedback) => {
     await updateMutation.execute({
@@ -62,14 +63,9 @@ export default function LessonFeedbackPage() {
     });
   };
 
-  const handleDelete = async () => {
-    if (deleting) {
-      await deleteMutation.execute(deleting.id);
-      setDeleting(null);
-    }
-  };
+  const handleDelete = () => confirmDelete(deleteMutation.execute);
 
-  const columns = getColumns(handlePinToggle, setDeleting);
+  const columns = getColumns(handlePinToggle, requestDelete);
 
   return (
     <div className="space-y-6">

@@ -9,8 +9,8 @@ import { useAddCourseToWishlistMutation } from "@/query-hooks/wishlist.api";
 import { usePinnedFeedbacksQuery } from "@/query-hooks/feedbacks.api";
 import { usePublicFaqsQuery } from "@/query-hooks/faqs.api";
 import useSession from "@/hooks/use-session";
-import { ROUTES } from "@/lib/const";
-import { formatINR, formatDuration } from "@/lib/format";
+import { ROUTES } from "@/lib/constants/const";
+import { formatINR, formatDuration } from "@/lib/utils/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Icon, type IconName } from "@/components/icon";
-import { Loading } from "@/components/loading";
-import UserAvatar from "@/components/user-avatar";
-import { LESSON_TYPE } from "@/lib/const";
+import { Icon, type IconName } from "@/components/common/icon";
+import { Loading } from "@/components/common/loading";
+import UserAvatar from "@/components/common/user-avatar";
+import { LESSON_TYPE } from "@/lib/constants/const";
 import { ReviewCard } from "../../components/review-card";
 
 const LESSON_TYPE_ICON: Record<string, IconName> = {

@@ -7,6 +7,11 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
+type cachedDiscussionsList struct {
+	Data  []Discussion `json:"data"`
+	Total int          `json:"total"`
+}
+
 func mapDiscussionError(err error) error {
 	switch {
 	case errors.Is(err, generic.ErrDiscussionsTargetNotFound),

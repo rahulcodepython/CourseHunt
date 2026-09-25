@@ -10,11 +10,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type TransactionListPayload struct {
-	Total int           `json:"total"`
-	Data  []Transaction `json:"data"`
-}
-
 func (a *App) InitiateClaimRepository(ctx context.Context, userID, courseID, txID string) (alreadyEnrolled, claimed bool, err error) {
 	err = a.DB.QueryRow(ctx, InitiateClaim, userID, courseID, txID).Scan(&alreadyEnrolled, &claimed)
 	if err != nil {

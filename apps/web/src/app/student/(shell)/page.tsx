@@ -5,14 +5,14 @@ import Link from "next/link";
 import { useUserDashboardQuery } from "@/query-hooks/dashboard.api";
 import { useEnrolledCoursesQuery } from "@/query-hooks/courses.api";
 import type { UserDashboard } from "@/schema/dashboard.types";
-import { PageHeader } from "@/components/page-header";
-import { StatCard } from "@/components/stat-card";
+import { PageHeader } from "@/components/layout/page-header";
+import { StatCard } from "@/components/common/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
-import { formatDate } from "@/lib/format";
+import { Icon } from "@/components/common/icon";
+import { formatDate } from "@/lib/utils/format";
 
 export default function StudentDashboardPage() {
   const { data: raw, isLoading } = useUserDashboardQuery();

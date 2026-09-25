@@ -9,14 +9,14 @@ import {
   useDeleteDiscussionMutation,
 } from "@/query-hooks/discussions.api";
 import type { Discussion } from "@/schema/discussions.types";
-import UserAvatar from "@/components/user-avatar";
+import UserAvatar from "@/components/common/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Icon } from "@/components/icon";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { formatDateTime } from "@/lib/format";
+import { Icon } from "@/components/common/icon";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import { formatDateTime } from "@/lib/utils/format";
 import useSession from "@/hooks/use-session";
-import { mergeListPage } from "@/lib/merge-list-page";
+import { mergeListPage } from "@/lib/utils/merge-list-page";
 
 const REPLIES_PAGE_SIZE = 5;
 

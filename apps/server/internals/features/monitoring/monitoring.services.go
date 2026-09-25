@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"os"
 	"sort"
 	"strconv"
 	"time"
@@ -90,7 +89,7 @@ func (a *App) QueryLokiLogs(ctx context.Context, limit int, level, search, start
 		query = fmt.Sprintf(`%s |= %q`, query, search)
 	}
 
-	lokiURL := os.Getenv("LOKI_URL")
+	lokiURL := a.Cfg.LokiURL
 	if lokiURL == "" {
 		lokiURL = "http://loki:3100"
 	}

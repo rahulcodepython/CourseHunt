@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
-import authClient from "@/lib/auth-client";
+import authClient from "@/lib/auth/auth-client";
 import { useSessionStore, type SessionPayload } from "@/store/session.store";
 
 import type { SessionRecord, SessionUser } from "@/schema/session.schema";

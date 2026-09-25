@@ -11,11 +11,11 @@ import {
   useDeleteChapterMutation,
 } from "@/query-hooks/chapters.api";
 import type { Chapter } from "@/schema/chapters.types";
-import { PageHeader } from "@/components/page-header";
-import { Icon } from "@/components/icon";
-import { DataTable } from "@/components/data-table";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { FormDialog } from "@/components/form-dialog";
+import { PageHeader } from "@/components/layout/page-header";
+import { Icon } from "@/components/common/icon";
+import { DataTable } from "@/components/table/data-table";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import { FormDialog } from "@/components/dialogs/form-dialog";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoadingButton } from "@/components/loading-button";
+import { LoadingButton } from "@/components/common/loading-button";
 
 import { useManageCoursesQuery } from "@/query-hooks/courses.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";

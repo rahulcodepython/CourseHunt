@@ -1,8 +1,8 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { formatDateTime } from "@/lib/format";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { formatDateTime } from "@/lib/utils/format";
 import type { SecurityEvent } from "@/schema/security.types";
 
 const columnHelper = createColumnHelper<SecurityEvent>();

@@ -73,7 +73,7 @@ func main() {
 	log.Printf("[seeder] Loaded %d permissions from catalog", len(permissionsCatalog))
 
 	// 0. Bootstrap the schema if the database has no tables yet.
-	runMigrationsIfNeeded(db)
+	runMigrationsIfNeeded(db, cfg)
 
 	// 1. Reset Database Table Data
 	log.Println("==================================================")
@@ -137,7 +137,7 @@ func main() {
 	log.Println("==================================================")
 }
 
-func runMigrationsIfNeeded(db *pgxpool.Pool) {
+func runMigrationsIfNeeded(db *pgxpool.Pool, cfg *config.Config) {
 	ctx := context.Background()
 	var exists bool
 	if err := db.QueryRow(ctx, `SELECT EXISTS (
@@ -151,7 +151,7 @@ func runMigrationsIfNeeded(db *pgxpool.Pool) {
 		return
 	}
 
-	dir := os.Getenv("MIGRATIONS_DIR")
+	dir := cfg.MigrationsDir
 	if dir == "" {
 		if _, err := os.Stat("internals/migrations"); err == nil {
 			dir = "internals/migrations"

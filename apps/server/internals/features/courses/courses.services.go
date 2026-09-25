@@ -171,8 +171,9 @@ func (a *App) Create(ctx context.Context, userID string, req CreateCourseRequest
 	}
 	req.ShortDescription = utils.SanitizeUGCPtr(req.ShortDescription)
 	req.LongDescription = utils.SanitizeUGCPtr(req.LongDescription)
+	slug := utils.Slugify(req.Title)
 
-	resp, err := a.CreateRepository(ctx, userID, req)
+	resp, err := a.CreateRepository(ctx, userID, slug, req)
 	if err != nil {
 		return nil, utils.ErrInternal("Failed to create course.", err)
 	}

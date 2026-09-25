@@ -2,7 +2,7 @@
 
 import type { Column } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 
 export function SortableColumnHeader<TData, TValue>({
   column,

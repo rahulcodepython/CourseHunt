@@ -51,6 +51,10 @@ func ErrTooManyRequests(message string, err error) *APIError {
 	return NewError(fiber.StatusTooManyRequests, message, err)
 }
 
+func ErrPayloadTooLarge(message string, err error) *APIError {
+	return NewError(fiber.StatusRequestEntityTooLarge, message, err)
+}
+
 func ErrInternal(message string, err error) *APIError {
 	return NewError(fiber.StatusInternalServerError, message, err)
 }
