@@ -2,7 +2,7 @@ import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import { ServiceStatusZod } from "@/schema/monitoring.types";
 
 export const HealthDataZod = z.object({

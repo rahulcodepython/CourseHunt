@@ -2,10 +2,10 @@
 
 import * as React from "react";
 
-import { PageHeader } from "@/components/page-header";
-import { StatCard } from "@/components/stat-card";
-import { DataTable } from "@/components/data-table";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { StatCard } from "@/components/common/stat-card";
+import { DataTable } from "@/components/table/data-table";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCursorFeed } from "@/hooks/use-cursor-feed";

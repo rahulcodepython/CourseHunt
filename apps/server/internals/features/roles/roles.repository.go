@@ -2,12 +2,9 @@ package roles
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"coursehunt/server/internals/pkg/postgres"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (a *App) ListRolesRepository(ctx context.Context) ([]Role, error) {
@@ -67,27 +64,11 @@ func (a *App) GetRolePermissionsRepository(ctx context.Context, roleID string) (
 }
 
 func (a *App) SetRolePermissionsRepository(ctx context.Context, roleID string, permissionIDs []string) error {
-	return postgres.WithTx(ctx, a.DB, func(tx pgx.Tx) error {
-		if _, err := tx.Exec(ctx, DeleteRolePermissions, roleID); err != nil {
-			return err
-		}
-
-		if len(permissionIDs) > 0 {
-			values := []string{}
-			args := []interface{}{roleID}
-			for i, pid := range permissionIDs {
-				idx := i + 2
-				values = append(values, fmt.Sprintf("($1, $%d)", idx))
-				args = append(args, pid)
-			}
-			query := BuildInsertRolePermissionsQuery(strings.Join(values, ", "))
-			if _, err := tx.Exec(ctx, query, args...); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
+	if permissionIDs == nil {
+		permissionIDs = []string{}
+	}
+	_, err := a.DB.Exec(ctx, SetRolePermissions, roleID, permissionIDs)
+	return postgres.MapPgError(err)
 }
 
 func (a *App) ListPermissionsRepository(ctx context.Context) ([]Permission, error) {

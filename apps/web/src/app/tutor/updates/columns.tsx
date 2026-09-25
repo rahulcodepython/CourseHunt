@@ -2,10 +2,10 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import type { CourseUpdate } from "@/schema/updates.types";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { RowActions, RowActionButton } from "@/components/row-actions";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
 
 const columnHelper = createColumnHelper<CourseUpdate>();
 

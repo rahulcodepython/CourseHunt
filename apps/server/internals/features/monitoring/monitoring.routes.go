@@ -12,4 +12,6 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 
 	g := router.Group("/v1/monitoring", auth)
 	g.Get("/", middlewares.RoleGuard(generic.RoleAdmin), a.handleSnapshot)
+
+	router.Get("/v1/admin/logs/loki/query", auth, middlewares.RoleGuard(generic.RoleAdmin), a.handleLokiQuery)
 }

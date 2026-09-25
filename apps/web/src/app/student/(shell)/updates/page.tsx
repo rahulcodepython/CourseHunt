@@ -2,8 +2,8 @@
 
 import { useUpdateFeedQuery } from "@/query-hooks/updates.api";
 import type { UpdateFeedItem } from "@/schema/updates.types";
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
 import { columns } from "./columns";
 
 export default function StudentUpdatesPage() {

@@ -12,7 +12,7 @@ import {
 } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
   LessonZod,
   CreateLessonRequestZod,
@@ -32,7 +32,7 @@ export function useLessonsQuery(chapterId: string, scope: "admin" | "tutor" = "t
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_LESSONS : API_ENDPOINTS.TUTOR_LESSONS;
   return useAppQuery(queryKeys.lessons(chapterId, scope), () =>
     apiRequest(
-      { url: `${endpoint}?chapter_id=${chapterId}`, method: "GET" },
+      { url: endpoint, method: "GET", params: { chapter_id: chapterId } },
       z.array(LessonZod),
     ),
   );
@@ -42,7 +42,7 @@ export function useCreateLessonMutation(chapterId: string) {
   return useArrayMutation({
     mutationFn: (data: z.infer<typeof CreateLessonRequestZod>) =>
       apiRequest(
-        { url: `${API_ENDPOINTS.TUTOR_LESSONS}?chapter_id=${chapterId}`, method: "POST", data },
+        { url: API_ENDPOINTS.TUTOR_LESSONS, method: "POST", params: { chapter_id: chapterId }, data },
         LessonZod,
       ),
     queryKey: queryKeys.lessons(chapterId, "tutor"),
@@ -213,4 +213,26 @@ export function useStudyLessonResourcesQuery(id: string) {
       ),
     { enabled: !!id },
   );
+}
+
+export function useHeartbeatMutation() {
+  return useSimpleMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { playback_seconds: number; session_seconds: number };
+    }) =>
+      apiRequest(
+        { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/progress/heartbeat`, method: "POST", data },
+        z.object({
+          lesson_id: z.string(),
+          playback_seconds: z.number(),
+          current_streak_days: z.number(),
+          total_study_minutes: z.number(),
+        }),
+      ),
+    showToast: false,
+  });
 }

@@ -1,17 +1,14 @@
 package utils
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"context"
+	"errors"
 
-// APIError is the only error type any handler/service returns up the call
-// stack. Nothing below the HTTP layer writes a status code or JSON body
-// directly — it constructs one of these and returns it, and the central
-// ErrorHandler (error.handler.go) renders it through the standard response
-// envelope. Err carries the underlying cause for logging only; it is never
-// serialized to the client. Data is optional and nil for almost every
-// caller — it exists for the rare non-2xx response that still needs to
-// carry a payload (e.g. a 503 health check reporting which dependencies
-// are down), set directly on the struct literal rather than via a
-// dedicated constructor.
+	"github.com/gofiber/fiber/v2"
+)
+
+// APIError is the single canonical error type returned across all handlers and services.
+// It constructs an error envelope with status code and context for the central ErrorHandler.
 type APIError struct {
 	Status  int
 	Message string
@@ -30,8 +27,6 @@ func ErrBadRequest(message string, err error) *APIError {
 	return NewError(fiber.StatusBadRequest, message, err)
 }
 
-// ErrValidation is for request-shape/struct-tag validation failures —
-// mirrors the project's existing use of 422 (not 400) for that case.
 func ErrValidation(message string, err error) *APIError {
 	return NewError(fiber.StatusUnprocessableEntity, message, err)
 }
@@ -56,6 +51,51 @@ func ErrTooManyRequests(message string, err error) *APIError {
 	return NewError(fiber.StatusTooManyRequests, message, err)
 }
 
+func ErrPayloadTooLarge(message string, err error) *APIError {
+	return NewError(fiber.StatusRequestEntityTooLarge, message, err)
+}
+
 func ErrInternal(message string, err error) *APIError {
 	return NewError(fiber.StatusInternalServerError, message, err)
+}
+
+// ErrorHandler is the single central place every failure response is rendered from.
+// It maps APIErrors, context cancellations, timeouts, and framework errors into the
+// single canonical generic.Response schema.
+func ErrorHandler(c *fiber.Ctx, err error) error {
+	var apiErr *APIError
+	if errors.As(err, &apiErr) {
+		if errors.Is(apiErr.Err, context.Canceled) {
+			c.Locals("handler_error", apiErr.Err)
+			return json[*struct{}](c, 499, false, "Request was canceled.", nil, apiErr.Err)
+		}
+		if errors.Is(apiErr.Err, context.DeadlineExceeded) {
+			c.Locals("handler_error", apiErr.Err)
+			return json[*struct{}](c, fiber.StatusGatewayTimeout, false, "Request timed out.", nil, apiErr.Err)
+		}
+		return json(c, apiErr.Status, false, apiErr.Message, apiErr.Data, apiErr.Err)
+	}
+
+	if errors.Is(err, context.Canceled) {
+		c.Locals("handler_error", err)
+		return json[*struct{}](c, 499, false, "Request was canceled.", nil, err)
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		c.Locals("handler_error", err)
+		return json[*struct{}](c, fiber.StatusGatewayTimeout, false, "Request timed out.", nil, err)
+	}
+
+	code := fiber.StatusInternalServerError
+	if fe, ok := err.(*fiber.Error); ok {
+		code = fe.Code
+	}
+
+	c.Locals("handler_error", err)
+
+	if code == fiber.StatusNotFound {
+		return json[*struct{}](c, fiber.StatusNotFound, false, "Requested resource not found.", nil, err)
+	}
+
+	// Anything else (framework error or recovered panic) falls back to generic message
+	return json[*struct{}](c, code, false, "An unexpected error occurred.", nil, nil)
 }

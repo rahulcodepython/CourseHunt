@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 const bubbleVariants = cva(
   "relative max-w-[85%] rounded-2xl px-4 py-2.5 text-sm transition-colors",

@@ -7,13 +7,14 @@ import {
   useDeleteCouponMutation,
 } from "@/query-hooks/coupons.api";
 import type { Coupon } from "@/schema/coupons.types";
-import { PageHeader } from "@/components/page-header";
-import { Loading } from "@/components/loading";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { DataTable } from "@/components/data-table";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { Loading } from "@/components/common/loading";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import { DataTable } from "@/components/table/data-table";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
-import { CouponModal } from "./coupon-modal";
+import { FormDialog } from "@/components/dialogs/form-dialog";
+import { CouponForm } from "./coupon-form";
 import { getColumns } from "./coupon-columns";
 
 import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
@@ -76,12 +77,24 @@ export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
         emptyText="No coupons found"
       />
 
-      <CouponModal
+      <FormDialog
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        editingCoupon={editingCoupon}
-        scope={scope}
-      />
+        title={editingCoupon ? "Edit Coupon" : "Create Coupon"}
+        description={
+          editingCoupon
+            ? "Update the coupon details"
+            : scope === "tutor"
+              ? "Create a discount coupon for one of your courses"
+              : "Create a new discount coupon"
+        }
+      >
+        <CouponForm
+          editingCoupon={editingCoupon}
+          onSuccess={() => setIsModalOpen(false)}
+          scope={scope}
+        />
+      </FormDialog>
 
       <ConfirmDeleteDialog
         open={!!deleteId}

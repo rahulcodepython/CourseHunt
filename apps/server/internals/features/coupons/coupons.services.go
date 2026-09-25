@@ -12,11 +12,6 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-type couponListCacheData struct {
-	Data  []Coupon `json:"data"`
-	Total int      `json:"total"`
-}
-
 // --- Admin Services ---
 
 func (a *App) AdminList(ctx context.Context, page, limit int, status, isActive, code string) ([]Coupon, int, error) {

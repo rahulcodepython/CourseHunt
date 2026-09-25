@@ -1,181 +1,18 @@
 package middlewares
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Audit rows are written by a small fixed pool of workers instead of a
-// goroutine per request — under a traffic spike or a slow DB, spawning one
-// goroutine per request has no upper bound and amplifies the outage instead
-// of shedding load. The queue is a bounded buffer; a full queue drops the
-// row (audit logging is best-effort and must never add request latency)
-// rather than blocking the caller.
-const (
-	auditWorkerCount = 8
-	auditQueueSize   = 512
-	maxBodyLogLength = 2048
-)
-
-type auditJob struct {
-	db                               *pgxpool.Pool
-	method, routePath, ip, userAgent string
-	status                           int
-	userID                           *string
-	logMessage, notifMessage         string
-}
-
-var (
-	auditQueue     chan auditJob
-	auditQueueOnce sync.Once
-)
-
-func startAuditWorkers() {
-	auditQueue = make(chan auditJob, auditQueueSize)
-	for range auditWorkerCount {
-		go func() {
-			for job := range auditQueue {
-				execAuditRow(job)
-			}
-		}()
-	}
-}
-
-func execAuditRow(j auditJob) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err := j.db.Exec(ctx, `
-		WITH actor AS (
-			SELECT u.email FROM (SELECT $3::uuid AS uid) p
-			LEFT JOIN "users" u ON u.id = p.uid
-		),
-		log_ins AS (
-			INSERT INTO logs (message, actor_email, success)
-			SELECT $1, actor.email, $2 FROM actor WHERE $4
-		),
-		notif_ins AS (
-			INSERT INTO notifications (type, message, is_admin, is_tutor, is_student)
-			SELECT 'system_error', $5, true, false, false WHERE $6 >= 500
-		),
-		sec_ins AS (
-			INSERT INTO security_events (event_type, user_id, email, ip_address, user_agent, path)
-			SELECT
-				CASE WHEN $6 = 429 THEN 'rate_limit_exceeded' ELSE 'unauthorized_access' END,
-				$3::uuid, actor.email, $7, $8, $9
-			FROM actor WHERE $6 IN (401, 403, 429)
-		)
-		SELECT 1
-	`, j.logMessage, j.status < 400, j.userID, j.method != fiber.MethodGet, j.notifMessage, j.status, j.ip, j.userAgent, j.routePath)
-	if err != nil {
-		slog.Error("audit insert failed", "error", err)
-	}
-}
-
-// containsFold checks whether s contains substr case-insensitively without allocating new strings.
-func containsFold(s, substr string) bool {
-	if len(substr) == 0 {
-		return true
-	}
-	if len(s) < len(substr) {
-		return false
-	}
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if strings.EqualFold(s[i:i+len(substr)], substr) {
-			return true
-		}
-	}
-	return false
-}
-
-// isSensitiveKey checks whether a key name indicates sensitive credential or card data.
-func isSensitiveKey(k string) bool {
-	return containsFold(k, "password") ||
-		containsFold(k, "secret") ||
-		containsFold(k, "token") ||
-		containsFold(k, "credit") ||
-		containsFold(k, "cvv") ||
-		containsFold(k, "card")
-}
-
-// sanitizeJSON recursively redacts sensitive fields in-place without duplicating untouched subtrees.
-func sanitizeJSON(val interface{}) {
-	switch v := val.(type) {
-	case map[string]interface{}:
-		for k, item := range v {
-			if isSensitiveKey(k) {
-				v[k] = "[REDACTED]"
-			} else {
-				sanitizeJSON(item)
-			}
-		}
-	case []interface{}:
-		for _, item := range v {
-			sanitizeJSON(item)
-		}
-	}
-}
-
-// sanitizeRequestBody returns a sanitized string representation of the request body.
-func sanitizeRequestBody(body []byte) string {
-	if len(body) == 0 {
-		return "{}"
-	}
-
-	trimmed := bytes.TrimSpace(body)
-	if len(trimmed) == 0 {
-		return "{}"
-	}
-
-	// Only parse as JSON if it begins with an object or array character
-	if trimmed[0] == '{' || trimmed[0] == '[' {
-		var parsed interface{}
-		if err := json.Unmarshal(trimmed, &parsed); err == nil {
-			sanitizeJSON(parsed)
-			if out, err := json.Marshal(parsed); err == nil {
-				if len(out) > maxBodyLogLength {
-					return string(out[:maxBodyLogLength]) + "... [TRUNCATED]"
-				}
-				return string(out)
-			}
-		}
-	}
-
-	if len(trimmed) > maxBodyLogLength {
-		return string(trimmed[:maxBodyLogLength]) + "... [TRUNCATED]"
-	}
-	return string(trimmed)
-}
-
-// shouldAudit returns whether a request produces any audit log, notification, or security event row.
-func shouldAudit(method string, status int) bool {
-	return method != fiber.MethodGet || status >= 500 || status == 401 || status == 403 || status == 429
-}
-
-// writeAuditRow enqueues the operational audit trail for this request onto the bounded worker pool.
-func writeAuditRow(db *pgxpool.Pool, method, routePath string, status int, userID *string, ip, userAgent, logMessage, notifMessage string) {
-	if db == nil || auditQueue == nil {
-		return
-	}
-
-	job := auditJob{db, method, routePath, ip, userAgent, status, userID, logMessage, notifMessage}
-	select {
-	case auditQueue <- job:
-	default:
-		slog.Warn("audit queue full, dropping audit row", "method", method, "route", routePath)
-	}
-}
-
+// LoggerMiddleware records structured request metrics, logs API errors with sanitized request bodies,
+// and enqueues operational audit records to PostgreSQL asynchronously.
 func LoggerMiddleware(db *pgxpool.Pool) fiber.Handler {
 	if db != nil {
 		auditQueueOnce.Do(startAuditWorkers)

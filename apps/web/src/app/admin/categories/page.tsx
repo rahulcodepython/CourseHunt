@@ -11,13 +11,13 @@ import {
   useDeleteCategoryMutation,
   useUpdateCategoryMutation,
 } from "@/query-hooks/categories.api";
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
-import { Loading } from "@/components/loading";
-import { LoadingButton } from "@/components/loading-button";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { FormDialog } from "@/components/form-dialog";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
+import { Loading } from "@/components/common/loading";
+import { LoadingButton } from "@/components/common/loading-button";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import { FormDialog } from "@/components/dialogs/form-dialog";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";

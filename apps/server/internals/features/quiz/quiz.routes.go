@@ -21,13 +21,13 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	gTutor.Get("/metadata", a.handleTutorReadMetadata)
 	gTutor.Post("/questions", a.handleCreateQuestion)
 	gTutor.Get("/questions", a.handleTutorListQuestions)
-	gTutor.Patch("/questions/:id", a.handleUpdateQuestion)
-	gTutor.Delete("/questions/:id", a.handleDeleteQuestion)
+	gTutor.Patch("/questions/:id", middlewares.ValidateUUIDParams("id"), a.handleUpdateQuestion)
+	gTutor.Delete("/questions/:id", middlewares.ValidateUUIDParams("id"), a.handleDeleteQuestion)
 
 	// Student quiz taking
 	gStudent := router.Group("/v1/quiz", auth)
 	gStudent.Post("/question", a.handleGetQuestion)
 	gStudent.Post("/submit", a.handleCreateSubmit)
 	gStudent.Get("/attempts", a.handleListAttempts)
-	gStudent.Get("/attempts/:id", a.handleGetAttemptDetail)
+	gStudent.Get("/attempts/:id", middlewares.ValidateUUIDParams("id"), a.handleGetAttemptDetail)
 }

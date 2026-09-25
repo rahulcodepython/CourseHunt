@@ -96,6 +96,29 @@ const (
 							FROM (
 								SELECT
 									ch.id, ch.chapter_no, ch.title, ch.total_lectures, ch.total_duration_seconds,
+									COALESCE(ch.unlock_days_after_enrollment, 0) AS unlock_days_after_enrollment,
+									ch.unlock_at,
+									ch.prerequisite_chapter_id,
+									(
+										CASE
+											WHEN ch.unlock_at IS NOT NULL AND CURRENT_TIMESTAMP < ch.unlock_at THEN true
+											WHEN ch.unlock_days_after_enrollment > 0 AND CURRENT_DATE < (e.enrolled_at::date + (ch.unlock_days_after_enrollment || ' days')::interval) THEN true
+											WHEN ch.prerequisite_chapter_id IS NOT NULL AND NOT COALESCE((
+												SELECT cp_pre.completed FROM chapter_progress cp_pre WHERE cp_pre.chapter_id = ch.prerequisite_chapter_id AND cp_pre.user_id = NULLIF($2, '')::uuid
+											), false) THEN true
+											ELSE false
+										END
+									) AS is_locked,
+									(
+										CASE
+											WHEN ch.unlock_at IS NOT NULL AND CURRENT_TIMESTAMP < ch.unlock_at THEN 'Scheduled unlock on ' || to_char(ch.unlock_at, 'YYYY-MM-DD')
+											WHEN ch.unlock_days_after_enrollment > 0 AND CURRENT_DATE < (e.enrolled_at::date + (ch.unlock_days_after_enrollment || ' days')::interval) THEN 'Unlocks ' || ch.unlock_days_after_enrollment || ' days after enrollment'
+											WHEN ch.prerequisite_chapter_id IS NOT NULL AND NOT COALESCE((
+												SELECT cp_pre.completed FROM chapter_progress cp_pre WHERE cp_pre.chapter_id = ch.prerequisite_chapter_id AND cp_pre.user_id = NULLIF($2, '')::uuid
+											), false) THEN 'Complete prerequisite chapter to unlock'
+											ELSE NULL
+										END
+									) AS lock_reason,
 									jsonb_build_object(
 										'lessons_completed', COALESCE(cp.lessons_completed, 0),
 										'completed', COALESCE(cp.completed, false)

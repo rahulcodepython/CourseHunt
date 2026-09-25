@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useSimpleMutation } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
   DiscussionZod,
   CreateDiscussionRequestZod,
@@ -35,7 +35,7 @@ export function useDiscussionsQuery(
   const endpoint = getDiscussionEndpoint(scope);
   return useAppQuery([...queryKeys.discussions(lessonId, scope), page, limit], () =>
     apiRequest(
-      { url: `${endpoint}/lesson/${lessonId}?page=${page}&limit=${limit}`, method: "GET" },
+      { url: `${endpoint}/lesson/${lessonId}`, method: "GET", params: { page, limit } },
       PaginatedResponseZod(DiscussionZod),
     ),
   );
@@ -50,7 +50,7 @@ export function useDiscussionRepliesQuery(
   const endpoint = getDiscussionEndpoint(scope);
   return useAppQuery([...queryKeys.discussionReplies(id, scope), page, limit], () =>
     apiRequest(
-      { url: `${endpoint}/replies/${id}?page=${page}&limit=${limit}`, method: "GET" },
+      { url: `${endpoint}/replies/${id}`, method: "GET", params: { page, limit } },
       PaginatedResponseZod(DiscussionZod),
     ),
   );

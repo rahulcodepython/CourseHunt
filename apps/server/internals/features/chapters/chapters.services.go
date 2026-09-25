@@ -8,37 +8,53 @@ import (
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/cache"
+	"coursehunt/server/internals/pkg/postgres"
 	"coursehunt/server/internals/utils"
 )
 
 func (a *App) AdminList(ctx context.Context, courseID string) ([]Chapter, error) {
 	cacheKey := fmt.Sprintf("chapters:admin:list:course:%s", courseID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]Chapter, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrChaptersCourseNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() ([]Chapter, error) {
 		chapters, err := a.AdminListRepository(ctx, courseID)
 		if err != nil {
-			return nil, utils.ErrInternal("Failed to fetch chapters.", err)
+			return nil, err
 		}
 		return chapters, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrChaptersCourseNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Course not found.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch chapters.", err)
+	}
+	return res, nil
 }
 
 func (a *App) TutorList(ctx context.Context, courseID, userID string) ([]Chapter, error) {
 	cacheKey := fmt.Sprintf("chapters:tutor:list:course:%s:u:%s", courseID, userID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]Chapter, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrChaptersCourseNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() ([]Chapter, error) {
 		chapters, err := a.TutorListRepository(ctx, courseID, userID)
 		if err != nil {
-			if errors.Is(err, generic.ErrChaptersCourseNotFound) {
-				return nil, utils.ErrNotFound("Course not found.", err)
-			}
-			if errors.Is(err, generic.ErrChaptersUnauthorized) {
-				return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch chapters.", err)
+			return nil, err
 		}
 		return chapters, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrChaptersCourseNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Course not found.", err)
+		}
+		if errors.Is(err, generic.ErrChaptersUnauthorized) {
+			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch chapters.", err)
+	}
+	return res, nil
 }
 
 func (a *App) Create(ctx context.Context, userID, courseID string, req CreateChapterRequest) (*Chapter, error) {
@@ -53,7 +69,7 @@ func (a *App) Create(ctx context.Context, userID, courseID string, req CreateCha
 		return nil, utils.ErrInternal("Failed to create chapter.", err)
 	}
 
-	a.Cache.Invalidate(ctx, "chapters:*", "courses:*")
+	a.Cache.Invalidate(ctx, "chapters:*", "courses:study:*")
 
 	return ch, nil
 }
@@ -70,7 +86,7 @@ func (a *App) Update(ctx context.Context, id, userID string, req UpdateChapterRe
 		return nil, utils.ErrInternal("Failed to update chapter.", err)
 	}
 
-	a.Cache.Invalidate(ctx, "chapters:*", "courses:*")
+	a.Cache.Invalidate(ctx, "chapters:*", "courses:study:*")
 
 	return ch, nil
 }
@@ -87,7 +103,7 @@ func (a *App) Delete(ctx context.Context, id, userID string) (string, error) {
 		return "", utils.ErrInternal("Failed to delete chapter.", err)
 	}
 
-	a.Cache.Invalidate(ctx, "chapters:*", "courses:*")
+	a.Cache.Invalidate(ctx, "chapters:*", "courses:study:*")
 
 	return deletedID, nil
 }

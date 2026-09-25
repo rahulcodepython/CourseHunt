@@ -3,6 +3,8 @@ package users
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/utils"
@@ -12,7 +14,9 @@ func (a *App) AssignRole(ctx context.Context, userID string, roleIDs []string) e
 	if err := a.AssignRoleRepository(ctx, userID, roleIDs); err != nil {
 		return utils.ErrInternal("Failed to assign roles.", err)
 	}
-	a.Cache.InvalidateUserAuthCache(ctx, userID)
+	slog.Info("invalidating auth cache", "user_id", userID)
+	_ = a.Cache.Delete(ctx, fmt.Sprintf("auth:roles_permissions:%s", userID))
+
 	return nil
 }
 
@@ -20,7 +24,9 @@ func (a *App) DeleteRole(ctx context.Context, userID string, roleIDs []string) e
 	if err := a.DeleteRoleRepository(ctx, userID, roleIDs); err != nil {
 		return utils.ErrInternal("Failed to revoke roles.", err)
 	}
-	a.Cache.InvalidateUserAuthCache(ctx, userID)
+	slog.Info("invalidating auth cache", "user_id", userID)
+	_ = a.Cache.Delete(ctx, fmt.Sprintf("auth:roles_permissions:%s", userID))
+
 	return nil
 }
 

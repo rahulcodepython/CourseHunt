@@ -11,11 +11,6 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-type updatesCacheData struct {
-	Data  []CourseUpdate `json:"data"`
-	Total int            `json:"total"`
-}
-
 func (a *App) AdminList(ctx context.Context, page, limit int) ([]CourseUpdate, int, error) {
 	cacheKey := fmt.Sprintf("updates:admin:list:p:%d:l:%d", page, limit)
 
@@ -49,6 +44,11 @@ func (a *App) TutorList(ctx context.Context, page, limit int, userID string) ([]
 }
 
 func (a *App) AdminCreate(ctx context.Context, userID string, req CreateUpdateRequest) (*CourseUpdate, error) {
+	req.Message = utils.SanitizeUGC(req.Message)
+	if req.Message == "" {
+		return nil, utils.ErrBadRequest("Update message cannot be empty after sanitization.", nil)
+	}
+
 	u, err := a.AdminCreateRepository(ctx, userID, req)
 	if err != nil {
 		return nil, utils.ErrInternal("Failed to create update.", err)
@@ -59,6 +59,11 @@ func (a *App) AdminCreate(ctx context.Context, userID string, req CreateUpdateRe
 }
 
 func (a *App) TutorCreate(ctx context.Context, userID string, req CreateUpdateRequest) (*CourseUpdate, error) {
+	req.Message = utils.SanitizeUGC(req.Message)
+	if req.Message == "" {
+		return nil, utils.ErrBadRequest("Update message cannot be empty after sanitization.", nil)
+	}
+
 	u, err := a.TutorCreateRepository(ctx, userID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrUpdatesAccessDenied) {
@@ -72,6 +77,11 @@ func (a *App) TutorCreate(ctx context.Context, userID string, req CreateUpdateRe
 }
 
 func (a *App) AdminUpdate(ctx context.Context, id, message string) (*CourseUpdate, error) {
+	message = utils.SanitizeUGC(message)
+	if message == "" {
+		return nil, utils.ErrBadRequest("Update message cannot be empty after sanitization.", nil)
+	}
+
 	u, err := a.AdminUpdateRepository(ctx, id, message)
 	if err != nil {
 		if errors.Is(err, generic.ErrUpdatesNotFound) {
@@ -85,6 +95,11 @@ func (a *App) AdminUpdate(ctx context.Context, id, message string) (*CourseUpdat
 }
 
 func (a *App) TutorUpdate(ctx context.Context, id, message, userID string) (*CourseUpdate, error) {
+	message = utils.SanitizeUGC(message)
+	if message == "" {
+		return nil, utils.ErrBadRequest("Update message cannot be empty after sanitization.", nil)
+	}
+
 	u, err := a.TutorUpdateRepository(ctx, id, message, userID)
 	if err != nil {
 		if errors.Is(err, generic.ErrUpdatesNotFound) {

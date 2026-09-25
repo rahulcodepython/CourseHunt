@@ -74,13 +74,17 @@ const (
 		FROM permissions;
 	`
 
-	DeleteRolePermissions = `DELETE FROM role_permissions WHERE role_id = $1;`
+	SetRolePermissions = `
+		WITH deleted AS (
+			DELETE FROM role_permissions WHERE role_id = $1
+		)
+		INSERT INTO role_permissions (role_id, permission_id)
+		SELECT $1, p
+		FROM unnest($2::text[]) AS p
+		ON CONFLICT DO NOTHING;
+	`
 )
 
 func BuildUpdateRoleQuery(setClauses string, idx int) string {
 	return fmt.Sprintf(`UPDATE roles SET %s WHERE id = $%d RETURNING row_to_json(roles.*);`, setClauses, idx)
-}
-
-func BuildInsertRolePermissionsQuery(values string) string {
-	return fmt.Sprintf(`INSERT INTO role_permissions (role_id, permission_id) VALUES %s;`, values)
 }

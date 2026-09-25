@@ -10,9 +10,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Icon } from "@/components/icon";
-import { cn } from "@/lib/utils";
-import { QUESTION_TYPE } from "@/lib/const";
+import { Icon } from "@/components/common/icon";
+import { cn } from "@/lib/utils/utils";
+import { QUESTION_TYPE } from "@/lib/constants/const";
 import type { QuizAttemptQuestionBreakdown } from "@/schema/quiz.types";
 
 function ChoiceAnswer({ question }: { question: QuizAttemptQuestionBreakdown }) {

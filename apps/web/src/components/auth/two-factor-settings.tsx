@@ -4,14 +4,14 @@ import React from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 
-import authClient from "@/lib/auth-client";
+import authClient from "@/lib/auth/auth-client";
 import useSession from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
-import { LoadingButton } from "@/components/loading-button";
+import { LoadingButton } from "@/components/common/loading-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 
 type Step = "idle" | "enrolling" | "confirming";
 

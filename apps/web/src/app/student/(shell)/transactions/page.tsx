@@ -2,8 +2,8 @@
 
 import { useTransactionsQuery, useMyRefundsQuery } from "@/query-hooks/transactions.api";
 import type { Transaction, RefundTransaction } from "@/schema/transactions.types";
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { columns } from "./columns";
 import { refundColumns } from "./refund-columns";

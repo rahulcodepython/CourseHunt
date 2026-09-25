@@ -2,8 +2,8 @@
 
 import type { SubmitQuizResponse } from "@/schema/quiz.types";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
-import { cn } from "@/lib/utils";
+import { Icon } from "@/components/common/icon";
+import { cn } from "@/lib/utils/utils";
 
 export function QuizResultView({
   result,

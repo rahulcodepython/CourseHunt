@@ -3,14 +3,14 @@
 import * as React from "react";
 
 import type { QuestionForAttempt } from "@/schema/quiz.types";
-import { QUESTION_TYPE } from "@/lib/const";
+import { QUESTION_TYPE } from "@/lib/constants/const";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
-import { cn } from "@/lib/utils";
+import { Icon } from "@/components/common/icon";
+import { cn } from "@/lib/utils/utils";
 import type { AnswerDraft } from "./types";
 
 function ArrangeInput({

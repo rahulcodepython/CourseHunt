@@ -3,9 +3,9 @@ package roles
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
-	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/cache"
 	"coursehunt/server/internals/utils"
 )
@@ -18,14 +18,6 @@ func (a *App) List(ctx context.Context) ([]Role, error) {
 		}
 		return rolesList, nil
 	})
-}
-
-// isSystemRoleName reports whether name collides with one of the three
-// fixed account-segment roles, which can never be created/modified/deleted
-// as a custom role.
-func isSystemRoleName(name string) bool {
-	systemRoles := map[string]bool{generic.RoleAdmin: true, generic.RoleTutor: true, generic.RoleUser: true}
-	return systemRoles[name]
 }
 
 func (a *App) Create(ctx context.Context, req CreateRoleRequest) (*Role, error) {
@@ -103,7 +95,7 @@ func (a *App) GetPermissions(ctx context.Context, roleID string) ([]Permission, 
 	}
 
 	cacheKey := fmt.Sprintf("roles:permissions:role:%s", roleID)
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() ([]Permission, error) {
+	return cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, nil, func() ([]Permission, error) {
 		permissions, err := a.GetRolePermissionsRepository(ctx, roleID)
 		if err != nil {
 			return nil, utils.ErrInternal("Failed to fetch role permissions.", err)
@@ -133,7 +125,8 @@ func (a *App) SetPermissions(ctx context.Context, roleID string, req UpdateRoleP
 	// Every user holding this role now has different effective permissions —
 	// bust the per-user auth cache app-wide since it's unknown which users
 	// hold it (see internals/middlewares/auth.go's authCacheTTL fallback).
-	a.Cache.InvalidateAllUserAuthCache(ctx)
+	slog.Info("invalidating all per-user auth cache")
+	_ = a.Cache.DeleteByPattern(ctx, "auth:roles_permissions:*")
 
 	return nil
 }

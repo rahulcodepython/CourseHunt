@@ -5,7 +5,7 @@ import { apiRequest } from "@/react-query/client";
 import { usePaginatedMutation, prependToPaginated } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import { CertificateZod } from "@/schema/certificate.types";
 import { PaginatedResponseZod } from "@/schema/common.types";
 

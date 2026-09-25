@@ -4,8 +4,8 @@ import * as React from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { useCourseStudyQuery } from "@/query-hooks/courses.api";
-import { Loading } from "@/components/loading";
-import { Icon } from "@/components/icon";
+import { Loading } from "@/components/common/loading";
+import { Icon } from "@/components/common/icon";
 import { CourseSidebar } from "./components/course-sidebar";
 
 export default function StudyLayout({ children }: { children: React.ReactNode }) {

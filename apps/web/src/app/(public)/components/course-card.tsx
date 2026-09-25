@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { CoursePublicResponse } from "@/schema/courses.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Icon } from "@/components/icon";
-import { formatINR } from "@/lib/format";
+import { Icon } from "@/components/common/icon";
+import { formatINR } from "@/lib/utils/format";
 
 export function CourseCard({ course }: { course: CoursePublicResponse }) {
   return (

@@ -7,11 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// handleList serves the shared admin/tutor notifications feed — the role on
-// the authenticated user decides which rows are visible (see
-// roleColumnFor). A plain "user" account gets an empty list rather than an
-// error; students don't have a notifications feed (they have the separate
-// Updates feature).
+// handleList serves the shared admin/tutor notifications feed — guarded at
+// the route level by RoleGuard(generic.RoleAdmin, generic.RoleTutor).
 func (a *App) handleList(c *fiber.Ctx) error {
 	user, err := middlewares.UserFromContext(c)
 	if err != nil {

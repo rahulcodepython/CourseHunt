@@ -11,7 +11,7 @@ import {
 } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
   CouponZod,
   CreateCouponRequestZod,
@@ -36,8 +36,9 @@ export function useCheckCouponQuery(code: string, courseId: string, enabled: boo
     () =>
       apiRequest(
         {
-          url: `${API_ENDPOINTS.COUPONS_CHECK}?code=${encodeURIComponent(code)}&course_id=${courseId}`,
+          url: API_ENDPOINTS.COUPONS_CHECK,
           method: "GET",
+          params: { code, course_id: courseId },
         },
         CouponCheckResponseZod,
       ),

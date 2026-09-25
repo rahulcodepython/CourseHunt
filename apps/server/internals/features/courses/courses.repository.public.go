@@ -18,11 +18,6 @@ func (a *App) PublicSingleRepository(ctx context.Context, slug, userID string) (
 	return resp, nil
 }
 
-type PublicListPayload struct {
-	Total int                    `json:"total"`
-	Data  []CoursePublicResponse `json:"data"`
-}
-
 func (a *App) PublicListRepository(ctx context.Context, page, limit int, categoryID, subcategoryID, level, search string) ([]CoursePublicResponse, int, error) {
 	filter := postgres.NewFilter()
 	filter.AddRawCondition("c.status = 'published'")

@@ -6,9 +6,9 @@ import { useDiscussionsQuery, useCreateDiscussionMutation } from "@/query-hooks/
 import type { Discussion } from "@/schema/discussions.types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import { DiscussionItem } from "./discussion-item";
-import { mergeListPage } from "@/lib/merge-list-page";
+import { mergeListPage } from "@/lib/utils/merge-list-page";
 
 const PAGE_SIZE = 10;
 

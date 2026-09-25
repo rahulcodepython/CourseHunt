@@ -21,6 +21,6 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	gTutor := router.Group("/v1/tutor/faqs", auth, tutorGuard)
 	gTutor.Get("/", a.handleTutorList)
 	gTutor.Post("/", a.handleCreate)
-	gTutor.Patch("/:id", a.handleUpdate)
-	gTutor.Delete("/:id", a.handleDelete)
+	gTutor.Patch("/:id", middlewares.ValidateUUIDParams("id"), a.handleUpdate)
+	gTutor.Delete("/:id", middlewares.ValidateUUIDParams("id"), a.handleDelete)
 }

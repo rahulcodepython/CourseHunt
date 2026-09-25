@@ -204,11 +204,6 @@ type QuizAttemptMultiAnswer struct {
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 }
 
-type QuizAttemptMultiAnswerOption struct {
-	MultiAnswerID    string `json:"multi_answer_id" db:"multi_answer_id"`
-	SelectedOptionID string `json:"selected_option_id" db:"selected_option_id"`
-}
-
 type QuizAttemptArrangeAnswer struct {
 	ID             string    `json:"id" db:"id"`
 	AttemptID      string    `json:"attempt_id" db:"attempt_id"`

@@ -3,9 +3,9 @@ import * as React from "react";
 
 import { useUsersQuery } from "@/query-hooks/users.api";
 import type { UserListResponse } from "@/schema/users.types";
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
-import { ROLES } from "@/lib/const";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
+import { ROLES } from "@/lib/constants/const";
 import { useUserBanActions } from "@/hooks/use-user-ban-actions";
 import { getColumns } from "./columns";
 

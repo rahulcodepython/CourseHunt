@@ -1,0 +1,34 @@
+import { z } from "zod";
+import type { QueryKey } from "@tanstack/react-query";
+
+import { apiRequest, compactParams } from "@/react-query/client";
+import { useAppQuery } from "@/react-query/query";
+import { PaginatedResponseZod } from "@/schema/common.types";
+
+/**
+ * Builds a `use<X>Query(params?)` hook for the common "plain paginated GET
+ * list" shape — a handful of query-hooks files repeat
+ * `useAppQuery(queryKeys.x(params), () => apiRequest({url, method:"GET",
+ * params}, PaginatedResponseZod(XZod)))` verbatim. Only fits a resource with
+ * no extra options (no `enabled`, no non-paginated/wrapped response shape,
+ * no extra client-side transform) — anything with real extra logic stays a
+ * hand-written hook instead of being forced through this.
+ */
+export function createListQuery<
+  T,
+  P extends Record<string, string | number | boolean | null | undefined> = Record<string, string | number | boolean | null | undefined>,
+>(
+  endpoint: string | ((params?: P) => string),
+  queryKeyFn: (params?: P) => QueryKey,
+  itemSchema: z.ZodType<T>,
+) {
+  return function useListQuery(params?: P) {
+    const url = typeof endpoint === "function" ? endpoint(params) : endpoint;
+    return useAppQuery(queryKeyFn(params), () =>
+      apiRequest(
+        { url, method: "GET", params: compactParams(params) },
+        PaginatedResponseZod(itemSchema),
+      ),
+    );
+  };
+}

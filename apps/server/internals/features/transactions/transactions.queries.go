@@ -98,6 +98,20 @@ const (
 		coupon_bumped AS (
 			UPDATE coupons SET usage_count = usage_count + 1 WHERE id IN (SELECT coupon_id FROM coupon_used)
 		),
+		payout_recorded AS (
+			INSERT INTO tutor_payout_transactions (tutor_id, course_id, transaction_id, amount, platform_fee, status)
+			SELECT 
+				c.tutor_id,
+				utx.course_id,
+				utx.id,
+				ROUND(utx.amount * (COALESCE(tpp.commission_percentage, 80.0) / 100.0), 2),
+				ROUND(utx.amount * ((100.0 - COALESCE(tpp.commission_percentage, 80.0)) / 100.0), 2),
+				'pending'
+			FROM updated_tx utx
+			JOIN courses c ON c.id = utx.course_id
+			LEFT JOIN tutor_payout_profiles tpp ON tpp.user_id = c.tutor_id
+			WHERE NOT EXISTS (SELECT 1 FROM marked_duplicate)
+		),
 		notified AS (
 			INSERT INTO notifications (type, message, is_admin, is_tutor, is_student)
 			SELECT
@@ -302,3 +316,73 @@ func BuildListRefundsQuery(whereClause string, limitParam, offsetParam int) stri
 		);
 	`, whereClause, whereClause, limitParam, offsetParam)
 }
+
+const (
+	ListTutorPayouts = `
+		SELECT jsonb_build_object(
+			'summary', jsonb_build_object(
+				'pending_balance', COALESCE((SELECT SUM(amount) FROM tutor_payout_transactions WHERE tutor_id = $1 AND status = 'pending'), 0),
+				'total_earned', COALESCE((SELECT SUM(amount) FROM tutor_payout_transactions WHERE tutor_id = $1 AND status IN ('pending', 'processing', 'completed')), 0),
+				'total_paid', COALESCE((SELECT SUM(amount) FROM tutor_payout_transactions WHERE tutor_id = $1 AND status = 'completed'), 0)
+			),
+			'payouts', COALESCE((
+				SELECT jsonb_agg(
+					jsonb_build_object(
+						'id', pt.id,
+						'tutor_id', pt.tutor_id,
+						'course_id', pt.course_id,
+						'course_title', c.title,
+						'transaction_id', pt.transaction_id,
+						'amount', pt.amount,
+						'platform_fee', pt.platform_fee,
+						'status', pt.status,
+						'reference_id', pt.reference_id,
+						'processed_at', pt.processed_at,
+						'created_at', pt.created_at
+					) ORDER BY pt.created_at DESC
+				)
+				FROM tutor_payout_transactions pt
+				LEFT JOIN courses c ON c.id = pt.course_id
+				WHERE pt.tutor_id = $1
+			), '[]'::jsonb)
+		);
+	`
+
+	RequestTutorPayout = `
+		UPDATE tutor_payout_transactions
+		SET status = 'processing'
+		WHERE tutor_id = $1 AND status = 'pending'
+		RETURNING id;
+	`
+
+	ListAdminPayouts = `
+		SELECT COALESCE(
+			jsonb_agg(
+				jsonb_build_object(
+					'id', pt.id,
+					'tutor_id', pt.tutor_id,
+					'tutor_email', u.email,
+					'course_id', pt.course_id,
+					'course_title', c.title,
+					'transaction_id', pt.transaction_id,
+					'amount', pt.amount,
+					'platform_fee', pt.platform_fee,
+					'status', pt.status,
+					'reference_id', pt.reference_id,
+					'processed_at', pt.processed_at,
+					'created_at', pt.created_at
+				) ORDER BY pt.created_at DESC
+			), '[]'::jsonb
+		)
+		FROM tutor_payout_transactions pt
+		LEFT JOIN "users" u ON u.id = pt.tutor_id
+		LEFT JOIN courses c ON c.id = pt.course_id;
+	`
+
+	SettleAdminPayout = `
+		UPDATE tutor_payout_transactions
+		SET status = 'completed', reference_id = $2, processed_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND status IN ('pending', 'processing')
+		RETURNING id;
+	`
+)

@@ -4,10 +4,13 @@ import (
 	"errors"
 	"strings"
 
+	"coursehunt/server/internals/generic"
+
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	entranslations "github.com/go-playground/validator/v10/translations/en"
+	"github.com/gofiber/fiber/v2"
 )
 
 var (
@@ -35,6 +38,19 @@ func ValidateStruct(s interface{}) error {
 			return errors.New(strings.Join(errs, "; "))
 		}
 		return err
+	}
+	return nil
+}
+
+// BindAndValidate parses the JSON body into dst and runs struct-tag
+// validation — the only sanctioned way to read a request body. Returns nil
+// on success, or an *APIError ready to be returned straight from the handler.
+func BindAndValidate(c *fiber.Ctx, dst interface{}) error {
+	if err := c.BodyParser(dst); err != nil {
+		return ErrBadRequest(generic.ErrMsgInvalidRequestBody, err)
+	}
+	if err := ValidateStruct(dst); err != nil {
+		return ErrValidation(generic.ErrMsgValidationFailed, err)
 	}
 	return nil
 }

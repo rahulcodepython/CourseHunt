@@ -11,7 +11,7 @@ import {
 } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
   ChapterZod,
   CreateChapterRequestZod,
@@ -23,7 +23,7 @@ export function useChaptersQuery(courseId: string, scope: "admin" | "tutor" = "t
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_CHAPTERS : API_ENDPOINTS.TUTOR_CHAPTERS;
   return useAppQuery(queryKeys.chapters(courseId, scope), () =>
     apiRequest(
-      { url: `${endpoint}?course_id=${courseId}`, method: "GET" },
+      { url: endpoint, method: "GET", params: { course_id: courseId } },
       z.array(ChapterZod),
     ),
   );
@@ -33,7 +33,7 @@ export function useCreateChapterMutation(courseId: string) {
   return useArrayMutation({
     mutationFn: (data: z.infer<typeof CreateChapterRequestZod>) =>
       apiRequest(
-        { url: `${API_ENDPOINTS.TUTOR_CHAPTERS}?course_id=${courseId}`, method: "POST", data },
+        { url: API_ENDPOINTS.TUTOR_CHAPTERS, method: "POST", params: { course_id: courseId }, data },
         ChapterZod,
       ),
     queryKey: queryKeys.chapters(courseId, "tutor"),

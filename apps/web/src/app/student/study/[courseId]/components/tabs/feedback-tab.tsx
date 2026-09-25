@@ -6,8 +6,8 @@ import { useCreateFeedbackMutation } from "@/query-hooks/feedbacks.api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Icon } from "@/components/icon";
-import { cn } from "@/lib/utils";
+import { Icon } from "@/components/common/icon";
+import { cn } from "@/lib/utils/utils";
 
 function StarRating({ value, onChange }: { value: number; onChange: (value: number) => void }) {
   const [hovered, setHovered] = React.useState(0);

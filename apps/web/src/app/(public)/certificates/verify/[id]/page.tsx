@@ -1,14 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Icon } from "@/components/icon";
-import { formatDate } from "@/lib/format";
-import { API_CONFIG, ROUTES } from "@/lib/const";
+import { Icon } from "@/components/common/icon";
+import { formatDate } from "@/lib/utils/format";
+import { API_CONFIG, ROUTES } from "@/lib/constants/const";
 import { CertificateVerificationZod } from "@/schema/certificate.types";
 import { ApiResponseZod } from "@/schema/common.types";
 
 async function fetchVerification(id: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? API_CONFIG.DEFAULT_URL;
+  const baseUrl = API_CONFIG.DEFAULT_URL;
   const res = await fetch(`${baseUrl}/api/v1/certificates/verify/${id}`, { cache: "no-store" });
   const json = await res.json();
   const parsed = ApiResponseZod(CertificateVerificationZod).safeParse(json);

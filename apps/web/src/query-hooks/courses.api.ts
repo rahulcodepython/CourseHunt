@@ -7,9 +7,9 @@ import {
   useSimpleMutation,
 } from "@/react-query/mutation";
 import { useAppQuery } from "@/react-query/query";
-import { createListQuery } from "@/react-query/query-factories";
+import { createListQuery } from "@/react-query/factory";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
   CreateCourseRequestZod,
   UpdateCourseRequestZod,

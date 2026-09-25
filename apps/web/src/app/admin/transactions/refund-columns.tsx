@@ -2,9 +2,9 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import type { RefundTransaction } from "@/schema/transactions.types";
-import { formatDateTime, formatINR, truncate } from "@/lib/format";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
+import { formatDateTime, formatINR, truncate } from "@/lib/utils/format";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/common/status-badge";
 
 const columnHelper = createColumnHelper<RefundTransaction>();
 

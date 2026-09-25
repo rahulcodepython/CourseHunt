@@ -2,13 +2,13 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import type { AdminProfileItem, UserListResponse } from "@/schema/users.types";
-import { Icon } from "@/components/icon";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { RowActions, RowActionButton } from "@/components/row-actions";
-import { RolesCell } from "@/components/roles-cell";
-import { StatusBadge } from "@/components/status-badge";
-import { bannedStatusMap } from "@/lib/user-status";
-import UserCell from "@/components/user-cell";
+import { Icon } from "@/components/common/icon";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
+import { RolesCell } from "@/components/table/roles-cell";
+import { StatusBadge } from "@/components/common/status-badge";
+import { bannedStatusMap } from "@/lib/auth/user-status";
+import UserCell from "@/components/table/user-cell";
 
 // /tutors sources rows from useUsersQuery (UserListResponse), not the
 // profiles endpoint — total_students/rating_avg aren't actually present on

@@ -1,7 +1,7 @@
 "use client";
 
-import { Icon } from "@/components/icon";
-import { MarkdownContent } from "@/components/markdown-content";
+import { Icon } from "@/components/common/icon";
+import { MarkdownContent } from "@/components/common/markdown-content";
 
 export function ContentTab({ content }: { content: string | null | undefined }) {
   if (!content?.trim()) {

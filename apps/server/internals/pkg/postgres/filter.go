@@ -14,8 +14,8 @@ type QueryFilter struct {
 // NewFilter creates a new QueryFilter pre-populated with optional initial arguments.
 func NewFilter(initialArgs ...interface{}) *QueryFilter {
 	qf := &QueryFilter{
-		conditions: make([]string, 0),
-		Args:       make([]interface{}, 0, len(initialArgs)),
+		conditions: make([]string, 0, 4),
+		Args:       make([]interface{}, 0, len(initialArgs)+4),
 	}
 	if len(initialArgs) > 0 {
 		qf.Args = append(qf.Args, initialArgs...)
@@ -77,29 +77,39 @@ func (f *QueryFilter) Conditions() []string {
 }
 
 // Join joins all conditions with " AND ". If no conditions exist, defaultClause is returned.
-// Example: filter.Join("1=1") or filter.Join("")
+// Fast-paths single-condition and empty cases to eliminate slice allocations.
 func (f *QueryFilter) Join(defaultClause string) string {
-	if len(f.conditions) == 0 {
+	switch len(f.conditions) {
+	case 0:
 		return defaultClause
+	case 1:
+		return f.conditions[0]
+	default:
+		return strings.Join(f.conditions, " AND ")
 	}
-	return strings.Join(f.conditions, " AND ")
 }
 
 // Where returns "WHERE <conditions>" if conditions exist, or defaultClause if empty.
-// Example: filter.Where("") returns "WHERE a = $1" or ""
+// Fast-paths single-condition and empty cases to eliminate redundant slice scans.
 func (f *QueryFilter) Where(defaultClause string) string {
-	j := f.Join("")
-	if j == "" {
+	switch len(f.conditions) {
+	case 0:
 		return defaultClause
+	case 1:
+		return "WHERE " + f.conditions[0]
+	default:
+		return "WHERE " + strings.Join(f.conditions, " AND ")
 	}
-	return "WHERE " + j
 }
 
 // AndPrefix returns " AND <conditions>" if conditions exist, or "" if empty.
 func (f *QueryFilter) AndPrefix() string {
-	j := f.Join("")
-	if j == "" {
+	switch len(f.conditions) {
+	case 0:
 		return ""
+	case 1:
+		return " AND " + f.conditions[0]
+	default:
+		return " AND " + strings.Join(f.conditions, " AND ")
 	}
-	return " AND " + j
 }

@@ -14,8 +14,8 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 
 	gAdmin := router.Group("/v1/admin/enrollments", auth)
 	gAdmin.Get("/", adminInspect, a.handleAdminList)
-	gAdmin.Post("/:userId/:courseId/revoke", adminRevoke, a.handleRevoke)
-	gAdmin.Post("/:userId/:courseId/regain", adminRevoke, a.handleRegain)
+	gAdmin.Post("/:userId/:courseId/revoke", adminRevoke, middlewares.ValidateUUIDParams("userId", "courseId"), a.handleRevoke)
+	gAdmin.Post("/:userId/:courseId/regain", adminRevoke, middlewares.ValidateUUIDParams("userId", "courseId"), a.handleRegain)
 
 	// Tutor enrollments management: strictly single permission PermTutorCoursesManage
 	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCoursesManage)

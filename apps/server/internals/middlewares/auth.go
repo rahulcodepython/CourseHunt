@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -65,7 +66,7 @@ func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo UsersLoo
 		banned := claims.Banned
 
 		if usersRepo != nil && claims.Subject != "" {
-			cacheKey := cache.AuthCacheKey(claims.Subject)
+			cacheKey := fmt.Sprintf("auth:roles_permissions:%s", claims.Subject)
 
 			var cached generic.RolesAndPermissionsResult
 			if hit, _ := cch.Get(c.UserContext(), cacheKey, &cached); hit {
@@ -92,53 +93,6 @@ func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo UsersLoo
 			Permissions: perms,
 		})
 
-		return c.Next()
-	}
-}
-
-// UserFromContext reads the UserContext stored in Fiber locals.
-func UserFromContext(c *fiber.Ctx) (*generic.UserContext, error) {
-	user, ok := c.Locals("user").(*generic.UserContext)
-	if !ok || user == nil {
-		return nil, generic.ErrAuthNoUserContext
-	}
-	return user, nil
-}
-
-// UserID returns the authenticated user's ID string, or "" if unauthenticated.
-func UserID(c *fiber.Ctx) string {
-	if user, err := UserFromContext(c); err == nil && user != nil {
-		return user.UserID
-	}
-	return ""
-}
-
-// PermissionGuard restricts a route to callers holding the specified permission.
-func PermissionGuard(requiredPermission string) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		user, err := UserFromContext(c)
-		if err != nil {
-			return utils.ErrUnauthorized("Unauthorized.", err)
-		}
-
-		if _, hasPerm := user.Permissions[requiredPermission]; hasPerm {
-			return c.Next()
-		}
-
-		return utils.ErrForbidden("Permission denied.", nil)
-	}
-}
-
-// RoleGuard restricts a route to a single account segment (admin/tutor/user).
-func RoleGuard(required string) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		user, err := UserFromContext(c)
-		if err != nil {
-			return utils.ErrUnauthorized("Unauthorized.", err)
-		}
-		if user.Role != required {
-			return utils.ErrForbidden("Permission denied.", nil)
-		}
 		return c.Next()
 	}
 }

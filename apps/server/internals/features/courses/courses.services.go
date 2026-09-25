@@ -9,13 +9,9 @@ import (
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/cache"
+	"coursehunt/server/internals/pkg/postgres"
 	"coursehunt/server/internals/utils"
 )
-
-type publicCoursesCacheData struct {
-	Cards []CoursePublicResponse `json:"cards"`
-	Total int                    `json:"total"`
-}
 
 func (a *App) PublicList(ctx context.Context, page, limit int, catID, subID, lvl, search string) ([]CoursePublicResponse, int, error) {
 	if len(search) > 200 {
@@ -40,22 +36,38 @@ func (a *App) PublicList(ctx context.Context, page, limit int, catID, subID, lvl
 func (a *App) PublicSingle(ctx context.Context, slug, userID string) (*CourseLandingResponse, error) {
 	cacheKey := fmt.Sprintf("courses:public:single:slug:%s:u:%s", slug, userID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (*CourseLandingResponse, error) {
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 5*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrCoursesCourseNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*CourseLandingResponse, error) {
 		resp, err := a.PublicSingleRepository(ctx, slug, userID)
 		if err != nil {
-			if errors.Is(err, generic.ErrCoursesCourseNotFound) {
-				return nil, utils.ErrNotFound("Course not found.", err)
-			}
-			return nil, utils.ErrInternal("Failed to fetch course details.", err)
+			return nil, err
 		}
 		return resp, nil
 	})
+	if err != nil {
+		if errors.Is(err, generic.ErrCoursesCourseNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Course not found.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch course details.", err)
+	}
+	return res, nil
 }
 
 func (a *App) Study(ctx context.Context, courseID, userID string) (*CourseStudyResponse, error) {
-	resp, err := a.StudyMetadataRepository(ctx, courseID, userID)
+	cacheKey := fmt.Sprintf("courses:study:c:%s:u:%s", courseID, userID)
+
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 5*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrCoursesCourseNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*CourseStudyResponse, error) {
+		resp, err := a.StudyMetadataRepository(ctx, courseID, userID)
+		if err != nil {
+			return nil, err
+		}
+		return resp, nil
+	})
 	if err != nil {
-		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
+		if errors.Is(err, generic.ErrCoursesCourseNotFound) || errors.Is(err, postgres.ErrNotFound) {
 			return nil, utils.ErrNotFound("Course not found.", err)
 		}
 		if errors.Is(err, generic.ErrCoursesNotEnrolled) {
@@ -63,7 +75,7 @@ func (a *App) Study(ctx context.Context, courseID, userID string) (*CourseStudyR
 		}
 		return nil, utils.ErrInternal("Failed to fetch study page.", err)
 	}
-	return resp, nil
+	return res, nil
 }
 
 func (a *App) EnrollFree(ctx context.Context, userID, courseID string) error {
@@ -98,14 +110,24 @@ func (a *App) AdminList(ctx context.Context, page, limit int, categoryID, subcat
 }
 
 func (a *App) AdminGetByID(ctx context.Context, id string) (*Course, error) {
-	course, err := a.AdminGetByIDRepository(ctx, id)
+	cacheKey := fmt.Sprintf("courses:admin:get:id:%s", id)
+
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 5*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrCoursesCourseNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*Course, error) {
+		course, err := a.AdminGetByIDRepository(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		return course, nil
+	})
 	if err != nil {
-		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
+		if errors.Is(err, generic.ErrCoursesCourseNotFound) || errors.Is(err, postgres.ErrNotFound) {
 			return nil, utils.ErrNotFound("Course not found.", err)
 		}
 		return nil, utils.ErrInternal("Failed to fetch course.", err)
 	}
-	return course, nil
+	return res, nil
 }
 
 // --- Tutor Services ---
@@ -119,9 +141,19 @@ func (a *App) TutorList(ctx context.Context, page, limit int, userID, categoryID
 }
 
 func (a *App) TutorGetByID(ctx context.Context, id, userID string) (*Course, error) {
-	course, err := a.TutorGetByIDRepository(ctx, id, userID)
+	cacheKey := fmt.Sprintf("courses:tutor:get:id:%s:u:%s", id, userID)
+
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 5*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrCoursesCourseNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*Course, error) {
+		course, err := a.TutorGetByIDRepository(ctx, id, userID)
+		if err != nil {
+			return nil, err
+		}
+		return course, nil
+	})
 	if err != nil {
-		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
+		if errors.Is(err, generic.ErrCoursesCourseNotFound) || errors.Is(err, postgres.ErrNotFound) {
 			return nil, utils.ErrNotFound("Course not found.", err)
 		}
 		if errors.Is(err, generic.ErrCoursesAccessDenied) {
@@ -129,7 +161,7 @@ func (a *App) TutorGetByID(ctx context.Context, id, userID string) (*Course, err
 		}
 		return nil, utils.ErrInternal("Failed to fetch course.", err)
 	}
-	return course, nil
+	return res, nil
 }
 
 func (a *App) Create(ctx context.Context, userID string, req CreateCourseRequest) (*Course, error) {
@@ -137,8 +169,11 @@ func (a *App) Create(ctx context.Context, userID string, req CreateCourseRequest
 		req.FinalPrice = 0
 		req.CouponAllowed = false
 	}
+	req.ShortDescription = utils.SanitizeUGCPtr(req.ShortDescription)
+	req.LongDescription = utils.SanitizeUGCPtr(req.LongDescription)
+	slug := utils.Slugify(req.Title)
 
-	resp, err := a.CreateRepository(ctx, userID, req)
+	resp, err := a.CreateRepository(ctx, userID, slug, req)
 	if err != nil {
 		return nil, utils.ErrInternal("Failed to create course.", err)
 	}
@@ -154,6 +189,12 @@ func (a *App) Update(ctx context.Context, id, userID string, req UpdateCourseReq
 		req.FinalPrice = &zero
 		notAllowed := false
 		req.CouponAllowed = &notAllowed
+	}
+	if req.ShortDescription != nil {
+		req.ShortDescription = utils.SanitizeUGCPtr(req.ShortDescription)
+	}
+	if req.LongDescription != nil {
+		req.LongDescription = utils.SanitizeUGCPtr(req.LongDescription)
 	}
 
 	course, cleanup, err := a.UpdateRepository(ctx, id, userID, req)

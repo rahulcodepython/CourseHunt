@@ -1,7 +1,7 @@
 "use client";
 
-import { PageHeader } from "@/components/page-header";
-import { NotificationsFeedTable } from "@/components/notifications-table";
+import { PageHeader } from "@/components/layout/page-header";
+import { NotificationsFeedTable } from "@/components/table/notifications-table";
 
 export default function AdminNotificationsPage() {
   return (

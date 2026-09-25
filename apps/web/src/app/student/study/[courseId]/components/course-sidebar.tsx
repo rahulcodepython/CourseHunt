@@ -11,10 +11,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
-import { Icon, type IconName } from "@/components/icon";
-import { LESSON_TYPE } from "@/lib/const";
-import { formatDuration } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { Icon, type IconName } from "@/components/common/icon";
+import { LESSON_TYPE } from "@/lib/constants/const";
+import { formatDuration } from "@/lib/utils/format";
+import { cn } from "@/lib/utils/utils";
 
 const LESSON_TYPE_ICON: Record<string, IconName> = {
   [LESSON_TYPE.VIDEO]: "video",
@@ -26,11 +26,33 @@ function LessonRow({
   courseId,
   lesson,
   active,
+  locked,
 }: {
   courseId: string;
   lesson: StudyLessonItem;
   active: boolean;
+  locked?: boolean;
 }) {
+  if (locked) {
+    return (
+      <div
+        className={cn(
+          "flex min-w-0 items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground/60 cursor-not-allowed select-none",
+        )}
+      >
+        <Icon name="lock" className="size-4 shrink-0 text-muted-foreground/50" />
+        <Icon
+          name={LESSON_TYPE_ICON[lesson.lesson_type] ?? "file-text"}
+          className="size-4 shrink-0 text-muted-foreground/40"
+        />
+        <span className="min-w-0 flex-1 truncate">{lesson.title}</span>
+        <span className="shrink-0 text-xs text-muted-foreground/40 tabular-nums">
+          {formatDuration(lesson.duration_seconds)}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <Link
       href={`/student/study/${courseId}?lessonId=${lesson.id}`}
@@ -98,13 +120,24 @@ export function CourseSidebar({
               <AccordionItem key={chapter.id} value={chapter.id} className="border-b-0">
                 <AccordionTrigger className="min-w-0 px-2.5 py-2.5 hover:no-underline">
                   <div className="min-w-0 flex-1 text-left">
-                    <p className="truncate text-sm font-medium">
-                      Ch {chapter.chapter_no}: {chapter.title}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {chapter.progress.lessons_completed}/{chapter.total_lectures} lectures
-                      &middot; {formatDuration(chapter.total_duration_seconds)}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate text-sm font-medium">
+                        Ch {chapter.chapter_no}: {chapter.title}
+                      </p>
+                      {chapter.is_locked && (
+                        <Icon name="lock" className="size-3.5 shrink-0 text-amber-500" />
+                      )}
+                    </div>
+                    {chapter.is_locked && chapter.lock_reason ? (
+                      <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                        {chapter.lock_reason}
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {chapter.progress.lessons_completed}/{chapter.total_lectures} lectures
+                        &middot; {formatDuration(chapter.total_duration_seconds)}
+                      </p>
+                    )}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-1">
@@ -115,6 +148,7 @@ export function CourseSidebar({
                         courseId={courseId}
                         lesson={lesson}
                         active={lesson.id === activeLessonId}
+                        locked={chapter.is_locked}
                       />
                     ))}
                   </div>

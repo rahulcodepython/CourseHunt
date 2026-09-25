@@ -3,7 +3,7 @@ import { apiRequest } from "@/react-query/client";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
 import { SecurityEventZod, SecurityStatsZod } from "@/schema/security.types";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import type { CursorPageParams } from "@/hooks/use-cursor-feed";
 import { z } from "zod";
 

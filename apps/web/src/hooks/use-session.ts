@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
-import authClient from "@/lib/auth-client";
+import authClient from "@/lib/auth/auth-client";
 import { useSessionStore, type SessionPayload } from "@/store/session.store";
 
 import type { SessionRecord, SessionUser } from "@/schema/session.schema";
@@ -117,10 +117,10 @@ export default function useSession() {
     if (hydratedRef.current) return;
     hydratedRef.current = true;
 
-    if (!token) {
-      refreshSession();
-    }
-  }, [token, refreshSession]);
+    // Trigger non-blocking background validation against the backend session endpoint
+    // to refresh permissions and verify token validity without blocking initial render.
+    refreshSession();
+  }, [refreshSession]);
 
   return {
     user,

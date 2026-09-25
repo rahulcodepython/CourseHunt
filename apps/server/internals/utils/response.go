@@ -7,9 +7,8 @@ import (
 )
 
 // json is the canonical response envelope used by every handler (success,
-// via OK/Created below) and by the central ErrorHandler (errors.go/
-// error.handler.go) for every failure. It's the one place the wire shape is
-// defined.
+// via OK/Created below) and by the central ErrorHandler for every failure.
+// It is the single place the wire response schema is defined.
 func json[T interface{}](c *fiber.Ctx, status int, success bool, message string, data T, err error) error {
 	var errStr string
 	if err != nil {
@@ -28,14 +27,17 @@ func json[T interface{}](c *fiber.Ctx, status int, success bool, message string,
 	return c.Status(status).JSON(body)
 }
 
+// OK returns a successful HTTP 200 response with payload data.
 func OK[T interface{}](c *fiber.Ctx, message string, data T) error {
 	return json(c, fiber.StatusOK, true, message, data, nil)
 }
 
+// OKEmpty returns a successful HTTP 200 response with nil payload.
 func OKEmpty(c *fiber.Ctx, message string) error {
 	return json[*struct{}](c, fiber.StatusOK, true, message, nil, nil)
 }
 
+// Created returns a successful HTTP 201 response with payload data.
 func Created[T interface{}](c *fiber.Ctx, message string, data T) error {
 	return json(c, fiber.StatusCreated, true, message, data, nil)
 }

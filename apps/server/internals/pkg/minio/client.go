@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -18,9 +17,7 @@ import (
 
 // Storage implements object storage on top of MinIO. Callers get one
 // instance from Connect and pass it into every feature that needs it
-// (upload, courses, lessons) via constructor injection — there is no
-// package-level singleton, so a feature's dependency on storage is visible
-// in its constructor signature instead of a hidden global read.
+// (upload, courses, lessons) via constructor injection.
 type Storage struct {
 	mu sync.RWMutex
 
@@ -28,13 +25,12 @@ type Storage struct {
 	// used for server-side operations (bucket setup, health checks).
 	client *minio.Client
 	// publicClient is signed for the host in MINIO_BASE_URL — the address a
-	// browser can actually reach. The signed host is baked into a presigned
-	// URL's AWS SigV4 signature, so it can't be swapped after the fact by
-	// rewriting the URL string; it has to be signed for the right host from
-	// the start.
-	publicClient *minio.Client
-	bucket       string
-	baseURL      string
+	// browser can actually reach.
+	publicClient  *minio.Client
+	bucket        string // Private bucket (coursehunt-private)
+	baseURL       string
+	publicBucket  string // Public bucket (coursehunt-public)
+	publicBaseURL string
 
 	cfg *config.Config // retained for Ping's auto-reconnect
 }
@@ -42,20 +38,15 @@ type Storage struct {
 // minioRegion is fixed rather than auto-discovered: without it, the SDK
 // issues a live GetBucketLocation call the first time a client signs
 // anything, using that client's own configured endpoint. publicClient is
-// only ever reachable from the browser (that's the whole point of it), so
-// from inside the server that lookup would fail outright — pinning the
-// region up front means presigned-URL generation never needs network I/O.
+// only ever reachable from the browser, so region pinning prevents network I/O.
 const minioRegion = "us-east-1"
 
 // publicReadPolicyTemplate allows anonymous GetObject so direct public URLs
-// persisted in the DB (GetPublicURL) can be fetched by the browser without
-// credentials. %s is substituted with the bucket name.
+// persisted in the DB (GetPublicURL) can be fetched by the browser without credentials.
 const publicReadPolicyTemplate = `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::%s/*"]}]}`
 
-// Connect initializes the MinIO client with retries and ensures the bucket
-// exists, returning a ready-to-use *Storage. Continuing without file
-// storage on failure (if desired) is the caller's decision, same as today —
-// this just returns the error instead of logging+swallowing it itself.
+// Connect initializes the MinIO client with retries and ensures both private
+// and public buckets exist, returning a ready-to-use *Storage.
 func Connect(cfg *config.Config) (*Storage, error) {
 	s := &Storage{cfg: cfg}
 
@@ -64,7 +55,7 @@ func Connect(cfg *config.Config) (*Storage, error) {
 		return nil, fmt.Errorf("minio setup failed after %d retries: %w", maxAttempts, err)
 	}
 
-	slog.Info("connected to minio", "endpoint", cfg.MinioEnd, "bucket", cfg.MinioBucket)
+	slog.Info("connected to minio", "endpoint", cfg.MinioEnd, "private_bucket", cfg.MinioBucket, "public_bucket", cfg.MinioPublicBucket)
 	return s, nil
 }
 
@@ -84,6 +75,7 @@ func (s *Storage) init() error {
 	}
 
 	publicEndpoint, publicSecure := publicEndpointFrom(cfg.MinioBaseURL, cfg.MinioEnd, cfg.MinioSecure)
+
 	publicClient, err := minio.New(publicEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.MinioAccess, cfg.MinioSecret, ""),
 		Secure: publicSecure,
@@ -96,22 +88,40 @@ func (s *Storage) init() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// 1. Private bucket setup (no public policy applied — strictly private access)
 	exists, err := client.BucketExists(ctx, cfg.MinioBucket)
 	if err != nil {
-		return fmt.Errorf("failed to check bucket existence: %w", err)
+		return fmt.Errorf("failed to check private bucket existence: %w", err)
 	}
-
 	if !exists {
 		if err := client.MakeBucket(ctx, cfg.MinioBucket, minio.MakeBucketOptions{}); err != nil {
-			return fmt.Errorf("failed to create bucket: %w", err)
+			return fmt.Errorf("failed to create private bucket: %w", err)
 		}
 	}
 
-	// The app persists GetPublicURL (base URL + object name) in the DB for
-	// images/videos and the browser fetches those directly, so the bucket must
-	// allow anonymous reads. Uploads still go through presigned PUT URLs.
-	if err := client.SetBucketPolicy(ctx, cfg.MinioBucket, fmt.Sprintf(publicReadPolicyTemplate, cfg.MinioBucket)); err != nil {
-		return fmt.Errorf("failed to set public-read policy: %w", err)
+	// 2. Public bucket setup (for thumbnails, public avatars, banners)
+	publicBucket := cfg.MinioPublicBucket
+	if publicBucket == "" {
+		publicBucket = "coursehunt-public"
+	}
+	pubExists, err := client.BucketExists(ctx, publicBucket)
+	if err != nil {
+		return fmt.Errorf("failed to check public bucket existence: %w", err)
+	}
+	if !pubExists {
+		if err := client.MakeBucket(ctx, publicBucket, minio.MakeBucketOptions{}); err != nil {
+			return fmt.Errorf("failed to create public bucket: %w", err)
+		}
+	}
+
+	// Apply public-read policy ONLY to the public bucket
+	if err := client.SetBucketPolicy(ctx, publicBucket, fmt.Sprintf(publicReadPolicyTemplate, publicBucket)); err != nil {
+		slog.Warn("failed to set public-read policy on public bucket", "bucket", publicBucket, "err", err)
+	}
+
+	pubBaseURL := cfg.MinioPublicBaseURL
+	if pubBaseURL == "" {
+		pubBaseURL = cfg.MinioBaseURL
 	}
 
 	s.mu.Lock()
@@ -119,6 +129,8 @@ func (s *Storage) init() error {
 	s.publicClient = publicClient
 	s.bucket = cfg.MinioBucket
 	s.baseURL = cfg.MinioBaseURL
+	s.publicBucket = publicBucket
+	s.publicBaseURL = pubBaseURL
 	s.mu.Unlock()
 
 	return nil
@@ -135,8 +147,7 @@ func publicEndpointFrom(baseURL, fallbackEndpoint string, fallbackSecure bool) (
 	return u.Host, u.Scheme == "https"
 }
 
-// Ping checks health status of the MinIO connection, attempting
-// auto-reconnect if needed.
+// Ping checks health status of the MinIO connection, attempting auto-reconnect if needed.
 func (s *Storage) Ping(ctx context.Context) error {
 	s.mu.RLock()
 	client, bucket := s.client, s.bucket
@@ -166,63 +177,4 @@ func (s *Storage) Ping(ctx context.Context) error {
 		return fmt.Errorf("minio bucket check failed: %w", err)
 	}
 	return nil
-}
-
-// GetSignedURL generates a signed URL for uploading an object, valid for 1 hour
-func (s *Storage) GetSignedURL(ctx context.Context, objectName string) (string, error) {
-	if objectName == "" {
-		return "", fmt.Errorf("object name cannot be empty")
-	}
-
-	expiry := time.Hour
-	signedURL, err := s.publicClient.PresignedPutObject(ctx, s.bucket, objectName, expiry)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate signed URL: %w", err)
-	}
-
-	return signedURL.String(), nil
-}
-
-// GetPublicURL returns the public URL for a given object name
-func (s *Storage) GetPublicURL(objectName string) string {
-	return fmt.Sprintf("%s/%s", s.baseURL, objectName)
-}
-
-// DeleteObject removes an object from the bucket. A no-op (not an error) for
-// an empty object name, so callers can pass through an "absent" value freely.
-func (s *Storage) DeleteObject(ctx context.Context, objectName string) error {
-	if objectName == "" {
-		return nil
-	}
-	return s.client.RemoveObject(ctx, s.bucket, objectName, minio.RemoveObjectOptions{})
-}
-
-// ObjectNameFromURL extracts the bucket-relative object name from a URL
-// previously handed out by GetPublicURL, or "" if the URL doesn't belong to
-// this bucket (e.g. empty, or an external URL that predates this storage).
-func (s *Storage) ObjectNameFromURL(fileURL string) string {
-	prefix := s.baseURL + "/"
-	if fileURL == "" || !strings.HasPrefix(fileURL, prefix) {
-		return ""
-	}
-	return strings.TrimPrefix(fileURL, prefix)
-}
-
-// DeleteIfReplaced deletes the object behind oldURL when a file field is
-// being replaced or cleared (newURL differs from it) — otherwise a stale
-// object is left behind in the bucket every time a course/lesson file is
-// swapped. Best-effort: storage errors are logged, not returned, since the
-// DB write this follows has already succeeded and shouldn't be undone over a
-// secondary cleanup failure.
-func (s *Storage) DeleteIfReplaced(ctx context.Context, oldURL *string, newURL string) {
-	if oldURL == nil || *oldURL == "" || *oldURL == newURL {
-		return
-	}
-	objectName := s.ObjectNameFromURL(*oldURL)
-	if objectName == "" {
-		return
-	}
-	if err := s.DeleteObject(ctx, objectName); err != nil {
-		slog.Error("failed to delete replaced minio object", "object", objectName, "error", err)
-	}
 }

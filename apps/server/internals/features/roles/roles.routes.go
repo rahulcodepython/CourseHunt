@@ -16,10 +16,10 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	g := router.Group("/v1/roles", auth)
 	g.Get("/", read, a.handleListRoles)
 	g.Post("/", create, a.handleCreateRole)
-	g.Put("/:id", update, a.handleUpdateRole)
-	g.Delete("/:id", deleteRole, a.handleDeleteRole)
-	g.Get("/:id/permissions", read, a.handleGetRolePermissions)
-	g.Put("/:id/permissions", update, a.handleSetRolePermissions)
+	g.Put("/:id", update, middlewares.ValidateUUIDParams("id"), a.handleUpdateRole)
+	g.Delete("/:id", deleteRole, middlewares.ValidateUUIDParams("id"), a.handleDeleteRole)
+	g.Get("/:id/permissions", read, middlewares.ValidateUUIDParams("id"), a.handleGetRolePermissions)
+	g.Put("/:id/permissions", update, middlewares.ValidateUUIDParams("id"), a.handleSetRolePermissions)
 
 	router.Get("/v1/permissions", auth, read, a.handleListPermissions)
 }

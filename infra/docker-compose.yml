@@ -26,6 +26,13 @@ services:
         networks:
             - coursehunt-network
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 128M
+                reservations:
+                    memory: 64M
         healthcheck:
             test: [ "CMD", "traefik", "healthcheck", "--ping" ]
             interval: 10s
@@ -54,17 +61,19 @@ services:
             - coursehunt-network
         labels:
             - "traefik.enable=true"
-            # No explicit "entrypoints" label: Traefik then attaches this
-            # router to every defined entrypoint. In prod that's web(:80,
-            # which the static config below redirects to websecure) and
-            # websecure(:443, TLS-terminated via tls.certresolver); in local
-            # dev (docker-compose.dev.yml) the redirect and ACME flags
-            # are absent, so :80 just serves plain HTTP as before.
             - "traefik.http.routers.web.rule=Host(`${DOMAIN}`) && PathPrefix(`/`)"
+            - "traefik.http.routers.web.priority=1"
             - "traefik.http.routers.web.tls.certresolver=le"
-            - "traefik.http.services.web.loadbalancer.server.port=${PORT:-8080}"
+            - "traefik.http.services.web.loadbalancer.server.port=3000"
+        deploy:
+            resources:
+                limits:
+                    cpus: '1.0'
+                    memory: 750M
+                reservations:
+                    memory: 400M
         healthcheck:
-            test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-8080}/ || exit 1" ]
+            test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1" ]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -84,6 +93,13 @@ services:
         # start — see apps/migrator/migrations/000054_ops_retention_cron.up.sql.
         command: [ "postgres", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.database_name=${POSTGRES_DB:-coursehunt}" ]
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '2.0'
+                    memory: 2048M
+                reservations:
+                    memory: 1500M
         volumes:
             - pgdata:/var/lib/postgresql
         networks:
@@ -102,6 +118,13 @@ services:
             - ../.env
         command: [ "redis-server", "--requirepass", "${REDIS_PASSWORD}" ]
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 512M
+                reservations:
+                    memory: 256M
         volumes:
             - redisdata:/data
         networks:
@@ -126,9 +149,19 @@ services:
             - miniodata:/data
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.minio.rule=Host(`${DOMAIN}`) && PathPrefix(`/coursehunt`)"
+            - "traefik.http.routers.minio.rule=Host(`${DOMAIN}`) && (PathPrefix(`/storage`) || PathPrefix(`/${MINIO_BUCKET:-coursehunt-private}`) || PathPrefix(`/${MINIO_PUBLIC_BUCKET:-coursehunt-public}`) || PathPrefix(`/coursehunt`))"
+            - "traefik.http.routers.minio.priority=50"
             - "traefik.http.routers.minio.tls.certresolver=le"
+            - "traefik.http.middlewares.minio-strip.stripprefix.prefixes=/storage"
+            - "traefik.http.routers.minio.middlewares=minio-strip"
             - "traefik.http.services.minio.loadbalancer.server.port=9000"
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 512M
+                reservations:
+                    memory: 256M
         networks:
             - coursehunt-network
         restart: unless-stopped
@@ -184,7 +217,7 @@ services:
             # JWKS) is itself a container here — there is no host-level dev
             # server on :3000 in this deployment, so JWKS must be fetched from
             # the `web` service over the internal network, not host.docker.internal.
-            - JWKS_URL=${DOCKER_JWKS_URL:-${JWKS_URL:-http://web:${PORT:-8080}/api/auth/jwks}}
+            - JWKS_URL=${DOCKER_JWKS_URL:-${JWKS_URL:-http://web:3000/api/auth/jwks}}
         depends_on:
             postgres:
                 condition: service_healthy
@@ -197,8 +230,16 @@ services:
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.backend.rule=Host(`${DOMAIN}`) && PathPrefix(`/api/v1`)"
+            - "traefik.http.routers.backend.priority=100"
             - "traefik.http.routers.backend.tls.certresolver=le"
             - "traefik.http.services.backend.loadbalancer.server.port=${PORT:-8080}"
+        deploy:
+            resources:
+                limits:
+                    cpus: '1.0'
+                    memory: 256M
+                reservations:
+                    memory: 128M
         networks:
             - coursehunt-network
         healthcheck:
@@ -207,6 +248,31 @@ services:
             timeout: 10s
             retries: 3
             start_period: 15s
+
+    loki:
+        image: grafana/loki:3.0.0
+        container_name: coursehunt-loki
+        restart: unless-stopped
+        ports:
+            - "3100:3100"
+        command: -config.file=/etc/loki/local-config.yaml
+        volumes:
+            - ./loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+            - loki-data:/loki
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 512M
+                reservations:
+                    memory: 256M
+        networks:
+            - coursehunt-network
+        healthcheck:
+            test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
+            interval: 10s
+            timeout: 5s
+            retries: 3
 
 networks:
     coursehunt-network:
@@ -217,3 +283,4 @@ volumes:
     redisdata:
     miniodata:
     letsencrypt:
+    loki-data:

@@ -8,11 +8,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type UserListPayload struct {
-	Total int                `json:"total"`
-	Data  []UserListResponse `json:"data"`
-}
-
 func (a *App) GetRolesAndPermissions(ctx context.Context, userID string) (generic.RolesAndPermissionsResult, error) {
 	var (
 		role        string

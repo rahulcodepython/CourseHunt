@@ -2,13 +2,13 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import type { UserListResponse } from "@/schema/users.types";
-import { formatDate } from "@/lib/format";
-import { bannedStatusMap } from "@/lib/user-status";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { RowActions, RowActionButton } from "@/components/row-actions";
-import { RolesCell } from "@/components/roles-cell";
-import { StatusBadge } from "@/components/status-badge";
-import UserCell from "@/components/user-cell";
+import { formatDate } from "@/lib/utils/format";
+import { bannedStatusMap } from "@/lib/auth/user-status";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
+import { RolesCell } from "@/components/table/roles-cell";
+import { StatusBadge } from "@/components/common/status-badge";
+import UserCell from "@/components/table/user-cell";
 
 const columnHelper = createColumnHelper<UserListResponse>();
 

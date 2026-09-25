@@ -206,3 +206,17 @@ func (a *App) handleUpdateComplete(c *fiber.Ctx) error {
 
 	return utils.OK(c, "Lesson marked as complete.", LessonCompleteResponse{LessonID: lessonID, Completed: true})
 }
+
+func (a *App) handleHeartbeat(c *fiber.Ctx) error {
+	var req HeartbeatRequest
+	if err := utils.BindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	resp, err := a.Heartbeat(c.UserContext(), c.Params("id"), middlewares.UserID(c), req)
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Playback progress recorded.", resp)
+}

@@ -15,20 +15,20 @@ import {
 } from "@/query-hooks/lessons.api";
 import { useQuizMetadataQuery, useCreateQuizMutation } from "@/query-hooks/quiz.api";
 import type { Lesson } from "@/schema/lessons.types";
-import { flushPendingUploads, clearPendingUploads } from "@/lib/pending-uploads";
-import { formatDuration } from "@/lib/format";
-import { readVideoDuration } from "@/lib/video-duration";
-import { cn } from "@/lib/utils";
+import { flushPendingUploads, clearPendingUploads } from "@/lib/utils/pending-uploads";
+import { formatDuration } from "@/lib/utils/format";
+import { readVideoDuration } from "@/lib/utils/video-duration";
+import { cn } from "@/lib/utils/utils";
 
-import { FormDialog } from "@/components/form-dialog";
+import { FormDialog } from "@/components/dialogs/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MarkdownContent } from "@/components/markdown-content";
-import { LoadingButton } from "@/components/loading-button";
-import { Icon } from "@/components/icon";
-import FileUpload from "@/components/file-upload";
+import { MarkdownContent } from "@/components/common/markdown-content";
+import { LoadingButton } from "@/components/common/loading-button";
+import { Icon } from "@/components/common/icon";
+import FileUpload from "@/components/common/file-upload";
 import {
   Select,
   SelectContent,

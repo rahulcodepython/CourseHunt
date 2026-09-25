@@ -4,16 +4,16 @@ import * as React from "react";
 
 import { useManageCoursesQuery, useDeleteCourseMutation } from "@/query-hooks/courses.api";
 import type { Course } from "@/schema/courses.types";
-import { PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/table/data-table";
+import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
+import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 import { CourseModal } from "./course-modal";
 import { CourseStatusDialog } from "./course-status-dialog";
-import { CourseDetailsModal } from "@/components/course-details-modal";
+import { CourseDetailsModal } from "@/components/dialogs/course-details-modal";
 
 export default function TutorCoursesPage() {
   const { data: rawCourses, isLoading } = useManageCoursesQuery();

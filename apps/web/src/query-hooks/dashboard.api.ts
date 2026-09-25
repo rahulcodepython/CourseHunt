@@ -4,7 +4,7 @@ import { apiRequest } from "@/react-query/client";
 
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import { AdminDashboardZod, TutorDashboardZod, UserDashboardZod } from "@/schema/dashboard.types";
 
 export function useAdminDashboardQuery() {

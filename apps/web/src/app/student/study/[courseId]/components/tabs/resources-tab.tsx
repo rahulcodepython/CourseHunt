@@ -4,9 +4,9 @@ import { createColumnHelper } from "@tanstack/react-table";
 
 import { useStudyLessonResourcesQuery } from "@/query-hooks/lessons.api";
 import type { LessonResource } from "@/schema/lessons.types";
-import { DataTable, type TableColumn } from "@/components/data-table";
+import { DataTable, type TableColumn } from "@/components/table/data-table";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 
 const columnHelper = createColumnHelper<LessonResource>();
 

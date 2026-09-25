@@ -2,9 +2,9 @@
 
 import React from "react";
 
-import { AuthCard } from "@/components/auth-card";
-import { StaffLoginForm } from "@/components/auth/staff-login-form";
-import { StudentLoginForm } from "@/components/auth/student-login-form";
+import { AuthCard } from "@/components/common/auth-card";
+import { StaffLoginForm } from "./staff-login-form";
+import { StudentLoginForm } from "./student-login-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function LoginPage() {

@@ -2,7 +2,7 @@ import { apiRequest } from "@/react-query/client";
 import { z } from "zod";
 
 import { LogEntryZod } from "@/schema/logs.types";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 import type { CursorPageParams } from "@/hooks/use-cursor-feed";
 
 export function fetchLogs(params: CursorPageParams) {

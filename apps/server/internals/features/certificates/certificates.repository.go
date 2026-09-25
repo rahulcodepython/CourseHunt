@@ -7,11 +7,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type CertificatesListPayload struct {
-	Total int           `json:"total"`
-	Data  []Certificate `json:"data"`
-}
-
 func (a *App) IssueRepository(ctx context.Context, userID, courseID string) (*Certificate, error) {
 	return postgres.QueryWithStatus[Certificate](ctx, a.DB, IssueCertificateJSON, IssueCertificateErrMap, userID, courseID)
 }

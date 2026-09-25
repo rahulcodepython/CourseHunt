@@ -4,14 +4,14 @@ import React from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-import { AuthCard } from "@/components/auth-card";
-import authClient from "@/lib/auth-client";
+import { AuthCard } from "@/components/common/auth-card";
+import authClient from "@/lib/auth/auth-client";
 import useSession from "@/hooks/use-session";
-import { LoadingButton } from "@/components/loading-button";
+import { LoadingButton } from "@/components/common/loading-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getDashboardURI, ROUTES } from "@/lib/const";
+import { getDashboardURI, ROUTES } from "@/lib/constants/const";
 
 const inputClass =
   "border-zinc-700 bg-zinc-800 text-white text-center text-lg tracking-[0.5em] placeholder:text-zinc-500 placeholder:tracking-normal focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30";

@@ -75,6 +75,7 @@ var (
 	ErrLessonsNotEnrolled      = errors.New("access denied: not enrolled in course")
 	ErrLessonsLessonNotFound   = errors.New("lesson not found")
 	ErrLessonsChapterNotFound  = errors.New("chapter not found")
+	ErrLessonsChapterLocked    = errors.New("access denied: chapter is locked")
 	ErrLessonsResourceNotFound = errors.New("resource not found")
 	ErrLessonsAccessDenied     = errors.New("access denied")
 )

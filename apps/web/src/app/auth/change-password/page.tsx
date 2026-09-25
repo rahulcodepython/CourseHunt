@@ -4,15 +4,15 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import authClient from "@/lib/auth-client";
-import { AuthCard } from "@/components/auth-card";
-import { LoadingButton } from "@/components/loading-button";
+import authClient from "@/lib/auth/auth-client";
+import { AuthCard } from "@/components/common/auth-card";
+import { LoadingButton } from "@/components/common/loading-button";
 import { Label } from "@/components/ui/label";
-import { PasswordInput } from "@/components/password-input";
+import { PasswordInput } from "@/components/common/password-input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ROUTES, getDashboardURI } from "@/lib/const";
+import { ROUTES, getDashboardURI } from "@/lib/constants/const";
 import useSession from "@/hooks/use-session";
 
 const inputClass =

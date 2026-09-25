@@ -7,11 +7,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type CouponListPayload struct {
-	Total int      `json:"total"`
-	Data  []Coupon `json:"data"`
-}
-
 func (a *App) CourseAllowsCouponRepository(ctx context.Context, courseID string) (bool, error) {
 	var allowed bool
 	err := a.DB.QueryRow(ctx, CourseAllowsCoupon, courseID).Scan(&allowed)

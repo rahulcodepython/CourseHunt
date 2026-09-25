@@ -3,7 +3,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import type { LessonResource } from "@/schema/lessons.types";
 import { Badge } from "@/components/ui/badge";
-import { RowActions, RowActionButton } from "@/components/row-actions";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
 
 const columnHelper = createColumnHelper<LessonResource>();
 

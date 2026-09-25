@@ -1,14 +1,14 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import type { TableColumn } from "@/components/data-table";
+import type { TableColumn } from "@/components/table/data-table";
 import type { Course } from "@/schema/courses.types";
-import { formatINR } from "@/lib/format";
+import { formatINR } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
-import { Icon } from "@/components/icon";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { RowActions, RowActionButton } from "@/components/row-actions";
-import { COURSE_STATUS } from "@/lib/const";
+import { Icon } from "@/components/common/icon";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
+import { COURSE_STATUS } from "@/lib/constants/const";
 
 const columnHelper = createColumnHelper<Course>();
 

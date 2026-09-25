@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"coursehunt/server/internals/config"
+	"coursehunt/server/internals/features/assignments"
 	"coursehunt/server/internals/features/categories"
 	"coursehunt/server/internals/features/certificates"
 	"coursehunt/server/internals/features/chapters"
@@ -75,6 +76,7 @@ type Router struct {
 	Upload        *upload.App
 	Users         *users.App
 	Wishlist      *wishlist.App
+	Assignments   *assignments.App
 }
 
 func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Storage, cfg *config.Config, verifier *jwt.Verifier, rootCtx context.Context) *Router {
@@ -83,13 +85,14 @@ func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Sto
 	rzp := razorpay.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
 
 	// Construct feature apps in dependency order
+	assignmentsApp := assignments.New(db, cch, storage)
 	categoriesApp := categories.New(db, cch, cfg)
-	certificatesApp := certificates.New(db, cfg)
+	certificatesApp := certificates.New(db, cch, cfg)
 	chaptersApp := chapters.New(db, cch, cfg)
 	couponsApp := coupons.New(db, cch, cfg)
 	coursesApp := courses.New(db, cch, cfg, storage)
-	dashboardApp := dashboard.New(db, cfg)
-	discussionsApp := discussions.New(db, cfg)
+	dashboardApp := dashboard.New(db, cch, cfg)
+	discussionsApp := discussions.New(db, cch, cfg)
 	enrollmentsApp := enrollments.New(db, cfg)
 	faqsApp := faqs.New(db, cch, cfg)
 	feedbacksApp := feedbacks.New(db, cch, cfg)
@@ -138,12 +141,14 @@ func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Sto
 		Upload:        uploadApp,
 		Users:         usersApp,
 		Wishlist:      wishlistApp,
+		Assignments:   assignmentsApp,
 	}
 }
 
 func (r *Router) SetUp() {
 	r.App.Use(middlewares.RequestContextMiddleware(r.RootCtx, time.Duration(r.CFG.RequestTimeoutSec)*time.Second))
 	r.App.Use(middlewares.LoggerMiddleware(r.DB))
+	r.App.Use(middlewares.LokiLoggerMiddleware(r.CFG.LokiURL, r.CFG.Environment))
 	r.App.Use(recover.New())
 	r.App.Use(helmet.New())
 	r.App.Use(compress.New())
@@ -163,10 +168,11 @@ func (r *Router) SetUp() {
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
 		AllowCredentials: true,
 	}))
-	r.App.Use(middlewares.RateLimiterMiddleware())
+	r.App.Use(middlewares.RateLimiterMiddleware(r.Cache.Client()))
 
 	auth := middlewares.BaseAuthMiddleware(r.CFG, r.Cache, r.Users, r.Verifier)
 
+	r.Assignments.RegisterRoutes(r.API, auth)
 	r.Categories.RegisterRoutes(r.API, auth)
 	r.Certificates.RegisterRoutes(r.API, auth)
 	r.Chapters.RegisterRoutes(r.API, auth)
@@ -190,4 +196,8 @@ func (r *Router) SetUp() {
 	r.Upload.RegisterRoutes(r.API, auth)
 	r.Users.RegisterRoutes(r.API, auth)
 	r.Wishlist.RegisterRoutes(r.API, auth)
+
+	// Start resilient background workers
+	r.Transactions.StartBackgroundWorkers(r.RootCtx)
+	r.Security.StartBackgroundWorkers(r.RootCtx)
 }

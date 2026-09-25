@@ -2,12 +2,12 @@
 
 import { useAdminDashboardQuery } from "@/query-hooks/dashboard.api";
 import type { AdminDashboard } from "@/schema/dashboard.types";
-import { PageHeader } from "@/components/page-header";
-import { StatCard } from "@/components/stat-card";
-import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/layout/page-header";
+import { StatCard } from "@/components/common/stat-card";
+import { DataTable } from "@/components/table/data-table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatINR } from "@/lib/format";
+import { formatINR } from "@/lib/utils/format";
 import { topCoursesColumns } from "./columns-top-courses";
 import { userGrowthColumns } from "./columns-user-growth";
 

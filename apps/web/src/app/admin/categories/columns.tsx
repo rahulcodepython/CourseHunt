@@ -2,12 +2,12 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Category } from "@/schema/category.types";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
-import { Icon } from "@/components/icon";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { RowActions, RowActionButton } from "@/components/row-actions";
-import { cn } from "@/lib/utils";
+import { Icon } from "@/components/common/icon";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
+import { cn } from "@/lib/utils/utils";
 
 const columnHelper = createColumnHelper<Category>();
 

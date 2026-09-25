@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
-import type { TableColumn } from "@/components/data-table";
+import type { TableColumn } from "@/components/table/data-table";
 import type { EnrolledCourseResponse } from "@/schema/courses.types";
-import { Icon } from "@/components/icon";
+import { Icon } from "@/components/common/icon";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/common/status-badge";
 
 const columnHelper = createColumnHelper<EnrolledCourseResponse>();
 

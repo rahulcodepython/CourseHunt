@@ -2,7 +2,7 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import type { AdminTopCourse } from "@/schema/dashboard.types";
-import { formatINR } from "@/lib/format";
+import { formatINR } from "@/lib/utils/format";
 
 const columnHelper = createColumnHelper<AdminTopCourse>();
 

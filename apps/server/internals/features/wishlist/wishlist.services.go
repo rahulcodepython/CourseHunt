@@ -12,15 +12,10 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-type wishlistListCacheData struct {
-	Data  []WishlistItem `json:"data"`
-	Total int            `json:"total"`
-}
-
 func (a *App) List(ctx context.Context, userID string, page, limit int) ([]WishlistItem, int, error) {
 	cacheKey := fmt.Sprintf("wishlist:user:%s:p:%d:l:%d", userID, page, limit)
 
-	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (wishlistListCacheData, error) {
+	result, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 5*time.Minute, nil, func() (wishlistListCacheData, error) {
 		list, total, err := a.ListRepository(ctx, userID, page, limit)
 		if err != nil {
 			return wishlistListCacheData{}, utils.ErrInternal("Failed to fetch wishlist.", err)

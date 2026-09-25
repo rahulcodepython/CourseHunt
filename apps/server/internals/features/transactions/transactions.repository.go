@@ -10,11 +10,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type TransactionListPayload struct {
-	Total int           `json:"total"`
-	Data  []Transaction `json:"data"`
-}
-
 func (a *App) InitiateClaimRepository(ctx context.Context, userID, courseID, txID string) (alreadyEnrolled, claimed bool, err error) {
 	err = a.DB.QueryRow(ctx, InitiateClaim, userID, courseID, txID).Scan(&alreadyEnrolled, &claimed)
 	if err != nil {
@@ -197,4 +192,28 @@ func (a *App) UpsertWebhookEventRepository(ctx context.Context, eventID, eventTy
 func (a *App) MarkWebhookEventProcessedRepository(ctx context.Context, eventID string) error {
 	_, err := a.DB.Exec(ctx, MarkWebhookEventProcessed, eventID)
 	return postgres.MapPgError(err)
+}
+
+func (a *App) ListTutorPayoutsRepository(ctx context.Context, tutorID string) (*TutorPayoutOverview, error) {
+	return postgres.QueryJSON[TutorPayoutOverview](ctx, a.DB, ListTutorPayouts, tutorID)
+}
+
+func (a *App) RequestTutorPayoutRepository(ctx context.Context, tutorID string) error {
+	_, err := a.DB.Exec(ctx, RequestTutorPayout, tutorID)
+	return postgres.MapPgError(err)
+}
+
+func (a *App) ListAdminPayoutsRepository(ctx context.Context) ([]TutorPayoutTransaction, error) {
+	return postgres.QueryJSONSlice[TutorPayoutTransaction](ctx, a.DB, ListAdminPayouts)
+}
+
+func (a *App) SettleAdminPayoutRepository(ctx context.Context, payoutID, referenceID string) error {
+	tag, err := a.DB.Exec(ctx, SettleAdminPayout, payoutID, referenceID)
+	if err != nil {
+		return postgres.MapPgError(err)
+	}
+	if tag.RowsAffected() == 0 {
+		return generic.ErrTransactionsNotFound
+	}
+	return nil
 }

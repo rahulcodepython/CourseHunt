@@ -6,11 +6,6 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-type CategoriesListPayload struct {
-	Total int        `json:"total"`
-	Data  []Category `json:"data"`
-}
-
 // ListRepository returns paginated root categories with their subcategories.
 func (a *App) ListRepository(ctx context.Context, page, limit int, name string) ([]Category, int, error) {
 	offset := (page - 1) * limit

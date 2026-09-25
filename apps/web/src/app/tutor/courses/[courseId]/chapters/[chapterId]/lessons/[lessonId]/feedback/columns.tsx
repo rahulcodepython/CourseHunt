@@ -1,14 +1,14 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import type { TableColumn } from "@/components/data-table";
+import type { TableColumn } from "@/components/table/data-table";
 import type { Feedback } from "@/schema/feedbacks.types";
-import { formatDate } from "@/lib/format";
-import { Icon } from "@/components/icon";
-import { SortableColumnHeader } from "@/components/sortable-column-header";
-import { RowActions, RowActionButton } from "@/components/row-actions";
-import { StatusBadge, type StatusBadgeEntry } from "@/components/status-badge";
-import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/utils/format";
+import { Icon } from "@/components/common/icon";
+import { SortableColumnHeader } from "@/components/table/sortable-column-header";
+import { RowActions, RowActionButton } from "@/components/table/row-actions";
+import { StatusBadge, type StatusBadgeEntry } from "@/components/common/status-badge";
+import { cn } from "@/lib/utils/utils";
 
 const columnHelper = createColumnHelper<Feedback>();
 

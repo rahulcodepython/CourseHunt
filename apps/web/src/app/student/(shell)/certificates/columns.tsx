@@ -1,10 +1,10 @@
 "use client";
 
 import { createColumnHelper } from "@tanstack/react-table";
-import type { TableColumn } from "@/components/data-table";
+import type { TableColumn } from "@/components/table/data-table";
 import type { Certificate } from "@/schema/certificate.types";
-import { formatDate, truncate } from "@/lib/format";
-import { Icon } from "@/components/icon";
+import { formatDate, truncate } from "@/lib/utils/format";
+import { Icon } from "@/components/common/icon";
 import { CertificateDownloadButton } from "./certificate-pdf";
 import { Button } from "@/components/ui/button";
 

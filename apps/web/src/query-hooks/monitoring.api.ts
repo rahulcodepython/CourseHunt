@@ -3,7 +3,7 @@ import { apiRequest } from "@/react-query/client";
 import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
 import { MonitoringSnapshotZod } from "@/schema/monitoring.types";
-import { API_ENDPOINTS } from "@/lib/const";
+import { API_ENDPOINTS } from "@/lib/constants/const";
 
 export function useMonitoringQuery(refetchInterval?: number) {
   return useAppQuery(

@@ -9,8 +9,8 @@ import {
 } from "@/query-hooks/notes.api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Icon } from "@/components/icon";
-import { MarkdownContent } from "@/components/markdown-content";
+import { Icon } from "@/components/common/icon";
+import { MarkdownContent } from "@/components/common/markdown-content";
 
 export function NotesTab({ lessonId }: { lessonId: string }) {
   const { data: raw, isLoading } = useNotesQuery(lessonId);

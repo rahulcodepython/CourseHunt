@@ -6,7 +6,7 @@ import { useCreateQuizMutation } from "@/query-hooks/quiz.api";
 import type { QuizMetadata } from "@/schema/quiz.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LoadingButton } from "@/components/loading-button";
+import { LoadingButton } from "@/components/common/loading-button";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -5,7 +5,7 @@ import type { QueryKey } from "@tanstack/react-query";
 
 import { useAppQuery } from "@/react-query/query";
 import type { ApiResponse } from "@/schema/common.types";
-import { mergeListPage } from "@/lib/merge-list-page";
+import { mergeListPage } from "@/lib/utils/merge-list-page";
 
 interface FeedItem {
   id: number;

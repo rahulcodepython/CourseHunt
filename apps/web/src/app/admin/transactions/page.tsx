@@ -3,11 +3,11 @@ import * as React from "react";
 
 import { useTransactionsQuery, useRefundsQuery } from "@/query-hooks/transactions.api";
 import type { Transaction, RefundTransaction } from "@/schema/transactions.types";
-import { PageHeader } from "@/components/page-header";
-import { StatCard } from "@/components/stat-card";
-import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/layout/page-header";
+import { StatCard } from "@/components/common/stat-card";
+import { DataTable } from "@/components/table/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatINR } from "@/lib/format";
+import { formatINR } from "@/lib/utils/format";
 import { columns } from "./columns";
 import { refundColumns } from "./refund-columns";
 
