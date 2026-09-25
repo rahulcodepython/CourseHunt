@@ -2,10 +2,12 @@ package categories
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"coursehunt/server/internals/pkg/cache"
+	"coursehunt/server/internals/pkg/postgres"
 	"coursehunt/server/internals/utils"
 )
 
@@ -39,6 +41,9 @@ func (a *App) Create(ctx context.Context, req CreateCategoryRequest) (*Category,
 func (a *App) Update(ctx context.Context, id string, req UpdateCategoryRequest) (*Category, error) {
 	cat, err := a.UpdateRepository(ctx, id, req.Name)
 	if err != nil {
+		if errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Category not found.", err)
+		}
 		return nil, utils.ErrInternal("Failed to update category.", err)
 	}
 
@@ -50,6 +55,9 @@ func (a *App) Update(ctx context.Context, id string, req UpdateCategoryRequest) 
 func (a *App) Delete(ctx context.Context, id string) (string, error) {
 	deletedID, err := a.DeleteRepository(ctx, id)
 	if err != nil {
+		if errors.Is(err, postgres.ErrNotFound) {
+			return "", utils.ErrNotFound("Category not found.", err)
+		}
 		return "", utils.ErrInternal("Failed to delete category.", err)
 	}
 

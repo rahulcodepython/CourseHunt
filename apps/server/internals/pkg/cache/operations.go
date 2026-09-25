@@ -110,3 +110,16 @@ func (c *Cache) DeleteByPattern(ctx context.Context, pattern string) error {
 	}
 	return nil
 }
+
+// SetNX sets a key with a value and TTL only if the key does not already exist.
+// Returns true if the key was set, false if the key already existed.
+func (c *Cache) SetNX(ctx context.Context, key string, val interface{}, ttl time.Duration) (bool, error) {
+	if c == nil || c.client == nil {
+		return true, nil
+	}
+	data, err := json.Marshal(val)
+	if err != nil {
+		return false, err
+	}
+	return c.client.SetNX(ctx, key, data, ttl).Result()
+}

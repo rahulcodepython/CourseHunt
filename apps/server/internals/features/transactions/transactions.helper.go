@@ -6,7 +6,6 @@ import (
 	"log"
 	"log/slog"
 	"math"
-	"sync"
 	"time"
 
 	"coursehunt/server/internals/generic"
@@ -14,44 +13,59 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	refundWorkerCount = 4
-	refundQueueSize   = 256
-)
+// ProcessPendingRefundsCron polls the transaction_refunds table using PostgreSQL SKIP LOCKED
+// to safely process any pending duplicate payment refunds without ephemeral queue drops.
+func (a *App) ProcessPendingRefundsCron(ctx context.Context) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
 
-type refundJob struct {
-	refundID  string
-	paymentID string
-}
-
-var (
-	refundQueue     chan refundJob
-	refundQueueOnce sync.Once
-)
-
-func (a *App) startRefundWorkers() {
-	refundQueue = make(chan refundJob, refundQueueSize)
-	for range refundWorkerCount {
-		go func() {
-			for job := range refundQueue {
-				a.processDuplicateRefund(job.refundID, job.paymentID)
-			}
-		}()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			a.processPendingRefundsBatch(ctx)
+		}
 	}
 }
 
-func (a *App) enqueueDuplicateRefund(refundID, paymentID string) {
-	if refundID == "" || paymentID == "" {
+func (a *App) processPendingRefundsBatch(ctx context.Context) {
+	queryCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	rows, err := a.DB.Query(queryCtx, `
+		SELECT id, razorpay_payment_id FROM transaction_refunds
+		WHERE refund_status = 'pending' AND razorpay_refund_id IS NULL
+		ORDER BY created_at ASC
+		LIMIT 10
+		FOR UPDATE SKIP LOCKED
+	`)
+	if err != nil {
 		return
 	}
-	refundQueueOnce.Do(a.startRefundWorkers)
+	defer rows.Close()
 
-	job := refundJob{refundID: refundID, paymentID: paymentID}
-	select {
-	case refundQueue <- job:
-	default:
-		slog.Warn("refund queue full, dropping immediate auto-refund dispatch", "refund_id", refundID, "payment_id", paymentID)
+	type pendingItem struct {
+		id        string
+		paymentID string
 	}
+	var batch []pendingItem
+
+	for rows.Next() {
+		var item pendingItem
+		if err := rows.Scan(&item.id, &item.paymentID); err == nil && item.paymentID != "" {
+			batch = append(batch, item)
+		}
+	}
+
+	for _, item := range batch {
+		a.processDuplicateRefund(item.id, item.paymentID)
+	}
+}
+
+// StartBackgroundWorkers launches the persistent auto-refund outbox poller.
+func (a *App) StartBackgroundWorkers(ctx context.Context) {
+	go a.ProcessPendingRefundsCron(ctx)
 }
 
 func (a *App) processDuplicateRefund(refundID, paymentID string) {
@@ -172,7 +186,7 @@ func (a *App) processWebhook(ctx context.Context, rawBody []byte, signature stri
 			return fmt.Errorf("failed to mark payment captured for order %s: %w", payload.OrderID, err)
 		}
 		if isDuplicate {
-			a.enqueueDuplicateRefund(refundID, paymentID)
+			go a.processDuplicateRefund(refundID, paymentID)
 		}
 
 	case "payment.failed":

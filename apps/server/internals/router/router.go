@@ -190,4 +190,8 @@ func (r *Router) SetUp() {
 	r.Upload.RegisterRoutes(r.API, auth)
 	r.Users.RegisterRoutes(r.API, auth)
 	r.Wishlist.RegisterRoutes(r.API, auth)
+
+	// Start resilient background workers
+	r.Transactions.StartBackgroundWorkers(r.RootCtx)
+	r.Security.StartBackgroundWorkers(r.RootCtx)
 }

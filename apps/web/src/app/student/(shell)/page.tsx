@@ -49,24 +49,24 @@ export default function StudentDashboardPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Enrolled Courses"
-          value={d.enrolled_courses_count.toLocaleString()}
+          value={(d?.enrolled_courses_count ?? 0).toLocaleString()}
           icon="book"
         />
         <StatCard
           title="Completed"
-          value={d.completed_courses_count.toLocaleString()}
+          value={(d?.completed_courses_count ?? 0).toLocaleString()}
           icon="check"
           iconClassName="text-green-600"
         />
         <StatCard
           title="In Progress"
-          value={d.in_progress_courses_count.toLocaleString()}
+          value={(d?.in_progress_courses_count ?? 0).toLocaleString()}
           icon="clock"
           iconClassName="text-amber-600"
         />
         <StatCard
           title="Certificates"
-          value={d.certificates_count.toLocaleString()}
+          value={(d?.certificates_count ?? 0).toLocaleString()}
           icon="user-check"
           iconClassName="text-blue-600"
         />

@@ -5,6 +5,7 @@ const (
 		SELECT jsonb_build_object(
 			'enrolled_courses_count', (SELECT COUNT(*) FROM enrollments WHERE user_id = $1 AND revoked = false),
 			'completed_courses_count', (SELECT COUNT(*) FROM enrollments WHERE user_id = $1 AND revoked = false AND completed = true),
+			'in_progress_courses_count', (SELECT COUNT(*) FROM enrollments WHERE user_id = $1 AND revoked = false AND completed = false),
 			'certificates_count', (SELECT COUNT(*) FROM certificates WHERE user_id = $1),
 			'recent_certificates', COALESCE((
 				SELECT jsonb_agg(cert_rows) FROM (
@@ -44,6 +45,18 @@ const (
 	`
 
 	AdminDashboardJSON = `
+		WITH course_enrollment_counts AS (
+			SELECT course_id, COUNT(DISTINCT user_id) AS student_count
+			FROM enrollments
+			WHERE revoked = false
+			GROUP BY course_id
+		),
+		course_revenue_totals AS (
+			SELECT course_id, COALESCE(SUM(amount), 0.0) AS total_revenue
+			FROM transactions
+			WHERE status = 'success'
+			GROUP BY course_id
+		)
 		SELECT jsonb_build_object(
 			'total_users', (SELECT COUNT(*) FROM "users"),
 			'total_tutors', (
@@ -53,7 +66,7 @@ const (
 				WHERE ro.name = 'tutor'
 			),
 			'total_courses', (SELECT COUNT(*) FROM courses),
-			'total_enrollments', (SELECT COUNT(*) FROM enrollments),
+			'total_enrollments', (SELECT COUNT(*) FROM enrollments WHERE revoked = false),
 			'total_revenue', COALESCE((SELECT SUM(amount) FROM transactions WHERE status = 'success'), 0.0),
 			'revenue_this_month', COALESCE((
 				SELECT SUM(amount) FROM transactions
@@ -68,11 +81,12 @@ const (
 			), '[]'::jsonb),
 			'top_courses', COALESCE((
 				SELECT jsonb_agg(top_rows) FROM (
-					SELECT c.title, COUNT(DISTINCT e.user_id) AS students, COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'success'), 0.0) AS revenue
+					SELECT c.title,
+					       COALESCE(ce.student_count, 0) AS students,
+					       COALESCE(cr.total_revenue, 0.0) AS revenue
 					FROM courses c
-					LEFT JOIN enrollments e ON e.course_id = c.id
-					LEFT JOIN transactions t ON t.course_id = c.id
-					GROUP BY c.id, c.title
+					LEFT JOIN course_enrollment_counts ce ON ce.course_id = c.id
+					LEFT JOIN course_revenue_totals cr ON cr.course_id = c.id
 					ORDER BY revenue DESC LIMIT 10
 				) top_rows
 			), '[]'::jsonb),
