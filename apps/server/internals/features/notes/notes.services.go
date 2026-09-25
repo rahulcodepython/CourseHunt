@@ -11,6 +11,11 @@ import (
 )
 
 func (a *App) Upsert(ctx context.Context, userID, lessonID, content string) (*NoteResponse, error) {
+	content = utils.SanitizeUGC(content)
+	if content == "" {
+		return nil, utils.ErrBadRequest("Note content cannot be empty after sanitization.", nil)
+	}
+
 	n, err := a.UpsertRepository(ctx, userID, lessonID, content)
 	if err != nil {
 		switch {

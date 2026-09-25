@@ -137,6 +137,8 @@ func (a *App) Create(ctx context.Context, userID string, req CreateCourseRequest
 		req.FinalPrice = 0
 		req.CouponAllowed = false
 	}
+	req.ShortDescription = utils.SanitizeUGCPtr(req.ShortDescription)
+	req.LongDescription = utils.SanitizeUGCPtr(req.LongDescription)
 
 	resp, err := a.CreateRepository(ctx, userID, req)
 	if err != nil {
@@ -154,6 +156,12 @@ func (a *App) Update(ctx context.Context, id, userID string, req UpdateCourseReq
 		req.FinalPrice = &zero
 		notAllowed := false
 		req.CouponAllowed = &notAllowed
+	}
+	if req.ShortDescription != nil {
+		req.ShortDescription = utils.SanitizeUGCPtr(req.ShortDescription)
+	}
+	if req.LongDescription != nil {
+		req.LongDescription = utils.SanitizeUGCPtr(req.LongDescription)
 	}
 
 	course, cleanup, err := a.UpdateRepository(ctx, id, userID, req)

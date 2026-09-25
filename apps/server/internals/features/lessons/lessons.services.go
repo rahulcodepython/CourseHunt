@@ -42,6 +42,8 @@ func (a *App) TutorList(ctx context.Context, chapterID, userID string) ([]Lesson
 }
 
 func (a *App) Create(ctx context.Context, userID, chapterID string, req CreateLessonRequest) (*Lesson, error) {
+	req.ShortDescription = utils.SanitizeUGCPtr(req.ShortDescription)
+
 	l, err := a.CreateRepository(ctx, userID, chapterID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrLessonsChapterNotFound) {
@@ -59,6 +61,10 @@ func (a *App) Create(ctx context.Context, userID, chapterID string, req CreateLe
 }
 
 func (a *App) Update(ctx context.Context, id, userID string, req UpdateLessonRequest) (*Lesson, error) {
+	if req.ShortDescription != nil {
+		req.ShortDescription = utils.SanitizeUGCPtr(req.ShortDescription)
+	}
+
 	l, cleanup, err := a.UpdateRepository(ctx, id, userID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
@@ -110,6 +116,10 @@ func (a *App) Delete(ctx context.Context, id, userID string) (string, error) {
 }
 
 func (a *App) UpsertVideoContent(ctx context.Context, lessonID, userID string, req UpsertVideoContentRequest) (*LessonVideoContent, error) {
+	if req.WrittenContent != nil {
+		req.WrittenContent = utils.SanitizeUGCPtr(req.WrittenContent)
+	}
+
 	vc, cleanup, err := a.UpsertVideoContentRepository(ctx, lessonID, userID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
@@ -131,6 +141,11 @@ func (a *App) UpsertVideoContent(ctx context.Context, lessonID, userID string, r
 }
 
 func (a *App) UpsertDocumentContent(ctx context.Context, lessonID, userID, content string) (*LessonDocumentContent, error) {
+	content = utils.SanitizeUGC(content)
+	if content == "" {
+		return nil, utils.ErrBadRequest("Document content cannot be empty after sanitization.", nil)
+	}
+
 	dc, err := a.UpsertDocumentContentRepository(ctx, lessonID, userID, content)
 	if err != nil {
 		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
@@ -150,7 +165,7 @@ func (a *App) UpsertDocumentContent(ctx context.Context, lessonID, userID, conte
 func (a *App) AdminReadContent(ctx context.Context, lessonID string) (*AggregatedLessonContentResponse, error) {
 	cacheKey := fmt.Sprintf("lessons:admin:content:%s", lessonID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AggregatedLessonContentResponse, error) {
+	res, err := cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AggregatedLessonContentResponse, error) {
 		resp, err := a.AdminReadContentRepository(ctx, lessonID)
 		if err != nil {
 			if errors.Is(err, generic.ErrLessonsLessonNotFound) {
@@ -160,12 +175,16 @@ func (a *App) AdminReadContent(ctx context.Context, lessonID string) (*Aggregate
 		}
 		return resp, nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return a.signVideoContent(ctx, res), nil
 }
 
 func (a *App) TutorReadContent(ctx context.Context, lessonID, userID string) (*AggregatedLessonContentResponse, error) {
 	cacheKey := fmt.Sprintf("lessons:tutor:content:%s:u:%s", lessonID, userID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AggregatedLessonContentResponse, error) {
+	res, err := cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AggregatedLessonContentResponse, error) {
 		resp, err := a.ReadContentForTutorRepository(ctx, lessonID, userID)
 		if err != nil {
 			if errors.Is(err, generic.ErrLessonsLessonNotFound) {
@@ -178,12 +197,16 @@ func (a *App) TutorReadContent(ctx context.Context, lessonID, userID string) (*A
 		}
 		return resp, nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return a.signVideoContent(ctx, res), nil
 }
 
 func (a *App) StudentReadContent(ctx context.Context, lessonID, userID string) (*AggregatedLessonContentResponse, error) {
 	cacheKey := fmt.Sprintf("lessons:student:content:%s:u:%s", lessonID, userID)
 
-	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AggregatedLessonContentResponse, error) {
+	res, err := cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AggregatedLessonContentResponse, error) {
 		resp, err := a.StudentReadContentRepository(ctx, lessonID, userID)
 		if err != nil {
 			if errors.Is(err, generic.ErrLessonsLessonNotFound) {
@@ -196,6 +219,23 @@ func (a *App) StudentReadContent(ctx context.Context, lessonID, userID string) (
 		}
 		return resp, nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return a.signVideoContent(ctx, res), nil
+}
+
+func (a *App) signVideoContent(ctx context.Context, res *AggregatedLessonContentResponse) *AggregatedLessonContentResponse {
+	if res == nil || res.VideoContent == nil || res.VideoContent.VideoURL == "" || a.Storage == nil {
+		return res
+	}
+	cloned := *res
+	videoCopy := *res.VideoContent
+	if signedURL, signErr := a.Storage.GeneratePresignedStreamingURL(ctx, videoCopy.VideoURL, 15*time.Minute); signErr == nil && signedURL != "" {
+		videoCopy.VideoURL = signedURL
+	}
+	cloned.VideoContent = &videoCopy
+	return &cloned
 }
 
 func (a *App) UpdateComplete(ctx context.Context, lessonID, userID string) error {

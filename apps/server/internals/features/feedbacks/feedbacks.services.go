@@ -17,6 +17,8 @@ type feedbackListCacheData struct {
 }
 
 func (a *App) Create(ctx context.Context, userID, courseID string, req CreateFeedbackRequest) (*Feedback, error) {
+	req.Content = utils.SanitizeUGCPtr(req.Content)
+
 	f, err := a.CreateRepository(ctx, userID, courseID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrFeedbacksNotEnrolled) {

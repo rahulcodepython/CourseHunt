@@ -15,6 +15,8 @@ type Config struct {
 	MinioSecret           string  `env:"MINIO_SECRET_KEY" envDefault:"minioadmin"`
 	MinioBucket           string  `env:"MINIO_BUCKET" envDefault:"coursehunt" envRequired:"true"`
 	MinioBaseURL          string  `env:"MINIO_BASE_URL" envDefault:"http://localhost:9000/coursehunt"`
+	MinioPublicBucket     string  `env:"MINIO_PUBLIC_BUCKET" envDefault:"coursehunt-public"`
+	MinioPublicBaseURL    string  `env:"MINIO_PUBLIC_BASE_URL" envDefault:"http://localhost:9000/coursehunt-public"`
 	MinioSecure           bool    `env:"MINIO_SECURE" envDefault:"false"`
 	AllowedOrigins        string  `env:"ALLOWED_ORIGINS" envDefault:"http://localhost:3000,http://localhost:3001,http://localhost:3002,http://coursehunt.localhost:3000,http://admin.coursehunt.localhost:3000,https://coursehunt.com,https://tutor.coursehunt.com,https://admin.coursehunt.com"`
 	JWKSURL               string  `env:"JWKS_URL" envDefault:"http://localhost:3000/api/auth/jwks"`

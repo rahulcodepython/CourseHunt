@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/middlewares"
 	"coursehunt/server/internals/utils"
 
@@ -16,6 +17,10 @@ func (a *App) handleList(c *fiber.Ctx) error {
 	user, err := middlewares.UserFromContext(c)
 	if err != nil {
 		return utils.ErrUnauthorized("Unauthorized.", err)
+	}
+
+	if user.Role != generic.RoleAdmin && user.Role != generic.RoleTutor {
+		return utils.ErrForbidden("Access denied. Notifications are only available to tutors and administrators.", nil)
 	}
 
 	afterID, beforeID, limit := utils.CursorParams(c)
