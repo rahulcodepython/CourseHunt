@@ -11,6 +11,9 @@ const (
 					'title', ch.title,
 					'total_lectures', ch.total_lectures,
 					'total_duration_seconds', ch.total_duration_seconds,
+					'unlock_days_after_enrollment', ch.unlock_days_after_enrollment,
+					'unlock_at', ch.unlock_at,
+					'prerequisite_chapter_id', ch.prerequisite_chapter_id,
 					'created_at', ch.created_at,
 					'updated_at', ch.updated_at
 				) ORDER BY ch.chapter_no ASC
@@ -41,6 +44,9 @@ const (
 							'title', ch.title,
 							'total_lectures', ch.total_lectures,
 							'total_duration_seconds', ch.total_duration_seconds,
+							'unlock_days_after_enrollment', ch.unlock_days_after_enrollment,
+							'unlock_at', ch.unlock_at,
+							'prerequisite_chapter_id', ch.prerequisite_chapter_id,
 							'created_at', ch.created_at,
 							'updated_at', ch.updated_at
 						) ORDER BY ch.chapter_no ASC
@@ -65,11 +71,11 @@ const (
 			SELECT COALESCE(MAX(chapter_no), 0) + 1 AS n FROM chapters WHERE course_id = $1
 		),
 		inserted AS (
-			INSERT INTO chapters (course_id, chapter_no, title)
-			SELECT $1, next_no.n, $3
+			INSERT INTO chapters (course_id, chapter_no, title, unlock_days_after_enrollment, unlock_at, prerequisite_chapter_id)
+			SELECT $1, next_no.n, $3, COALESCE($4, 0), $5, NULLIF($6, '')::uuid
 			FROM status_check, next_no
 			WHERE status_check.status_code = 2
-			RETURNING id, course_id, chapter_no, title, total_lectures, total_duration_seconds, created_at, updated_at
+			RETURNING id, course_id, chapter_no, title, total_lectures, total_duration_seconds, unlock_days_after_enrollment, unlock_at, prerequisite_chapter_id, created_at, updated_at
 		)
 		SELECT
 			sc.status_code AS status_flag,
@@ -82,6 +88,9 @@ const (
 						'title', i.title,
 						'total_lectures', i.total_lectures,
 						'total_duration_seconds', i.total_duration_seconds,
+						'unlock_days_after_enrollment', i.unlock_days_after_enrollment,
+						'unlock_at', i.unlock_at,
+						'prerequisite_chapter_id', i.prerequisite_chapter_id,
 						'created_at', i.created_at,
 						'updated_at', i.updated_at
 					) FROM inserted i
@@ -107,10 +116,13 @@ const (
 			UPDATE chapters ch
 			SET
 				title = COALESCE($3, ch.title),
+				unlock_days_after_enrollment = COALESCE($4, ch.unlock_days_after_enrollment),
+				unlock_at = CASE WHEN $5::timestamptz IS NULL THEN ch.unlock_at ELSE $5::timestamptz END,
+				prerequisite_chapter_id = CASE WHEN $6::text IS NULL THEN ch.prerequisite_chapter_id WHEN $6::text = '' THEN NULL ELSE $6::uuid END,
 				updated_at = CURRENT_TIMESTAMP
 			FROM courses co
 			WHERE ch.course_id = co.id AND co.tutor_id = $2 AND ch.id = $1
-			RETURNING ch.id, ch.course_id, ch.chapter_no, ch.title, ch.total_lectures, ch.total_duration_seconds, ch.created_at, ch.updated_at
+			RETURNING ch.id, ch.course_id, ch.chapter_no, ch.title, ch.total_lectures, ch.total_duration_seconds, ch.unlock_days_after_enrollment, ch.unlock_at, ch.prerequisite_chapter_id, ch.created_at, ch.updated_at
 		)
 		SELECT
 			sc.status_code AS status_flag,
@@ -123,6 +135,9 @@ const (
 						'title', u.title,
 						'total_lectures', u.total_lectures,
 						'total_duration_seconds', u.total_duration_seconds,
+						'unlock_days_after_enrollment', u.unlock_days_after_enrollment,
+						'unlock_at', u.unlock_at,
+						'prerequisite_chapter_id', u.prerequisite_chapter_id,
 						'created_at', u.created_at,
 						'updated_at', u.updated_at
 					) FROM updated u

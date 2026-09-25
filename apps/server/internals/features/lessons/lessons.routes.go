@@ -34,4 +34,5 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	gStudent.Get("/:id/content", middlewares.ValidateUUIDParams("id"), a.handleStudentReadContent)
 	gStudent.Get("/:id/resources", middlewares.ValidateUUIDParams("id"), a.handleStudentReadResources)
 	gStudent.Post("/:id/complete", middlewares.ValidateUUIDParams("id"), a.handleUpdateComplete)
+	gStudent.Post("/:id/progress/heartbeat", middlewares.ValidateUUIDParams("id"), a.handleHeartbeat)
 }

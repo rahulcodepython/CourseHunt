@@ -15,6 +15,9 @@ import {
   CheckoutCourseResponseZod,
   TransactionStatusResponseZod,
   RefundTransactionZod,
+  TutorPayoutOverviewZod,
+  TutorPayoutTransactionZod,
+  SettlePayoutRequestZod,
 } from "@/schema/transactions.types";
 
 import { createListQuery } from "@/react-query/factory";
@@ -87,3 +90,46 @@ export function useInitiateTransactionMutation() {
     showToast: false,
   });
 }
+
+export function useTutorPayoutOverviewQuery() {
+  return useAppQuery(queryKeys.tutorPayouts(), () =>
+    apiRequest(
+      { url: API_ENDPOINTS.TUTOR_PAYOUTS, method: "GET" },
+      TutorPayoutOverviewZod,
+    ),
+  );
+}
+
+export function useRequestPayoutMutation() {
+  return useSimpleMutation({
+    mutationFn: () =>
+      apiRequest(
+        { url: `${API_ENDPOINTS.TUTOR_PAYOUTS}/request`, method: "POST" },
+        z.object({ message: z.string().optional() }),
+      ),
+    invalidateKeys: [queryKeys.tutorPayouts()],
+    showToast: true,
+  });
+}
+
+export const useAdminPayoutsQuery = createListQuery<
+  { id: string } & z.infer<typeof TutorPayoutTransactionZod>,
+  { page?: number; limit?: number; status?: string; tutor_id?: string }
+>(
+  API_ENDPOINTS.ADMIN_PAYOUTS,
+  (params) => queryKeys.adminPayouts(params as Record<string, string | number>),
+  TutorPayoutTransactionZod,
+);
+
+export function useSettlePayoutMutation(payoutId: string) {
+  return useSimpleMutation({
+    mutationFn: (data: z.infer<typeof SettlePayoutRequestZod>) =>
+      apiRequest(
+        { url: `${API_ENDPOINTS.ADMIN_PAYOUTS}/${payoutId}/settle`, method: "POST", data },
+        z.object({ message: z.string().optional() }),
+      ),
+    invalidateKeys: [queryKeys.adminPayouts()],
+    showToast: true,
+  });
+}
+

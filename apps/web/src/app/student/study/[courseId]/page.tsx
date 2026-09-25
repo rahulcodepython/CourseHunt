@@ -108,6 +108,8 @@ export default function StudyPage() {
             <LessonVideoPlayer
               src={content.video_content.video_url}
               title={lessonMeta?.title ?? "Lesson"}
+              lessonId={lessonId}
+              initialPlaybackSeconds={content.playback_seconds}
             />
           )}
           {content.lesson_type === LESSON_TYPE.DOCUMENT && content.document_content && (

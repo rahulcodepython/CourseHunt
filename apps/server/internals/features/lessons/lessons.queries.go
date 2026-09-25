@@ -452,16 +452,36 @@ const (
 				WHERE e.user_id = $2 AND e.revoked = false
 			) AS is_enrolled
 		),
+		chapter_drip AS (
+			SELECT 
+				CASE
+					WHEN ch.unlock_at IS NOT NULL AND CURRENT_TIMESTAMP < ch.unlock_at THEN true
+					WHEN ch.unlock_days_after_enrollment > 0 AND CURRENT_DATE < (e.enrolled_at::date + ch.unlock_days_after_enrollment * INTERVAL '1 day') THEN true
+					WHEN ch.prerequisite_chapter_id IS NOT NULL AND NOT COALESCE((
+						SELECT cp_pre.completed FROM chapter_progress cp_pre WHERE cp_pre.chapter_id = ch.prerequisite_chapter_id AND cp_pre.user_id = $2
+					), false) THEN true
+					ELSE false
+				END AS is_locked
+			FROM lesson_info li
+			JOIN lessons l ON l.id = li.lesson_id
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN enrollments e ON e.course_id = li.course_id AND e.user_id = $2 AND e.revoked = false
+		),
 		updated_enrollment AS (
 			UPDATE enrollments e
 			SET last_accessed_lesson_id = $1
-			FROM lesson_info li, enrollment_auth ea
-			WHERE e.course_id = li.course_id AND e.user_id = $2 AND e.revoked = false AND ea.is_enrolled = true
+			FROM lesson_info li, enrollment_auth ea, chapter_drip cd
+			WHERE e.course_id = li.course_id AND e.user_id = $2 AND e.revoked = false AND ea.is_enrolled = true AND cd.is_locked = false
 			RETURNING e.id
 		),
 		content_cte AS (
 			SELECT 
 				li.lesson_type,
+				COALESCE((
+					SELECT lp.playback_seconds
+					FROM lesson_progress lp
+					WHERE lp.lesson_id = li.lesson_id AND lp.user_id = $2
+				), 0) AS playback_seconds,
 				CASE 
 					WHEN li.lesson_type = 'video' THEN (
 						SELECT jsonb_build_object(
@@ -508,10 +528,68 @@ const (
 				END AS quiz_content
 			FROM lesson_info li
 			JOIN enrollment_auth ea ON ea.is_enrolled = true
+			JOIN chapter_drip cd ON cd.is_locked = false
 		)
 		SELECT 
 			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
 			COALESCE((SELECT is_enrolled FROM enrollment_auth), false) AS is_enrolled,
+			COALESCE((SELECT is_locked FROM chapter_drip), false) AS is_locked,
 			(SELECT row_to_json(content_cte.*) FROM content_cte) AS content_data;
+	`
+
+	RecordHeartbeat = `
+		WITH lesson_info AS (
+			SELECT l.id AS lesson_id, ch.course_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			WHERE l.id = $1
+		),
+		enrollment_auth AS (
+			SELECT EXISTS (
+				SELECT 1 FROM enrollments e
+				JOIN lesson_info li ON e.course_id = li.course_id
+				WHERE e.user_id = $2 AND e.revoked = false
+			) AS is_enrolled
+		),
+		upsert_progress AS (
+			INSERT INTO lesson_progress (user_id, lesson_id, course_id, playback_seconds, total_watch_time_seconds, last_watched_at)
+			SELECT $2, li.lesson_id, li.course_id, $3, $4, CURRENT_TIMESTAMP
+			FROM lesson_info li
+			JOIN enrollment_auth ea ON ea.is_enrolled = true
+			ON CONFLICT (user_id, lesson_id) DO UPDATE
+			SET playback_seconds = EXCLUDED.playback_seconds,
+			    total_watch_time_seconds = lesson_progress.total_watch_time_seconds + EXCLUDED.total_watch_time_seconds,
+			    last_watched_at = CURRENT_TIMESTAMP
+			RETURNING user_id
+		),
+		upsert_streak AS (
+			INSERT INTO user_learning_streaks (user_id, current_streak_days, longest_streak_days, last_active_date, total_study_minutes)
+			SELECT $2, 1, 1, CURRENT_DATE, ROUND($4 / 60.0)
+			FROM enrollment_auth ea WHERE ea.is_enrolled = true
+			ON CONFLICT (user_id) DO UPDATE
+			SET 
+				current_streak_days = CASE
+					WHEN user_learning_streaks.last_active_date = CURRENT_DATE THEN user_learning_streaks.current_streak_days
+					WHEN user_learning_streaks.last_active_date = CURRENT_DATE - INTERVAL '1 day' THEN user_learning_streaks.current_streak_days + 1
+					ELSE 1
+				END,
+				longest_streak_days = GREATEST(
+					user_learning_streaks.longest_streak_days,
+					CASE
+						WHEN user_learning_streaks.last_active_date = CURRENT_DATE THEN user_learning_streaks.current_streak_days
+						WHEN user_learning_streaks.last_active_date = CURRENT_DATE - INTERVAL '1 day' THEN user_learning_streaks.current_streak_days + 1
+						ELSE 1
+					END
+				),
+				last_active_date = CURRENT_DATE,
+				total_study_minutes = user_learning_streaks.total_study_minutes + ROUND($4 / 60.0),
+				updated_at = CURRENT_TIMESTAMP
+			RETURNING current_streak_days, total_study_minutes
+		)
+		SELECT 
+			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
+			COALESCE((SELECT is_enrolled FROM enrollment_auth), false) AS is_enrolled,
+			COALESCE((SELECT current_streak_days FROM upsert_streak), 1) AS current_streak,
+			COALESCE((SELECT total_study_minutes FROM upsert_streak), 0) AS total_study_minutes;
 	`
 )

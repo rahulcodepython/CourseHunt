@@ -190,3 +190,44 @@ func (a *App) handleStudentListRefunds(c *fiber.Ctx) error {
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
+
+// --- Tutor & Admin Payout Handlers ---
+
+func (a *App) handleTutorPayouts(c *fiber.Ctx) error {
+	tutorID := middlewares.UserID(c)
+	overview, err := a.ListTutorPayouts(c.UserContext(), tutorID)
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Tutor payouts fetched successfully.", overview)
+}
+
+func (a *App) handleTutorRequestPayout(c *fiber.Ctx) error {
+	tutorID := middlewares.UserID(c)
+	if err := a.RequestTutorPayout(c.UserContext(), tutorID); err != nil {
+		return err
+	}
+	return utils.OK(c, "Payout withdrawal request submitted successfully.", fiber.Map{"status": "processing"})
+}
+
+func (a *App) handleAdminPayouts(c *fiber.Ctx) error {
+	payouts, err := a.ListAdminPayouts(c.UserContext())
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Admin payouts fetched successfully.", payouts)
+}
+
+func (a *App) handleAdminSettlePayout(c *fiber.Ctx) error {
+	var req SettlePayoutRequest
+	if err := utils.BindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	payoutID := c.Params("id")
+	if err := a.SettleAdminPayout(c.UserContext(), payoutID, req.ReferenceID); err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Payout transaction settled successfully.", fiber.Map{"id": payoutID, "status": "completed", "reference_id": req.ReferenceID})
+}

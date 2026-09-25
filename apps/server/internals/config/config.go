@@ -55,6 +55,13 @@ type Config struct {
 	// Observability & Server Tuning
 	RequestTimeoutSec int    `env:"REQUEST_TIMEOUT_SEC" envDefault:"30" validate:"min=1"`
 	LokiURL           string `env:"LOKI_URL" envDefault:"http://loki:3100" validate:"url"`
+
+	// SMTP / Transactional Mailer
+	SMTPHost     string `env:"SMTP_HOST" envDefault:"localhost"`
+	SMTPPort     int    `env:"SMTP_PORT" envDefault:"1025"`
+	SMTPUsername string `env:"SMTP_USERNAME" envDefault:""`
+	SMTPPassword string `env:"SMTP_PASSWORD" envDefault:""`
+	SMTPFrom     string `env:"SMTP_FROM" envDefault:"noreply@coursehunt.com"`
 }
 
 // Load reads .env (if present), binds environment variables, and validates all constraints.

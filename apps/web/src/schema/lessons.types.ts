@@ -62,6 +62,7 @@ export type QuizMetadataMini = z.infer<typeof QuizMetadataMiniZod>;
 
 export const AggregatedLessonContentResponseZod = z.object({
   lesson_type: z.string(),
+  playback_seconds: z.number().optional().default(0),
   video_content: LessonVideoContentZod.nullable().optional(),
   document_content: LessonDocumentContentZod.nullable().optional(),
   quiz_content: QuizMetadataMiniZod.nullable().optional(),

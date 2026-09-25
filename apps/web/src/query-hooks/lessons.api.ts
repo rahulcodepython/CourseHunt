@@ -214,3 +214,25 @@ export function useStudyLessonResourcesQuery(id: string) {
     { enabled: !!id },
   );
 }
+
+export function useHeartbeatMutation() {
+  return useSimpleMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { playback_seconds: number; session_seconds: number };
+    }) =>
+      apiRequest(
+        { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/progress/heartbeat`, method: "POST", data },
+        z.object({
+          lesson_id: z.string(),
+          playback_seconds: z.number(),
+          current_streak_days: z.number(),
+          total_study_minutes: z.number(),
+        }),
+      ),
+    showToast: false,
+  });
+}

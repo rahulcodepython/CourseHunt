@@ -78,9 +78,22 @@ type AddResourceRequest struct {
 
 type AggregatedLessonContentResponse struct {
 	LessonType      string                 `json:"lesson_type"`
+	PlaybackSeconds int                    `json:"playback_seconds"`
 	VideoContent    *LessonVideoContent    `json:"video_content"`
 	DocumentContent *LessonDocumentContent `json:"document_content"`
 	QuizContent     *quiz.QuizMetadata     `json:"quiz_content"`
+}
+
+type HeartbeatRequest struct {
+	PlaybackSeconds int `json:"playback_seconds" validate:"min=0"`
+	SessionSeconds  int `json:"session_seconds" validate:"min=0"`
+}
+
+type HeartbeatResponse struct {
+	LessonID        string `json:"lesson_id"`
+	PlaybackSeconds int    `json:"playback_seconds"`
+	CurrentStreak   int    `json:"current_streak_days"`
+	TotalMinutes    int    `json:"total_study_minutes"`
 }
 
 type LessonCompleteResponse struct {

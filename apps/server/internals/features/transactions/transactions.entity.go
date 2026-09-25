@@ -94,3 +94,33 @@ type RefundListPayload struct {
 	Total int                 `json:"total"`
 	Data  []RefundTransaction `json:"data"`
 }
+
+type TutorPayoutTransaction struct {
+	ID            string     `json:"id" db:"id"`
+	TutorID       string     `json:"tutor_id" db:"tutor_id"`
+	TutorEmail    *string    `json:"tutor_email,omitempty" db:"tutor_email"`
+	CourseID      *string    `json:"course_id" db:"course_id"`
+	CourseTitle   *string    `json:"course_title,omitempty" db:"course_title"`
+	TransactionID *string    `json:"transaction_id" db:"transaction_id"`
+	Amount        float64    `json:"amount" db:"amount"`
+	PlatformFee   float64    `json:"platform_fee" db:"platform_fee"`
+	Status        string     `json:"status" db:"status"`
+	ReferenceID   *string    `json:"reference_id" db:"reference_id"`
+	ProcessedAt   *time.Time `json:"processed_at" db:"processed_at"`
+	CreatedAt     time.Time  `json:"created_at" db:"created_at"`
+}
+
+type TutorPayoutSummary struct {
+	PendingBalance float64 `json:"pending_balance"`
+	TotalEarned    float64 `json:"total_earned"`
+	TotalPaid      float64 `json:"total_paid"`
+}
+
+type TutorPayoutOverview struct {
+	Summary TutorPayoutSummary       `json:"summary"`
+	Payouts []TutorPayoutTransaction `json:"payouts"`
+}
+
+type SettlePayoutRequest struct {
+	ReferenceID string `json:"reference_id" validate:"required,min=2,max=100"`
+}

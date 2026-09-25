@@ -87,3 +87,44 @@ export const RefundTransactionZod = z.object({
   refunded_at: z.string().nullable().optional(),
 });
 export type RefundTransaction = z.infer<typeof RefundTransactionZod>;
+
+export const TutorPayoutTransactionZod = z.object({
+  id: z.string(),
+  transaction_id: z.string(),
+  tutor_id: z.string(),
+  course_id: z.string(),
+  course_title: z.string(),
+  gross_amount: z.number(),
+  platform_fee_percent: z.number(),
+  platform_fee_amount: z.number(),
+  net_payout_amount: z.number(),
+  currency: z.string(),
+  payout_status: z.string(),
+  requested_at: z.string().nullable().optional(),
+  settled_at: z.string().nullable().optional(),
+  payout_reference: z.string().nullable().optional(),
+  created_at: z.string(),
+});
+export type TutorPayoutTransaction = z.infer<typeof TutorPayoutTransactionZod>;
+
+export const TutorPayoutSummaryZod = z.object({
+  total_gross_earnings: z.number(),
+  total_platform_fees: z.number(),
+  total_net_earnings: z.number(),
+  pending_payout_amount: z.number(),
+  settled_payout_amount: z.number(),
+  requested_payout_amount: z.number(),
+});
+export type TutorPayoutSummary = z.infer<typeof TutorPayoutSummaryZod>;
+
+export const TutorPayoutOverviewZod = z.object({
+  summary: TutorPayoutSummaryZod,
+  history: z.array(TutorPayoutTransactionZod),
+});
+export type TutorPayoutOverview = z.infer<typeof TutorPayoutOverviewZod>;
+
+export const SettlePayoutRequestZod = z.object({
+  payout_reference: z.string().min(1, "Payout reference is required"),
+});
+export type SettlePayoutRequest = z.infer<typeof SettlePayoutRequestZod>;
+

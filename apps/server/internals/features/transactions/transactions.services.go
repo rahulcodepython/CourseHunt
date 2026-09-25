@@ -79,3 +79,36 @@ func (a *App) ListRefunds(ctx context.Context, page, limit int, userID, status, 
 	}
 	return list, total, nil
 }
+
+func (a *App) ListTutorPayouts(ctx context.Context, tutorID string) (*TutorPayoutOverview, error) {
+	resp, err := a.ListTutorPayoutsRepository(ctx, tutorID)
+	if err != nil {
+		return nil, utils.ErrInternal("Failed to fetch tutor payouts.", err)
+	}
+	return resp, nil
+}
+
+func (a *App) RequestTutorPayout(ctx context.Context, tutorID string) error {
+	if err := a.RequestTutorPayoutRepository(ctx, tutorID); err != nil {
+		return utils.ErrInternal("Failed to request payout withdrawal.", err)
+	}
+	return nil
+}
+
+func (a *App) ListAdminPayouts(ctx context.Context) ([]TutorPayoutTransaction, error) {
+	list, err := a.ListAdminPayoutsRepository(ctx)
+	if err != nil {
+		return nil, utils.ErrInternal("Failed to fetch all tutor payouts.", err)
+	}
+	return list, nil
+}
+
+func (a *App) SettleAdminPayout(ctx context.Context, payoutID, referenceID string) error {
+	if err := a.SettleAdminPayoutRepository(ctx, payoutID, referenceID); err != nil {
+		if errors.Is(err, generic.ErrTransactionsNotFound) {
+			return utils.ErrNotFound("Payout transaction not found or already settled.", err)
+		}
+		return utils.ErrInternal("Failed to settle payout transaction.", err)
+	}
+	return nil
+}

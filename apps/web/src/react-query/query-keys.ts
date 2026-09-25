@@ -85,4 +85,12 @@ export const queryKeys = {
     params ? (["refunds", params] as const) : (["refunds"] as const),
   myRefunds: (params?: Record<string, string | number>) =>
     params ? (["refunds", "me", params] as const) : (["refunds", "me"] as const),
+  tutorPayouts: () => ["payouts", "tutor"] as const,
+  adminPayouts: (params?: Record<string, string | number>) =>
+    params ? (["payouts", "admin", params] as const) : (["payouts", "admin"] as const),
+  assignments: (courseId: string, scope?: string) =>
+    scope ? (["assignments", scope, courseId] as const) : (["assignments", courseId] as const),
+  assignmentDetail: (assignmentId: string) => ["assignments", "detail", assignmentId] as const,
+  assignmentSubmissions: (assignmentId: string) => ["assignments", assignmentId, "submissions"] as const,
+  myAssignmentSubmission: (assignmentId: string) => ["assignments", assignmentId, "my-submission"] as const,
 };

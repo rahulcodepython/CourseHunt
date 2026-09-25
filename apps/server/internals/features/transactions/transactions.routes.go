@@ -27,6 +27,14 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	gAdmin := router.Group("/v1/admin/transactions", auth, adminGuard)
 	gAdmin.Get("/", a.handleAdminList)
 	gAdmin.Get("/refunds", a.handleAdminListRefunds)
+	gAdmin.Get("/payouts", a.handleAdminPayouts)
+	gAdmin.Post("/payouts/:id/settle", middlewares.ValidateUUIDParams("id"), a.handleAdminSettlePayout)
+
+	// Tutor payouts: strictly single permission PermTutorCoursesManage
+	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
+	gTutor := router.Group("/v1/tutor/payouts", auth, tutorGuard)
+	gTutor.Get("/", a.handleTutorPayouts)
+	gTutor.Post("/request", a.handleTutorRequestPayout)
 
 	// Student transactions endpoints
 	gStudent := router.Group("/v1/transactions", auth)

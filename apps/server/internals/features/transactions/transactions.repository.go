@@ -193,3 +193,27 @@ func (a *App) MarkWebhookEventProcessedRepository(ctx context.Context, eventID s
 	_, err := a.DB.Exec(ctx, MarkWebhookEventProcessed, eventID)
 	return postgres.MapPgError(err)
 }
+
+func (a *App) ListTutorPayoutsRepository(ctx context.Context, tutorID string) (*TutorPayoutOverview, error) {
+	return postgres.QueryJSON[TutorPayoutOverview](ctx, a.DB, ListTutorPayouts, tutorID)
+}
+
+func (a *App) RequestTutorPayoutRepository(ctx context.Context, tutorID string) error {
+	_, err := a.DB.Exec(ctx, RequestTutorPayout, tutorID)
+	return postgres.MapPgError(err)
+}
+
+func (a *App) ListAdminPayoutsRepository(ctx context.Context) ([]TutorPayoutTransaction, error) {
+	return postgres.QueryJSONSlice[TutorPayoutTransaction](ctx, a.DB, ListAdminPayouts)
+}
+
+func (a *App) SettleAdminPayoutRepository(ctx context.Context, payoutID, referenceID string) error {
+	tag, err := a.DB.Exec(ctx, SettleAdminPayout, payoutID, referenceID)
+	if err != nil {
+		return postgres.MapPgError(err)
+	}
+	if tag.RowsAffected() == 0 {
+		return generic.ErrTransactionsNotFound
+	}
+	return nil
+}

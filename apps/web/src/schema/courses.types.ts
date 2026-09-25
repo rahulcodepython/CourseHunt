@@ -62,6 +62,11 @@ export const StudyChapterItemZod = z.object({
   title: z.string(),
   total_lectures: z.number(),
   total_duration_seconds: z.number(),
+  unlock_days_after_enrollment: z.number().optional(),
+  unlock_at: z.string().nullable().optional(),
+  prerequisite_chapter_id: z.string().nullable().optional(),
+  is_locked: z.boolean().optional().default(false),
+  lock_reason: z.string().nullable().optional(),
   progress: ChapterProgressInfoZod,
   lessons: z.array(StudyLessonItemZod),
 });

@@ -188,6 +188,10 @@ export const API_ENDPOINTS = {
   MONITORING: "/api/v1/monitoring",
   HEALTH: "/api/v1/health",
   UPLOAD_SIGNED_URL: "/api/v1/upload/signed/url",
+  TUTOR_PAYOUTS: "/api/v1/tutor/payouts",
+  ADMIN_PAYOUTS: "/api/v1/admin/transactions/payouts",
+  ASSIGNMENTS: "/api/v1/assignments",
+  TUTOR_ASSIGNMENTS: "/api/v1/tutor/assignments",
 } as const;
 
 export const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";

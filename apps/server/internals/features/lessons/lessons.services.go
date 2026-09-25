@@ -227,9 +227,26 @@ func (a *App) StudentReadContent(ctx context.Context, lessonID, userID string) (
 		if errors.Is(err, generic.ErrLessonsNotEnrolled) {
 			return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
 		}
+		if errors.Is(err, generic.ErrLessonsChapterLocked) {
+			return nil, utils.ErrForbidden("Access denied. Chapter is currently locked.", err)
+		}
 		return nil, utils.ErrInternal("Failed to fetch lesson content.", err)
 	}
 	return a.signVideoContent(ctx, res), nil
+}
+
+func (a *App) Heartbeat(ctx context.Context, lessonID, userID string, req HeartbeatRequest) (*HeartbeatResponse, error) {
+	resp, err := a.RecordHeartbeatRepository(ctx, lessonID, userID, req)
+	if err != nil {
+		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
+			return nil, utils.ErrNotFound("Lesson not found.", err)
+		}
+		if errors.Is(err, generic.ErrLessonsNotEnrolled) {
+			return nil, utils.ErrForbidden("Access denied. Not enrolled in this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to record playback heartbeat.", err)
+	}
+	return resp, nil
 }
 
 func (a *App) UpdateComplete(ctx context.Context, lessonID, userID string) error {

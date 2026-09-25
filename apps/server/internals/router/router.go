@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"coursehunt/server/internals/config"
+	"coursehunt/server/internals/features/assignments"
 	"coursehunt/server/internals/features/categories"
 	"coursehunt/server/internals/features/certificates"
 	"coursehunt/server/internals/features/chapters"
@@ -75,6 +76,7 @@ type Router struct {
 	Upload        *upload.App
 	Users         *users.App
 	Wishlist      *wishlist.App
+	Assignments   *assignments.App
 }
 
 func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Storage, cfg *config.Config, verifier *jwt.Verifier, rootCtx context.Context) *Router {
@@ -83,6 +85,7 @@ func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Sto
 	rzp := razorpay.NewClient(cfg.RazorpayKeyID, cfg.RazorpaySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
 
 	// Construct feature apps in dependency order
+	assignmentsApp := assignments.New(db, cch, storage)
 	categoriesApp := categories.New(db, cch, cfg)
 	certificatesApp := certificates.New(db, cch, cfg)
 	chaptersApp := chapters.New(db, cch, cfg)
@@ -138,6 +141,7 @@ func New(app *fiber.App, db *pgxpool.Pool, rdb *redis.Client, storage *minio.Sto
 		Upload:        uploadApp,
 		Users:         usersApp,
 		Wishlist:      wishlistApp,
+		Assignments:   assignmentsApp,
 	}
 }
 
@@ -168,6 +172,7 @@ func (r *Router) SetUp() {
 
 	auth := middlewares.BaseAuthMiddleware(r.CFG, r.Cache, r.Users, r.Verifier)
 
+	r.Assignments.RegisterRoutes(r.API, auth)
 	r.Categories.RegisterRoutes(r.API, auth)
 	r.Certificates.RegisterRoutes(r.API, auth)
 	r.Chapters.RegisterRoutes(r.API, auth)

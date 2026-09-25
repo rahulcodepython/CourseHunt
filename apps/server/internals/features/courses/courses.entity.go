@@ -50,13 +50,18 @@ type ChapterProgressInfo struct {
 }
 
 type StudyChapterItem struct {
-	ID                   string              `json:"id"`
-	ChapterNo            int                 `json:"chapter_no"`
-	Title                string              `json:"title"`
-	TotalLectures        int                 `json:"total_lectures"`
-	TotalDurationSeconds int                 `json:"total_duration_seconds"`
-	Progress             ChapterProgressInfo `json:"progress"`
-	Lessons              []StudyLessonItem   `json:"lessons"`
+	ID                        string              `json:"id"`
+	ChapterNo                 int                 `json:"chapter_no"`
+	Title                     string              `json:"title"`
+	TotalLectures             int                 `json:"total_lectures"`
+	TotalDurationSeconds      int                 `json:"total_duration_seconds"`
+	UnlockDaysAfterEnrollment int                 `json:"unlock_days_after_enrollment,omitempty"`
+	UnlockAt                  *time.Time          `json:"unlock_at,omitempty"`
+	PrerequisiteChapterID     *string             `json:"prerequisite_chapter_id,omitempty"`
+	IsLocked                  bool                `json:"is_locked"`
+	LockReason                *string             `json:"lock_reason,omitempty"`
+	Progress                  ChapterProgressInfo `json:"progress"`
+	Lessons                   []StudyLessonItem   `json:"lessons"`
 }
 
 // Status is always "draft" on create — never client-settable here. Tutors
