@@ -1,0 +1,19 @@
+{
+  "name": "gentik",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "help": "bun scripts/help.ts",
+    "deps:up": "docker compose up -d --wait",
+    "deps:down": "docker compose down",
+    "migrate-up": "bun --env-file=.env --filter @coursehunt/server migrate-up",
+    "migrate-down": "bun --env-file=.env --filter @coursehunt/server migrate-down",
+    "seed": "bun --env-file=.env --filter @coursehunt/server seed",
+    "flush": "bun --env-file=.env --filter @coursehunt/server flush",
+    "dev:web": "bun --env-file=.env --filter @coursehunt/web dev",
+    "dev:server": "bun --env-file=.env --filter @coursehunt/server dev",
+    "dev": "bun run deps:up && bun --env-file=.env --filter @coursehunt/server --filter @coursehunt/web dev"
+  }
+}

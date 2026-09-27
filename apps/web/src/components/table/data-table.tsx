@@ -33,8 +33,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon, type IconName } from "@/components/common/icon";
 import { useDebounce } from "@/hooks/use-debounce";
-import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormDialog } from "@/components/dialogs/form-dialog";
 import { DialogFooter } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -65,47 +63,14 @@ export interface DataTableProps<TData> {
   getSubRows?: (row: TData) => TData[] | undefined;
 }
 
-/** Wraps a DataTable cell's content with click-to-copy and tooltip preview. */
-function CopyableCell({ children }: { children: React.ReactNode }) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const [text, setText] = React.useState("");
-
-  React.useLayoutEffect(() => {
-    setText(ref.current?.textContent?.trim() ?? "");
-  });
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest("button, a, input, [role='button'], [role='menuitem']"))
-      return;
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
-  };
-
-  const content = (
-    <div ref={ref} onClick={handleClick} className={text ? "cursor-pointer" : undefined}>
-      {children}
-    </div>
-  );
-
-  if (!text) return content;
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{content}</TooltipTrigger>
-      <TooltipContent>{text}</TooltipContent>
-    </Tooltip>
-  );
-}
-
 type ExportFormat = "csv" | "xlsx";
 
-/** Exports displayed DataTable rows as CSV or XLSX. */
-function ExportTableButton({
-  containerRef,
+/** Exports displayed DataTable rows as CSV or XLSX using in-memory table data. */
+function ExportTableButton<TData>({
+  table,
   filename,
 }: {
-  containerRef: React.RefObject<HTMLElement | null>;
+  table: TanStackTable<TData>;
   filename: string;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -113,14 +78,27 @@ function ExportTableButton({
   const [isExporting, setIsExporting] = React.useState(false);
 
   const handleExport = async () => {
-    const container = containerRef.current;
-    if (!container) return;
+    const visibleColumns = table
+      .getVisibleLeafColumns()
+      .filter((col) => col.id !== "actions" && col.id !== "select");
 
-    const headers = Array.from(container.querySelectorAll("thead th")).map(
-      (th) => th.textContent?.trim() ?? "",
-    );
-    const rows = Array.from(container.querySelectorAll("tbody tr")).map((tr) =>
-      Array.from(tr.querySelectorAll("td")).map((td) => td.textContent?.trim() ?? ""),
+    const headers = visibleColumns.map((col) => {
+      const headerDef = col.columnDef.header;
+      if (typeof headerDef === "string") return headerDef;
+      return col.id;
+    });
+
+    const rows = table.getFilteredRowModel().rows.map((row) =>
+      visibleColumns.map((col) => {
+        const val = row.getValue(col.id);
+        if (val === null || val === undefined) return "";
+        if (typeof val === "object") {
+          if ("name" in (val as any) && typeof (val as any).name === "string") return (val as any).name;
+          if ("title" in (val as any) && typeof (val as any).title === "string") return (val as any).title;
+          return JSON.stringify(val);
+        }
+        return String(val);
+      }),
     );
 
     setIsExporting(true);
@@ -217,7 +195,6 @@ export function DataTable<TData>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
-  const tableContainerRef = React.useRef<HTMLDivElement>(null);
 
   const [filterInput, setFilterInput] = React.useState("");
   const debouncedFilter = useDebounce(filterInput, 300);
@@ -287,7 +264,7 @@ export function DataTable<TData>({
 
           <div className="flex items-center gap-2">
             {exportFilename && (
-              <ExportTableButton containerRef={tableContainerRef} filename={exportFilename} />
+              <ExportTableButton table={table} filename={exportFilename} />
             )}
             {showPagination && canLoadMore && (
               <Button
@@ -329,7 +306,7 @@ export function DataTable<TData>({
         </div>
       )}
 
-      <div className="rounded-md border" ref={tableContainerRef}>
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -361,9 +338,7 @@ export function DataTable<TData>({
                           : undefined
                       }
                     >
-                      <CopyableCell>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </CopyableCell>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>

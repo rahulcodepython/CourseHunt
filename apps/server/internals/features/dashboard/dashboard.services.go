@@ -22,7 +22,7 @@ func (a *App) UserDashboard(ctx context.Context, userID string) (*UserDashboard,
 
 func (a *App) TutorDashboard(ctx context.Context, tutorID string) (*TutorDashboard, error) {
 	cacheKey := fmt.Sprintf("dashboard:tutor:%s", tutorID)
-	return cache.Fetch(ctx, a.Cache, cacheKey, 60*time.Second, func() (*TutorDashboard, error) {
+	return cache.Fetch(ctx, a.Cache, cacheKey, 3*time.Minute, func() (*TutorDashboard, error) {
 		d, err := a.TutorDashboardRepository(ctx, tutorID)
 		if err != nil {
 			return nil, utils.ErrInternal("Failed to fetch tutor dashboard.", err)
@@ -33,7 +33,7 @@ func (a *App) TutorDashboard(ctx context.Context, tutorID string) (*TutorDashboa
 
 func (a *App) AdminDashboard(ctx context.Context) (*AdminDashboard, error) {
 	cacheKey := "dashboard:admin"
-	return cache.Fetch(ctx, a.Cache, cacheKey, 60*time.Second, func() (*AdminDashboard, error) {
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*AdminDashboard, error) {
 		d, err := a.AdminDashboardRepository(ctx)
 		if err != nil {
 			return nil, utils.ErrInternal("Failed to fetch admin dashboard.", err)

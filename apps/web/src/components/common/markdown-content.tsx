@@ -1,24 +1,24 @@
-"use client";
-
-import dynamic from "next/dynamic";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils/utils";
-import { useTheme } from "next-themes";
-import * as React from "react";
 
-const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), { ssr: false });
-
-export function MarkdownContent({ content, className }: { content: string; className?: string }) {
-  const { theme, systemTheme } = useTheme();
-  const currentTheme = theme === "system" ? systemTheme : theme;
+export function MarkdownContent({
+  content,
+  className,
+}: {
+  content: string;
+  className?: string;
+}) {
   return (
     <div
-      className={cn("markdown-body bg-transparent", className)}
-      data-color-mode={currentTheme || "light"}
+      className={cn(
+        "prose dark:prose-invert max-w-none text-sm break-words",
+        className
+      )}
     >
-      <MarkdownPreview
-        source={content.replace(/\\n/g, "\n")}
-        style={{ backgroundColor: "transparent" }}
-      />
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {(content || "").replace(/\\n/g, "\n")}
+      </ReactMarkdown>
     </div>
   );
 }

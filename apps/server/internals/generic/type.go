@@ -10,6 +10,12 @@ type PaginatedResponse[T interface{}] struct {
 	Limit int `json:"limit"`
 }
 
+// ListPayload is a generic payload container for database list queries returning total count and records.
+type ListPayload[T interface{}] struct {
+	Total int `json:"total"`
+	Data  []T `json:"data"`
+}
+
 // RolesAndPermissionsResult holds the current segment, custom roles,
 // permissions, and ban status resolved from the database for a given user.
 // Lives here (not in the users feature) because middlewares.BaseAuthMiddleware

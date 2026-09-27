@@ -18,3 +18,14 @@ func (a *App) List(ctx context.Context, userID, role string, afterID, beforeID *
 	}
 	return list, nil
 }
+
+func (a *App) MarkSeen(ctx context.Context, userID, role string, lastSeenID int64) error {
+	if role != generic.RoleAdmin && role != generic.RoleTutor {
+		return utils.ErrForbidden("Access denied. Notifications are only available to tutors and administrators.", nil)
+	}
+
+	if err := a.MarkSeenRepository(ctx, userID, lastSeenID); err != nil {
+		return utils.ErrInternal("Failed to mark notifications as seen.", err)
+	}
+	return nil
+}

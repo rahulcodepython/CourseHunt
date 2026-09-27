@@ -8,30 +8,17 @@ import (
 
 const maxBodyLogLength = 2048
 
-// containsFold checks whether s contains substr case-insensitively without allocating new strings.
-func containsFold(s, substr string) bool {
-	if len(substr) == 0 {
-		return true
-	}
-	if len(s) < len(substr) {
-		return false
-	}
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if strings.EqualFold(s[i:i+len(substr)], substr) {
+var sensitiveKeyPatterns = []string{"password", "secret", "token", "credit", "cvv", "card"}
+
+// isSensitiveKey checks whether a key name indicates sensitive credential or card data.
+func isSensitiveKey(k string) bool {
+	kLower := strings.ToLower(k)
+	for _, pattern := range sensitiveKeyPatterns {
+		if strings.Contains(kLower, pattern) {
 			return true
 		}
 	}
 	return false
-}
-
-// isSensitiveKey checks whether a key name indicates sensitive credential or card data.
-func isSensitiveKey(k string) bool {
-	return containsFold(k, "password") ||
-		containsFold(k, "secret") ||
-		containsFold(k, "token") ||
-		containsFold(k, "credit") ||
-		containsFold(k, "cvv") ||
-		containsFold(k, "card")
 }
 
 // sanitizeJSON recursively redacts sensitive fields in-place without duplicating untouched subtrees.

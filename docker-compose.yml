@@ -1,0 +1,116 @@
+name: coursehunt
+
+services:
+  postgres:
+    build:
+      context: ./infra/postgres
+    container_name: ${POSTGRES_CONTAINER_NAME:-coursehunt-postgres}
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-coursehunt}
+    command: [ "postgres", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.database_name=${POSTGRES_DB:-coursehunt}" ]
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks:
+      - coursehunt-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-coursehunt}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    container_name: ${REDIS_CONTAINER_NAME:-coursehunt-redis}
+    env_file:
+      - .env
+    command: [ "redis-server" ]
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - coursehunt-network
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+
+  minio:
+    image: ${MINIO_IMAGE:-minio/minio:latest}
+    container_name: ${MINIO_CONTAINER_NAME:-coursehunt-minio}
+    env_file:
+      - .env
+    command: server /data --console-address ":${MINIO_CONSOLE_PORT:-9001}"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    restart: unless-stopped
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - miniodata:/data
+    networks:
+      - coursehunt-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  mailpit:
+    image: ${MAILPIT_IMAGE:-axllent/mailpit:latest}
+    container_name: ${MAILPIT_CONTAINER_NAME:-coursehunt-mailpit}
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    networks:
+      - coursehunt-network
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8025/livez || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: coursehunt-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./infra/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    networks:
+      - coursehunt-network
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+
+networks:
+  coursehunt-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  loki-data:

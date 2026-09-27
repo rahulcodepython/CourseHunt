@@ -43,7 +43,7 @@ export function LessonVideoPlayer({
         });
         lastLoggedSecond.current = currentSec;
       }
-    }, 10000);
+    }, 30000);
 
     return () => {
       clearInterval(interval);

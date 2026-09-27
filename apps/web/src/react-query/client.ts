@@ -56,17 +56,19 @@ export async function request<T>(
       throw new ApiError(message, response.status, response.data);
     }
 
-    const parsed = ApiResponseZod(schema).safeParse(response.data);
-
-    if (!parsed.success) {
-      throw new ApiError(
-        ERROR_MESSAGES.VALIDATION_FAILED,
-        response.status,
-        parsed.error,
-      );
+    if (schema) {
+      const parsed = schema.safeParse(response.data.data);
+      if (!parsed.success) {
+        throw new ApiError(
+          ERROR_MESSAGES.VALIDATION_FAILED,
+          response.status,
+          parsed.error,
+        );
+      }
+      return (parsed.data ?? null) as T;
     }
 
-    return (parsed.data.data ?? null) as T;
+    return (response.data.data ?? null) as T;
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if (axios.isAxiosError(error)) {
