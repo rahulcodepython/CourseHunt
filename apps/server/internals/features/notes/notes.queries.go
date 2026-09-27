@@ -80,27 +80,5 @@ const (
 			(SELECT row_to_json(updated.*) FROM updated) AS updated_data;
 	`
 
-	DeleteNote = `
-		WITH note_info AS (
-			SELECT id, user_id, lesson_id, course_id FROM notes WHERE id = $1
-		),
-		enrollment_auth AS (
-			SELECT EXISTS (
-				SELECT 1 FROM enrollments e
-				JOIN note_info ni ON e.course_id = ni.course_id
-				WHERE e.user_id = $2 AND e.revoked = false
-			) AS is_enrolled
-		),
-		deleted AS (
-			DELETE FROM notes
-			USING note_info ni, enrollment_auth ea
-			WHERE notes.id = $1 AND notes.user_id = $2 AND ea.is_enrolled = true
-			RETURNING notes.id
-		)
-		SELECT
-			EXISTS(SELECT 1 FROM note_info) AS note_exists,
-			EXISTS(SELECT 1 FROM note_info WHERE user_id = $2) AS is_owner,
-			COALESCE((SELECT is_enrolled FROM enrollment_auth), false) AS is_enrolled,
-			(SELECT id FROM deleted) AS deleted_id;
-	`
+	DeleteNote = `DELETE FROM notes WHERE id = $1 AND user_id = $2 RETURNING id;`
 )

@@ -1,10 +1,10 @@
 package quiz
 
 import (
-	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
+	"math/rand/v2"
 	"slices"
 
 	"coursehunt/server/internals/generic"
@@ -57,12 +57,14 @@ func (a *App) ReadNextQuestionUnifiedRepository(ctx context.Context, quizID, use
 }
 
 func deconflictArrangeOrder(items []QuizArrangeItem) []QuizArrangeItem {
-	if len(items) >= 2 && slices.IsSortedFunc(items, func(a, b QuizArrangeItem) int {
-		return cmp.Compare(a.CorrectOrder, b.CorrectOrder)
-	}) {
-		items[0], items[1] = items[1], items[0]
+	if len(items) <= 1 {
+		return items
 	}
-	return items
+	shuffled := slices.Clone(items)
+	rand.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
+	return shuffled
 }
 
 func (a *App) GetQuestionRepository(ctx context.Context, quizID, userID string, req NextQuestionRequest) (*NextQuestionResponse, error) {

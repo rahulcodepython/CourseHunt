@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/common/icon";
 import { useCursorFeed } from "@/hooks/use-cursor-feed";
-import { fetchNotifications } from "@/query-hooks/notifications.api";
+import { fetchNotifications, markNotificationsSeen } from "@/query-hooks/notifications.api";
 import { queryKeys } from "@/react-query/query-keys";
 import { formatDateTime } from "@/lib/utils/format";
 import useSession from "@/hooks/use-session";
@@ -43,8 +43,13 @@ export function NotificationBell() {
   const [seenCount, setSeenCount] = React.useState(0);
 
   React.useEffect(() => {
-    if (open) setSeenCount(items.length);
-  }, [open, items.length]);
+    if (open) {
+      setSeenCount(items.length);
+      if (items.length > 0 && items[0]?.id) {
+        markNotificationsSeen(items[0].id).catch(() => {});
+      }
+    }
+  }, [open, items]);
 
   if (!enabled) return null;
 

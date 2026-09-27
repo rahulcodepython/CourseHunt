@@ -4,17 +4,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Icon, type IconName } from "@/components/common/icon";
 import type { Course } from "@/schema/courses.types";
-import { formatDate, formatINR } from "@/lib/utils/format";
+import { formatDate, formatDuration, formatINR } from "@/lib/utils/format";
 import { COURSE_STATUS } from "@/lib/constants/const";
 import { cn } from "@/lib/utils/utils";
-
-function formatDuration(totalSeconds: number): string {
-  if (!totalSeconds || totalSeconds <= 0) return "—";
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.round((totalSeconds % 3600) / 60);
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  return `${minutes}m`;
-}
 
 function StatCard({
   icon,

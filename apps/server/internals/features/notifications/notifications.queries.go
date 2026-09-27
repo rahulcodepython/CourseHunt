@@ -15,15 +15,6 @@ func BuildListQuery(roleCol, cursorClause string, limitParam int) string {
 			WHERE n.%s = true %s
 			ORDER BY n.id DESC
 			LIMIT $%d
-		),
-		seen_upsert AS (
-			INSERT INTO notification_seen (user_id, last_seen_notification_id, updated_at)
-			SELECT $1::uuid, mx, CURRENT_TIMESTAMP
-			FROM (SELECT MAX(id) AS mx FROM page) s
-			WHERE s.mx IS NOT NULL
-			ON CONFLICT (user_id) DO UPDATE
-				SET last_seen_notification_id = GREATEST(notification_seen.last_seen_notification_id, EXCLUDED.last_seen_notification_id),
-				    updated_at = CURRENT_TIMESTAMP
 		)
 		SELECT COALESCE(
 			jsonb_agg(
@@ -35,3 +26,11 @@ func BuildListQuery(roleCol, cursorClause string, limitParam int) string {
 		FROM page;
 	`, roleCol, cursorClause, limitParam)
 }
+
+const MarkSeenQuery = `
+	INSERT INTO notification_seen (user_id, last_seen_notification_id, updated_at)
+	VALUES ($1::uuid, $2, CURRENT_TIMESTAMP)
+	ON CONFLICT (user_id) DO UPDATE
+		SET last_seen_notification_id = GREATEST(notification_seen.last_seen_notification_id, EXCLUDED.last_seen_notification_id),
+		    updated_at = CURRENT_TIMESTAMP;
+`

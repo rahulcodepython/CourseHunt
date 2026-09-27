@@ -72,11 +72,11 @@ func (a *App) RecordHeartbeatRepository(ctx context.Context, lessonID, userID st
 		return nil, postgres.MapPgError(err)
 	}
 
-	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: !lessonExists, Err: generic.ErrLessonsLessonNotFound},
-		postgres.Condition{Failed: !isEnrolled, Err: generic.ErrLessonsNotEnrolled},
-	); err != nil {
-		return nil, err
+	if !lessonExists {
+		return nil, generic.ErrLessonsLessonNotFound
+	}
+	if !isEnrolled {
+		return nil, generic.ErrLessonsNotEnrolled
 	}
 
 	return &HeartbeatResponse{

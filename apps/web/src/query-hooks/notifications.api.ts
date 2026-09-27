@@ -11,3 +11,14 @@ export function fetchNotifications(params: CursorPageParams) {
     z.array(NotificationZod),
   );
 }
+
+export function markNotificationsSeen(lastSeenId: number) {
+  return apiRequest(
+    {
+      url: `${API_ENDPOINTS.NOTIFICATIONS}/seen`,
+      method: "POST",
+      data: { last_seen_id: lastSeenId },
+    },
+    z.null().optional(),
+  );
+}

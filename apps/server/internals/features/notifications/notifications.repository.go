@@ -29,3 +29,8 @@ func (a *App) ListRepository(ctx context.Context, userID, role string, afterID, 
 	query := BuildListQuery(roleCol, filter.Join(""), limitParam)
 	return postgres.QueryJSONSlice[Notification](ctx, a.DB, query, filter.Args...)
 }
+
+func (a *App) MarkSeenRepository(ctx context.Context, userID string, lastSeenID int64) error {
+	_, err := a.DB.Exec(ctx, MarkSeenQuery, userID, lastSeenID)
+	return err
+}

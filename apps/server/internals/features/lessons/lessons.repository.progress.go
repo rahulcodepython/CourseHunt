@@ -21,8 +21,11 @@ func (a *App) UpdateCompleteRepository(ctx context.Context, lessonID, userID str
 		return postgres.MapPgError(err)
 	}
 
-	return postgres.CheckConditions(
-		postgres.Condition{Failed: !lessonExists, Err: generic.ErrLessonsLessonNotFound},
-		postgres.Condition{Failed: !isEnrolled, Err: generic.ErrLessonsNotEnrolled},
-	)
+	if !lessonExists {
+		return generic.ErrLessonsLessonNotFound
+	}
+	if !isEnrolled {
+		return generic.ErrLessonsNotEnrolled
+	}
+	return nil
 }

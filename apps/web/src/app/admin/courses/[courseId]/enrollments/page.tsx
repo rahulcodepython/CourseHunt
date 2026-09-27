@@ -1,44 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { PageHeader } from "@/components/layout/page-header";
-import { Icon } from "@/components/common/icon";
-import { Button } from "@/components/ui/button";
-import { EnrollmentAccessTable } from "@/components/table/enrollment-access-table";
+import { CourseEnrollmentsView } from "@/components/enrollments/course-enrollments-view";
 
-import { useManageCourseQuery } from "@/query-hooks/courses.api";
-import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
-
-export default function CourseEnrollmentsPage() {
-  const params = useParams<{ courseId: string }>();
-  const courseId = params.courseId as string;
-
-  const { data: courseData } = useManageCourseQuery(courseId);
-  useSetBreadcrumbs([
-    { label: "Courses", href: "/admin/courses" },
-    { label: courseData?.title || "Course", href: `/admin/courses/overview/${courseId}` },
-    { label: "Enrolled Users" },
-  ]);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
-          <Link href="/admin/courses">
-            <span className="flex items-center gap-1.5">
-              <Icon name="arrow-left" className="size-4" />
-              Back to Courses
-            </span>
-          </Link>
-        </Button>
-        <PageHeader
-          title="Enrolled Users"
-          subtitle="Users enrolled in this course, and their access status"
-        />
-      </div>
-
-      <EnrollmentAccessTable courseId={courseId} emptyText="No users enrolled in this course" />
-    </div>
-  );
+export default function AdminCourseEnrollmentsPage() {
+  return <CourseEnrollmentsView role="admin" />;
 }

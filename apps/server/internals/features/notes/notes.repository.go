@@ -22,12 +22,14 @@ func (a *App) UpsertRepository(ctx context.Context, userID, lessonID, content st
 		return nil, postgres.MapPgError(err)
 	}
 
-	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: !lessonExists, Err: generic.ErrNotesLessonNotFound},
-		postgres.Condition{Failed: !isEnrolled, Err: generic.ErrNotesNotEnrolled},
-		postgres.Condition{Failed: len(insertedData) == 0 || string(insertedData) == "null", Err: errors.New("failed to save note")},
-	); err != nil {
-		return nil, err
+	if !lessonExists {
+		return nil, generic.ErrNotesLessonNotFound
+	}
+	if !isEnrolled {
+		return nil, generic.ErrNotesNotEnrolled
+	}
+	if len(insertedData) == 0 || string(insertedData) == "null" {
+		return nil, errors.New("failed to save note")
 	}
 
 	return postgres.DecodeJSON[NoteResponse](insertedData)
@@ -47,12 +49,14 @@ func (a *App) ReadRepository(ctx context.Context, userID, lessonID string) (*Use
 		return nil, postgres.MapPgError(err)
 	}
 
-	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: !lessonExists, Err: generic.ErrNotesLessonNotFound},
-		postgres.Condition{Failed: !isEnrolled, Err: generic.ErrNotesNotEnrolled},
-		postgres.Condition{Failed: len(noteJSON) == 0 || string(noteJSON) == "null", Err: generic.ErrNoteNotFound},
-	); err != nil {
-		return nil, err
+	if !lessonExists {
+		return nil, generic.ErrNotesLessonNotFound
+	}
+	if !isEnrolled {
+		return nil, generic.ErrNotesNotEnrolled
+	}
+	if len(noteJSON) == 0 || string(noteJSON) == "null" {
+		return nil, generic.ErrNoteNotFound
 	}
 
 	return postgres.DecodeJSON[UserNote](noteJSON)
@@ -73,41 +77,31 @@ func (a *App) UpdateRepository(ctx context.Context, id, userID, content string) 
 		return nil, postgres.MapPgError(err)
 	}
 
-	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: !noteExists, Err: generic.ErrNoteNotFound},
-		postgres.Condition{Failed: !isOwner, Err: generic.ErrNotesAccessDenied},
-		postgres.Condition{Failed: !isEnrolled, Err: generic.ErrNotesNotEnrolled},
-		postgres.Condition{Failed: len(updatedData) == 0 || string(updatedData) == "null", Err: errors.New("failed to update note")},
-	); err != nil {
-		return nil, err
+	if !noteExists {
+		return nil, generic.ErrNoteNotFound
+	}
+	if !isOwner {
+		return nil, generic.ErrNotesAccessDenied
+	}
+	if !isEnrolled {
+		return nil, generic.ErrNotesNotEnrolled
+	}
+	if len(updatedData) == 0 || string(updatedData) == "null" {
+		return nil, errors.New("failed to update note")
 	}
 
 	return postgres.DecodeJSON[NoteResponse](updatedData)
 }
 
 func (a *App) DeleteRepository(ctx context.Context, id, userID string) (string, error) {
-	var (
-		noteExists bool
-		isOwner    bool
-		isEnrolled bool
-		deletedID  *string
-	)
-
-	err := a.DB.QueryRow(ctx, DeleteNote, id, userID).Scan(
-		&noteExists, &isOwner, &isEnrolled, &deletedID,
-	)
+	var deletedID string
+	err := a.DB.QueryRow(ctx, DeleteNote, id, userID).Scan(&deletedID)
 	if err != nil {
-		return "", postgres.MapPgError(err)
+		pgErr := postgres.MapPgError(err)
+		if errors.Is(pgErr, postgres.ErrNotFound) {
+			return "", generic.ErrNoteNotFound
+		}
+		return "", pgErr
 	}
-
-	if err := postgres.CheckConditions(
-		postgres.Condition{Failed: !noteExists, Err: generic.ErrNoteNotFound},
-		postgres.Condition{Failed: !isOwner, Err: generic.ErrNotesAccessDenied},
-		postgres.Condition{Failed: !isEnrolled, Err: generic.ErrNotesNotEnrolled},
-		postgres.Condition{Failed: deletedID == nil, Err: errors.New("failed to delete note")},
-	); err != nil {
-		return "", err
-	}
-
-	return *deletedID, nil
+	return deletedID, nil
 }

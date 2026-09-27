@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import { useBreadcrumbStore, type BreadcrumbItemData } from "@/store/breadcrumb.store";
 
 export function useSetBreadcrumbs(items: BreadcrumbItemData[]) {
   const setBreadcrumbs = useBreadcrumbStore((s) => s.setBreadcrumbs);
-  const clearBreadcrumbs = useBreadcrumbStore((s) => s.clearBreadcrumbs);
-
-  const serialized = useMemo(() => JSON.stringify(items), [items]);
+  const prevKeyRef = useRef<string>("");
 
   useEffect(() => {
-    setBreadcrumbs(items);
-    return () => {
-      clearBreadcrumbs();
-    };
-  }, [serialized, setBreadcrumbs, clearBreadcrumbs]);
+    const key = items.map((i) => `${i.label}:${i.href ?? ""}`).join("|");
+    if (prevKeyRef.current !== key) {
+      prevKeyRef.current = key;
+      setBreadcrumbs(items);
+    }
+  });
 }

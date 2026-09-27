@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -83,29 +84,33 @@ func (c *Cache) Delete(ctx context.Context, keys ...string) error {
 	return nil
 }
 
-// DeleteByPattern scans for matching keys and deletes them.
+// DeleteByPattern scans for matching keys and deletes them in pipelined batches.
+// If pattern contains no wildcards (* or ?), it executes an immediate O(1) Del.
 func (c *Cache) DeleteByPattern(ctx context.Context, pattern string) error {
-	if c == nil || c.client == nil {
+	if c == nil || c.client == nil || pattern == "" {
 		return nil
 	}
+
+	// Fast path: direct key without wildcards
+	if !strings.ContainsAny(pattern, "*?") {
+		return c.client.Del(ctx, pattern).Err()
+	}
+
 	var cursor uint64
-	var keys []string
 	for {
-		var err error
-		var k []string
-		k, cursor, err = c.client.Scan(ctx, cursor, pattern, 100).Result()
+		keys, nextCursor, err := c.client.Scan(ctx, cursor, pattern, 200).Result()
 		if err != nil {
 			slog.Error("cache delete-by-pattern scan error", "pattern", pattern, "error", err)
-			return nil
+			return err
 		}
-		keys = append(keys, k...)
+		if len(keys) > 0 {
+			if delErr := c.client.Del(ctx, keys...).Err(); delErr != nil {
+				slog.Error("cache delete-by-pattern delete error", "pattern", pattern, "error", delErr)
+			}
+		}
+		cursor = nextCursor
 		if cursor == 0 {
 			break
-		}
-	}
-	if len(keys) > 0 {
-		if err := c.client.Del(ctx, keys...).Err(); err != nil {
-			slog.Error("cache delete-by-pattern delete error", "pattern", pattern, "error", err)
 		}
 	}
 	return nil

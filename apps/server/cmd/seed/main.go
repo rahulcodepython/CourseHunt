@@ -96,6 +96,11 @@ func main() {
 	}
 	log.Println("[seeder] All database tables truncated and reset successfully!")
 
+	if len(os.Args) > 1 && (os.Args[1] == "flush" || os.Args[1] == "-flush" || os.Args[1] == "--flush") {
+		log.Println("[seeder] Flush completed. Database tables cleared.")
+		return
+	}
+
 	// 2. Seed the permission catalog
 	log.Println("==================================================")
 	log.Println("[seeder] SEEDING PERMISSION CATALOG...")
