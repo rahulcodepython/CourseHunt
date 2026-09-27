@@ -52,7 +52,7 @@ function SecurityEventsTable({ eventType, emptyText }: { eventType: string; empt
 
 export default function SecurityPage() {
   const { data: statsResp } = useSecurityStatsQuery(POLL_INTERVAL_MS);
-  const stats = statsResp?.data;
+  const stats = (statsResp as any)?.data ?? statsResp;
 
   return (
     <div className="space-y-6">

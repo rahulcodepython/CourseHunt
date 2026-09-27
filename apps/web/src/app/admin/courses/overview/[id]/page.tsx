@@ -67,7 +67,7 @@ export default function CourseOverviewPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id as string;
   const { data: raw, isLoading } = useManageCourseQuery(courseId, "admin");
-  const course = raw?.data;
+  const course = raw;
 
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },

@@ -17,7 +17,7 @@ export default function CourseEnrollmentsPage() {
   const { data: courseData } = useManageCourseQuery(courseId);
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },
-    { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
+    { label: courseData?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "Enrolled Users" },
   ]);
 

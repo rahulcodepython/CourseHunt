@@ -1,10 +1,10 @@
 "use client";
 
-import { apiRequest } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request } from "@/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@/react-query/mutation";
-import { useAppQuery } from "@/react-query/query";
+import { useSimpleMutation } from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
@@ -16,30 +16,25 @@ import {
 } from "@/schema/assignments.types";
 
 export function useAssignmentsQuery(courseId: string, scope?: string) {
-  return useAppQuery(queryKeys.assignments(courseId, scope), () =>
-    apiRequest(
+  return useQuery({ queryKey: queryKeys.assignments(courseId, scope), queryFn: () =>
+    request(
       { url: `${API_ENDPOINTS.ASSIGNMENTS}/course/${courseId}`, method: "GET" },
       z.array(AssignmentZod),
-    ),
-  );
+    ) });
 }
 
 export function useAssignmentSubmissionsQuery(assignmentId: string) {
-  return useAppQuery(
-    queryKeys.assignmentSubmissions(assignmentId),
-    () =>
-      apiRequest(
+  return useQuery({ queryKey: queryKeys.assignmentSubmissions(assignmentId), queryFn: () =>
+      request(
         { url: `${API_ENDPOINTS.TUTOR_ASSIGNMENTS}/${assignmentId}/submissions`, method: "GET" },
         z.array(AssignmentSubmissionZod),
-      ),
-    { enabled: Boolean(assignmentId) },
-  );
+      ), enabled: Boolean(assignmentId) });
 }
 
 export function useCreateAssignmentMutation(courseId: string) {
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof CreateAssignmentRequestZod>) =>
-      apiRequest(
+      request(
         { url: API_ENDPOINTS.TUTOR_ASSIGNMENTS, method: "POST", data },
         AssignmentZod,
       ),
@@ -51,7 +46,7 @@ export function useCreateAssignmentMutation(courseId: string) {
 export function useSubmitAssignmentMutation(assignmentId: string, courseId: string) {
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof SubmitAssignmentRequestZod>) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/submit`, method: "POST", data },
         AssignmentSubmissionZod,
       ),
@@ -72,7 +67,7 @@ export function useGradeAssignmentMutation(assignmentId: string) {
       submissionId: string;
       data: z.infer<typeof GradeAssignmentRequestZod>;
     }) =>
-      apiRequest(
+      request(
         {
           url: `${API_ENDPOINTS.TUTOR_ASSIGNMENTS}/submissions/${submissionId}/grade`,
           method: "POST",

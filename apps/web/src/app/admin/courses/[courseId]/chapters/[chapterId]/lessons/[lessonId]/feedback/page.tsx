@@ -34,12 +34,12 @@ export default function LessonFeedbackPage() {
   const { data: chaptersData } = useChaptersQuery(courseId, "admin");
   const { data: lessonsData } = useLessonsQuery(chapterId, "admin");
 
-  const currentChapter = chaptersData?.data?.find((ch) => ch.id === chapterId);
-  const currentLesson = lessonsData?.data?.find((l) => l.id === lessonId);
+  const currentChapter = chaptersData?.find((ch) => ch.id === chapterId);
+  const currentLesson = lessonsData?.find((l) => l.id === lessonId);
 
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },
-    { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
+    { label: courseData?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "Chapters", href: `/admin/courses/${courseId}/chapters` },
     {
       label: currentChapter?.title || "Chapter",
@@ -53,7 +53,7 @@ export default function LessonFeedbackPage() {
   const updateMutation = useUpdateFeedbackMutation();
   const deleteMutation = useDeleteFeedbackMutation("admin");
 
-  const feedbacks: Feedback[] = rawFeedbacks?.data?.data ?? [];
+  const feedbacks: Feedback[] = rawFeedbacks?.data ?? [];
   const { deleting, setDeleting, requestDelete, confirmDelete } = useCrudDialogState<Feedback>();
 
   const handlePinToggle = async (feedback: Feedback) => {

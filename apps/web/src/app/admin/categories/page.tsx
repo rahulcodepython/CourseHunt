@@ -146,9 +146,11 @@ function CategoryDialog({
 
 export default function CategoriesPage() {
   const { data: raw, isLoading } = useCategoriesQuery();
-  const categories: Category[] = Array.isArray(raw?.data)
-    ? raw.data
-    : ((raw?.data as { data?: Category[] } | undefined)?.data ?? []);
+  const categories: Category[] = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw?.data)
+      ? raw.data
+      : [];
   const deleteMutation = useDeleteCategoryMutation();
   const {
     dialogOpen,
@@ -162,7 +164,7 @@ export default function CategoriesPage() {
     confirmDelete,
   } = useCrudDialogState<Category>();
 
-  if (isLoading || (!raw?.data && !categories.length)) {
+  if (isLoading || (!raw && !categories.length)) {
     return <Loading />;
   }
 

@@ -13,7 +13,7 @@ export default function UsersPage() {
   const { data: rawUsers, isLoading } = useUsersQuery({ role: ROLES.USER });
   const { canBan, currentUserId, handleBanToggle } = useUserBanActions();
 
-  const users: UserListResponse[] = rawUsers?.data?.data ?? [];
+  const users: UserListResponse[] = rawUsers?.data ?? [];
   const columns = React.useMemo(
     () => getColumns(handleBanToggle, { canBan, currentUserId }),
     [canBan, currentUserId], // eslint-disable-line react-hooks/exhaustive-deps

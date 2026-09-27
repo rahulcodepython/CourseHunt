@@ -60,7 +60,7 @@ export function CreateUserDialog({
   const assignableRoles = React.useMemo(
     () =>
       (
-        (rawRoles?.data as
+        (rawRoles as
           { id: string; name: string; is_system?: boolean }[] | null | undefined) ?? []
       ).filter((r) => !r.is_system),
     [rawRoles],

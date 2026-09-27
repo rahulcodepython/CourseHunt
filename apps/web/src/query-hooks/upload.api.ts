@@ -1,5 +1,5 @@
 import { apiRequest } from "@/react-query/client";
-import { useSimpleMutation } from "@/react-query/mutation";
+import { useSimpleMutation } from "@/react-query/mutations";
 import { UploadMediaResponseZod } from "@/schema/upload.types";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import { z } from "zod";
@@ -20,10 +20,7 @@ export async function getSignedUrl(fileName: string) {
     },
     SignedURLResponseZod,
   );
-  if (!res.success || !res.data) {
-    throw new Error(res.message || "Failed to retrieve signed URL");
-  }
-  return res.data;
+  return res;
 }
 
 export function useUploadMediaMutation() {
@@ -39,8 +36,9 @@ export function useUploadMediaMutation() {
       });
 
       return {
-        success: true,
-        message: "Media uploaded successfully",
+        downloadUrl: signedInfo.downloadUrl,
+        htmlUrl: signedInfo.htmlUrl,
+        status: 200,
         data: {
           downloadUrl: signedInfo.downloadUrl,
           htmlUrl: signedInfo.htmlUrl,

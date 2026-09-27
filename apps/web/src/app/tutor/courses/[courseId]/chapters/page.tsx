@@ -109,7 +109,7 @@ export default function TutorCourseChaptersPage() {
   const courseId = params.courseId as string;
 
   const { data: rawCourses } = useManageCoursesQuery();
-  const currentCourse = rawCourses?.data?.data?.find((c) => c.id === courseId);
+  const currentCourse = rawCourses?.data?.find((c) => c.id === courseId);
 
   useSetBreadcrumbs([
     { label: "My Courses", href: "/tutor/courses" },
@@ -119,7 +119,7 @@ export default function TutorCourseChaptersPage() {
 
   const { data: rawChapters, isLoading } = useChaptersQuery(courseId);
   const deleteMutation = useDeleteChapterMutation(courseId);
-  const chapters: Chapter[] = rawChapters?.data ?? [];
+  const chapters: Chapter[] = rawChapters ?? [];
 
   const {
     dialogOpen,

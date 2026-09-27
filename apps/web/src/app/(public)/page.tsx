@@ -14,8 +14,8 @@ export default function LandingPage() {
   const { data: rawCourses, isLoading: isLoadingCourses } = useCoursesQuery({ limit: 8 });
   const { data: rawFeedbacks } = usePinnedFeedbacksQuery();
 
-  const courses = rawCourses?.data?.data ?? [];
-  const feedbacks = (rawFeedbacks?.data?.data ?? []).filter((fb) => fb.content);
+  const courses = rawCourses?.data ?? [];
+  const feedbacks = (rawFeedbacks?.data ?? []).filter((fb) => fb.content);
 
   return (
     <div className="bg-background">

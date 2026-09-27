@@ -8,7 +8,7 @@ import { columns } from "./columns";
 
 export default function StudentUpdatesPage() {
   const { data: raw, isLoading } = useUpdateFeedQuery({ limit: 20 });
-  const updates: UpdateFeedItem[] = raw?.data?.updates?.data ?? [];
+  const updates: UpdateFeedItem[] = raw?.updates?.data ?? [];
 
   return (
     <div className="space-y-6">

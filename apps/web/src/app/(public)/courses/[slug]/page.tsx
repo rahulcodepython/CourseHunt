@@ -41,11 +41,11 @@ export default function CourseDetailPage() {
   const enrollFree = useEnrollFreeMutation();
   const addToWishlist = useAddCourseToWishlistMutation();
 
-  const course = raw?.data;
+  const course = raw;
   const { data: rawFeedbacks } = usePinnedFeedbacksQuery(course?.id);
-  const reviews = (rawFeedbacks?.data?.data ?? []).filter((fb) => fb.content);
+  const reviews = (rawFeedbacks?.data ?? []).filter((fb) => fb.content);
   const { data: rawFaqs } = usePublicFaqsQuery(course?.id ?? "");
-  const faqs = rawFaqs?.data ?? [];
+  const faqs = rawFaqs ?? [];
 
   if (isLoading) return <Loading />;
 

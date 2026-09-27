@@ -19,7 +19,7 @@ function formatTime(seconds: number): string {
 
 function QuizMetadataCell({ lessonId }: { lessonId: string }) {
   const { data: raw } = useQuizMetadataQuery(lessonId);
-  const metadata: QuizMetadata | null = raw?.success ? (raw.data ?? null) : null;
+  const metadata: QuizMetadata | null = raw ?? null;
 
   if (!metadata) {
     return <span className="text-xs text-muted-foreground">Not configured</span>;

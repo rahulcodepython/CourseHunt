@@ -55,7 +55,7 @@ function UpdateDialog({
   const createMutation = useCreateUpdateMutation("tutor");
   const updateMutation = useUpdateUpdateMutation("tutor");
   const { data: rawCourses } = useManageCoursesQuery({ scope: "tutor" });
-  const courses = rawCourses?.data?.data ?? [];
+  const courses = rawCourses?.data ?? [];
 
   const {
     register,
@@ -153,7 +153,7 @@ export default function TutorUpdatesPage() {
   const { data: rawUpdates, isLoading } = useUpdatesQuery("tutor");
   const deleteMutation = useDeleteUpdateMutation("tutor");
 
-  const updates: CourseUpdate[] = rawUpdates?.data?.data ?? [];
+  const updates: CourseUpdate[] = rawUpdates?.data ?? [];
 
   const {
     dialogOpen,

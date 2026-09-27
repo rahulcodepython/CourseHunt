@@ -1,6 +1,7 @@
 "use client";
 
-import { apiRequest } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request } from "@/react-query/client";
 import { z } from "zod";
 
 import {
@@ -9,8 +10,7 @@ import {
   appendToArray,
   replaceInArray,
   removeFromArray,
-} from "@/react-query/mutation";
-import { useAppQuery } from "@/react-query/query";
+} from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
@@ -30,18 +30,17 @@ import { DeleteResponseZod } from "@/schema/common.types";
 
 export function useLessonsQuery(chapterId: string, scope: "admin" | "tutor" = "tutor") {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_LESSONS : API_ENDPOINTS.TUTOR_LESSONS;
-  return useAppQuery(queryKeys.lessons(chapterId, scope), () =>
-    apiRequest(
+  return useQuery({ queryKey: queryKeys.lessons(chapterId, scope), queryFn: () =>
+    request(
       { url: endpoint, method: "GET", params: { chapter_id: chapterId } },
       z.array(LessonZod),
-    ),
-  );
+    ) });
 }
 
 export function useCreateLessonMutation(chapterId: string) {
   return useArrayMutation({
     mutationFn: (data: z.infer<typeof CreateLessonRequestZod>) =>
-      apiRequest(
+      request(
         { url: API_ENDPOINTS.TUTOR_LESSONS, method: "POST", params: { chapter_id: chapterId }, data },
         LessonZod,
       ),
@@ -54,7 +53,7 @@ export function useCreateLessonMutation(chapterId: string) {
 export function useDeleteLessonMutation(chapterId: string) {
   return useArrayMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}`, method: "DELETE" }, DeleteResponseZod),
+      request({ url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}`, method: "DELETE" }, DeleteResponseZod),
     queryKey: queryKeys.lessons(chapterId, "tutor"),
     updater: (res) => removeFromArray(res.id),
     optimistic: (id) => removeFromArray(id),
@@ -65,7 +64,7 @@ export function useDeleteLessonMutation(chapterId: string) {
 export function useUpdateLessonMutation(chapterId: string) {
   return useArrayMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateLessonRequestZod> }) =>
-      apiRequest({ url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}`, method: "PATCH", data }, LessonZod),
+      request({ url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}`, method: "PATCH", data }, LessonZod),
     queryKey: queryKeys.lessons(chapterId, "tutor"),
     updater: (lesson) => replaceInArray(lesson),
     showToast: true,
@@ -75,7 +74,7 @@ export function useUpdateLessonMutation(chapterId: string) {
 export function useCompleteLessonMutation(courseId: string) {
   return useSimpleMutation({
     mutationFn: (id: string) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/complete`, method: "POST" },
         LessonCompleteResponseZod,
       ),
@@ -86,15 +85,11 @@ export function useCompleteLessonMutation(courseId: string) {
 
 export function useLessonContentQuery(id: string, scope: "admin" | "tutor" = "tutor") {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_LESSONS : API_ENDPOINTS.TUTOR_LESSONS;
-  return useAppQuery(
-    queryKeys.lessonContent(id, scope),
-    () =>
-      apiRequest(
+  return useQuery({ queryKey: queryKeys.lessonContent(id, scope), queryFn: () =>
+      request(
         { url: `${endpoint}/${id}/content`, method: "GET" },
         AggregatedLessonContentResponseZod,
-      ),
-    { enabled: !!id },
-  );
+      ), enabled: !!id });
 }
 
 export function useAddVideoMutation() {
@@ -106,7 +101,7 @@ export function useAddVideoMutation() {
       id: string;
       data: z.infer<typeof UpsertVideoContentRequestZod>;
     }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}/video`, method: "POST", data },
         LessonVideoContentZod,
       ),
@@ -127,7 +122,7 @@ export function useAddDocumentMutation() {
       id: string;
       data: z.infer<typeof UpsertDocumentContentRequestZod>;
     }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}/document`, method: "POST", data },
         LessonDocumentContentZod,
       ),
@@ -146,14 +141,14 @@ export function useAddResourceMutation(id: string) {
     z.infer<typeof LessonResourceZod>
   >({
     mutationFn: (data: z.infer<typeof AddResourceRequestZod>) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}/resources`, method: "POST", data },
         LessonResourceZod,
       ),
     queryKey: queryKeys.lessonResources(id, "tutor"),
-    updater: (resource) => (old) =>
+    updater: (resource) => (old: any) =>
       replaceInArray(resource, {
-        matches: (r) => r.id.startsWith("temp-"),
+        matches: (r: any) => r.id.startsWith("temp-"),
         appendIfMissing: true,
       })(old),
     optimistic: (data) => appendToArray({ ...data, id: `temp-${Date.now()}` }),
@@ -169,7 +164,7 @@ export function useDeleteResourceMutation(id: string) {
     z.infer<typeof LessonResourceZod>
   >({
     mutationFn: (resourceId: string) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}/resources/${resourceId}`, method: "DELETE" },
         DeleteResponseZod,
       ),
@@ -183,36 +178,27 @@ export function useDeleteResourceMutation(id: string) {
 
 export function useLessonResourcesQuery(id: string, scope: "admin" | "tutor" = "tutor") {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_LESSONS : API_ENDPOINTS.TUTOR_LESSONS;
-  return useAppQuery(queryKeys.lessonResources(id, scope), () =>
-    apiRequest(
+  return useQuery({ queryKey: queryKeys.lessonResources(id, scope), queryFn: () =>
+    request(
       { url: `${endpoint}/${id}/resources`, method: "GET" },
       z.array(LessonResourceZod),
-    ),
-  );
+    ) });
 }
 
 export function useStudyLessonContentQuery(id: string) {
-  return useAppQuery(
-    queryKeys.studyLessonContent(id),
-    () =>
-      apiRequest(
+  return useQuery({ queryKey: queryKeys.studyLessonContent(id), queryFn: () =>
+      request(
         { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/content`, method: "GET" },
         AggregatedLessonContentResponseZod,
-      ),
-    { enabled: !!id },
-  );
+      ), enabled: !!id });
 }
 
 export function useStudyLessonResourcesQuery(id: string) {
-  return useAppQuery(
-    queryKeys.studyLessonResources(id),
-    () =>
-      apiRequest(
+  return useQuery({ queryKey: queryKeys.studyLessonResources(id), queryFn: () =>
+      request(
         { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/resources`, method: "GET" },
         z.array(LessonResourceZod),
-      ),
-    { enabled: !!id },
-  );
+      ), enabled: !!id });
 }
 
 export function useHeartbeatMutation() {
@@ -224,7 +210,7 @@ export function useHeartbeatMutation() {
       id: string;
       data: { playback_seconds: number; session_seconds: number };
     }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/progress/heartbeat`, method: "POST", data },
         z.object({
           lesson_id: z.string(),

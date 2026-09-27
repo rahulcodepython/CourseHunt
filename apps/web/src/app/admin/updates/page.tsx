@@ -55,7 +55,7 @@ function UpdateDialog({
   const createMutation = useCreateUpdateMutation("admin");
   const updateMutation = useUpdateUpdateMutation("admin");
   const { data: rawCourses } = useManageCoursesQuery({ scope: "admin" });
-  const courses = rawCourses?.data?.data ?? [];
+  const courses = rawCourses?.data ?? [];
 
   const {
     register,
@@ -153,7 +153,7 @@ export default function UpdatesPage() {
   const { data: rawUpdates, isLoading } = useUpdatesQuery("admin");
   const deleteMutation = useDeleteUpdateMutation("admin");
 
-  const updates: CourseUpdate[] = rawUpdates?.data?.data ?? [];
+  const updates: CourseUpdate[] = rawUpdates?.data ?? [];
 
   const {
     dialogOpen,

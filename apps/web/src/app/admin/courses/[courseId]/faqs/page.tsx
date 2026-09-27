@@ -20,12 +20,12 @@ export default function AdminCourseFaqsPage() {
   const { data: courseData } = useManageCourseQuery(courseId, "admin");
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },
-    { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
+    { label: courseData?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "FAQs" },
   ]);
 
   const { data: rawFaqs, isLoading } = useFaqsQuery(courseId, "admin");
-  const faqs = rawFaqs?.data ?? [];
+  const faqs = rawFaqs ?? [];
   const columns = getColumns();
 
   return (

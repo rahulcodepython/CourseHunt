@@ -128,9 +128,9 @@ export default function LessonResourcesPage() {
   const { data: chaptersData } = useChaptersQuery(courseId);
   const { data: lessonsData } = useLessonsQuery(chapterId);
 
-  const currentCourse = rawCourses?.data?.data?.find((c) => c.id === courseId);
-  const currentChapter = chaptersData?.data?.find((ch) => ch.id === chapterId);
-  const currentLesson = lessonsData?.data?.find((l) => l.id === lessonId);
+  const currentCourse = rawCourses?.data?.find((c) => c.id === courseId);
+  const currentChapter = chaptersData?.find((ch) => ch.id === chapterId);
+  const currentLesson = lessonsData?.find((l) => l.id === lessonId);
 
   useSetBreadcrumbs([
     { label: "My Courses", href: "/tutor/courses" },
@@ -145,7 +145,7 @@ export default function LessonResourcesPage() {
   ]);
 
   const { data: rawResources, isLoading } = useLessonResourcesQuery(lessonId);
-  const resources: LessonResource[] = rawResources?.success ? (rawResources.data ?? []) : [];
+  const resources: LessonResource[] = rawResources ?? [];
   const deleteResourceMutation = useDeleteResourceMutation(lessonId);
 
   const [addOpen, setAddOpen] = React.useState(false);

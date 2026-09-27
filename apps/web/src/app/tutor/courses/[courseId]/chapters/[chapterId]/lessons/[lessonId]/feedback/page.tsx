@@ -30,9 +30,9 @@ export default function TutorLessonFeedbackPage() {
   const { data: chaptersData } = useChaptersQuery(courseId, "tutor");
   const { data: lessonsData } = useLessonsQuery(chapterId, "tutor");
 
-  const currentCourse = rawCourses?.data?.data?.find((c) => c.id === courseId);
-  const currentChapter = chaptersData?.data?.find((ch) => ch.id === chapterId);
-  const currentLesson = lessonsData?.data?.find((l) => l.id === lessonId);
+  const currentCourse = rawCourses?.data?.find((c) => c.id === courseId);
+  const currentChapter = chaptersData?.find((ch) => ch.id === chapterId);
+  const currentLesson = lessonsData?.find((l) => l.id === lessonId);
 
   useSetBreadcrumbs([
     { label: "My Courses", href: "/tutor/courses" },
@@ -49,7 +49,7 @@ export default function TutorLessonFeedbackPage() {
   const { data: rawFeedbacks, isLoading } = useFeedbacksQuery("tutor");
   const deleteMutation = useDeleteFeedbackMutation("tutor");
 
-  const feedbacks: Feedback[] = rawFeedbacks?.data?.data ?? [];
+  const feedbacks: Feedback[] = rawFeedbacks?.data ?? [];
   const { deleting, setDeleting, requestDelete, confirmDelete } = useCrudDialogState<Feedback>();
 
   const handleDelete = () => confirmDelete(deleteMutation.execute);

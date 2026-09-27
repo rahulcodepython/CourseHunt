@@ -20,12 +20,12 @@ export default function CourseChaptersPage() {
   const { data: courseData } = useManageCourseQuery(courseId, "admin");
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },
-    { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
+    { label: courseData?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "Chapters" },
   ]);
 
   const { data: rawChapters, isLoading } = useChaptersQuery(courseId, "admin");
-  const chapters = rawChapters?.data ?? [];
+  const chapters = rawChapters ?? [];
   const columns = getColumns(courseId);
 
   return (

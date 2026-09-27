@@ -45,7 +45,7 @@ export default function AdminProfilePage() {
   useSetBreadcrumbs([{ label: "Profile" }]);
 
   const userProfileQuery = useUserProfileQuery();
-  const profile = userProfileQuery.data?.data;
+  const profile = userProfileQuery.data;
   const { isPending: isSaving, mutateAsync: updateAdminProfile } = useCreateUserProfileMutation();
   const { isPending: isUploading, uploadMedia } = useUploadMediaMutation();
 

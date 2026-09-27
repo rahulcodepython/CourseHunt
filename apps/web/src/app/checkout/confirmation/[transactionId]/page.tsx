@@ -20,7 +20,7 @@ export default function PaymentConfirmationPage() {
     enabled: !!transactionId,
     refetchInterval: POLL_INTERVAL_MS,
   });
-  const status = raw?.data?.status;
+  const status = raw?.status;
   const resolved = status === "success" || status === "failed";
   const exhausted = !resolved && attempts >= MAX_ATTEMPTS;
 
@@ -67,9 +67,9 @@ export default function PaymentConfirmationPage() {
             <Icon name="x" className="size-8 text-red-600" />
           </div>
           <h1 className="text-xl font-semibold text-red-600">Payment Failed</h1>
-          {raw?.data?.error_description && (
+          {raw?.error_description && (
             <p className="max-w-sm rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-              {raw.data.error_description}
+              {raw?.error_description}
             </p>
           )}
           <Button asChild>

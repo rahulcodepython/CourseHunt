@@ -2,12 +2,12 @@
 
 import * as React from "react";
 
-import { useCoursesQuery } from "@/query-hooks/courses.api";
+import { useInfiniteCoursesQuery } from "@/query-hooks/courses.api";
 import { useCategoriesQuery } from "@/query-hooks/categories.api";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import type { Category } from "@/schema/category.types";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Icon } from "@/components/common/icon";
 import {
@@ -24,32 +24,38 @@ import { CourseCard } from "../components/course-card";
 const PAGE_SIZE = 12;
 
 export default function CoursesBrowsePage() {
-  const [page, setPage] = React.useState(1);
   const [searchInput, setSearchInput] = React.useState("");
   const [categoryId, setCategoryId] = React.useState("all");
   const [level, setLevel] = React.useState("all");
   const search = useDebounce(searchInput, 300);
 
-  React.useEffect(() => {
-    setPage(1);
-  }, [search, categoryId, level]);
-
   const { data: rawCategories } = useCategoriesQuery();
-  const categories: Category[] = Array.isArray(rawCategories?.data)
-    ? rawCategories.data
-    : ((rawCategories?.data as { data?: Category[] } | undefined)?.data ?? []);
+  const categories: Category[] = Array.isArray(rawCategories)
+    ? rawCategories
+    : Array.isArray(rawCategories?.data)
+      ? rawCategories.data
+      : [];
 
-  const { data: rawCourses, isLoading } = useCoursesQuery({
-    page,
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteCoursesQuery({
     limit: PAGE_SIZE,
     search: search || undefined,
     category_id: categoryId === "all" ? undefined : categoryId,
     level: level === "all" ? undefined : level,
   });
 
-  const courses = rawCourses?.data?.data ?? [];
-  const total = rawCourses?.data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    onLoadMore: fetchNextPage,
+  });
+
+  const courses = data?.pages.flatMap((page) => page.data) ?? [];
 
   return (
     <div className="container mx-auto space-y-6 px-4 py-12">
@@ -126,27 +132,12 @@ export default function CoursesBrowsePage() {
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 pt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-          </Button>
+      {/* Invisible sentinel element: triggers fetchNextPage() automatically */}
+      <div ref={sentinelRef} className="h-4 w-full" />
+
+      {isFetchingNextPage && (
+        <div className="text-center py-4 text-sm text-muted-foreground">
+          Loading more courses...
         </div>
       )}
     </div>

@@ -15,7 +15,7 @@ export default function StudyLayout({ children }: { children: React.ReactNode })
   const lessonId = searchParams.get("lessonId");
 
   const { data: raw, isLoading } = useCourseStudyQuery(courseId);
-  const study = raw?.data;
+  const study = raw;
 
   React.useEffect(() => {
     if (!study || lessonId) return;

@@ -47,7 +47,7 @@ export function StaffUserManager({
   const [createOpen, setCreateOpen] = React.useState(false);
   const [passwordUser, setPasswordUser] = React.useState<UserListResponse | null>(null);
 
-  const users: UserListResponse[] = rawData?.data?.data ?? [];
+  const users: UserListResponse[] = rawData?.data ?? [];
 
   const handleManage = (user: UserListResponse) => {
     setSelectedUser(user);

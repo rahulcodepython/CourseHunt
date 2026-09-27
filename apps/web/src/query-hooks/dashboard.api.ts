@@ -1,26 +1,23 @@
 "use client";
 
-import { apiRequest } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request } from "@/react-query/client";
 
-import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import { AdminDashboardZod, TutorDashboardZod, UserDashboardZod } from "@/schema/dashboard.types";
 
 export function useAdminDashboardQuery() {
-  return useAppQuery(queryKeys.dashboardAdmin(), () =>
-    apiRequest({ url: API_ENDPOINTS.DASHBOARD_ADMIN, method: "GET" }, AdminDashboardZod),
-  );
+  return useQuery({ queryKey: queryKeys.dashboardAdmin(), queryFn: () =>
+    request({ url: API_ENDPOINTS.DASHBOARD_ADMIN, method: "GET" }, AdminDashboardZod) });
 }
 
 export function useTutorDashboardQuery() {
-  return useAppQuery(queryKeys.dashboardTutor(), () =>
-    apiRequest({ url: API_ENDPOINTS.DASHBOARD_TUTOR, method: "GET" }, TutorDashboardZod),
-  );
+  return useQuery({ queryKey: queryKeys.dashboardTutor(), queryFn: () =>
+    request({ url: API_ENDPOINTS.DASHBOARD_TUTOR, method: "GET" }, TutorDashboardZod) });
 }
 
 export function useUserDashboardQuery() {
-  return useAppQuery(queryKeys.dashboardUser(), () =>
-    apiRequest({ url: API_ENDPOINTS.DASHBOARD_USER, method: "GET" }, UserDashboardZod),
-  );
+  return useQuery({ queryKey: queryKeys.dashboardUser(), queryFn: () =>
+    request({ url: API_ENDPOINTS.DASHBOARD_USER, method: "GET" }, UserDashboardZod) });
 }

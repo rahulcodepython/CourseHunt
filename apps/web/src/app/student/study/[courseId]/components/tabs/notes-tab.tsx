@@ -22,16 +22,16 @@ export function NotesTab({ lessonId }: { lessonId: string }) {
   const hydratedRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (hydratedRef.current || !raw?.data) return;
+    if (hydratedRef.current || !raw) return;
     hydratedRef.current = true;
-    setContent(raw.data.content ?? "");
+    setContent((raw as any)?.content ?? (raw as any)?.data?.content ?? "");
   }, [raw]);
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Loading notes...</p>;
   }
 
-  const noteId = raw?.data?.id;
+  const noteId = (raw as any)?.id ?? (raw as any)?.data?.id;
 
   return (
     <div className="space-y-3">

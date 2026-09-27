@@ -12,8 +12,8 @@ export default function StudentTransactionsPage() {
   const { data: rawTx, isLoading: txLoading } = useTransactionsQuery();
   const { data: rawRefunds, isLoading: refundsLoading } = useMyRefundsQuery();
 
-  const transactions: Transaction[] = rawTx?.data?.data ?? [];
-  const refunds: RefundTransaction[] = rawRefunds?.data?.data ?? [];
+  const transactions: Transaction[] = rawTx?.data ?? [];
+  const refunds: RefundTransaction[] = rawRefunds?.data ?? [];
 
   return (
     <div className="space-y-6">

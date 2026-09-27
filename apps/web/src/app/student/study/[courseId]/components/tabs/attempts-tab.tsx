@@ -19,7 +19,7 @@ const statusMap: Record<string, StatusBadgeEntry> = {
 
 export function AttemptsTab({ quizId }: { quizId: string }) {
   const { data: raw, isLoading } = useQuizAttemptsQuery(quizId);
-  const attempts = raw?.data ?? [];
+  const attempts = raw ?? [];
   const [selectedAttemptId, setSelectedAttemptId] = React.useState<string | null>(null);
 
   const columnHelper = React.useMemo(() => createColumnHelper<QuizAttemptSummary>(), []);

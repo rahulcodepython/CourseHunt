@@ -1,9 +1,11 @@
 package quiz
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/postgres"
@@ -55,17 +57,9 @@ func (a *App) ReadNextQuestionUnifiedRepository(ctx context.Context, quizID, use
 }
 
 func deconflictArrangeOrder(items []QuizArrangeItem) []QuizArrangeItem {
-	if len(items) < 2 {
-		return items
-	}
-	alreadySorted := true
-	for i := 1; i < len(items); i++ {
-		if items[i-1].CorrectOrder > items[i].CorrectOrder {
-			alreadySorted = false
-			break
-		}
-	}
-	if alreadySorted {
+	if len(items) >= 2 && slices.IsSortedFunc(items, func(a, b QuizArrangeItem) int {
+		return cmp.Compare(a.CorrectOrder, b.CorrectOrder)
+	}) {
 		items[0], items[1] = items[1], items[0]
 	}
 	return items

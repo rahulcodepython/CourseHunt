@@ -1,14 +1,10 @@
-import { apiRequest } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request } from "@/react-query/client";
 
-import { useAppQuery } from "@/react-query/query";
 import { queryKeys } from "@/react-query/query-keys";
 import { MonitoringSnapshotZod } from "@/schema/monitoring.types";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 
 export function useMonitoringQuery(refetchInterval?: number) {
-  return useAppQuery(
-    queryKeys.monitoring(),
-    () => apiRequest({ url: API_ENDPOINTS.MONITORING, method: "GET" }, MonitoringSnapshotZod),
-    { refetchInterval, refetchIntervalInBackground: false },
-  );
+  return useQuery({ queryKey: queryKeys.monitoring(), queryFn: () => request({ url: API_ENDPOINTS.MONITORING, method: "GET" }, MonitoringSnapshotZod), refetchInterval, refetchIntervalInBackground: false });
 }

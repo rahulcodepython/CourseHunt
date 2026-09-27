@@ -1,19 +1,26 @@
 import { z } from "zod";
 
 export const PaginatedResponseZod = <T extends z.ZodTypeAny>(dataSchema: T) =>
-  z.object({
-    data: z.array(dataSchema),
-    total: z.number(),
-    page: z.number(),
-    limit: z.number(),
-  });
+  z
+    .object({
+      data: z.array(dataSchema),
+      total: z.number(),
+      page: z.number(),
+      limit: z.number(),
+      has_more: z.boolean().optional(),
+    })
+    .transform((val) => ({
+      ...val,
+      has_more: val.has_more ?? val.page * val.limit < val.total,
+    }));
 
-export type PaginatedResponse<T> = {
+export interface PaginatedResponse<T> {
   data: T[];
   total: number;
   page: number;
   limit: number;
-};
+  has_more?: boolean;
+}
 
 export const DeleteResponseZod = z.object({
   id: z.string(),
@@ -62,9 +69,9 @@ export const ApiResponseZod = <T extends z.ZodTypeAny>(dataSchema: T) =>
     error: z.string().optional().nullable(),
   });
 
-export type ApiResponse<T> = {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
-  data?: T | null;
-  error?: string | null;
-};
+  data: T;
+  error?: string;
+}

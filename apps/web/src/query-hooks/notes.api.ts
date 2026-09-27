@@ -1,19 +1,19 @@
 "use client";
 
-import { apiRequest, ApiError } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request, ApiError } from "@/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@/react-query/mutation";
-import { useAppQuery } from "@/react-query/query";
+import { useSimpleMutation } from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { UpsertNoteRequestZod, NoteResponseZod } from "@/schema/notes.types";
 import { DeleteResponseZod } from "@/schema/common.types";
 
 // Returns data: null when the lesson has no note yet (the backend 404s in that case).
 export function useNotesQuery(lessonId: string) {
-  return useAppQuery(queryKeys.notes(lessonId), async () => {
+  return useQuery({ queryKey: queryKeys.notes(lessonId), queryFn: async () => {
     try {
-      return await apiRequest(
+      return await request(
         { url: "/api/v1/notes", method: "GET", params: { lesson_id: lessonId } },
         NoteResponseZod,
       );
@@ -23,13 +23,13 @@ export function useNotesQuery(lessonId: string) {
       }
       throw err;
     }
-  });
+  } });
 }
 
 export function useCreateNoteMutation(lessonId: string) {
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof UpsertNoteRequestZod>) =>
-      apiRequest(
+      request(
         { url: "/api/v1/notes", method: "POST", params: { lesson_id: lessonId }, data },
         NoteResponseZod,
       ),
@@ -41,7 +41,7 @@ export function useCreateNoteMutation(lessonId: string) {
 export function useDeleteNoteMutation(lessonId: string) {
   return useSimpleMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `/api/v1/notes/${id}`, method: "DELETE" }, DeleteResponseZod),
+      request({ url: `/api/v1/notes/${id}`, method: "DELETE" }, DeleteResponseZod),
     invalidateKeys: [queryKeys.notes(lessonId)],
     showToast: true,
   });
@@ -50,7 +50,7 @@ export function useDeleteNoteMutation(lessonId: string) {
 export function useUpdateNoteMutation(lessonId: string) {
   return useSimpleMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpsertNoteRequestZod> }) =>
-      apiRequest({ url: `/api/v1/notes/${id}`, method: "PATCH", data }, NoteResponseZod),
+      request({ url: `/api/v1/notes/${id}`, method: "PATCH", data }, NoteResponseZod),
     invalidateKeys: [queryKeys.notes(lessonId)],
     showToast: true,
   });

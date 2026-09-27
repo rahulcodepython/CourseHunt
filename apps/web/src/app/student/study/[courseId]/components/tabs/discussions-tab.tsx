@@ -38,12 +38,12 @@ export function DiscussionsTab({
   }, [lessonId]);
 
   React.useEffect(() => {
-    const pageItems = raw?.data?.data;
+    const pageItems = Array.isArray(raw) ? raw : raw?.data;
     if (!pageItems) return;
     setItems((prev) => mergeListPage(prev, pageItems));
   }, [raw]);
 
-  const total = raw?.data?.total ?? 0;
+  const total = (raw as any)?.total ?? (Array.isArray(raw) ? raw.length : raw?.data?.length ?? 0);
   const hasMore = items.length < total;
 
   const submit = async () => {

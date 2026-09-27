@@ -38,8 +38,8 @@ const serviceLabels: Record<string, string> = {
 export default function MonitoringPage() {
   const { data: snapshotResp } = useMonitoringQuery(POLL_INTERVAL_MS);
   const { data: healthResp, isError: isHealthError } = useHealthQuery(POLL_INTERVAL_MS);
-  const snapshot = snapshotResp?.data;
-  const healthData = healthResp?.data;
+  const snapshot = snapshotResp;
+  const healthData = healthResp;
   const [chartData, setChartData] = React.useState<TelemetryPoint[]>([]);
 
   React.useEffect(() => {

@@ -44,7 +44,7 @@ export default function TutorProfilePage() {
   useSetBreadcrumbs([{ label: "Tutor Profile" }]);
 
   const profileQuery = useTutorProfileQuery();
-  const profile = profileQuery.data?.data;
+  const profile = profileQuery.data;
   const { isPending: isSaving, mutateAsync: updateTutorProfile } = useCreateTutorProfileMutation();
   const { isPending: isUploading, uploadMedia } = useUploadMediaMutation();
 

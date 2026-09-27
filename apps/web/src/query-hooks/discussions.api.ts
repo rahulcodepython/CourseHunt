@@ -1,10 +1,10 @@
 "use client";
 
-import { apiRequest } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request } from "@/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@/react-query/mutation";
-import { useAppQuery } from "@/react-query/query";
+import { useSimpleMutation } from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
@@ -33,12 +33,11 @@ export function useDiscussionsQuery(
   scope: "admin" | "tutor" | "student" = "student",
 ) {
   const endpoint = getDiscussionEndpoint(scope);
-  return useAppQuery([...queryKeys.discussions(lessonId, scope), page, limit], () =>
-    apiRequest(
+  return useQuery({ queryKey: [...queryKeys.discussions(lessonId, scope), page, limit], queryFn: () =>
+    request(
       { url: `${endpoint}/lesson/${lessonId}`, method: "GET", params: { page, limit } },
       PaginatedResponseZod(DiscussionZod),
-    ),
-  );
+    ) });
 }
 
 export function useDiscussionRepliesQuery(
@@ -48,19 +47,18 @@ export function useDiscussionRepliesQuery(
   scope: "admin" | "tutor" | "student" = "student",
 ) {
   const endpoint = getDiscussionEndpoint(scope);
-  return useAppQuery([...queryKeys.discussionReplies(id, scope), page, limit], () =>
-    apiRequest(
+  return useQuery({ queryKey: [...queryKeys.discussionReplies(id, scope), page, limit], queryFn: () =>
+    request(
       { url: `${endpoint}/replies/${id}`, method: "GET", params: { page, limit } },
       PaginatedResponseZod(DiscussionZod),
-    ),
-  );
+    ) });
 }
 
 export function useCreateDiscussionMutation(scope: "admin" | "tutor" | "student" = "student") {
   const endpoint = getDiscussionEndpoint(scope);
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof CreateDiscussionRequestZod>) =>
-      apiRequest({ url: endpoint, method: "POST", data }, DiscussionZod),
+      request({ url: endpoint, method: "POST", data }, DiscussionZod),
     invalidateKeys: [queryKeys.discussionsAll()],
     showToast: true,
   });
@@ -70,7 +68,7 @@ export function useUpdateDiscussionMutation(scope: "admin" | "tutor" | "student"
   const endpoint = getDiscussionEndpoint(scope);
   return useSimpleMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateDiscussionRequestZod> }) =>
-      apiRequest({ url: `${endpoint}/${id}`, method: "PATCH", data }, DiscussionZod),
+      request({ url: `${endpoint}/${id}`, method: "PATCH", data }, DiscussionZod),
     invalidateKeys: [queryKeys.discussionsAll()],
     showToast: true,
   });
@@ -80,7 +78,7 @@ export function useDeleteDiscussionMutation(scope: "admin" | "tutor" | "student"
   const endpoint = getDiscussionEndpoint(scope);
   return useSimpleMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `${endpoint}/${id}`, method: "DELETE" }, DeleteResponseZod),
+      request({ url: `${endpoint}/${id}`, method: "DELETE" }, DeleteResponseZod),
     invalidateKeys: [queryKeys.discussionsAll()],
     showToast: true,
   });

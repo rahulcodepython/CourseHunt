@@ -20,7 +20,7 @@ export default function StudentWishlistPage() {
   const removeMutation = useRemoveCourseFromWishlistMutation();
   const clearMutation = useClearWishlistMutation();
 
-  const items: WishlistItem[] = raw?.data?.data ?? [];
+  const items: WishlistItem[] = raw?.data ?? [];
   const [removing, setRemoving] = React.useState<WishlistItem | null>(null);
   const [clearing, setClearing] = React.useState(false);
 

@@ -125,7 +125,7 @@ export default function TutorCourseFaqsPage() {
   const courseId = params.courseId as string;
 
   const { data: rawCourses } = useManageCoursesQuery();
-  const currentCourse = rawCourses?.data?.data?.find((c) => c.id === courseId);
+  const currentCourse = rawCourses?.data?.find((c) => c.id === courseId);
 
   useSetBreadcrumbs([
     { label: "My Courses", href: "/tutor/courses" },
@@ -135,7 +135,7 @@ export default function TutorCourseFaqsPage() {
 
   const { data: rawFaqs, isLoading } = useFaqsQuery(courseId);
   const deleteMutation = useDeleteFaqMutation(courseId);
-  const faqs: Faq[] = rawFaqs?.data ?? [];
+  const faqs: Faq[] = rawFaqs ?? [];
 
   const {
     dialogOpen,

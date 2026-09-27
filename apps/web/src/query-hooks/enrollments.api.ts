@@ -1,10 +1,10 @@
 "use client";
 
-import { apiRequest, compactParams } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request, compactParams } from "@/react-query/client";
 import { z } from "zod";
 
-import { usePaginatedMutation } from "@/react-query/mutation";
-import { useAppQuery } from "@/react-query/query";
+import { usePaginatedMutation } from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import { ListEnrollmentResponseZod, type ListEnrollmentResponse } from "@/schema/enrollments.types";
@@ -15,16 +15,15 @@ export function useEnrollmentsQuery(
   scope: "admin" | "tutor" = "admin",
 ) {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_ENROLLMENTS : API_ENDPOINTS.TUTOR_ENROLLMENTS;
-  return useAppQuery(queryKeys.enrollments(params, scope), () =>
-    apiRequest(
+  return useQuery({ queryKey: queryKeys.enrollments(params, scope), queryFn: () =>
+    request(
       {
         url: endpoint,
         method: "GET",
         params: compactParams({ course_id: params.courseId, user_id: params.userId }),
       },
       PaginatedResponseZod(ListEnrollmentResponseZod),
-    ),
-  );
+    ) });
 }
 
 const flipEnrollmentRevoked =
@@ -39,12 +38,12 @@ const flipEnrollmentRevoked =
 export function useRevokeEnrollmentMutation(params: { courseId?: string; userId?: string }) {
   return usePaginatedMutation<null, { userId: string; courseId: string }, ListEnrollmentResponse>({
     mutationFn: ({ userId, courseId }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.ADMIN_ENROLLMENTS}/${userId}/${courseId}/revoke`, method: "POST" },
         z.null(),
       ),
     queryKey: queryKeys.enrollments(params, "admin"),
-    updater: () => (old) => old,
+    updater: () => (old: any) => old,
     optimistic: (vars) => flipEnrollmentRevoked(vars.userId, vars.courseId, true),
     invalidateKeys: [queryKeys.enrollmentsAll()],
     showToast: true,
@@ -54,12 +53,12 @@ export function useRevokeEnrollmentMutation(params: { courseId?: string; userId?
 export function useRegainEnrollmentMutation(params: { courseId?: string; userId?: string }) {
   return usePaginatedMutation<null, { userId: string; courseId: string }, ListEnrollmentResponse>({
     mutationFn: ({ userId, courseId }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.ADMIN_ENROLLMENTS}/${userId}/${courseId}/regain`, method: "POST" },
         z.null(),
       ),
     queryKey: queryKeys.enrollments(params, "admin"),
-    updater: () => (old) => old,
+    updater: () => (old: any) => old,
     optimistic: (vars) => flipEnrollmentRevoked(vars.userId, vars.courseId, false),
     invalidateKeys: [queryKeys.enrollmentsAll()],
     showToast: true,

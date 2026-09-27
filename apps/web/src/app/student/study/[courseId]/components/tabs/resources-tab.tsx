@@ -41,7 +41,7 @@ const columns: TableColumn<LessonResource>[] = [
 
 export function ResourcesTab({ lessonId }: { lessonId: string }) {
   const { data: raw, isLoading } = useStudyLessonResourcesQuery(lessonId);
-  const resources = raw?.data ?? [];
+  const resources = raw ?? [];
 
   return (
     <DataTable

@@ -57,7 +57,7 @@ export function CouponForm({
   const createMutation = useCreateCouponMutation(scope);
   const updateMutation = useUpdateCouponMutation(scope);
   const { data: rawCourses } = useManageCoursesQuery({ limit: 100, scope });
-  const courses = rawCourses?.data?.data ?? [];
+  const courses = rawCourses?.data ?? [];
 
   const {
     register,

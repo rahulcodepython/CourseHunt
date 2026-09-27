@@ -8,7 +8,7 @@ import { columns } from "./columns";
 
 export default function StudentLearnPage() {
   const { data: raw, isLoading } = useEnrolledCoursesQuery();
-  const courses: EnrolledCourseResponse[] = raw?.data?.data ?? [];
+  const courses: EnrolledCourseResponse[] = raw?.data ?? [];
 
   return (
     <div className="space-y-6">

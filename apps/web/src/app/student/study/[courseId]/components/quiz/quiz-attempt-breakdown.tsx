@@ -146,7 +146,7 @@ export function QuizAttemptBreakdown({
   onBack: () => void;
 }) {
   const { data: raw, isLoading } = useQuizAttemptDetailQuery(attemptId);
-  const detail = raw?.data;
+  const detail = raw;
 
   return (
     <div className="space-y-4">

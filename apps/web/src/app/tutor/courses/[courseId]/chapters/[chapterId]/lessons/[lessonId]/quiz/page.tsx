@@ -41,9 +41,9 @@ export default function TutorLessonQuizPage() {
   const { data: chaptersData } = useChaptersQuery(courseId);
   const { data: lessonsData } = useLessonsQuery(chapterId);
 
-  const currentCourse = rawCourses?.data?.data?.find((c) => c.id === courseId);
-  const currentChapter = chaptersData?.data?.find((ch) => ch.id === chapterId);
-  const currentLesson = lessonsData?.data?.find((l) => l.id === lessonId);
+  const currentCourse = rawCourses?.data?.find((c) => c.id === courseId);
+  const currentChapter = chaptersData?.find((ch) => ch.id === chapterId);
+  const currentLesson = lessonsData?.find((l) => l.id === lessonId);
 
   useSetBreadcrumbs([
     { label: "My Courses", href: "/tutor/courses" },
@@ -58,7 +58,7 @@ export default function TutorLessonQuizPage() {
   ]);
 
   const { data: rawMetadata, isLoading: metadataLoading } = useQuizMetadataQuery(lessonId);
-  const metadata: QuizMetadata | null = rawMetadata?.success ? (rawMetadata.data ?? null) : null;
+  const metadata: QuizMetadata | null = rawMetadata ?? null;
 
   const deleteMutation = useDeleteQuestionMutation();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
@@ -77,7 +77,7 @@ export default function TutorLessonQuizPage() {
   const { data: rawQuestions, isLoading: questionsLoading } = useQuizQuestionsQuery(
     metadata?.id ?? "",
   );
-  const questions: QuizQuestionDetail[] = rawQuestions?.success ? (rawQuestions.data ?? []) : [];
+  const questions: QuizQuestionDetail[] = rawQuestions ?? [];
 
   const handleDelete = () =>
     confirmDelete((questionId) =>

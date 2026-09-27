@@ -13,7 +13,7 @@ import { courseStatsColumns } from "./columns-course-stats";
 export default function TutorDashboardPage() {
   const { data: raw, isLoading } = useTutorDashboardQuery();
 
-  if (isLoading || !raw?.data) {
+  if (isLoading || !raw) {
     return (
       <div className="space-y-6">
         <PageHeader
@@ -38,7 +38,7 @@ export default function TutorDashboardPage() {
     );
   }
 
-  const d: TutorDashboard = raw.data;
+  const d: TutorDashboard = (raw as any)?.data ?? raw;
 
   return (
     <div className="space-y-6">

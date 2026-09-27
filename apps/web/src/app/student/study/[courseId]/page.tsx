@@ -22,7 +22,7 @@ export default function StudyPage() {
   const lessonId = searchParams.get("lessonId");
 
   const { data: rawStudy } = useCourseStudyQuery(courseId);
-  const study = rawStudy?.data;
+  const study = rawStudy;
   const allLessons = React.useMemo(() => study?.chapters.flatMap((c) => c.lessons) ?? [], [study]);
   const lessonMeta = React.useMemo(
     () => allLessons.find((l) => l.id === lessonId),
@@ -34,7 +34,7 @@ export default function StudyPage() {
     lessonIndex >= 0 && lessonIndex < allLessons.length - 1 ? allLessons[lessonIndex + 1] : null;
 
   const { data: rawContent, isLoading } = useStudyLessonContentQuery(lessonId ?? "");
-  const content = rawContent?.data;
+  const content = (rawContent as any)?.data ?? rawContent;
   const completeLesson = useCompleteLessonMutation(courseId);
 
   if (!lessonId) {

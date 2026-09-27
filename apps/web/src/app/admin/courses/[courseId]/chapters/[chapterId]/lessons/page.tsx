@@ -21,18 +21,18 @@ export default function ChapterLessonsPage() {
 
   const { data: courseData } = useManageCourseQuery(courseId, "admin");
   const { data: chaptersData } = useChaptersQuery(courseId, "admin");
-  const currentChapter = chaptersData?.data?.find((ch) => ch.id === chapterId);
+  const currentChapter = chaptersData?.find((ch) => ch.id === chapterId);
 
   useSetBreadcrumbs([
     { label: "Courses", href: "/admin/courses" },
-    { label: courseData?.data?.title || "Course", href: `/admin/courses/overview/${courseId}` },
+    { label: courseData?.title || "Course", href: `/admin/courses/overview/${courseId}` },
     { label: "Chapters", href: `/admin/courses/${courseId}/chapters` },
     { label: currentChapter?.title || "Chapter" },
     { label: "Lessons" },
   ]);
 
   const { data: rawLessons, isLoading } = useLessonsQuery(chapterId, "admin");
-  const lessons = rawLessons?.data ?? [];
+  const lessons = rawLessons ?? [];
 
   const columns = getColumns(courseId, chapterId);
 

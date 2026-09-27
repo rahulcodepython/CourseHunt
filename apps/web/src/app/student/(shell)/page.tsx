@@ -18,10 +18,10 @@ export default function StudentDashboardPage() {
   const { data: raw, isLoading } = useUserDashboardQuery();
   const { data: rawEnrolled, isLoading: isLoadingEnrolled } = useEnrolledCoursesQuery();
 
-  const enrolled = rawEnrolled?.data?.data ?? [];
+  const enrolled = rawEnrolled?.data ?? [];
   const inProgress = enrolled.filter((c) => c.completion_percent < 100).slice(0, 4);
 
-  if (isLoading || !raw?.data) {
+  if (isLoading || !raw) {
     return (
       <div className="space-y-6">
         <PageHeader title="Dashboard" subtitle="Your learning at a glance" />
@@ -40,7 +40,7 @@ export default function StudentDashboardPage() {
     );
   }
 
-  const d: UserDashboard = raw.data;
+  const d: UserDashboard = (raw as any)?.data ?? raw;
 
   return (
     <div className="space-y-6">

@@ -1,27 +1,16 @@
 package quiz
 
+// equalSets reports whether two string slices contain the exact same set of unique strings.
 func equalSets(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	m := map[string]bool{}
+	m := make(map[string]struct{}, len(a))
 	for _, v := range a {
-		m[v] = true
+		m[v] = struct{}{}
 	}
 	for _, v := range b {
-		if !m[v] {
-			return false
-		}
-	}
-	return true
-}
-
-func equalIntSlices(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
+		if _, ok := m[v]; !ok {
 			return false
 		}
 	}

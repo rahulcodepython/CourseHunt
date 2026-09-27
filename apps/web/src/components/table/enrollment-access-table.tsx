@@ -60,7 +60,7 @@ export function EnrollmentAccessTable({
   const revokeMutation = useRevokeEnrollmentMutation(params);
   const regainMutation = useRegainEnrollmentMutation(params);
 
-  const enrollments = raw?.data?.data ?? [];
+  const enrollments = raw?.data ?? [];
 
   const columns: TableColumn<ListEnrollmentResponse>[] = [
     columnHelper.accessor((row) => row.course.title, {

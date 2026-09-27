@@ -1,6 +1,7 @@
 "use client";
 
-import { apiRequest } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request } from "@/react-query/client";
 import { z } from "zod";
 
 import {
@@ -8,8 +9,7 @@ import {
   prependToPaginated,
   replaceInPaginated,
   removeFromPaginated,
-} from "@/react-query/mutation";
-import { useAppQuery } from "@/react-query/query";
+} from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
@@ -25,31 +25,26 @@ function getCouponEndpoint(scope: "admin" | "tutor") {
 }
 
 export function useCouponsQuery(scope: "admin" | "tutor" = "admin") {
-  return useAppQuery(queryKeys.coupons(scope), () =>
-    apiRequest({ url: getCouponEndpoint(scope), method: "GET" }, PaginatedResponseZod(CouponZod)),
-  );
+  return useQuery({ queryKey: queryKeys.coupons(scope), queryFn: () =>
+    request({ url: getCouponEndpoint(scope), method: "GET" }, PaginatedResponseZod(CouponZod)) });
 }
 
 export function useCheckCouponQuery(code: string, courseId: string, enabled: boolean) {
-  return useAppQuery(
-    queryKeys.couponCheck(code, courseId),
-    () =>
-      apiRequest(
+  return useQuery({ queryKey: queryKeys.couponCheck(code, courseId), queryFn: () =>
+      request(
         {
           url: API_ENDPOINTS.COUPONS_CHECK,
           method: "GET",
           params: { code, course_id: courseId },
         },
         CouponCheckResponseZod,
-      ),
-    { enabled },
-  );
+      ), enabled });
 }
 
 export function useCreateCouponMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: (data: z.infer<typeof CreateCouponRequestZod>) =>
-      apiRequest({ url: getCouponEndpoint(scope), method: "POST", data }, CouponZod),
+      request({ url: getCouponEndpoint(scope), method: "POST", data }, CouponZod),
     queryKey: queryKeys.coupons(scope),
     updater: (coupon) => prependToPaginated(coupon),
     showToast: true,
@@ -59,7 +54,7 @@ export function useCreateCouponMutation(scope: "admin" | "tutor" = "admin") {
 export function useUpdateCouponMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof UpdateCouponRequestZod> }) =>
-      apiRequest({ url: `${getCouponEndpoint(scope)}/${id}`, method: "PATCH", data }, CouponZod),
+      request({ url: `${getCouponEndpoint(scope)}/${id}`, method: "PATCH", data }, CouponZod),
     queryKey: queryKeys.coupons(scope),
     updater: (coupon) => replaceInPaginated(coupon),
     showToast: true,
@@ -69,7 +64,7 @@ export function useUpdateCouponMutation(scope: "admin" | "tutor" = "admin") {
 export function useDeleteCouponMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `${getCouponEndpoint(scope)}/${id}`, method: "DELETE" }, DeleteResponseZod),
+      request({ url: `${getCouponEndpoint(scope)}/${id}`, method: "DELETE" }, DeleteResponseZod),
     queryKey: queryKeys.coupons(scope),
     updater: (res) => removeFromPaginated(res.id),
     optimistic: (id) => removeFromPaginated(id),

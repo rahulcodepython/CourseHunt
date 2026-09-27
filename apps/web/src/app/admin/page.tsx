@@ -14,7 +14,7 @@ import { userGrowthColumns } from "./columns-user-growth";
 export default function DashboardPage() {
   const { data: raw, isLoading } = useAdminDashboardQuery();
 
-  if (isLoading || !raw?.data) {
+  if (isLoading || !raw) {
     return (
       <div className="space-y-6">
         <PageHeader title="Admin Dashboard" subtitle="Overview of platform performance" />
@@ -40,7 +40,7 @@ export default function DashboardPage() {
     );
   }
 
-  const d: AdminDashboard = raw.data;
+  const d: AdminDashboard = (raw as any)?.data ?? raw;
 
   return (
     <div className="space-y-6">

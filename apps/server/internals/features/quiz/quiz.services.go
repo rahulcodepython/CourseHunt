@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -322,7 +323,7 @@ func (a *App) submit(ctx context.Context, quizID, userID string, req SubmitQuizR
 
 		isCorrect := false
 		if !ans.IsSkipped {
-			isCorrect = equalIntSlices(submittedOrders, q.CorrectArrangeOrder)
+			isCorrect = slices.Equal(submittedOrders, q.CorrectArrangeOrder)
 		}
 
 		if ans.IsSkipped {
@@ -358,9 +359,9 @@ func (a *App) submit(ctx context.Context, quizID, userID string, req SubmitQuizR
 
 		isCorrect := false
 		if !ans.IsSkipped {
-			submitted := strings.TrimSpace(strings.ToLower(ans.FillText))
+			submitted := strings.TrimSpace(ans.FillText)
 			for _, correct := range q.CorrectFillAnswers {
-				if submitted == strings.TrimSpace(strings.ToLower(correct)) {
+				if strings.EqualFold(submitted, strings.TrimSpace(correct)) {
 					isCorrect = true
 					break
 				}

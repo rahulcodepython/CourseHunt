@@ -27,7 +27,7 @@ export default function CheckoutPage() {
   const { user } = useSession();
 
   const { data: raw, isLoading } = useCheckoutCourseQuery(id);
-  const course = raw?.data;
+  const course = raw;
 
   const [couponInput, setCouponInput] = React.useState("");
   const [appliedCode, setAppliedCode] = React.useState<string | null>(null);
@@ -36,7 +36,7 @@ export default function CheckoutPage() {
     id,
     !!appliedCode,
   );
-  const couponCheck = rawCoupon?.data;
+  const couponCheck = rawCoupon;
 
   const initiateTransaction = useInitiateTransactionMutation();
   const enrollFree = useEnrollFreeMutation();
@@ -110,7 +110,7 @@ export default function CheckoutPage() {
         coupon_code: couponApplied ? appliedCode : null,
       });
       if (!res?.success || !res.data) {
-        toast.error(res?.message || PAYMENT_CONFIG.START_FAILED);
+        toast.error((res as any)?.message || PAYMENT_CONFIG.START_FAILED);
         isPayingRef.current = false;
         setIsPaying(false);
         return;

@@ -19,8 +19,8 @@ export default function StudentCertificatesPage() {
   const { data: rawEnrolled } = useEnrolledCoursesQuery();
   const claimMutation = useClaimCertificateMutation();
 
-  const certificates: Certificate[] = rawCerts?.data?.data ?? [];
-  const enrolled = rawEnrolled?.data?.data ?? [];
+  const certificates: Certificate[] = rawCerts?.data ?? [];
+  const enrolled = rawEnrolled?.data ?? [];
 
   const certifiedCourseIds = new Set(certificates.map((c) => c.course.id));
   const claimable = enrolled.filter(

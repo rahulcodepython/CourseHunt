@@ -31,7 +31,7 @@ export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
   const { data: raw, isLoading } = useCouponsQuery(scope);
   const updateMutation = useUpdateCouponMutation(scope);
   const deleteMutation = useDeleteCouponMutation(scope);
-  const coupons: Coupon[] = raw?.data?.data ?? [];
+  const coupons: Coupon[] = raw?.data ?? [];
 
   const {
     dialogOpen: isModalOpen,

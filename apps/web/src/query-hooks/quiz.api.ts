@@ -1,10 +1,10 @@
 "use client";
 
-import { apiRequest } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request } from "@/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@/react-query/mutation";
-import { useAppQuery } from "@/react-query/query";
+import { useSimpleMutation } from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
@@ -24,25 +24,20 @@ import { DeleteResponseZod } from "@/schema/common.types";
 
 export function useQuizMetadataQuery(lessonId: string, scope: "admin" | "tutor" = "tutor") {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_QUIZ : API_ENDPOINTS.TUTOR_QUIZ;
-  return useAppQuery(
-    queryKeys.quizMetadata(lessonId, scope),
-    () =>
-      apiRequest(
+  return useQuery({ queryKey: queryKeys.quizMetadata(lessonId, scope), queryFn: () =>
+      request(
         { url: `${endpoint}/metadata`, method: "GET", params: { lesson_id: lessonId } },
         QuizMetadataZod,
-      ),
-    { enabled: !!lessonId },
-  );
+      ), enabled: !!lessonId });
 }
 
 export function useQuizQuestionsQuery(quizId: string, scope: "admin" | "tutor" = "tutor") {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_QUIZ : API_ENDPOINTS.TUTOR_QUIZ;
-  return useAppQuery(queryKeys.quizQuestions(quizId, scope), () =>
-    apiRequest(
+  return useQuery({ queryKey: queryKeys.quizQuestions(quizId, scope), queryFn: () =>
+    request(
       { url: `${endpoint}/questions`, method: "GET", params: { quiz_id: quizId } },
       z.array(QuizQuestionDetailZod),
-    ),
-  );
+    ) });
 }
 
 export function useCreateQuizMutation() {
@@ -54,7 +49,7 @@ export function useCreateQuizMutation() {
       lessonId: string;
       data: z.infer<typeof CreateQuizRequestZod>;
     }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.TUTOR_QUIZ}/metadata`, method: "POST", params: { lesson_id: lessonId }, data },
         QuizMetadataZod,
       ),
@@ -77,7 +72,7 @@ export function useCreateQuestionMutation() {
       quizId: string;
       data: z.infer<typeof CreateQuestionRequestZod>;
     }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.TUTOR_QUIZ}/questions`, method: "POST", params: { quiz_id: quizId }, data },
         QuizQuestionZod,
       ),
@@ -100,7 +95,7 @@ export function useUpdateQuestionMutation() {
       questionId: string;
       data: z.infer<typeof CreateQuestionRequestZod>;
     }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.TUTOR_QUIZ}/questions/${questionId}`, method: "PATCH", data },
         QuizQuestionZod,
       ),
@@ -115,7 +110,7 @@ export function useUpdateQuestionMutation() {
 export function useDeleteQuestionMutation() {
   return useSimpleMutation({
     mutationFn: ({ quizId, questionId }: { quizId: string; questionId: string }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.TUTOR_QUIZ}/questions/${questionId}`, method: "DELETE" },
         DeleteResponseZod,
       ),
@@ -136,7 +131,7 @@ export function useGetQuestionMutation() {
       quizId: string;
       data: z.infer<typeof NextQuestionRequestZod>;
     }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.QUIZ}/question`, method: "POST", params: { quiz_id: quizId }, data },
         NextQuestionResponseZod,
       ),
@@ -153,7 +148,7 @@ export function useSubmitQuizMutation() {
       quizId: string;
       data: z.infer<typeof SubmitQuizRequestZod>;
     }) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.QUIZ}/submit`, method: "POST", params: { quiz_id: quizId }, data },
         SubmitQuizResponseZod,
       ),
@@ -163,25 +158,17 @@ export function useSubmitQuizMutation() {
 }
 
 export function useQuizAttemptsQuery(quizId: string) {
-  return useAppQuery(
-    queryKeys.quizAttempts(quizId),
-    () =>
-      apiRequest(
+  return useQuery({ queryKey: queryKeys.quizAttempts(quizId), queryFn: () =>
+      request(
         { url: `${API_ENDPOINTS.QUIZ}/attempts`, method: "GET", params: { quiz_id: quizId } },
         z.array(QuizAttemptSummaryZod),
-      ),
-    { enabled: !!quizId },
-  );
+      ), enabled: !!quizId });
 }
 
 export function useQuizAttemptDetailQuery(attemptId: string) {
-  return useAppQuery(
-    queryKeys.quizAttemptDetail(attemptId),
-    () =>
-      apiRequest(
+  return useQuery({ queryKey: queryKeys.quizAttemptDetail(attemptId), queryFn: () =>
+      request(
         { url: `${API_ENDPOINTS.QUIZ}/attempts/${attemptId}`, method: "GET" },
         QuizAttemptDetailZod,
-      ),
-    { enabled: !!attemptId },
-  );
+      ), enabled: !!attemptId });
 }

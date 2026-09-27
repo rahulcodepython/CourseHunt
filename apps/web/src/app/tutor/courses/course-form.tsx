@@ -80,9 +80,11 @@ export function CourseForm({
   const { data: rawCategories } = useCategoriesQuery();
   // The categories endpoint returns either a plain array or a paginated
   // { data: [...] } envelope depending on the caller — handle both.
-  const categories: Category[] = Array.isArray(rawCategories?.data)
-    ? rawCategories.data
-    : ((rawCategories?.data as { data?: Category[] } | undefined)?.data ?? []);
+  const categories: Category[] = Array.isArray(rawCategories)
+    ? rawCategories
+    : Array.isArray(rawCategories?.data)
+      ? rawCategories.data
+      : [];
 
   const {
     register,

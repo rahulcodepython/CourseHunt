@@ -1,10 +1,10 @@
 "use client";
 
-import { apiRequest, compactParams } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request, compactParams } from "@/react-query/client";
 import { z } from "zod";
 
-import { useSimpleMutation } from "@/react-query/mutation";
-import { useAppQuery } from "@/react-query/query";
+import { useSimpleMutation } from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import { PaginatedResponseZod } from "@/schema/common.types";
@@ -20,70 +20,79 @@ import {
   SettlePayoutRequestZod,
 } from "@/schema/transactions.types";
 
-import { createListQuery } from "@/react-query/factory";
-
 export function useTransactionsQuery(
   params?: { page?: number; limit?: number },
   scope: "admin" | "student" = "student",
 ) {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_TRANSACTIONS : API_ENDPOINTS.TRANSACTIONS;
-  return useAppQuery(queryKeys.transactions(scope), () =>
-    apiRequest(
-      { url: endpoint, method: "GET", params: compactParams(params) },
-      PaginatedResponseZod(TransactionZod),
-    ),
-  );
+  return useQuery({
+    queryKey: queryKeys.transactions(scope),
+    queryFn: () =>
+      request(
+        { url: endpoint, method: "GET", params: compactParams(params) },
+        PaginatedResponseZod(TransactionZod),
+      ),
+  });
 }
 
-export const useRefundsQuery = createListQuery<{ id: string } & z.infer<typeof RefundTransactionZod>, {
+export function useRefundsQuery(params?: {
   page?: number;
   limit?: number;
   status?: string;
   user_id?: string;
   course_id?: string;
-}>(
-  `${API_ENDPOINTS.ADMIN_TRANSACTIONS}/refunds`,
-  (params) => queryKeys.refunds(params as Record<string, string | number>),
-  RefundTransactionZod,
-);
+}) {
+  return useQuery({
+    queryKey: queryKeys.refunds(params as Record<string, string | number>),
+    queryFn: () =>
+      request(
+        { url: `${API_ENDPOINTS.ADMIN_TRANSACTIONS}/refunds`, method: "GET", params: compactParams(params) },
+        PaginatedResponseZod(RefundTransactionZod),
+      ),
+  });
+}
 
-export const useMyRefundsQuery = createListQuery<
-  { id: string } & z.infer<typeof RefundTransactionZod>,
-  { page?: number; limit?: number }
->(
-  `${API_ENDPOINTS.TRANSACTIONS}/refunds/me`,
-  (params) => queryKeys.myRefunds(params as Record<string, string | number>),
-  RefundTransactionZod,
-);
+export function useMyRefundsQuery(params?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: queryKeys.myRefunds(params as Record<string, string | number>),
+    queryFn: () =>
+      request(
+        { url: `${API_ENDPOINTS.TRANSACTIONS}/refunds/me`, method: "GET", params: compactParams(params) },
+        PaginatedResponseZod(RefundTransactionZod),
+      ),
+  });
+}
 
 export function useCheckoutCourseQuery(courseId: string) {
-  return useAppQuery(queryKeys.transactionsCheckout(courseId), () =>
-    apiRequest(
-      { url: `${API_ENDPOINTS.TRANSACTIONS}/checkout/course/${courseId}`, method: "GET" },
-      CheckoutCourseResponseZod,
-    ),
-  );
+  return useQuery({
+    queryKey: queryKeys.transactionsCheckout(courseId),
+    queryFn: () =>
+      request(
+        { url: `${API_ENDPOINTS.TRANSACTIONS}/checkout/course/${courseId}`, method: "GET" },
+        CheckoutCourseResponseZod,
+      ),
+  });
 }
 
 export function useTransactionStatusQuery(
   txId: string,
   options?: { enabled?: boolean; refetchInterval?: number | false },
 ) {
-  return useAppQuery(
-    queryKeys.transactionStatus(txId),
-    () =>
-      apiRequest(
+  return useQuery({
+    queryKey: queryKeys.transactionStatus(txId),
+    queryFn: () =>
+      request(
         { url: `${API_ENDPOINTS.TRANSACTIONS}/${txId}/status`, method: "GET" },
         TransactionStatusResponseZod,
       ),
-    options,
-  );
+    ...options,
+  });
 }
 
 export function useInitiateTransactionMutation() {
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof InitiateTransactionRequestZod>) =>
-      apiRequest(
+      request(
         { url: API_ENDPOINTS.TRANSACTIONS_INITIATE, method: "POST", data },
         InitiateTransactionResponseZod,
       ),
@@ -92,44 +101,50 @@ export function useInitiateTransactionMutation() {
 }
 
 export function useTutorPayoutOverviewQuery() {
-  return useAppQuery(queryKeys.tutorPayouts(), () =>
-    apiRequest(
-      { url: API_ENDPOINTS.TUTOR_PAYOUTS, method: "GET" },
-      TutorPayoutOverviewZod,
-    ),
-  );
+  return useQuery({
+    queryKey: queryKeys.tutorPayouts(),
+    queryFn: () =>
+      request(
+        { url: API_ENDPOINTS.TUTOR_PAYOUTS, method: "GET" },
+        TutorPayoutOverviewZod,
+      ),
+  });
 }
 
 export function useRequestPayoutMutation() {
   return useSimpleMutation({
     mutationFn: () =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.TUTOR_PAYOUTS}/request`, method: "POST" },
         z.object({ message: z.string().optional() }),
       ),
     invalidateKeys: [queryKeys.tutorPayouts()],
-    showToast: true,
   });
 }
 
-export const useAdminPayoutsQuery = createListQuery<
-  { id: string } & z.infer<typeof TutorPayoutTransactionZod>,
-  { page?: number; limit?: number; status?: string; tutor_id?: string }
->(
-  API_ENDPOINTS.ADMIN_PAYOUTS,
-  (params) => queryKeys.adminPayouts(params as Record<string, string | number>),
-  TutorPayoutTransactionZod,
-);
+export function useAdminPayoutsQuery(params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  tutor_id?: string;
+}) {
+  return useQuery({
+    queryKey: queryKeys.adminPayouts(params as Record<string, string | number>),
+    queryFn: () =>
+      request(
+        { url: API_ENDPOINTS.ADMIN_PAYOUTS, method: "GET", params: compactParams(params) },
+        PaginatedResponseZod(TutorPayoutTransactionZod),
+      ),
+  });
+}
 
 export function useSettlePayoutMutation(payoutId: string) {
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof SettlePayoutRequestZod>) =>
-      apiRequest(
+      request(
         { url: `${API_ENDPOINTS.ADMIN_PAYOUTS}/${payoutId}/settle`, method: "POST", data },
         z.object({ message: z.string().optional() }),
       ),
     invalidateKeys: [queryKeys.adminPayouts()],
-    showToast: true,
   });
 }
-

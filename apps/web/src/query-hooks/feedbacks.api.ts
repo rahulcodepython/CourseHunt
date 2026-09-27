@@ -1,14 +1,14 @@
 "use client";
 
-import { apiRequest } from "@/react-query/client";
+import { useQuery } from "@tanstack/react-query";
+import { request } from "@/react-query/client";
 import { z } from "zod";
 
 import {
   useSimpleMutation,
   usePaginatedMutation,
   removeFromPaginated,
-} from "@/react-query/mutation";
-import { useAppQuery } from "@/react-query/query";
+} from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
@@ -23,24 +23,22 @@ function getFeedbackEndpoint(scope: "admin" | "tutor") {
 }
 
 export function useFeedbacksQuery(scope: "admin" | "tutor" = "admin") {
-  return useAppQuery(queryKeys.feedbacks(scope), () =>
-    apiRequest({ url: getFeedbackEndpoint(scope), method: "GET" }, PaginatedResponseZod(FeedbackZod)),
-  );
+  return useQuery({ queryKey: queryKeys.feedbacks(scope), queryFn: () =>
+    request({ url: getFeedbackEndpoint(scope), method: "GET" }, PaginatedResponseZod(FeedbackZod)) });
 }
 
 export function usePinnedFeedbacksQuery(courseId?: string) {
   const url = courseId
     ? `${API_ENDPOINTS.FEEDBACKS_PINNED}?course_id=${courseId}`
     : API_ENDPOINTS.FEEDBACKS_PINNED;
-  return useAppQuery([...queryKeys.feedbacksPinned(), courseId ?? "all"], () =>
-    apiRequest({ url, method: "GET" }, PaginatedResponseZod(FeedbackZod)),
-  );
+  return useQuery({ queryKey: [...queryKeys.feedbacksPinned(), courseId ?? "all"], queryFn: () =>
+    request({ url, method: "GET" }, PaginatedResponseZod(FeedbackZod)) });
 }
 
 export function useCreateFeedbackMutation() {
   return useSimpleMutation({
     mutationFn: (data: z.infer<typeof CreateFeedbackRequestZod>) =>
-      apiRequest({ url: API_ENDPOINTS.FEEDBACKS, method: "POST", data }, FeedbackZod),
+      request({ url: API_ENDPOINTS.FEEDBACKS, method: "POST", data }, FeedbackZod),
     invalidateKeys: [
       queryKeys.feedbacks("admin"),
       queryKeys.feedbacks("tutor"),
@@ -54,7 +52,7 @@ export function useCreateFeedbackMutation() {
 export function useUpdateFeedbackMutation() {
   return useSimpleMutation({
     mutationFn: ({ id, data }: { id: string; data: z.infer<typeof PinFeedbackRequestZod> }) =>
-      apiRequest({ url: `${API_ENDPOINTS.ADMIN_FEEDBACKS}/${id}`, method: "PATCH", data }, FeedbackZod),
+      request({ url: `${API_ENDPOINTS.ADMIN_FEEDBACKS}/${id}`, method: "PATCH", data }, FeedbackZod),
     invalidateKeys: [
       queryKeys.feedbacks("admin"),
       queryKeys.feedbacks("tutor"),
@@ -68,7 +66,7 @@ export function useUpdateFeedbackMutation() {
 export function useDeleteFeedbackMutation(scope: "admin" | "tutor" = "admin") {
   return usePaginatedMutation({
     mutationFn: (id: string) =>
-      apiRequest({ url: `${getFeedbackEndpoint(scope)}/${id}`, method: "DELETE" }, DeleteResponseZod),
+      request({ url: `${getFeedbackEndpoint(scope)}/${id}`, method: "DELETE" }, DeleteResponseZod),
     queryKey: queryKeys.feedbacks(scope),
     invalidateKeys: [queryKeys.feedbacksPinned(), queryKeys.feedbacksAll()],
     updater: (res) => removeFromPaginated(res.id),

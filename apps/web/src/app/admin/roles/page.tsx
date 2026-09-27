@@ -49,7 +49,7 @@ function PermissionsGrid({
     setDirty(false);
   }, [rolePermissions]);
 
-  const rawPermissions: Permission[] = allPermissions?.data ?? [];
+  const rawPermissions: Permission[] = allPermissions ?? [];
 
   const adminItems = rawPermissions
     .filter((p) => p.id.startsWith("admin:"))
@@ -179,7 +179,7 @@ export default function RolesPage() {
   const deleteRole = useDeleteRoleMutation();
   const updateRolePermissions = useUpdateRolePermissionsMutation();
 
-  const roles: Role[] = rolesRaw?.data ?? [];
+  const roles: Role[] = rolesRaw ?? [];
 
   const {
     dialogOpen: createOpen,
@@ -209,7 +209,7 @@ export default function RolesPage() {
     }
   };
 
-  if (isLoading || (!rolesRaw?.data && !roles.length)) {
+  if (isLoading || (!rolesRaw && !roles.length)) {
     return <Loading />;
   }
 
@@ -246,7 +246,7 @@ export default function RolesPage() {
         {expandedRoleId && (
           <PermissionsGrid
             roleId={expandedRoleId}
-            rolePermissions={(rolePermissions?.data ?? []).map((p: Permission) => p.id)}
+            rolePermissions={(rolePermissions ?? []).map((p: Permission) => p.id)}
             onSave={handleSavePermissions}
             isSaving={updateRolePermissions.isPending}
           />

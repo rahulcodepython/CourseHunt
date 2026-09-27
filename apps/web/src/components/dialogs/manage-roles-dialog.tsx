@@ -35,7 +35,7 @@ export function ManageRolesDialog({
   const assignRoleMutation = useAssignRoleMutation();
   const revokeRoleMutation = useRevokeRoleMutation();
 
-  const roles: Role[] = rawRoles?.data ?? [];
+  const roles: Role[] = rawRoles ?? [];
   const assignableRoles = roles.filter((r) => !r.is_system);
 
   const initialSelected = React.useMemo(

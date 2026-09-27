@@ -86,9 +86,9 @@ export function LessonWizardDialog({
   // null, so the empty id disables both queries (`enabled: !!id`) — nothing is
   // fetched until a lesson actually exists.
   const { data: rawContent } = useLessonContentQuery(editingLesson?.id ?? "");
-  const content = rawContent?.success ? rawContent.data : null;
+  const content = rawContent ?? null;
   const { data: rawQuizMetadata } = useQuizMetadataQuery(editingLesson?.id ?? "");
-  const quizMetadata = rawQuizMetadata?.success ? (rawQuizMetadata.data ?? null) : null;
+  const quizMetadata = rawQuizMetadata ?? null;
 
   const [step, setStep] = React.useState<1 | 2>(1);
   const [measuredDuration, setMeasuredDuration] = React.useState<number | null>(null);
