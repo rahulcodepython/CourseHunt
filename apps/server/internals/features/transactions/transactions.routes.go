@@ -25,6 +25,7 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	// Admin transactions inspection: strictly single permission PermAdminTransactionsReadAll
 	adminGuard := middlewares.PermissionGuard(generic.PermAdminTransactionsReadAll)
 	gAdmin := router.Group("/v1/admin/transactions", auth, adminGuard)
+	gAdmin.Get("/stats", a.handleAdminStats)
 	gAdmin.Get("/", a.handleAdminList)
 	gAdmin.Get("/refunds", a.handleAdminListRefunds)
 	gAdmin.Get("/payouts", a.handleAdminPayouts)

@@ -1,7 +1,11 @@
 "use client";
 import * as React from "react";
 
-import { useTransactionsQuery, useRefundsQuery } from "@/query-hooks/transactions.api";
+import {
+    useInfiniteTransactionsQuery,
+    useInfiniteRefundsQuery,
+    useAdminTransactionStatsQuery,
+} from "@/query-hooks/transactions.api";
 import type { Transaction, RefundTransaction } from "@/schema/transactions.types";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/common/stat-card";
@@ -12,21 +16,41 @@ import { columns } from "./columns";
 import { refundColumns } from "./refund-columns";
 
 export default function TransactionsPage() {
-    const { data: rawTx, isLoading: txLoading } = useTransactionsQuery(undefined, "admin");
-    const { data: rawRefunds, isLoading: refundsLoading } = useRefundsQuery();
+    const [activeTab, setActiveTab] = React.useState<string>("all");
 
-    const transactions: Transaction[] = rawTx?.data ?? [];
-    const refunds: RefundTransaction[] = rawRefunds?.data ?? [];
+    const { data: stats } = useAdminTransactionStatsQuery();
 
-    const totalRevenue = transactions
-        .filter((t) => t.status === "confirmed" || t.status === "success")
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
+    const {
+        data: txData,
+        isLoading: txLoading,
+        fetchNextPage: fetchNextTx,
+        hasNextPage: hasNextTx,
+        isFetchingNextPage: isFetchingNextTx,
+    } = useInfiniteTransactionsQuery({ limit: 12 }, "admin", {
+        enabled: activeTab === "all",
+    });
 
-    const totalRefundedAmount = refunds
-        .filter((r) => r.refund_status === "processed" || r.refund_status === "refunded")
-        .reduce((sum, r) => sum + (r.amount || 0), 0);
+    const {
+        data: refundsData,
+        isLoading: refundsLoading,
+        fetchNextPage: fetchNextRefunds,
+        hasNextPage: hasNextRefunds,
+        isFetchingNextPage: isFetchingNextRefunds,
+    } = useInfiniteRefundsQuery({ limit: 12 }, {
+        enabled: activeTab === "refunds",
+    });
 
-    const pendingRefundsCount = refunds.filter((r) => r.refund_status === "pending").length;
+    const transactions: Transaction[] = React.useMemo(
+        () => txData?.pages.flatMap((page) => page.data) ?? [],
+        [txData],
+    );
+    const txTotalCount = txData?.pages[0]?.total ?? 0;
+
+    const refunds: RefundTransaction[] = React.useMemo(
+        () => refundsData?.pages.flatMap((page) => page.data) ?? [],
+        [refundsData],
+    );
+    const refundsTotalCount = refundsData?.pages[0]?.total ?? 0;
 
     return (
         <div className="space-y-6">
@@ -38,28 +62,28 @@ export default function TransactionsPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <StatCard
                     title="Total Net Revenue"
-                    value={formatINR(totalRevenue)}
+                    value={stats ? formatINR(stats.total_revenue) : "—"}
                     icon="currency-rupee"
                     iconClassName="text-green-600"
                 />
                 <StatCard
                     title="Total Refunded"
-                    value={formatINR(totalRefundedAmount)}
+                    value={stats ? formatINR(stats.total_refunded) : "—"}
                     icon="arrow-back-up"
                     iconClassName="text-red-600"
                 />
                 <StatCard
                     title="Pending / Active Refunds"
-                    value={pendingRefundsCount.toString()}
+                    value={stats ? stats.pending_refunds_count.toString() : "—"}
                     icon="receipt-refund"
                     iconClassName="text-amber-600"
                 />
             </div>
 
-            <Tabs defaultValue="all" className="space-y-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="all">All Transactions ({transactions.length})</TabsTrigger>
-                    <TabsTrigger value="refunds">Refunded & Duplicate Transactions ({refunds.length})</TabsTrigger>
+                    <TabsTrigger value="all">All Transactions</TabsTrigger>
+                    <TabsTrigger value="refunds">Refunded & Duplicate Transactions</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="all" className="space-y-4">
@@ -71,6 +95,10 @@ export default function TransactionsPage() {
                         emptyText="No transactions found"
                         isLoading={txLoading}
                         loadingText="Loading transactions..."
+                        onLoadMore={fetchNextTx}
+                        hasNextPage={hasNextTx}
+                        isFetchingNextPage={isFetchingNextTx}
+                        totalCount={txTotalCount}
                     />
                 </TabsContent>
 
@@ -83,6 +111,10 @@ export default function TransactionsPage() {
                         emptyText="No refunded or duplicate transactions found"
                         isLoading={refundsLoading}
                         loadingText="Loading refund transactions..."
+                        onLoadMore={fetchNextRefunds}
+                        hasNextPage={hasNextRefunds}
+                        isFetchingNextPage={isFetchingNextRefunds}
+                        totalCount={refundsTotalCount}
                     />
                 </TabsContent>
             </Tabs>

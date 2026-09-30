@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"coursehunt/server/internals/middlewares"
+	"coursehunt/server/internals/pkg/middleware"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
@@ -66,14 +66,15 @@ func (a *App) Snapshot(ctx context.Context) SnapshotResponse {
 	services, allHealthy := a.checkServices(ctx)
 
 	return SnapshotResponse{
-		Telemetry:  t,
-		Services:   services,
-		AllHealthy: allHealthy,
+		Telemetry:       t,
+		Services:        services,
+		AllHealthy:      allHealthy,
+		ActiveInstances: a.GetActiveInstances(ctx),
 	}
 }
 
 // QueryLokiLogs queries Grafana Loki for log streams and returns structured LogSchema entries.
-func (a *App) QueryLokiLogs(ctx context.Context, limit int, level, search, start, end string) ([]middlewares.LogSchema, error) {
+func (a *App) QueryLokiLogs(ctx context.Context, limit int, level, search, start, end string) ([]middleware.LogSchema, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -91,12 +92,12 @@ func (a *App) QueryLokiLogs(ctx context.Context, limit int, level, search, start
 
 	lokiURL := a.Cfg.LokiURL
 	if lokiURL == "" {
-		lokiURL = "http://loki:3100"
+		lokiURL = "http://localhost:3100"
 	}
 
 	u, err := url.Parse(lokiURL + "/loki/api/v1/query_range")
 	if err != nil {
-		return []middlewares.LogSchema{}, nil
+		return []middleware.LogSchema{}, nil
 	}
 
 	q := u.Query()
@@ -113,33 +114,33 @@ func (a *App) QueryLokiLogs(ctx context.Context, limit int, level, search, start
 
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
-		return []middlewares.LogSchema{}, nil
+		return []middleware.LogSchema{}, nil
 	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		slog.Warn("failed to query loki", "error", err)
-		return []middlewares.LogSchema{}, nil
+		return []middleware.LogSchema{}, nil
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		slog.Warn("loki query returned non-200", "status", resp.StatusCode)
-		return []middlewares.LogSchema{}, nil
+		return []middleware.LogSchema{}, nil
 	}
 
 	var lokiResp LokiQueryResponse
 	if err := json.NewDecoder(resp.Body).Decode(&lokiResp); err != nil {
 		slog.Warn("failed to decode loki response", "error", err)
-		return []middlewares.LogSchema{}, nil
+		return []middleware.LogSchema{}, nil
 	}
 
-	logs := make([]middlewares.LogSchema, 0, limit)
+	logs := make([]middleware.LogSchema, 0, limit)
 	for _, stream := range lokiResp.Data.Result {
 		for _, val := range stream.Values {
 			if len(val) >= 2 {
-				var entry middlewares.LogSchema
+				var entry middleware.LogSchema
 				if err := json.Unmarshal([]byte(val[1]), &entry); err == nil {
 					logs = append(logs, entry)
 				}

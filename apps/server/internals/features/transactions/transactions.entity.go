@@ -124,3 +124,11 @@ type TutorPayoutOverview struct {
 type SettlePayoutRequest struct {
 	ReferenceID string `json:"reference_id" validate:"required,min=2,max=100"`
 }
+
+type TransactionStats struct {
+	TotalRevenue        float64 `json:"total_revenue" db:"total_revenue"`
+	TotalRefunded       float64 `json:"total_refunded" db:"total_refunded"`
+	PendingRefundsCount int64   `json:"pending_refunds_count" db:"pending_refunds_count"`
+	TotalTransactions   int64   `json:"total_transactions" db:"total_transactions"`
+	TotalRefunds        int64   `json:"total_refunds" db:"total_refunds"`
+}

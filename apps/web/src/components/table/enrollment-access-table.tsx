@@ -1,10 +1,11 @@
 "use client";
 
+import * as React from "react";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { TableColumn } from "@/components/table/data-table";
 import type { ListEnrollmentResponse } from "@/schema/enrollments.types";
 import {
-  useEnrollmentsQuery,
+  useInfiniteEnrollmentsQuery,
   useRevokeEnrollmentMutation,
   useRegainEnrollmentMutation,
 } from "@/query-hooks/enrollments.api";
@@ -56,11 +57,21 @@ export function EnrollmentAccessTable({
 }) {
   const params = { courseId, userId };
   const scope = showAccessActions ? "admin" : "tutor";
-  const { data: raw, isLoading } = useEnrollmentsQuery(params, scope);
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteEnrollmentsQuery({ ...params, limit: 12 }, scope);
   const revokeMutation = useRevokeEnrollmentMutation(params);
   const regainMutation = useRegainEnrollmentMutation(params);
 
-  const enrollments = raw?.data ?? [];
+  const enrollments = React.useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
+  const totalCount = data?.pages[0]?.total ?? 0;
 
   const columns: TableColumn<ListEnrollmentResponse>[] = [
     columnHelper.accessor((row) => row.course.title, {
@@ -156,6 +167,10 @@ export function EnrollmentAccessTable({
       emptyText={emptyText}
       isLoading={isLoading}
       loadingText="Loading..."
+      onLoadMore={fetchNextPage}
+      hasNextPage={hasNextPage}
+      isFetchingNextPage={isFetchingNextPage}
+      totalCount={totalCount}
     />
   );
 }

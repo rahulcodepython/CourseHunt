@@ -28,3 +28,8 @@ type ManageListPayload struct {
 	Total int      `json:"total"`
 	Data  []Course `json:"data"`
 }
+
+type AdminListPayload struct {
+	Total int               `json:"total"`
+	Data  []AdminCourseItem `json:"data"`
+}

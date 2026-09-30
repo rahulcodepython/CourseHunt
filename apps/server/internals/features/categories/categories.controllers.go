@@ -57,3 +57,11 @@ func (a *App) handleDelete(c *fiber.Ctx) error {
 
 	return utils.OK(c, "Category deleted successfully.", generic.DeleteResponse{ID: id})
 }
+
+func (a *App) handleOptions(c *fiber.Ctx) error {
+	opts, err := a.ListCategoryOptions(c.UserContext())
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Category options fetched successfully.", opts)
+}

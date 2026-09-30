@@ -46,3 +46,7 @@ func (a *App) DeleteRepository(ctx context.Context, id string) (string, error) {
 	}
 	return deletedID, nil
 }
+
+func (a *App) ListCategoryOptions(ctx context.Context) ([]CategoryOption, error) {
+	return postgres.QueryJSONSlice[CategoryOption](ctx, a.DB, CategoryOptionsJSON)
+}

@@ -74,3 +74,7 @@ func (a *App) SetRolePermissionsRepository(ctx context.Context, roleID string, p
 func (a *App) ListPermissionsRepository(ctx context.Context) ([]Permission, error) {
 	return postgres.QueryJSONSlice[Permission](ctx, a.DB, ListPermissions)
 }
+
+func (a *App) ListRoleOptionsRepository(ctx context.Context) ([]RoleOption, error) {
+	return postgres.QueryJSONSlice[RoleOption](ctx, a.DB, ListRoleOptions)
+}

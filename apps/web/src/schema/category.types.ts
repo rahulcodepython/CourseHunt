@@ -26,3 +26,10 @@ export const UpdateCategoryRequestZod = z.object({
   name: z.string(),
 });
 export type UpdateCategoryRequest = z.infer<typeof UpdateCategoryRequestZod>;
+
+export const CategoryOptionZod = z.object({
+  id: z.string(),
+  name: z.string(),
+  parent_id: z.string().nullable().optional(),
+});
+export type CategoryOption = z.infer<typeof CategoryOptionZod>;

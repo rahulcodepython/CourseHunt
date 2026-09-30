@@ -24,7 +24,8 @@ type HealthResponse struct {
 }
 
 type SnapshotResponse struct {
-	Telemetry  telemetry                `json:"telemetry"`
-	Services   map[string]ServiceStatus `json:"services"`
-	AllHealthy bool                     `json:"all_healthy"`
+	Telemetry       telemetry                `json:"telemetry"`
+	Services        map[string]ServiceStatus `json:"services"`
+	AllHealthy      bool                     `json:"all_healthy"`
+	ActiveInstances int                      `json:"active_instances"`
 }

@@ -2,13 +2,13 @@
 
 import * as React from "react";
 
-import { useDiscussionsQuery, useCreateDiscussionMutation } from "@/query-hooks/discussions.api";
+import { useInfiniteDiscussionsQuery, useCreateDiscussionMutation } from "@/query-hooks/discussions.api";
 import type { Discussion } from "@/schema/discussions.types";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Icon } from "@/components/common/icon";
 import { DiscussionItem } from "./discussion-item";
-import { mergeListPage } from "@/lib/utils/merge-list-page";
 
 const PAGE_SIZE = 10;
 
@@ -23,28 +23,34 @@ export function DiscussionsTab({
   canDeleteAny?: boolean;
   scope?: "admin" | "tutor" | "student";
 }) {
-  const [page, setPage] = React.useState(1);
   const [items, setItems] = React.useState<Discussion[]>([]);
   const [content, setContent] = React.useState("");
 
-  const { data: raw, isLoading, isFetching } = useDiscussionsQuery(lessonId, page, PAGE_SIZE, scope);
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteDiscussionsQuery(lessonId, PAGE_SIZE, scope);
   const createDiscussion = useCreateDiscussionMutation(scope);
 
-  // Reset accumulated state whenever the lesson changes — this component
-  // stays mounted across lesson navigation within the study page.
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    onLoadMore: fetchNextPage,
+  });
+
+  // Reset accumulated state whenever the lesson changes
   React.useEffect(() => {
-    setPage(1);
     setItems([]);
   }, [lessonId]);
 
   React.useEffect(() => {
-    const pageItems = Array.isArray(raw) ? raw : raw?.data;
-    if (!pageItems) return;
-    setItems((prev) => mergeListPage(prev, pageItems));
-  }, [raw]);
-
-  const total = (raw as any)?.total ?? (Array.isArray(raw) ? raw.length : raw?.data?.length ?? 0);
-  const hasMore = items.length < total;
+    if (data?.pages) {
+      setItems(data.pages.flatMap((page) => page.data));
+    }
+  }, [data]);
 
   const submit = async () => {
     if (!content.trim()) return;
@@ -108,16 +114,11 @@ export function DiscussionsTab({
         </div>
       )}
 
-      {hasMore && (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isFetching}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            {isFetching ? "Loading..." : "Load More"}
-          </Button>
+      {/* Auto-fetch infinite scroll sentinel */}
+      <div ref={sentinelRef} className="h-2 w-full" />
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-2 text-xs text-muted-foreground">
+          Loading more discussions...
         </div>
       )}
     </div>

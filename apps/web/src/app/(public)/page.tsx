@@ -7,8 +7,8 @@ import { usePinnedFeedbacksQuery } from "@/query-hooks/feedbacks.api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Icon } from "@/components/common/icon";
-import { CourseCard } from "./components/course-card";
-import { ReviewCard } from "./components/review-card";
+import { CourseCard } from "@/components/landing/course-card";
+import { ReviewCard } from "@/components/landing/review-card";
 
 export default function LandingPage() {
   const { data: rawCourses, isLoading: isLoadingCourses } = useCoursesQuery({ limit: 8 });

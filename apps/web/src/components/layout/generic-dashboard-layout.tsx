@@ -13,6 +13,7 @@ import { filterNavGroups } from "@/lib/auth/permissions";
 import { useSessionStore } from "@/store/session.store";
 import { UserNav } from "@/components/layout/user-nav";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import Image from "next/image";
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -53,7 +54,7 @@ export function GenericDashboardLayout({
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <AppSidebar navGroups={navGroups} />
+        <AppSidebar navGroups={navGroups} brandLogo={<Image src={'/logo.png'} alt="Logo" width={1000} height={1000} className="w-10 h-10" />} />
         <SidebarInset>
           <header className="sticky top-0 z-40 flex items-center justify-start gap-4 border-b bg-background/80 p-2 backdrop-blur-md">
             <SidebarTrigger />

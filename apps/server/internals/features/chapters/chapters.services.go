@@ -33,6 +33,57 @@ func (a *App) AdminList(ctx context.Context, courseID string) ([]Chapter, error)
 	return res, nil
 }
 
+func (a *App) AdminGetByID(ctx context.Context, id string) (*Chapter, error) {
+	cacheKey := fmt.Sprintf("chapters:admin:get:%s", id)
+
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, postgres.ErrNotFound)
+	}, func() (*Chapter, error) {
+		ch, err := a.AdminGetByIDRepository(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if ch == nil {
+			return nil, postgres.ErrNotFound
+		}
+		return ch, nil
+	})
+	if err != nil {
+		if errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Chapter not found.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch chapter.", err)
+	}
+	return res, nil
+}
+
+func (a *App) TutorGetByID(ctx context.Context, id, userID string) (*Chapter, error) {
+	cacheKey := fmt.Sprintf("chapters:tutor:get:%s:u:%s", id, userID)
+
+	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 10*time.Minute, func(e error) bool {
+		return errors.Is(e, generic.ErrChaptersChapterNotFound) || errors.Is(e, postgres.ErrNotFound)
+	}, func() (*Chapter, error) {
+		ch, err := a.TutorGetByIDRepository(ctx, id, userID)
+		if err != nil {
+			return nil, err
+		}
+		if ch == nil {
+			return nil, postgres.ErrNotFound
+		}
+		return ch, nil
+	})
+	if err != nil {
+		if errors.Is(err, generic.ErrChaptersChapterNotFound) || errors.Is(err, postgres.ErrNotFound) {
+			return nil, utils.ErrNotFound("Chapter not found.", err)
+		}
+		if errors.Is(err, generic.ErrChaptersUnauthorized) {
+			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to fetch chapter.", err)
+	}
+	return res, nil
+}
+
 func (a *App) TutorList(ctx context.Context, courseID, userID string) ([]Chapter, error) {
 	cacheKey := fmt.Sprintf("chapters:tutor:list:course:%s:u:%s", courseID, userID)
 

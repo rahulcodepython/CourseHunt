@@ -59,4 +59,17 @@ const (
 	`
 
 	DeleteCategory = `DELETE FROM categories WHERE id = $1 RETURNING id`
+
+	CategoryOptionsJSON = `
+		SELECT COALESCE(
+			jsonb_agg(
+				jsonb_build_object(
+					'id', id,
+					'name', name,
+					'parent_id', parent_id
+				) ORDER BY name ASC
+			), '[]'::jsonb
+		)
+		FROM categories;
+	`
 )

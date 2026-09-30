@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/common/icon";
-import { useSessionStore } from "@/store/session.store";
+import { api } from "@/react-query/client";
 
 interface StructuredLog {
   timestamp: string;
@@ -33,6 +33,7 @@ interface StructuredLog {
 
 export default function AdminObservabilityDashboard() {
   const [logs, setLogs] = useState<StructuredLog[]>([]);
+  const [activeInstances, setActiveInstances] = useState<number>(1);
   const [isLive, setIsLive] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
@@ -44,21 +45,19 @@ export default function AdminObservabilityDashboard() {
 
     const pollLogs = async () => {
       try {
-        const token = useSessionStore.getState().token;
-        const headers: Record<string, string> = {};
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-        const res = await fetch(
-          `/api/v1/admin/logs/loki/query?limit=50&level=${selectedLevel}`,
-          {
-            credentials: "include",
-            headers,
-          },
-        );
-        const json = await res.json();
-        if (json.data && Array.isArray(json.data)) {
-          setLogs(json.data);
+        const res = await api.get<{
+          success: boolean;
+          data: StructuredLog[] | { logs: StructuredLog[]; active_instances: number };
+        }>(`/api/v1/admin/logs/loki/query?limit=50&level=${selectedLevel}`);
+
+        const payload = res.data?.data;
+        if (Array.isArray(payload)) {
+          setLogs(payload);
+        } else if (payload && Array.isArray(payload.logs)) {
+          setLogs(payload.logs);
+          if (typeof payload.active_instances === "number") {
+            setActiveInstances(payload.active_instances);
+          }
         }
       } catch (err) {
         console.error("Loki live poll failed", err);
@@ -138,8 +137,16 @@ export default function AdminObservabilityDashboard() {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-xs text-muted-foreground uppercase font-semibold">Active Workers</div>
-            <div className="text-2xl font-bold mt-1">4 Nodes</div>
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-muted-foreground uppercase font-semibold">Active Backend Nodes</div>
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
+              </span>
+            </div>
+            <div className="text-2xl font-bold mt-1 text-emerald-500">
+              {activeInstances} {activeInstances === 1 ? "Node" : "Nodes"}
+            </div>
           </CardContent>
         </Card>
       </div>

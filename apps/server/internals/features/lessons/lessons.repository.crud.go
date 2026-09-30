@@ -11,6 +11,10 @@ func (a *App) AdminListRepository(ctx context.Context, chapterID string) ([]Less
 	return postgres.QueryJSONSlice[Lesson](ctx, a.DB, ListAdmin, chapterID)
 }
 
+func (a *App) AdminGetByIDRepository(ctx context.Context, id string) (*Lesson, error) {
+	return postgres.QueryJSON[Lesson](ctx, a.DB, GetByIDAdmin, id)
+}
+
 func (a *App) TutorListRepository(ctx context.Context, chapterID, userID string) ([]Lesson, error) {
 	var (
 		chapterExists bool
@@ -31,6 +35,28 @@ func (a *App) TutorListRepository(ctx context.Context, chapterID, userID string)
 	}
 
 	return postgres.DecodeJSONSlice[Lesson](data)
+}
+
+func (a *App) TutorGetByIDRepository(ctx context.Context, id, tutorID string) (*Lesson, error) {
+	var (
+		lessonExists bool
+		isOwner      bool
+		data         []byte
+	)
+
+	err := a.DB.QueryRow(ctx, GetByIDTutor, id, tutorID).Scan(&lessonExists, &isOwner, &data)
+	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+
+	if err := postgres.CheckConditions(
+		postgres.Condition{Failed: !lessonExists, Err: generic.ErrLessonsLessonNotFound},
+		postgres.Condition{Failed: !isOwner, Err: generic.ErrLessonsAccessDenied},
+	); err != nil {
+		return nil, err
+	}
+
+	return postgres.DecodeJSON[Lesson](data)
 }
 
 func (a *App) CreateRepository(ctx context.Context, tutorID, chapterID string, req CreateLessonRequest) (*Lesson, error) {

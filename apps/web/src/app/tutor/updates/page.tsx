@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import {
-  useUpdatesQuery,
+  useInfiniteUpdatesQuery,
   useCreateUpdateMutation,
   useUpdateUpdateMutation,
   useDeleteUpdateMutation,
 } from "@/query-hooks/updates.api";
-import { useManageCoursesQuery } from "@/query-hooks/courses.api";
+import { useCourseOptionsQuery } from "@/query-hooks/courses.api";
 import type { CourseUpdate } from "@/schema/updates.types";
 import { PageHeader } from "@/components/layout/page-header";
 import { LoadingButton } from "@/components/common/loading-button";
@@ -54,8 +54,7 @@ function UpdateDialog({
 }) {
   const createMutation = useCreateUpdateMutation("tutor");
   const updateMutation = useUpdateUpdateMutation("tutor");
-  const { data: rawCourses } = useManageCoursesQuery({ scope: "tutor" });
-  const courses = rawCourses?.data ?? [];
+  const { data: courses = [] } = useCourseOptionsQuery("tutor", { enabled: open && !editing });
 
   const {
     register,
@@ -150,10 +149,17 @@ function UpdateDialog({
 }
 
 export default function TutorUpdatesPage() {
-  const { data: rawUpdates, isLoading } = useUpdatesQuery("tutor");
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteUpdatesQuery("tutor", { limit: 20 });
   const deleteMutation = useDeleteUpdateMutation("tutor");
 
-  const updates: CourseUpdate[] = rawUpdates?.data ?? [];
+  const updates: CourseUpdate[] = data?.pages.flatMap((page) => page.data) ?? [];
+  const totalCount = data?.pages[0]?.total;
 
   const {
     dialogOpen,
@@ -192,6 +198,10 @@ export default function TutorUpdatesPage() {
         emptyText="No updates found"
         isLoading={isLoading}
         loadingText="Loading updates..."
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
 
       <UpdateDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} />

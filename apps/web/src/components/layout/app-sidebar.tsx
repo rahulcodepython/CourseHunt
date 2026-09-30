@@ -52,7 +52,7 @@ interface BrandProps {
 function Brand({ title = "CourseHunt", subTitle = "Admin Panel", logo }: BrandProps) {
   return (
     <div className="flex items-center gap-2.5 px-2 py-1.5">
-      <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+      <div className="flex items-center justify-center rounded-md">
         {logo ?? (
           <svg
             viewBox="0 0 24 24"

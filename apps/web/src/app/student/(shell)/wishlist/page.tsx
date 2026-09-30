@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import {
-  useWishlistQuery,
+  useInfiniteWishlistQuery,
   useRemoveCourseFromWishlistMutation,
   useClearWishlistMutation,
 } from "@/query-hooks/wishlist.api";
@@ -16,11 +16,22 @@ import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog"
 import { getColumns } from "./columns";
 
 export default function StudentWishlistPage() {
-  const { data: raw, isLoading } = useWishlistQuery();
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteWishlistQuery({ limit: 12 });
   const removeMutation = useRemoveCourseFromWishlistMutation();
   const clearMutation = useClearWishlistMutation();
 
-  const items: WishlistItem[] = raw?.data ?? [];
+  const items: WishlistItem[] = React.useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
+  const totalCount = data?.pages[0]?.total ?? 0;
+
   const [removing, setRemoving] = React.useState<WishlistItem | null>(null);
   const [clearing, setClearing] = React.useState(false);
 
@@ -53,33 +64,38 @@ export default function StudentWishlistPage() {
         emptyText="Your wishlist is empty."
         isLoading={isLoading}
         loadingText="Loading your wishlist..."
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
 
       <ConfirmDeleteDialog
         open={!!removing}
         onOpenChange={(open) => !open && setRemoving(null)}
         onConfirm={async () => {
-          if (!removing) return;
-          const res = await removeMutation.execute(removing.id);
-          if (res?.success) setRemoving(null);
+          if (removing) {
+            await removeMutation.execute(removing.course.id);
+            setRemoving(null);
+          }
         }}
-        loading={removeMutation.isPending}
         title="Remove from Wishlist"
         description={`Remove "${removing?.course.title}" from your wishlist?`}
         confirmText="Remove"
+        loading={removeMutation.isPending}
       />
 
       <ConfirmDeleteDialog
         open={clearing}
         onOpenChange={setClearing}
         onConfirm={async () => {
-          const res = await clearMutation.execute();
-          if (res?.success) setClearing(false);
+          await clearMutation.execute(undefined);
+          setClearing(false);
         }}
-        loading={clearMutation.isPending}
         title="Clear Wishlist"
-        description="Remove every course from your wishlist? This action cannot be undone."
+        description="Are you sure you want to remove all courses from your wishlist?"
         confirmText="Clear All"
+        loading={clearMutation.isPending}
       />
     </div>
   );

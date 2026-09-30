@@ -26,25 +26,19 @@ function SecurityEventsTable({ eventType, emptyText }: { eventType: string; empt
     <DataTable
       columns={securityColumns}
       data={items}
-      pageSize={1000}
       searchPlaceholder="Search..."
       emptyIcon="shield"
       emptyText={emptyText}
       isLoading={isLoading}
       exportFilename={eventType}
+      onLoadMore={loadMore}
+      hasNextPage={hasMore}
+      isFetchingNextPage={isFetching}
       toolbarActions={
-        <>
-          <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refresh()}>
-            <Icon name="refresh" className="size-4" />
-            Refresh
-          </Button>
-          {hasMore && (
-            <Button variant="outline" size="sm" disabled={isFetching} onClick={() => loadMore()}>
-              <Icon name="chevron-down" className="size-4" />
-              Load Older
-            </Button>
-          )}
-        </>
+        <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refresh()}>
+          <Icon name="refresh" className="size-4" />
+          Refresh
+        </Button>
       }
     />
   );

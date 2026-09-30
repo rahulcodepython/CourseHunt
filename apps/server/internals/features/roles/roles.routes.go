@@ -15,6 +15,7 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 
 	g := router.Group("/v1/roles", auth)
 	g.Get("/", read, a.handleListRoles)
+	g.Get("/options", read, a.handleListRoleOptions)
 	g.Post("/", create, a.handleCreateRole)
 	g.Put("/:id", update, middlewares.ValidateUUIDParams("id"), a.handleUpdateRole)
 	g.Delete("/:id", deleteRole, middlewares.ValidateUUIDParams("id"), a.handleDeleteRole)

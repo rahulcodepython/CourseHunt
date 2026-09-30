@@ -24,6 +24,45 @@ func (a *App) AdminList(ctx context.Context, chapterID string) ([]Lesson, error)
 	})
 }
 
+func (a *App) AdminGetByID(ctx context.Context, id string) (*Lesson, error) {
+	cacheKey := fmt.Sprintf("lessons:admin:get:%s", id)
+
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*Lesson, error) {
+		lesson, err := a.AdminGetByIDRepository(ctx, id)
+		if err != nil {
+			if errors.Is(err, postgres.ErrNotFound) {
+				return nil, utils.ErrNotFound("Lesson not found.", err)
+			}
+			return nil, utils.ErrInternal("Failed to fetch lesson.", err)
+		}
+		if lesson == nil {
+			return nil, utils.ErrNotFound("Lesson not found.", nil)
+		}
+		return lesson, nil
+	})
+}
+
+func (a *App) TutorGetByID(ctx context.Context, id, userID string) (*Lesson, error) {
+	cacheKey := fmt.Sprintf("lessons:tutor:get:%s:u:%s", id, userID)
+
+	return cache.Fetch(ctx, a.Cache, cacheKey, 10*time.Minute, func() (*Lesson, error) {
+		lesson, err := a.TutorGetByIDRepository(ctx, id, userID)
+		if err != nil {
+			if errors.Is(err, generic.ErrLessonsLessonNotFound) || errors.Is(err, postgres.ErrNotFound) {
+				return nil, utils.ErrNotFound("Lesson not found.", err)
+			}
+			if errors.Is(err, generic.ErrLessonsAccessDenied) {
+				return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+			}
+			return nil, utils.ErrInternal("Failed to fetch lesson.", err)
+		}
+		if lesson == nil {
+			return nil, utils.ErrNotFound("Lesson not found.", nil)
+		}
+		return lesson, nil
+	})
+}
+
 func (a *App) TutorList(ctx context.Context, chapterID, userID string) ([]Lesson, error) {
 	cacheKey := fmt.Sprintf("lessons:tutor:list:chap:%s:u:%s", chapterID, userID)
 

@@ -10,6 +10,7 @@ import (
 	"coursehunt/server/internals/generic"
 	"coursehunt/server/internals/pkg/cache"
 	"coursehunt/server/internals/pkg/jwt"
+	"coursehunt/server/internals/pkg/middleware"
 	"coursehunt/server/internals/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -71,7 +72,11 @@ func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo UsersLoo
 			var cached generic.RolesAndPermissionsResult
 			if hit, _ := cch.Get(c.UserContext(), cacheKey, &cached); hit {
 				role, roles, permissions, banned = cached.Role, cached.Roles, cached.Permissions, cached.Banned
-			} else if fresh, err := usersRepo.GetRolesAndPermissions(c.UserContext(), claims.Subject); err == nil {
+			} else {
+				fresh, err := usersRepo.GetRolesAndPermissions(c.UserContext(), claims.Subject)
+				if err != nil {
+					return utils.ErrUnauthorized("User account not found or session expired.", generic.ErrAuthNoUserContext)
+				}
 				role, roles, permissions, banned = fresh.Role, fresh.Roles, fresh.Permissions, fresh.Banned
 				_ = cch.Set(c.UserContext(), cacheKey, fresh, authCacheTTL)
 			}
@@ -96,3 +101,14 @@ func BaseAuthMiddleware(cfg *config.Config, cch *cache.Cache, usersRepo UsersLoo
 		return c.Next()
 	}
 }
+
+// UserFromContext reads the UserContext stored in Fiber locals (delegates to pkg/middleware).
+func UserFromContext(c *fiber.Ctx) (*generic.UserContext, error) {
+	return middleware.UserFromContext(c)
+}
+
+// UserID returns the authenticated user's ID string, or "" if unauthenticated (delegates to pkg/middleware).
+func UserID(c *fiber.Ctx) string {
+	return middleware.UserID(c)
+}
+

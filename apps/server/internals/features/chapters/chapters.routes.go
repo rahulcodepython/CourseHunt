@@ -12,11 +12,13 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	adminGuard := middlewares.PermissionGuard(generic.PermAdminCoursesInspect)
 	gAdmin := router.Group("/v1/admin/chapters", auth, adminGuard)
 	gAdmin.Get("/", a.handleAdminList)
+	gAdmin.Get("/:id", middlewares.ValidateUUIDParams("id"), a.handleAdminGetByID)
 
 	// Tutor chapter management: strictly single permission PermTutorCoursesManage
 	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
 	gTutor := router.Group("/v1/tutor/chapters", auth, tutorGuard)
 	gTutor.Get("/", a.handleTutorList)
+	gTutor.Get("/:id", middlewares.ValidateUUIDParams("id"), a.handleTutorGetByID)
 	gTutor.Post("/", a.handleCreate)
 	gTutor.Patch("/:id", middlewares.ValidateUUIDParams("id"), a.handleUpdate)
 	gTutor.Delete("/:id", middlewares.ValidateUUIDParams("id"), a.handleDelete)

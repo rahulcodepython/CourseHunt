@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { Chapter } from "@/schema/chapters.types";
 import { SortableColumnHeader } from "@/components/table/sortable-column-header";
 import { RowActions, RowActionButton } from "@/components/table/row-actions";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/common/icon";
 import { formatDuration } from "@/lib/utils/format";
 
 const columnHelper = createColumnHelper<Chapter>();
@@ -25,7 +28,18 @@ export const getChapterColumns = (courseId: string, options: ChapterColumnOption
   }),
   columnHelper.accessor("title", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Title" />,
-    cell: ({ getValue }) => <span className="font-semibold">{getValue()}</span>,
+    cell: ({ row, getValue }) => {
+      const chapter = row.original;
+      const href = `/${options.role}/courses/${courseId}/chapters/${chapter.id}/lessons`;
+      return (
+        <Link
+          href={href}
+          className="font-semibold text-foreground hover:text-primary hover:underline transition-colors"
+        >
+          {getValue()}
+        </Link>
+      );
+    },
   }),
   columnHelper.accessor("total_lectures", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Lessons" />,
@@ -42,12 +56,27 @@ export const getChapterColumns = (courseId: string, options: ChapterColumnOption
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => {
       const chapter = row.original;
+      const href = `/${options.role}/courses/${courseId}/chapters/${chapter.id}/lessons`;
+
+      if (options.role === "admin") {
+        return (
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" asChild className="h-8">
+              <Link href={href}>
+                <Icon name="book" className="mr-1.5 size-3.5" />
+                Manage
+              </Link>
+            </Button>
+          </div>
+        );
+      }
+
       return (
         <RowActions>
           <RowActionButton
             icon="book"
             label="View Lessons"
-            href={`/${options.role}/courses/${courseId}/chapters/${chapter.id}/lessons`}
+            href={href}
           />
           {options.onEdit && (
             <RowActionButton icon="pencil" label="Edit Chapter" onClick={() => options.onEdit?.(chapter)} />

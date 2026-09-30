@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { COOKIES, ROUTES } from "@/lib/constants/const";
 import { isPublicPath } from "@/lib/auth/public-routes";
 
-export default function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const sessionToken = request.cookies.get(COOKIES.SESSION_TOKEN)?.value;
   const isAuthenticated = Boolean(sessionToken);
   const { pathname } = request.nextUrl;
@@ -24,13 +24,10 @@ export default function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 3. Authenticated visitor on auth pages bounces to dashboard
-  if (isAuthenticated && pathname.startsWith("/auth/login")) {
-    return NextResponse.redirect(new URL(ROUTES.STUDENT_DASHBOARD, request.url));
-  }
-
   return NextResponse.next();
 }
+
+export default proxy;
 
 export const config = {
   matcher: [

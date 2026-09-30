@@ -2,7 +2,7 @@
 
 import React from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import authClient from "@/lib/auth/auth-client";
 import useSession from "@/hooks/use-session";
@@ -29,6 +29,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function StaffLoginForm() {
   const { refreshSession } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const [isLoading, setIsLoading] = React.useState(false);
 
   const {
@@ -69,7 +71,11 @@ export function StaffLoginForm() {
         return;
       }
 
-      router.push(mustChangePassword ? ROUTES.CHANGE_PASSWORD : getDashboardURI(user.role));
+      router.push(
+        mustChangePassword
+          ? ROUTES.CHANGE_PASSWORD
+          : (callbackUrl || getDashboardURI(user.role)),
+      );
     } catch (error) {
       console.error("Login failed:", error);
       toast.error("Failed to sign in. Please check credentials.");

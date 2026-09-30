@@ -1,59 +1,35 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  useFeedbacksQuery,
+  useInfiniteFeedbacksQuery,
   useUpdateFeedbackMutation,
   useDeleteFeedbackMutation,
 } from "@/query-hooks/feedbacks.api";
 import type { Feedback } from "@/schema/feedbacks.types";
-import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
 import { DataTable } from "@/components/table/data-table";
-import { Icon } from "@/components/common/icon";
-import { Button } from "@/components/ui/button";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 
-import { useManageCourseQuery } from "@/query-hooks/courses.api";
-import { useChaptersQuery } from "@/query-hooks/chapters.api";
-import { useLessonsQuery } from "@/query-hooks/lessons.api";
-import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
-import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
-
-export default function LessonFeedbackPage() {
+export default function AdminLessonFeedbackPage() {
   const params = useParams<{
-    courseId: string;
-    chapterId: string;
     lessonId: string;
   }>();
-  const { courseId, chapterId, lessonId } = params;
 
-  const { data: courseData } = useManageCourseQuery(courseId, "admin");
-  const { data: chaptersData } = useChaptersQuery(courseId, "admin");
-  const { data: lessonsData } = useLessonsQuery(chapterId, "admin");
-
-  const currentChapter = chaptersData?.find((ch) => ch.id === chapterId);
-  const currentLesson = lessonsData?.find((l) => l.id === lessonId);
-
-  useSetBreadcrumbs([
-    { label: "Courses", href: "/admin/courses" },
-    { label: courseData?.title || "Course", href: `/admin/courses/overview/${courseId}` },
-    { label: "Chapters", href: `/admin/courses/${courseId}/chapters` },
-    {
-      label: currentChapter?.title || "Chapter",
-      href: `/admin/courses/${courseId}/chapters/${chapterId}/lessons`,
-    },
-    { label: currentLesson?.title || "Lesson" },
-    { label: "Feedbacks" },
-  ]);
-
-  const { data: rawFeedbacks, isLoading } = useFeedbacksQuery("admin");
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteFeedbacksQuery("admin", { limit: 20 });
   const updateMutation = useUpdateFeedbackMutation();
   const deleteMutation = useDeleteFeedbackMutation("admin");
 
-  const feedbacks: Feedback[] = rawFeedbacks?.data ?? [];
+  const feedbacks: Feedback[] = data?.pages.flatMap((page) => page.data) ?? [];
+  const totalCount = data?.pages[0]?.total;
   const { deleting, setDeleting, requestDelete, confirmDelete } = useCrudDialogState<Feedback>();
 
   const handlePinToggle = async (feedback: Feedback) => {
@@ -68,22 +44,7 @@ export default function LessonFeedbackPage() {
   const columns = getColumns(handlePinToggle, requestDelete);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
-          <Link href={`/admin/courses/${courseId}/chapters/${chapterId}/lessons`}>
-            <span className="flex items-center gap-1.5">
-              <Icon name="arrow-left" className="size-4" />
-              Back to Lessons
-            </span>
-          </Link>
-        </Button>
-        <PageHeader
-          title="Lesson Feedback"
-          subtitle="Review and moderate student feedback for this lesson"
-        />
-      </div>
-
+    <div className="w-full space-y-6">
       <DataTable
         columns={columns}
         data={feedbacks}
@@ -92,6 +53,10 @@ export default function LessonFeedbackPage() {
         emptyText="No feedback found for this lesson"
         isLoading={isLoading}
         loadingText="Loading feedback..."
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
 
       <ConfirmDeleteDialog

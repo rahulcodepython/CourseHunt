@@ -14,6 +14,6 @@
     "flush": "bun --env-file=.env --filter @coursehunt/server flush",
     "dev:web": "bun --env-file=.env --filter @coursehunt/web dev",
     "dev:server": "bun --env-file=.env --filter @coursehunt/server dev",
-    "dev": "bun run deps:up && bun --env-file=.env --filter @coursehunt/server --filter @coursehunt/web dev"
+    "dev": "bun run deps:up && bun --env-file=.env --filter @coursehunt/web --filter @coursehunt/server dev"
   }
 }

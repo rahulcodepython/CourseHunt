@@ -26,3 +26,8 @@ type UpdateRoleRequest struct {
 type UpdateRolePermissionsRequest struct {
 	PermissionIDs []string `json:"permission_ids" validate:"required,max=200,dive,uuid"`
 }
+
+type RoleOption struct {
+	ID   string `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}

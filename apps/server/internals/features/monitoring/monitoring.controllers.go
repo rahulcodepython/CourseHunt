@@ -39,5 +39,10 @@ func (a *App) handleLokiQuery(c *fiber.Ctx) error {
 		return utils.ErrInternal("Failed to query Loki logs.", err)
 	}
 
-	return utils.OK(c, "Loki logs fetched.", logs)
+	activeInstances := a.GetActiveInstances(c.UserContext())
+
+	return utils.OK(c, "Loki logs fetched.", fiber.Map{
+		"logs":             logs,
+		"active_instances": activeInstances,
+	})
 }

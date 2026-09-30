@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { request, compactParams } from "@/react-query/client";
 import { z } from "zod";
 
@@ -24,6 +24,32 @@ export function useEnrollmentsQuery(
       },
       PaginatedResponseZod(ListEnrollmentResponseZod),
     ) });
+}
+
+export function useInfiniteEnrollmentsQuery(
+  params: { courseId?: string; userId?: string; limit?: number },
+  scope: "admin" | "tutor" = "admin",
+) {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_ENROLLMENTS : API_ENDPOINTS.TUTOR_ENROLLMENTS;
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.enrollments(params, scope), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: endpoint,
+          method: "GET",
+          params: compactParams({
+            course_id: params.courseId,
+            user_id: params.userId,
+            page: pageParam,
+            limit: params.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(ListEnrollmentResponseZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
+  });
 }
 
 const flipEnrollmentRevoked =

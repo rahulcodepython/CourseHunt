@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import authClient from "@/lib/auth/auth-client";
 import { useSessionStore, type SessionPayload } from "@/store/session.store";
@@ -54,38 +54,50 @@ export function buildSessionPayload(params: {
   };
 }
 
+let inflightSessionPromise: Promise<SessionPayload> | null = null;
+let hasInitialSessionFetched = false;
+
 // Validates the better-auth session via native authClient.getSession(),
 // capturing the minted JWT from set-auth-jwt response header and decoding
 // role/roles/mustChangePassword for the client Zustand store using jwtDecode
 // (permissions come from the session response itself, see buildSessionPayload).
 async function fetchSession(): Promise<SessionPayload> {
-  try {
-    let jwt: string | null = null;
-    const { data, error } = await authClient.getSession({
-      fetchOptions: {
-        onResponse: (ctx) => {
-          jwt = ctx.response.headers.get("set-auth-jwt");
-        },
-      },
-    });
-
-    if (error || !data?.user) {
-      return EMPTY_SESSION;
-    }
-
-    return buildSessionPayload({
-      user: data.user,
-      session: data.session,
-      jwtToken: jwt,
-    });
-  } catch {
-    return EMPTY_SESSION;
+  if (inflightSessionPromise) {
+    return inflightSessionPromise;
   }
+
+  inflightSessionPromise = (async () => {
+    try {
+      let jwt: string | null = null;
+      const { data, error } = await authClient.getSession({
+        fetchOptions: {
+          onResponse: (ctx) => {
+            jwt = ctx.response.headers.get("set-auth-jwt");
+          },
+        },
+      });
+
+      if (error || !data?.user) {
+        return EMPTY_SESSION;
+      }
+
+      return buildSessionPayload({
+        user: data.user,
+        session: data.session,
+        jwtToken: jwt,
+      });
+    } catch {
+      return EMPTY_SESSION;
+    } finally {
+      hasInitialSessionFetched = true;
+      inflightSessionPromise = null;
+    }
+  })();
+
+  return inflightSessionPromise;
 }
 
 export default function useSession() {
-  const hydratedRef = useRef(false);
-
   const user = useSessionStore((s) => s.user);
   const data = useSessionStore((s) => s.data);
   const token = useSessionStore((s) => s.token);
@@ -114,11 +126,7 @@ export default function useSession() {
   }, [clear]);
 
   useEffect(() => {
-    if (hydratedRef.current) return;
-    hydratedRef.current = true;
-
-    // Trigger non-blocking background validation against the backend session endpoint
-    // to refresh permissions and verify token validity without blocking initial render.
+    if (hasInitialSessionFetched) return;
     refreshSession();
   }, [refreshSession]);
 

@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
 import { EnrollmentAccessTable } from "@/components/table/enrollment-access-table";
-import { useManageCourseQuery, useManageCoursesQuery } from "@/query-hooks/courses.api";
+import { useCourseSummaryQuery } from "@/query-hooks/courses.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 
 export function CourseEnrollmentsView({ role }: { role: "admin" | "tutor" }) {
@@ -15,18 +15,14 @@ export function CourseEnrollmentsView({ role }: { role: "admin" | "tutor" }) {
   const courseId = params.courseId as string;
 
   const isAdmin = role === "admin";
-  const { data: adminCourse } = useManageCourseQuery(courseId, isAdmin ? "admin" : undefined);
-  const { data: tutorCourses } = useManageCoursesQuery(isAdmin ? undefined : { scope: "tutor" });
-  const currentCourse = isAdmin
-    ? adminCourse
-    : tutorCourses?.data?.find((c) => c.id === courseId);
+  const { data: courseSummary } = useCourseSummaryQuery(courseId);
 
   useSetBreadcrumbs([
     { label: isAdmin ? "Courses" : "My Courses", href: `/${role}/courses` },
     {
-      label: currentCourse?.title || "Course",
+      label: courseSummary?.title || "Course",
       href: isAdmin
-        ? `/admin/courses/overview/${courseId}`
+        ? `/admin/courses/${courseId}`
         : `/tutor/courses/${courseId}`,
     },
     { label: isAdmin ? "Enrolled Users" : "Enrolled Students" },

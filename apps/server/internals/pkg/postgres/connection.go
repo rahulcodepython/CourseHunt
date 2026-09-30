@@ -26,8 +26,8 @@ func Connect(cfg *config.Config) *pgxpool.Pool {
 	if cfg.DBMaxIdleConns > 0 {
 		poolConfig.MinConns = int32(cfg.DBMaxIdleConns)
 	}
-	poolConfig.MaxConnLifetime = time.Duration(cfg.DBConnMaxLifetime) * time.Minute
-	poolConfig.MaxConnIdleTime = time.Duration(cfg.DBConnMaxIdleTime) * time.Minute
+	poolConfig.MaxConnLifetime = cfg.DBConnMaxLifetime
+	poolConfig.MaxConnIdleTime = cfg.DBConnMaxIdleTime
 	poolConfig.HealthCheckPeriod = 1 * time.Minute
 
 	if poolConfig.ConnConfig.RuntimeParams == nil {

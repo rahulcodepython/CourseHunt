@@ -3,7 +3,7 @@
 import React from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import authClient from "@/lib/auth/auth-client";
 import useSession from "@/hooks/use-session";
@@ -25,6 +25,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function StudentLoginForm() {
   const { refreshSession } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
 
   const [email, setEmail] = React.useState("");
   const [otp, setOtp] = React.useState("");
@@ -67,7 +69,7 @@ export function StudentLoginForm() {
       return;
     }
     const user = payload.user as typeof payload.user & { role?: string };
-    router.push(getDashboardURI(user.role));
+    router.push(callbackUrl || getDashboardURI(user.role));
   };
 
   const verifyCode = async (e: React.FormEvent) => {
@@ -97,7 +99,10 @@ export function StudentLoginForm() {
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     try {
-      await authClient.signIn.social({ provider: "google", callbackURL: "/" });
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: callbackUrl || "/",
+      });
     } catch (error) {
       console.error("Google login failed:", error);
       toast.error("Failed to sign in with Google. Please try again.");

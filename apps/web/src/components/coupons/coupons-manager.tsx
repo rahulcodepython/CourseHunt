@@ -2,7 +2,7 @@
 import * as React from "react";
 
 import {
-  useCouponsQuery,
+  useInfiniteCouponsQuery,
   useUpdateCouponMutation,
   useDeleteCouponMutation,
 } from "@/query-hooks/coupons.api";
@@ -28,10 +28,20 @@ const COPY = {
 } as const;
 
 export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
-  const { data: raw, isLoading } = useCouponsQuery(scope);
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteCouponsQuery(scope, { limit: 12 });
   const updateMutation = useUpdateCouponMutation(scope);
   const deleteMutation = useDeleteCouponMutation(scope);
-  const coupons: Coupon[] = raw?.data ?? [];
+  const coupons: Coupon[] = React.useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
+  const totalCount = data?.pages[0]?.total ?? 0;
 
   const {
     dialogOpen: isModalOpen,
@@ -49,7 +59,7 @@ export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
     updateMutation.execute({ id: coupon.id, data: { is_active: !coupon.is_active } });
   };
 
-  if (isLoading || (!raw?.data && !coupons.length)) {
+  if (isLoading || (!data && !coupons.length)) {
     return <Loading />;
   }
 
@@ -75,6 +85,12 @@ export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
         searchPlaceholder="Search coupons..."
         emptyIcon="ticket"
         emptyText="No coupons found"
+        isLoading={isLoading}
+        loadingText="Loading coupons..."
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
 
       <FormDialog
@@ -89,11 +105,13 @@ export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
               : "Create a new discount coupon"
         }
       >
-        <CouponForm
-          editingCoupon={editingCoupon}
-          onSuccess={() => setIsModalOpen(false)}
-          scope={scope}
-        />
+        {isModalOpen && (
+          <CouponForm
+            editingCoupon={editingCoupon}
+            onSuccess={() => setIsModalOpen(false)}
+            scope={scope}
+          />
+        )}
       </FormDialog>
 
       <ConfirmDeleteDialog

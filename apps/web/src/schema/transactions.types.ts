@@ -128,3 +128,12 @@ export const SettlePayoutRequestZod = z.object({
 });
 export type SettlePayoutRequest = z.infer<typeof SettlePayoutRequestZod>;
 
+export const TransactionStatsZod = z.object({
+  total_revenue: z.number(),
+  total_refunded: z.number(),
+  pending_refunds_count: z.number(),
+  total_transactions: z.number(),
+  total_refunds: z.number(),
+});
+export type TransactionStats = z.infer<typeof TransactionStatsZod>;
+

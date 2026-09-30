@@ -21,5 +21,6 @@ export const MonitoringSnapshotZod = z.object({
   telemetry: TelemetryZod,
   services: z.record(z.string(), ServiceStatusZod),
   all_healthy: z.boolean(),
+  active_instances: z.number().optional(),
 });
 export type MonitoringSnapshot = z.infer<typeof MonitoringSnapshotZod>;

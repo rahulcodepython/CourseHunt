@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { useManageCoursesQuery, useDeleteCourseMutation } from "@/query-hooks/courses.api";
+import { useInfiniteManageCoursesQuery, useDeleteCourseMutation } from "@/query-hooks/courses.api";
 import type { Course } from "@/schema/courses.types";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/table/data-table";
@@ -16,9 +16,20 @@ import { CourseStatusDialog } from "./course-status-dialog";
 import { CourseDetailsModal } from "@/components/dialogs/course-details-modal";
 
 export default function TutorCoursesPage() {
-  const { data: rawCourses, isLoading } = useManageCoursesQuery();
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteManageCoursesQuery({ scope: "tutor", limit: 12 });
   const deleteMutation = useDeleteCourseMutation();
-  const courses: Course[] = rawCourses?.data ?? [];
+
+  const courses: Course[] = React.useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
+  const totalCount = data?.pages[0]?.total ?? 0;
 
   const {
     dialogOpen,
@@ -60,6 +71,10 @@ export default function TutorCoursesPage() {
         emptyText="No courses found"
         isLoading={isLoading}
         loadingText="Loading courses..."
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
 
       <CourseModal open={dialogOpen} onOpenChange={setDialogOpen} editingCourse={editing} />

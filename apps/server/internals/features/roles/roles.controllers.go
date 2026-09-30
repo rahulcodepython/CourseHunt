@@ -83,3 +83,11 @@ func (a *App) handleListPermissions(c *fiber.Ctx) error {
 	}
 	return utils.OK(c, "Permissions fetched.", permissions)
 }
+
+func (a *App) handleListRoleOptions(c *fiber.Ctx) error {
+	opts, err := a.ListOptions(c.UserContext())
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Role options fetched.", opts)
+}

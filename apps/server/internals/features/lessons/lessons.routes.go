@@ -12,6 +12,7 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	adminGuard := middlewares.PermissionGuard(generic.PermAdminCoursesInspect)
 	gAdmin := router.Group("/v1/admin/lessons", auth, adminGuard)
 	gAdmin.Get("/", a.handleAdminList)
+	gAdmin.Get("/:id", middlewares.ValidateUUIDParams("id"), a.handleAdminGetByID)
 	gAdmin.Get("/:id/content", middlewares.ValidateUUIDParams("id"), a.handleAdminReadContent)
 	gAdmin.Get("/:id/resources", middlewares.ValidateUUIDParams("id"), a.handleAdminReadResources)
 
@@ -19,6 +20,7 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
 	gTutor := router.Group("/v1/tutor/lessons", auth, tutorGuard)
 	gTutor.Get("/", a.handleTutorList)
+	gTutor.Get("/:id", middlewares.ValidateUUIDParams("id"), a.handleTutorGetByID)
 	gTutor.Post("/", a.handleCreate)
 	gTutor.Patch("/:id", middlewares.ValidateUUIDParams("id"), a.handleUpdate)
 	gTutor.Delete("/:id", middlewares.ValidateUUIDParams("id"), a.handleDelete)

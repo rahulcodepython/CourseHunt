@@ -131,7 +131,7 @@ export type EnrolledCourseResponse = z.infer<typeof EnrolledCourseResponseZod>;
 
 export const CourseZod = z.object({
   id: z.string(),
-  tutor_id: z.string().optional(),
+  tutor_id: z.string().nullable().optional(),
   slug: z.string(),
   title: z.string(),
   short_description: z.string().nullable().optional(),
@@ -140,17 +140,18 @@ export const CourseZod = z.object({
   preview_video_url: z.string().nullable().optional(),
   language: z.string(),
   level: z.string(),
-  actual_price: z.number(),
-  final_price: z.number(),
-  benefits: z.array(z.string()),
-  requirements: z.array(z.string()),
-  coupon_allowed: z.boolean(),
-  is_free: z.boolean(),
-  total_lectures: z.number(),
-  total_duration_seconds: z.number(),
-  rating_avg: z.number(),
-  feedback_count: z.number(),
-  student_count: z.number(),
+  actual_price: z.coerce.number(),
+  final_price: z.coerce.number(),
+  benefits: z.array(z.string()).nullish().transform((v) => v ?? []),
+  requirements: z.array(z.string()).nullish().transform((v) => v ?? []),
+  category_id: z.string().nullable().optional(),
+  coupon_allowed: z.boolean().optional().default(true),
+  is_free: z.boolean().optional().default(false),
+  total_lectures: z.coerce.number().optional().default(0),
+  total_duration_seconds: z.coerce.number().optional().default(0),
+  rating_avg: z.coerce.number().optional().default(0),
+  feedback_count: z.coerce.number().optional().default(0),
+  student_count: z.coerce.number().optional().default(0),
   status: z.string(),
   tutor: z
     .object({
@@ -164,6 +165,83 @@ export const CourseZod = z.object({
   updated_at: z.string(),
 });
 export type Course = z.infer<typeof CourseZod>;
+
+export const AdminCourseItemZod = z.object({
+  id: z.string(),
+  title: z.string(),
+  slug: z.string(),
+  image_url: z.string().nullable().optional(),
+  status: z.string(),
+  final_price: z.coerce.number(),
+  total_lectures: z.coerce.number().optional().default(0),
+  rating_avg: z.coerce.number().optional().default(0),
+  student_count: z.coerce.number().optional().default(0),
+  tutor: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      image: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+});
+export type AdminCourseItem = z.infer<typeof AdminCourseItemZod>;
+
+export const AdminCourseDetailZod = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  short_description: z.string().nullable().optional(),
+  long_description: z.string().nullable().optional(),
+  image_url: z.string().nullable().optional(),
+  language: z.string(),
+  level: z.string(),
+  actual_price: z.coerce.number(),
+  final_price: z.coerce.number(),
+  benefits: z.array(z.string()).nullish().transform((v) => v ?? []),
+  requirements: z.array(z.string()).nullish().transform((v) => v ?? []),
+  coupon_allowed: z.boolean().optional().default(true),
+  is_free: z.boolean().optional().default(false),
+  total_lectures: z.coerce.number().optional().default(0),
+  total_duration_seconds: z.coerce.number().optional().default(0),
+  rating_avg: z.coerce.number().optional().default(0),
+  feedback_count: z.coerce.number().optional().default(0),
+  student_count: z.coerce.number().optional().default(0),
+  status: z.string(),
+  tutor: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      image: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+export type AdminCourseDetail = z.infer<typeof AdminCourseDetailZod>;
+
+export const DailySalesPointZod = z.object({
+  day: z.string(),
+  date: z.string(),
+  revenue: z.coerce.number(),
+  count: z.coerce.number(),
+});
+export type DailySalesPoint = z.infer<typeof DailySalesPointZod>;
+
+export const MonthlySalesPointZod = z.object({
+  month: z.string(),
+  year_month: z.string(),
+  revenue: z.coerce.number(),
+  count: z.coerce.number(),
+});
+export type MonthlySalesPoint = z.infer<typeof MonthlySalesPointZod>;
+
+export const CourseAnalyticsResponseZod = z.object({
+  daily_sales: z.array(DailySalesPointZod).nullish().transform((v) => v ?? []),
+  monthly_sales: z.array(MonthlySalesPointZod).nullish().transform((v) => v ?? []),
+});
+export type CourseAnalyticsResponse = z.infer<typeof CourseAnalyticsResponseZod>;
 
 export const CourseStudyResponseZod = z.object({
   course: z.object({
@@ -194,3 +272,15 @@ export const CoursePublicResponseZod = z.object({
   instructor: InstructorInfoZod,
 });
 export type CoursePublicResponse = z.infer<typeof CoursePublicResponseZod>;
+
+export const CourseOptionZod = z.object({
+  id: z.string(),
+  title: z.string(),
+});
+export type CourseOption = z.infer<typeof CourseOptionZod>;
+
+export const CourseSummaryZod = z.object({
+  id: z.string(),
+  title: z.string(),
+});
+export type CourseSummary = z.infer<typeof CourseSummaryZod>;

@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { TableColumn } from "@/components/table/data-table";
-import type { Course } from "@/schema/courses.types";
+import type { AdminCourseItem } from "@/schema/courses.types";
 import { formatINR } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/common/icon";
@@ -10,20 +11,19 @@ import { SortableColumnHeader } from "@/components/table/sortable-column-header"
 import { RowActions, RowActionButton } from "@/components/table/row-actions";
 import { COURSE_STATUS } from "@/lib/constants/const";
 
-const columnHelper = createColumnHelper<Course>();
+const columnHelper = createColumnHelper<AdminCourseItem>();
 
-export const getColumns = ({
-  onViewCourse,
-}: {
-  onViewCourse: (course: Course) => void;
-}): TableColumn<Course>[] => [
+export const getColumns = (): TableColumn<AdminCourseItem>[] => [
   columnHelper.accessor("title", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Course" />,
     cell: ({ row }) => {
       const course = row.original;
       return (
-        <div className="flex items-center gap-3">
-          <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
+        <Link
+          href={`/admin/courses/${course.id}`}
+          className="group flex items-center gap-3 transition-opacity hover:opacity-90"
+        >
+          <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-muted flex items-center justify-center text-muted-foreground border">
             {course.image_url ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img src={course.image_url} alt={course.title} className="size-full object-cover" />
@@ -32,10 +32,12 @@ export const getColumns = ({
             )}
           </div>
           <div className="min-w-0">
-            <p className="max-w-70 truncate font-medium">{course.title}</p>
+            <p className="max-w-70 truncate font-medium text-foreground group-hover:underline">
+              {course.title}
+            </p>
             <p className="text-xs text-muted-foreground">{course.total_lectures} lectures</p>
           </div>
-        </div>
+        </Link>
       );
     },
   }),
@@ -113,27 +115,18 @@ export const getColumns = ({
       const course = row.original;
       return (
         <RowActions>
-          <RowActionButton icon="eye" label="View Details" onClick={() => onViewCourse(course)} />
           <RowActionButton
-            icon="hierarchy"
-            label="View Chapters"
-            href={`/admin/courses/${course.id}/chapters`}
+            icon="settings"
+            label="Manage Course"
+            href={`/admin/courses/${course.id}`}
           />
-          <RowActionButton
-            icon="help-circle"
-            label="View FAQs"
-            href={`/admin/courses/${course.id}/faqs`}
-          />
-          <RowActionButton
-            icon="users"
-            label="View Enrolled Users"
-            href={`/admin/courses/${course.id}/enrollments`}
-          />
-          <RowActionButton
-            icon="chart-bar"
-            label="View Analytics"
-            href={`/admin/courses/overview/${course.id}`}
-          />
+          {course.slug && (
+            <RowActionButton
+              icon="external-link"
+              label="View Public Page"
+              href={`/courses/${course.slug}`}
+            />
+          )}
         </RowActions>
       );
     },

@@ -1,6 +1,7 @@
 export const queryKeys = {
   authSession: () => ["auth", "session"] as const,
   categories: () => ["categories"] as const,
+  categoriesOptions: () => ["categories", "options"] as const,
   certificates: () => ["certificates"] as const,
   chapters: (courseId: string, scope?: string) =>
     scope ? (["chapters", scope, courseId] as const) : (["chapters", courseId] as const),
@@ -19,8 +20,12 @@ export const queryKeys = {
     params ? (["courses", "admin", params] as const) : (["courses", "admin"] as const),
   coursesTutor: (params?: Record<string, string | number>) =>
     params ? (["courses", "tutor", params] as const) : (["courses", "tutor"] as const),
+  courseOptions: (scope: "admin" | "tutor") => ["courses", scope, "options"] as const,
+  courseSummary: (id: string) => ["courses", id, "summary"] as const,
   courseById: (id: string, scope?: string) =>
     scope ? (["courses", scope, id] as const) : (["courses", id] as const),
+  courseAnalytics: (id: string, scope?: string) =>
+    scope ? (["courses", scope, id, "analytics"] as const) : (["courses", id, "analytics"] as const),
   courseStudy: (id: string) => ["courses", id, "study"] as const,
   courseLanding: (slug: string) => ["courses", "landing", slug] as const,
   dashboardAdmin: () => ["dashboard", "admin"] as const,
@@ -69,6 +74,7 @@ export const queryKeys = {
   quizAttemptDetail: (attemptId: string) => ["quiz", "attempts", "detail", attemptId] as const,
   transactions: (scope?: string) =>
     scope ? (["transactions", scope] as const) : (["transactions"] as const),
+  transactionStats: () => ["transactions", "admin", "stats"] as const,
   transactionsCheckout: (courseId: string) => ["transactions", "checkout", courseId] as const,
   transactionStatus: (id: string) => ["transactions", "status", id] as const,
   updates: (scope?: string) =>
@@ -79,6 +85,7 @@ export const queryKeys = {
   users: (params?: Record<string, string | number>) =>
     params ? (["users", params] as const) : (["users"] as const),
   roles: () => ["roles"] as const,
+  rolesOptions: () => ["roles", "options"] as const,
   permissions: () => ["permissions"] as const,
   wishlist: () => ["wishlist"] as const,
   refunds: (params?: Record<string, string | number>) =>

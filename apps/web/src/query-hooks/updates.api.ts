@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { request, compactParams } from "@/react-query/client";
 import { z } from "zod";
 
@@ -32,12 +32,57 @@ export function useUpdatesQuery(scope: "admin" | "tutor" = "admin") {
     ) });
 }
 
+export function useInfiniteUpdatesQuery(
+  scope: "admin" | "tutor" = "admin",
+  params?: { limit?: number },
+) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.updates(scope), "infinite", params],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: getUpdateEndpoint(scope),
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(CourseUpdateZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
+  });
+}
+
 export function useUpdateFeedQuery(params?: { page?: number; limit?: number }) {
   return useQuery({ queryKey: queryKeys.updateFeed(params), queryFn: () =>
     request(
       { url: API_ENDPOINTS.UPDATES_FEED, method: "GET", params: compactParams(params) },
       UpdateFeedResponseZod,
     ) });
+}
+
+export function useInfiniteUpdateFeedQuery(params?: { limit?: number }) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.updateFeed(params), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: API_ENDPOINTS.UPDATES_FEED,
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        UpdateFeedResponseZod,
+      ),
+    getNextPageParam: (lastPage) => (lastPage.updates.has_more ? lastPage.updates.page + 1 : undefined),
+    initialPageParam: 1,
+  });
 }
 
 export function useCreateUpdateMutation(scope: "admin" | "tutor" = "admin") {

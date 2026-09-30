@@ -1,7 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { request } from "@/react-query/client";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { request, compactParams } from "@/react-query/client";
 import { z } from "zod";
 
 import { useSimpleMutation } from "@/react-query/mutations";
@@ -40,6 +40,29 @@ export function useDiscussionsQuery(
     ) });
 }
 
+export function useInfiniteDiscussionsQuery(
+  lessonId: string,
+  limit: number = 10,
+  scope: "admin" | "tutor" | "student" = "student",
+) {
+  const endpoint = getDiscussionEndpoint(scope);
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.discussions(lessonId, scope), "infinite", limit],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: `${endpoint}/lesson/${lessonId}`,
+          method: "GET",
+          params: compactParams({ page: pageParam, limit }),
+        },
+        PaginatedResponseZod(DiscussionZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
+    enabled: Boolean(lessonId),
+  });
+}
+
 export function useDiscussionRepliesQuery(
   id: string,
   page: number = 1,
@@ -52,6 +75,29 @@ export function useDiscussionRepliesQuery(
       { url: `${endpoint}/replies/${id}`, method: "GET", params: { page, limit } },
       PaginatedResponseZod(DiscussionZod),
     ) });
+}
+
+export function useInfiniteDiscussionRepliesQuery(
+  id: string,
+  limit: number = 10,
+  scope: "admin" | "tutor" | "student" = "student",
+) {
+  const endpoint = getDiscussionEndpoint(scope);
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.discussionReplies(id, scope), "infinite", limit],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: `${endpoint}/replies/${id}`,
+          method: "GET",
+          params: compactParams({ page: pageParam, limit }),
+        },
+        PaginatedResponseZod(DiscussionZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
+    enabled: Boolean(id),
+  });
 }
 
 export function useCreateDiscussionMutation(scope: "admin" | "tutor" | "student" = "student") {

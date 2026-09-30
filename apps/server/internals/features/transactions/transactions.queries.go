@@ -253,9 +253,9 @@ func BuildListTransactionsQuery(whereClause string, limitParam, offsetParam int)
 								'error_description', t.error_description,
 								'confirmed_at', t.confirmed_at,
 								'created_at', t.created_at,
-								'user', jsonb_build_object('id', t.user_id, 'name', COALESCE(u.name, ''), 'email', COALESCE(u.email, ''), 'image', u.image),
-								'course', jsonb_build_object('id', t.course_id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url),
-								'coupon', CASE WHEN tc.coupon_id IS NOT NULL THEN jsonb_build_object('id', tc.coupon_id, 'code', COALESCE(cp.code, ''), 'discount_value', COALESCE(cp.discount_percent, 0)) ELSE jsonb_build_object('id', '', 'code', '', 'discount_value', 0) END
+								'user', jsonb_build_object('id', t.user_id, 'name', COALESCE(t.name, ''), 'email', COALESCE(t.email, ''), 'image', t.image),
+								'course', jsonb_build_object('id', t.course_id, 'title', COALESCE(t.title, ''), 'thumbnail', t.image_url),
+								'coupon', CASE WHEN t.coupon_id IS NOT NULL THEN jsonb_build_object('id', t.coupon_id, 'code', COALESCE(t.code, ''), 'discount_value', COALESCE(t.discount_percent, 0)) ELSE jsonb_build_object('id', '', 'code', '', 'discount_value', 0) END
 							) ORDER BY t.created_at DESC
 						)
 						FROM (
@@ -297,8 +297,8 @@ func BuildListRefundsQuery(whereClause string, limitParam, offsetParam int) stri
 								'error_description', r.error_description,
 								'created_at', r.created_at,
 								'refunded_at', r.refunded_at,
-								'user', jsonb_build_object('id', r.user_id, 'name', COALESCE(u.name, ''), 'email', COALESCE(u.email, ''), 'image', u.image),
-								'course', jsonb_build_object('id', r.course_id, 'title', COALESCE(c.title, ''), 'thumbnail', c.image_url)
+								'user', jsonb_build_object('id', r.user_id, 'name', COALESCE(r.name, ''), 'email', COALESCE(r.email, ''), 'image', r.image),
+								'course', jsonb_build_object('id', r.course_id, 'title', COALESCE(r.title, ''), 'thumbnail', r.image_url)
 							) ORDER BY r.created_at DESC
 						)
 						FROM (
@@ -384,5 +384,15 @@ const (
 		SET status = 'completed', reference_id = $2, processed_at = CURRENT_TIMESTAMP
 		WHERE id = $1 AND status IN ('pending', 'processing')
 		RETURNING id;
+	`
+
+	TransactionStatsQuery = `
+		SELECT json_build_object(
+			'total_revenue', COALESCE((SELECT SUM(amount) FROM transactions WHERE status = 'success'), 0),
+			'total_refunded', COALESCE((SELECT SUM(amount) FROM transaction_refunds WHERE refund_status = 'processed'), 0),
+			'pending_refunds_count', COALESCE((SELECT COUNT(*) FROM transaction_refunds WHERE refund_status = 'pending'), 0),
+			'total_transactions', COALESCE((SELECT COUNT(*) FROM transactions), 0),
+			'total_refunds', COALESCE((SELECT COUNT(*) FROM transaction_refunds), 0)
+		);
 	`
 )

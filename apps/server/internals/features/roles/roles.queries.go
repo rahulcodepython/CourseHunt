@@ -83,6 +83,19 @@ const (
 		FROM unnest($2::text[]) AS p
 		ON CONFLICT DO NOTHING;
 	`
+
+	ListRoleOptions = `
+		SELECT COALESCE(
+			jsonb_agg(
+				jsonb_build_object(
+					'id', id,
+					'name', name
+				) ORDER BY name ASC
+			), '[]'::jsonb
+		)
+		FROM roles
+		WHERE is_system = FALSE;
+	`
 )
 
 func BuildUpdateRoleQuery(setClauses string, idx int) string {

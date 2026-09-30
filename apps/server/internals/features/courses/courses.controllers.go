@@ -73,7 +73,7 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return utils.OK(c, "Courses fetched successfully.", generic.PaginatedResponse[[]Course]{
+	return utils.OK(c, "Courses fetched successfully.", generic.PaginatedResponse[[]AdminCourseItem]{
 		Data: list, Total: total, Page: page, Limit: limit,
 	})
 }
@@ -151,4 +151,49 @@ func (a *App) handleDelete(c *fiber.Ctx) error {
 		return err
 	}
 	return utils.OK(c, "Course deleted successfully.", generic.DeleteResponse{ID: id})
+}
+
+func (a *App) handleAdminCourseOptions(c *fiber.Ctx) error {
+	options, err := a.ListAdminCourseOptions(c.UserContext())
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Course options fetched successfully.", options)
+}
+
+func (a *App) handleTutorCourseOptions(c *fiber.Ctx) error {
+	tutorID := middlewares.UserID(c)
+	options, err := a.ListTutorCourseOptions(c.UserContext(), tutorID)
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Course options fetched successfully.", options)
+}
+
+func (a *App) handleCourseSummary(c *fiber.Ctx) error {
+	courseID := c.Params("id")
+	summary, err := a.GetCourseSummary(c.UserContext(), courseID)
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Course summary fetched successfully.", summary)
+}
+
+func (a *App) handleAdminCourseAnalytics(c *fiber.Ctx) error {
+	courseID := c.Params("id")
+	analytics, err := a.AdminCourseAnalytics(c.UserContext(), courseID)
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Course analytics fetched successfully.", analytics)
+}
+
+func (a *App) handleTutorCourseAnalytics(c *fiber.Ctx) error {
+	courseID := c.Params("id")
+	userID := middlewares.UserID(c)
+	analytics, err := a.TutorCourseAnalytics(c.UserContext(), courseID, userID)
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Course analytics fetched successfully.", analytics)
 }

@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { CollapsibleCheckboxList } from "@/components/common/collapsible-checkbox-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/react-query/query-keys";
-import { useRolesQuery } from "@/query-hooks/roles.api";
+import { useRoleOptionsQuery } from "@/query-hooks/roles.api";
 import { useAssignRoleMutation } from "@/query-hooks/users.api";
 
 const createUserSchema = z.object({
@@ -56,15 +56,9 @@ export function CreateUserDialog({
   // plain "user" accounts don't participate in the permission system.
   const showRolePicker = authRole !== "user";
 
-  const { data: rawRoles } = useRolesQuery();
-  const assignableRoles = React.useMemo(
-    () =>
-      (
-        (rawRoles as
-          { id: string; name: string; is_system?: boolean }[] | null | undefined) ?? []
-      ).filter((r) => !r.is_system),
-    [rawRoles],
-  );
+  const { data: assignableRoles = [] } = useRoleOptionsQuery({
+    enabled: open && showRolePicker,
+  });
 
   const [roleIds, setRoleIds] = React.useState<string[]>([]);
   const [roleError, setRoleError] = React.useState<string | null>(null);

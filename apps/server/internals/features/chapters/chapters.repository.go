@@ -10,8 +10,16 @@ func (a *App) AdminListRepository(ctx context.Context, courseID string) ([]Chapt
 	return postgres.QueryJSONSlice[Chapter](ctx, a.DB, ListAdmin, courseID)
 }
 
+func (a *App) AdminGetByIDRepository(ctx context.Context, id string) (*Chapter, error) {
+	return postgres.QueryJSON[Chapter](ctx, a.DB, GetByIDAdmin, id)
+}
+
 func (a *App) TutorListRepository(ctx context.Context, courseID, userID string) ([]Chapter, error) {
 	return postgres.QuerySliceWithStatus[Chapter](ctx, a.DB, ListScoped, chapterCourseErrMap, courseID, userID)
+}
+
+func (a *App) TutorGetByIDRepository(ctx context.Context, id, userID string) (*Chapter, error) {
+	return postgres.QueryWithStatus[Chapter](ctx, a.DB, GetByIDTutor, chapterItemErrMap, id, userID)
 }
 
 func (a *App) CreateRepository(ctx context.Context, userID, courseID string, req CreateChapterRequest) (*Chapter, error) {

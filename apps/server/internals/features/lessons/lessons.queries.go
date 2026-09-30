@@ -67,6 +67,27 @@ const (
 	`
 
 	ListAdmin = `
+		SELECT COALESCE(
+			jsonb_agg(
+				jsonb_build_object(
+					'id', l.id,
+					'chapter_id', l.chapter_id,
+					'lesson_no', l.lesson_no,
+					'title', l.title,
+					'lesson_type', l.lesson_type,
+					'short_description', l.short_description,
+					'preview_video_url', l.preview_video_url,
+					'duration_seconds', l.duration_seconds,
+					'created_at', l.created_at,
+					'updated_at', l.updated_at
+				) ORDER BY l.lesson_no ASC
+			), '[]'::jsonb
+		)
+		FROM lessons l
+		WHERE l.chapter_id = $1;
+	`
+
+	GetByIDAdmin = `
 		SELECT jsonb_build_object(
 			'id', l.id,
 			'chapter_id', l.chapter_id,
@@ -80,9 +101,32 @@ const (
 			'updated_at', l.updated_at
 		)
 		FROM lessons l
-		WHERE l.chapter_id = $1
-		ORDER BY l.lesson_no ASC;
+		WHERE l.id = $1;
 	`
+
+	GetByIDTutor = `
+		WITH lesson_info AS (
+			SELECT l.id, ch.course_id, c.tutor_id
+			FROM lessons l
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE l.id = $1
+		),
+		lesson_cte AS (
+			SELECT
+				l.id, l.chapter_id, l.lesson_no, l.title, l.lesson_type,
+				l.short_description, l.preview_video_url, l.duration_seconds,
+				l.created_at, l.updated_at
+			FROM lessons l
+			JOIN lesson_info li ON li.id = l.id
+			WHERE li.tutor_id = $2
+		)
+		SELECT
+			EXISTS(SELECT 1 FROM lesson_info) AS lesson_exists,
+			EXISTS(SELECT 1 FROM lesson_info WHERE tutor_id = $2) AS is_owner,
+			(SELECT row_to_json(lesson_cte.*) FROM lesson_cte) AS data;
+	`
+
 
 	ListScoped = `
 		WITH chapter_info AS (

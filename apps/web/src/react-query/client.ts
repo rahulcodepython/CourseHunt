@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiResponse, ApiResponseZod } from "@/schema/common.types";
 import { API_CONFIG, ERROR_MESSAGES } from "@/lib/constants/const";
 import { useSessionStore } from "@/store/session.store";
+import { clearAuthCookies } from "@/lib/auth/clear-auth-cookies";
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_CONFIG.DEFAULT_URL,
@@ -21,6 +22,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
+      clearAuthCookies();
       useSessionStore.getState().clear();
       if (typeof window !== "undefined" && !window.location.pathname.startsWith("/auth/login")) {
         window.location.assign("/auth/login");
@@ -59,6 +61,10 @@ export async function request<T>(
     if (schema) {
       const parsed = schema.safeParse(response.data.data);
       if (!parsed.success) {
+        console.error(
+          `[API Response Validation Failed] ${config.method?.toUpperCase()} ${config.url}:`,
+          parsed.error.issues,
+        );
         throw new ApiError(
           ERROR_MESSAGES.VALIDATION_FAILED,
           response.status,

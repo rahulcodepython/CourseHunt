@@ -9,6 +9,7 @@ import (
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	router.Get("/v1/categories", a.handleList)
+	router.Get("/v1/categories/options", a.handleOptions)
 
 	manage := middlewares.PermissionGuard(generic.PermAdminCategoriesManage)
 	g := router.Group("/v1/categories", auth, manage)

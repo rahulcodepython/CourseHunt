@@ -102,7 +102,7 @@ type SuccessResponse struct {
 type Response[T interface{}] struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
-	Data    T      `json:"data,omitempty"`
+	Data    T      `json:"data"`
 	Error   string `json:"error,omitempty"`
 }
 

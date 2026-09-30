@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { request, compactParams } from "@/react-query/client";
 import { z } from "zod";
 
@@ -18,6 +18,7 @@ import {
   TutorPayoutOverviewZod,
   TutorPayoutTransactionZod,
   SettlePayoutRequestZod,
+  TransactionStatsZod,
 } from "@/schema/transactions.types";
 
 export function useTransactionsQuery(
@@ -32,6 +33,41 @@ export function useTransactionsQuery(
         { url: endpoint, method: "GET", params: compactParams(params) },
         PaginatedResponseZod(TransactionZod),
       ),
+  });
+}
+
+export function useAdminTransactionStatsQuery(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.transactionStats(),
+    queryFn: () => request({ url: API_ENDPOINTS.ADMIN_TRANSACTIONS_STATS, method: "GET" }, TransactionStatsZod),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useInfiniteTransactionsQuery(
+  params?: { limit?: number },
+  scope: "admin" | "student" = "student",
+  options?: { enabled?: boolean },
+) {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_TRANSACTIONS : API_ENDPOINTS.TRANSACTIONS;
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.transactions(scope), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: endpoint,
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(TransactionZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -52,6 +88,36 @@ export function useRefundsQuery(params?: {
   });
 }
 
+export function useInfiniteRefundsQuery(
+  params?: {
+    limit?: number;
+    status?: string;
+    user_id?: string;
+    course_id?: string;
+  },
+  options?: { enabled?: boolean },
+) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.refunds(params as Record<string, string | number>), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: `${API_ENDPOINTS.ADMIN_TRANSACTIONS}/refunds`,
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(RefundTransactionZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
+    enabled: options?.enabled ?? true,
+  });
+}
+
 export function useMyRefundsQuery(params?: { page?: number; limit?: number }) {
   return useQuery({
     queryKey: queryKeys.myRefunds(params as Record<string, string | number>),
@@ -60,6 +126,31 @@ export function useMyRefundsQuery(params?: { page?: number; limit?: number }) {
         { url: `${API_ENDPOINTS.TRANSACTIONS}/refunds/me`, method: "GET", params: compactParams(params) },
         PaginatedResponseZod(RefundTransactionZod),
       ),
+  });
+}
+
+export function useInfiniteMyRefundsQuery(
+  params?: { limit?: number },
+  options?: { enabled?: boolean },
+) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.myRefunds(params as Record<string, string | number>), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: `${API_ENDPOINTS.TRANSACTIONS}/refunds/me`,
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(RefundTransactionZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -135,6 +226,31 @@ export function useAdminPayoutsQuery(params?: {
         { url: API_ENDPOINTS.ADMIN_PAYOUTS, method: "GET", params: compactParams(params) },
         PaginatedResponseZod(TutorPayoutTransactionZod),
       ),
+  });
+}
+
+export function useInfiniteAdminPayoutsQuery(params?: {
+  limit?: number;
+  status?: string;
+  tutor_id?: string;
+}) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.adminPayouts(params as Record<string, string | number>), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: API_ENDPOINTS.ADMIN_PAYOUTS,
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(TutorPayoutTransactionZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
   });
 }
 

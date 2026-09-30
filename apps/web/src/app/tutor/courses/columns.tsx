@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { TableColumn } from "@/components/table/data-table";
 import type { Course } from "@/schema/courses.types";
@@ -23,8 +24,11 @@ export const getColumns = (
     cell: ({ row }) => {
       const course = row.original;
       return (
-        <div className="flex items-center gap-3">
-          <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
+        <Link
+          href={`/tutor/courses/${course.id}`}
+          className="group flex items-center gap-3 transition-opacity hover:opacity-90"
+        >
+          <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-muted flex items-center justify-center text-muted-foreground border">
             {course.image_url ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img src={course.image_url} alt={course.title} className="size-full object-cover" />
@@ -33,10 +37,12 @@ export const getColumns = (
             )}
           </div>
           <div className="min-w-0">
-            <p className="max-w-70 truncate font-medium">{course.title}</p>
+            <p className="max-w-70 truncate font-medium text-foreground group-hover:underline">
+              {course.title}
+            </p>
             <p className="text-xs text-muted-foreground">{course.total_lectures} lectures</p>
           </div>
-        </div>
+        </Link>
       );
     },
   }),
@@ -91,23 +97,20 @@ export const getColumns = (
       const course = row.original;
       return (
         <RowActions>
-          <RowActionButton icon="eye" label="View Details" onClick={() => onViewCourse(course)} />
           <RowActionButton
-            icon="hierarchy"
-            label="View Chapters"
-            href={`/tutor/courses/${course.id}/chapters`}
+            icon="settings"
+            label="Manage Course"
+            href={`/tutor/courses/${course.id}`}
           />
-          <RowActionButton
-            icon="users"
-            label="View Enrolled Users"
-            href={`/tutor/courses/${course.id}/enrollments`}
-          />
-          <RowActionButton
-            icon="help-circle"
-            label="Manage FAQs"
-            href={`/tutor/courses/${course.id}/faqs`}
-          />
-          <RowActionButton icon="pencil" label="Edit Course" onClick={() => onEdit(course)} />
+          {course.slug && (
+            <RowActionButton
+              icon="external-link"
+              label="View Public Page"
+              href={`/courses/${course.slug}`}
+            />
+          )}
+          <RowActionButton icon="eye" label="Quick View" onClick={() => onViewCourse(course)} />
+          <RowActionButton icon="pencil" label="Edit Info" onClick={() => onEdit(course)} />
           <RowActionButton icon="globe" label="Set Status" onClick={() => onSetStatus(course)} />
           <RowActionButton
             icon="trash"

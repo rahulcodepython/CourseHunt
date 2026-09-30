@@ -4,6 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"fmt"
+	"log/slog"
+	"net/http"
+	"time"
+
+	"coursehunt/server/internals/pkg/retry"
+
 	"github.com/MicahParks/keyfunc/v3"
 	extjwt "github.com/golang-jwt/jwt/v5"
 )
@@ -26,10 +33,31 @@ type Verifier struct {
 // NewVerifier fetches the JWKS at jwksURL once and hands back a verifier
 // backed by a keyset kept fresh for the lifetime of ctx.
 func NewVerifier(ctx context.Context, jwksURL string) (*Verifier, error) {
+	client := &http.Client{Timeout: 2 * time.Second}
+
+	// Retry probe so the Go backend gracefully awaits Next.js boot instead of
+	// logging an immediate connection refused error on dual startup.
+	_ = retry.Connect("jwks", 5, 1*time.Second, func() error {
+		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, jwksURL, nil)
+		if reqErr != nil {
+			return reqErr
+		}
+		resp, respErr := client.Do(req)
+		if respErr != nil {
+			return respErr
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+		return nil
+	})
+
 	kf, err := keyfunc.NewDefaultCtx(ctx, []string{jwksURL})
 	if err != nil {
 		return nil, err
 	}
+	slog.Info("connected to jwks", "url", jwksURL)
 	return &Verifier{kf: kf}, nil
 }
 

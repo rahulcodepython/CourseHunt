@@ -44,9 +44,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   if (!isPending) {
     if (!user) {
-      // Unauthenticated: public pages (landing/courses/checkout) and
-      // /auth/* are visible; redirect everything else to login.
-      if (!isPublic && !pathname.startsWith(ROUTES.LOGIN)) shouldRedirect = ROUTES.LOGIN;
+      // Unauthenticated: public pages (landing/courses) and
+      // /auth/* are visible; redirect everything else to login with return path.
+      if (!isPublic && !pathname.startsWith(ROUTES.LOGIN)) {
+        shouldRedirect = `${ROUTES.LOGIN}?callbackUrl=${encodeURIComponent(pathname)}`;
+      }
     } else if (mustChangePassword && !isChangePassword) {
       // First-login password change enforced on all routes except the change-password page.
       shouldRedirect = ROUTES.CHANGE_PASSWORD;
@@ -56,9 +58,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } else if (!isAuthRoute && !isRouteAllowed(pathname, routePermissionMap, permissions)) {
       // Permission gate — only applies to protected routes, not /auth/*.
       shouldRedirect = roleHome;
+    } else if (pathname.startsWith(ROUTES.LOGIN)) {
+      shouldRedirect = roleHome;
     }
-    // Authenticated user on /auth/login: no-op — login page handles its own
-    // post-login navigation via router.push to avoid racing this effect.
   }
 
   useEffect(() => {

@@ -24,6 +24,15 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 	return utils.OK(c, "Chapters fetched successfully.", chapters)
 }
 
+func (a *App) handleAdminGetByID(c *fiber.Ctx) error {
+	ch, err := a.AdminGetByID(c.UserContext(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Chapter fetched successfully.", ch)
+}
+
 // --- Tutor Handlers ---
 
 func (a *App) handleTutorList(c *fiber.Ctx) error {
@@ -39,6 +48,15 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	}
 
 	return utils.OK(c, "Chapters fetched successfully.", chapters)
+}
+
+func (a *App) handleTutorGetByID(c *fiber.Ctx) error {
+	ch, err := a.TutorGetByID(c.UserContext(), c.Params("id"), middlewares.UserID(c))
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Chapter fetched successfully.", ch)
 }
 
 func (a *App) handleCreate(c *fiber.Ctx) error {

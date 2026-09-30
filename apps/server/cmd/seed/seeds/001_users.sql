@@ -32,7 +32,7 @@ ON CONFLICT (email) DO UPDATE SET
 -- NOT verify against "password123" (or any other tried candidate), so no
 -- staff account could actually sign in with the documented password.
 INSERT INTO "accounts" ("userId", "accountId", "providerId", "password")
-SELECT u.id, v.email, 'credential', v.hash
+SELECT u.id, u.id::text, 'credential', v.hash
 FROM (VALUES
     ('admin@example.com',  '3e241efba52e84fb56d8151a0467682c:1753d5e567d005f8fd62e6315225656442edd6d1a18ba6aee7d17961b350ce688d341b30c9cb748b6516354b189281315bc39f194fcc6472f8289dc5cb17b389'),
     ('superadmin@example.com', '3e241efba52e84fb56d8151a0467682c:1753d5e567d005f8fd62e6315225656442edd6d1a18ba6aee7d17961b350ce688d341b30c9cb748b6516354b189281315bc39f194fcc6472f8289dc5cb17b389'),

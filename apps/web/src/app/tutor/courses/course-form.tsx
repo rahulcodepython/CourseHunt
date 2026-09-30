@@ -3,9 +3,9 @@
 import React, { useEffect } from "react";
 
 import { useCreateCourseMutation, useUpdateCourseMutation } from "@/query-hooks/courses.api";
-import { useCategoriesQuery } from "@/query-hooks/categories.api";
+import { useCategoryOptionsQuery } from "@/query-hooks/categories.api";
 import type { Course } from "@/schema/courses.types";
-import type { Category } from "@/schema/category.types";
+import type { CategoryOption } from "@/schema/category.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,20 +71,15 @@ function splitLines(value: string): string[] {
 export function CourseForm({
   editingCourse,
   onSuccess,
+  hideCancel = false,
 }: {
   editingCourse: Course | null;
   onSuccess: () => void;
+  hideCancel?: boolean;
 }) {
   const createMutation = useCreateCourseMutation();
   const updateMutation = useUpdateCourseMutation();
-  const { data: rawCategories } = useCategoriesQuery();
-  // The categories endpoint returns either a plain array or a paginated
-  // { data: [...] } envelope depending on the caller — handle both.
-  const categories: Category[] = Array.isArray(rawCategories)
-    ? rawCategories
-    : Array.isArray(rawCategories?.data)
-      ? rawCategories.data
-      : [];
+  const { data: categories = [] } = useCategoryOptionsQuery();
 
   const {
     register,
@@ -362,9 +357,11 @@ export function CourseForm({
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onSuccess}>
-          Cancel
-        </Button>
+        {!hideCancel && (
+          <Button type="button" variant="outline" onClick={onSuccess}>
+            Cancel
+          </Button>
+        )}
         <LoadingButton type="submit" loading={createMutation.isPending || updateMutation.isPending}>
           {editingCourse ? "Save Changes" : "Create Course"}
         </LoadingButton>

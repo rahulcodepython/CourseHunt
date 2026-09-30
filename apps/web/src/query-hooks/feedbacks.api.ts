@@ -1,7 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { request } from "@/react-query/client";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { request, compactParams } from "@/react-query/client";
 import { z } from "zod";
 
 import {
@@ -25,6 +25,30 @@ function getFeedbackEndpoint(scope: "admin" | "tutor") {
 export function useFeedbacksQuery(scope: "admin" | "tutor" = "admin") {
   return useQuery({ queryKey: queryKeys.feedbacks(scope), queryFn: () =>
     request({ url: getFeedbackEndpoint(scope), method: "GET" }, PaginatedResponseZod(FeedbackZod)) });
+}
+
+export function useInfiniteFeedbacksQuery(
+  scope: "admin" | "tutor" = "admin",
+  params?: { limit?: number },
+) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.feedbacks(scope), "infinite", params],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: getFeedbackEndpoint(scope),
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(FeedbackZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
+  });
 }
 
 export function usePinnedFeedbacksQuery(courseId?: string) {

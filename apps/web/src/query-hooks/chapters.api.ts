@@ -19,13 +19,38 @@ import {
 } from "@/schema/chapters.types";
 import { DeleteResponseZod } from "@/schema/common.types";
 
-export function useChaptersQuery(courseId: string, scope: "admin" | "tutor" = "tutor") {
+export function useChaptersQuery(
+  courseId: string,
+  scope: "admin" | "tutor" = "tutor",
+  options?: { enabled?: boolean },
+) {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_CHAPTERS : API_ENDPOINTS.TUTOR_CHAPTERS;
-  return useQuery({ queryKey: queryKeys.chapters(courseId, scope), queryFn: () =>
-    request(
-      { url: endpoint, method: "GET", params: { course_id: courseId } },
-      z.array(ChapterZod),
-    ) });
+  return useQuery({
+    queryKey: queryKeys.chapters(courseId, scope),
+    queryFn: () =>
+      request(
+        { url: endpoint, method: "GET", params: { course_id: courseId } },
+        z.array(ChapterZod),
+      ),
+    enabled: options?.enabled ?? !!courseId,
+  });
+}
+
+export function useChapterQuery(
+  chapterId: string,
+  scope: "admin" | "tutor" = "tutor",
+  options?: { enabled?: boolean },
+) {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_CHAPTERS : API_ENDPOINTS.TUTOR_CHAPTERS;
+  return useQuery({
+    queryKey: ["chapter", scope, chapterId],
+    queryFn: () =>
+      request(
+        { url: `${endpoint}/${chapterId}`, method: "GET" },
+        ChapterZod,
+      ),
+    enabled: options?.enabled ?? !!chapterId,
+  });
 }
 
 export function useCreateChapterMutation(courseId: string) {

@@ -37,6 +37,23 @@ export function useLessonsQuery(chapterId: string, scope: "admin" | "tutor" = "t
     ) });
 }
 
+export function useLessonQuery(
+  lessonId: string,
+  scope: "admin" | "tutor" = "tutor",
+  options?: { enabled?: boolean },
+) {
+  const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_LESSONS : API_ENDPOINTS.TUTOR_LESSONS;
+  return useQuery({
+    queryKey: ["lesson", scope, lessonId],
+    queryFn: () =>
+      request(
+        { url: `${endpoint}/${lessonId}`, method: "GET" },
+        LessonZod,
+      ),
+    enabled: options?.enabled ?? !!lessonId,
+  });
+}
+
 export function useCreateLessonMutation(chapterId: string) {
   return useArrayMutation({
     mutationFn: (data: z.infer<typeof CreateLessonRequestZod>) =>

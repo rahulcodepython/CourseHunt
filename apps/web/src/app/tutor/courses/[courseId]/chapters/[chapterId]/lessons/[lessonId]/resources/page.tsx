@@ -12,7 +12,7 @@ import {
   useAddResourceMutation,
   useDeleteResourceMutation,
 } from "@/query-hooks/lessons.api";
-import { useManageCoursesQuery } from "@/query-hooks/courses.api";
+import { useCourseSummaryQuery } from "@/query-hooks/courses.api";
 import { useChaptersQuery } from "@/query-hooks/chapters.api";
 import { useLessonsQuery } from "@/query-hooks/lessons.api";
 import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
@@ -124,26 +124,6 @@ export default function LessonResourcesPage() {
   const params = useParams<{ courseId: string; chapterId: string; lessonId: string }>();
   const { courseId, chapterId, lessonId } = params;
 
-  const { data: rawCourses } = useManageCoursesQuery();
-  const { data: chaptersData } = useChaptersQuery(courseId);
-  const { data: lessonsData } = useLessonsQuery(chapterId);
-
-  const currentCourse = rawCourses?.data?.find((c) => c.id === courseId);
-  const currentChapter = chaptersData?.find((ch) => ch.id === chapterId);
-  const currentLesson = lessonsData?.find((l) => l.id === lessonId);
-
-  useSetBreadcrumbs([
-    { label: "My Courses", href: "/tutor/courses" },
-    { label: currentCourse?.title || "Course", href: `/tutor/courses/${courseId}` },
-    { label: "Chapters", href: `/tutor/courses/${courseId}/chapters` },
-    {
-      label: currentChapter?.title || "Chapter",
-      href: `/tutor/courses/${courseId}/chapters/${chapterId}/lessons`,
-    },
-    { label: currentLesson?.title || "Lesson" },
-    { label: "Resources" },
-  ]);
-
   const { data: rawResources, isLoading } = useLessonResourcesQuery(lessonId);
   const resources: LessonResource[] = rawResources ?? [];
   const deleteResourceMutation = useDeleteResourceMutation(lessonId);
@@ -156,26 +136,16 @@ export default function LessonResourcesPage() {
   const columns = getColumns(requestDelete);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
-          <Link href={`/tutor/courses/${courseId}/chapters/${chapterId}/lessons`}>
-            <span className="flex items-center gap-1.5">
-              <Icon name="arrow-left" className="size-4" />
-              Back to Lessons
-            </span>
-          </Link>
+    <div className="w-full space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold">Lesson Resources</h2>
+          <p className="text-sm text-muted-foreground">Downloadable material attached to this lesson</p>
+        </div>
+        <Button onClick={() => setAddOpen(true)}>
+          <Icon name="plus" className="size-4" />
+          Add Resource
         </Button>
-        <PageHeader
-          title="Lesson Resources"
-          subtitle="Downloadable material attached to this lesson"
-          actions={
-            <Button onClick={() => setAddOpen(true)}>
-              <Icon name="plus" className="size-4" />
-              Add Resource
-            </Button>
-          }
-        />
       </div>
 
       <DataTable

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useUsersQuery } from "@/query-hooks/users.api";
+import { useInfiniteUsersQuery } from "@/query-hooks/users.api";
 import { useSessionStore } from "@/store/session.store";
 import { hasPermission } from "@/lib/auth/permissions";
 import { PERMISSIONS } from "@/lib/constants/const";
@@ -41,13 +41,23 @@ export function StaffUserManager({
   const canChangePassword = hasPermission(permissions, PERMISSIONS.ADMIN_USERS_PASSWORD_RESET);
   const { canBan, currentUserId, handleBanToggle } = useUserBanActions();
 
-  const { data: rawData, isLoading } = useUsersQuery({ role });
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteUsersQuery({ role, limit: 12 });
   const [selectedUser, setSelectedUser] = React.useState<UserListResponse | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
   const [passwordUser, setPasswordUser] = React.useState<UserListResponse | null>(null);
 
-  const users: UserListResponse[] = rawData?.data ?? [];
+  const users: UserListResponse[] = React.useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
+  const totalCount = data?.pages[0]?.total ?? 0;
 
   const handleManage = (user: UserListResponse) => {
     setSelectedUser(user);
@@ -87,6 +97,10 @@ export function StaffUserManager({
         emptyText={`No ${role === "admin" ? "admins" : "tutors"} found`}
         isLoading={isLoading}
         loadingText={`Loading ${role === "admin" ? "admins" : "tutors"}...`}
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
 
       <CreateUserDialog

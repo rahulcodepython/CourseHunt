@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 
 import { useCourseLandingQuery, useEnrollFreeMutation } from "@/query-hooks/courses.api";
 import { useAddCourseToWishlistMutation } from "@/query-hooks/wishlist.api";
-import { usePinnedFeedbacksQuery } from "@/query-hooks/feedbacks.api";
 import { usePublicFaqsQuery } from "@/query-hooks/faqs.api";
 import useSession from "@/hooks/use-session";
 import { ROUTES } from "@/lib/constants/const";
@@ -24,7 +23,6 @@ import { Icon, type IconName } from "@/components/common/icon";
 import { Loading } from "@/components/common/loading";
 import UserAvatar from "@/components/common/user-avatar";
 import { LESSON_TYPE } from "@/lib/constants/const";
-import { ReviewCard } from "../../components/review-card";
 
 const LESSON_TYPE_ICON: Record<string, IconName> = {
   [LESSON_TYPE.VIDEO]: "video",
@@ -42,8 +40,6 @@ export default function CourseDetailPage() {
   const addToWishlist = useAddCourseToWishlistMutation();
 
   const course = raw;
-  const { data: rawFeedbacks } = usePinnedFeedbacksQuery(course?.id);
-  const reviews = (rawFeedbacks?.data ?? []).filter((fb) => fb.content);
   const { data: rawFaqs } = usePublicFaqsQuery(course?.id ?? "");
   const faqs = rawFaqs ?? [];
 
@@ -60,11 +56,20 @@ export default function CourseDetailPage() {
 
   const handleEnrollFree = async () => {
     if (!user) {
-      router.push(ROUTES.LOGIN);
+      router.push(`${ROUTES.LOGIN}?callbackUrl=${encodeURIComponent(`/courses/${slug}`)}`);
       return;
     }
     const res = await enrollFree.execute(course.id);
     if (res?.success) router.push(`/student/study/${course.id}`);
+  };
+
+  const handleBuy = () => {
+    const checkoutUrl = `/checkout/${course.id}`;
+    if (!user) {
+      router.push(`${ROUTES.LOGIN}?callbackUrl=${encodeURIComponent(checkoutUrl)}`);
+      return;
+    }
+    router.push(checkoutUrl);
   };
 
   return (
@@ -150,14 +155,15 @@ export default function CourseDetailPage() {
                     disabled={enrollFree.isPending}
                     onClick={handleEnrollFree}
                   >
-                    {user ? "Enroll for Free" : "Log in to Enroll"}
+                    {user ? "Enroll for Free" : "Get Started (Free)"}
                   </Button>
                 ) : (
-                  <Button className="w-full bg-green-600 hover:bg-green-700" asChild>
-                    <Link href={`/checkout/${course.id}`}>
-                      <Icon name="shopping-cart" className="size-4" />
-                      Buy Now
-                    </Link>
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={handleBuy}
+                  >
+                    <Icon name="shopping-cart" className="size-4" />
+                    {user ? "Buy Now" : "Get Started"}
                   </Button>
                 )}
 
@@ -295,17 +301,6 @@ export default function CourseDetailPage() {
                   </Accordion>
                 </CardContent>
               </Card>
-            </section>
-          )}
-
-          {reviews.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-2xl font-bold">Student Reviews</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {reviews.map((fb) => (
-                  <ReviewCard key={fb.id} feedback={fb} showCourse={false} />
-                ))}
-              </div>
             </section>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { SessionData, SessionRecord, SessionUser } from "@/schema/session.schema";
+import { clearAuthCookies } from "@/lib/auth/clear-auth-cookies";
 
 export interface SessionPayload {
   user: SessionUser | null;
@@ -56,7 +57,8 @@ export const useSessionStore = create<SessionState>()(
             user: updatedUser,
           };
         }),
-      clear: () =>
+      clear: () => {
+        clearAuthCookies();
         set({
           data: null,
           user: null,
@@ -65,7 +67,8 @@ export const useSessionStore = create<SessionState>()(
           isPending: false,
           roles: [],
           permissions: [],
-        }),
+        });
+      },
     }),
     {
       name: "coursehunt-session-storage",

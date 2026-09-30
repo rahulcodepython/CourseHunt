@@ -112,3 +112,11 @@ func (a *App) SettleAdminPayout(ctx context.Context, payoutID, referenceID strin
 	}
 	return nil
 }
+
+func (a *App) Stats(ctx context.Context) (*TransactionStats, error) {
+	stats, err := a.StatsRepository(ctx)
+	if err != nil {
+		return nil, utils.ErrInternal("Failed to fetch transaction stats.", err)
+	}
+	return stats, nil
+}

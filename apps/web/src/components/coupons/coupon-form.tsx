@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 
 import { useCreateCouponMutation, useUpdateCouponMutation } from "@/query-hooks/coupons.api";
-import { useManageCoursesQuery } from "@/query-hooks/courses.api";
+import { useCourseOptionsQuery } from "@/query-hooks/courses.api";
 import type { Coupon } from "@/schema/coupons.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,8 +56,7 @@ export function CouponForm({
 }) {
   const createMutation = useCreateCouponMutation(scope);
   const updateMutation = useUpdateCouponMutation(scope);
-  const { data: rawCourses } = useManageCoursesQuery({ limit: 100, scope });
-  const courses = rawCourses?.data ?? [];
+  const { data: courses = [] } = useCourseOptionsQuery(scope, { enabled: !editingCoupon });
 
   const {
     register,

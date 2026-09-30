@@ -101,7 +101,7 @@ func (a *App) EnrolledList(ctx context.Context, userID string, page, limit int) 
 
 // --- Admin Services ---
 
-func (a *App) AdminList(ctx context.Context, page, limit int, categoryID, subcategoryID, level, search, status, filterTutorID string) ([]Course, int, error) {
+func (a *App) AdminList(ctx context.Context, page, limit int, categoryID, subcategoryID, level, search, status, filterTutorID string) ([]AdminCourseItem, int, error) {
 	list, total, err := a.AdminListRepository(ctx, page, limit, categoryID, subcategoryID, level, search, status, filterTutorID)
 	if err != nil {
 		return nil, 0, utils.ErrInternal("Failed to fetch courses.", err)
@@ -109,12 +109,12 @@ func (a *App) AdminList(ctx context.Context, page, limit int, categoryID, subcat
 	return list, total, nil
 }
 
-func (a *App) AdminGetByID(ctx context.Context, id string) (*Course, error) {
+func (a *App) AdminGetByID(ctx context.Context, id string) (*AdminCourseDetail, error) {
 	cacheKey := fmt.Sprintf("courses:admin:get:id:%s", id)
 
 	res, err := cache.FetchOrNegative(ctx, a.Cache, cacheKey, 5*time.Minute, func(e error) bool {
 		return errors.Is(e, generic.ErrCoursesCourseNotFound) || errors.Is(e, postgres.ErrNotFound)
-	}, func() (*Course, error) {
+	}, func() (*AdminCourseDetail, error) {
 		course, err := a.AdminGetByIDRepository(ctx, id)
 		if err != nil {
 			return nil, err
@@ -237,4 +237,27 @@ func (a *App) Delete(ctx context.Context, id, userID string) (string, error) {
 	a.Cache.Invalidate(ctx, "courses:*")
 
 	return deletedID, nil
+}
+
+func (a *App) AdminCourseAnalytics(ctx context.Context, courseID string) (*CourseAnalyticsResponse, error) {
+	data, err := a.GetCourseAnalyticsRepository(ctx, courseID)
+	if err != nil {
+		return nil, utils.ErrInternal("Failed to fetch course analytics.", err)
+	}
+	return data, nil
+}
+
+func (a *App) TutorCourseAnalytics(ctx context.Context, courseID, userID string) (*CourseAnalyticsResponse, error) {
+	_, err := a.TutorGetByIDRepository(ctx, courseID, userID)
+	if err != nil {
+		if errors.Is(err, generic.ErrCoursesCourseNotFound) {
+			return nil, utils.ErrNotFound("Course not found.", err)
+		}
+		return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+	}
+	data, err := a.GetCourseAnalyticsRepository(ctx, courseID)
+	if err != nil {
+		return nil, utils.ErrInternal("Failed to fetch course analytics.", err)
+	}
+	return data, nil
 }

@@ -109,6 +109,14 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 	})
 }
 
+func (a *App) handleAdminStats(c *fiber.Ctx) error {
+	stats, err := a.Stats(c.UserContext())
+	if err != nil {
+		return err
+	}
+	return utils.OK(c, "Transaction stats fetched successfully.", stats)
+}
+
 func (a *App) handleAdminListRefunds(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	targetUserID := c.Query("user_id")

@@ -32,3 +32,9 @@ export const RolePermissionUpdateZod = z.object({
   permission_ids: z.array(z.string()),
 });
 export type RolePermissionUpdate = z.infer<typeof RolePermissionUpdateZod>;
+
+export const RoleOptionZod = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+export type RoleOption = z.infer<typeof RoleOptionZod>;

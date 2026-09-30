@@ -140,3 +140,13 @@ func (a *App) ListPermissions(ctx context.Context) ([]Permission, error) {
 		return permissions, nil
 	})
 }
+
+func (a *App) ListOptions(ctx context.Context) ([]RoleOption, error) {
+	return cache.Fetch(ctx, a.Cache, "roles:options", 10*time.Minute, func() ([]RoleOption, error) {
+		opts, err := a.ListRoleOptionsRepository(ctx)
+		if err != nil {
+			return nil, utils.ErrInternal("Failed to fetch role options.", err)
+		}
+		return opts, nil
+	})
+}

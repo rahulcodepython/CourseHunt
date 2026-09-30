@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { request, compactParams } from "@/react-query/client";
 
 import {
@@ -22,6 +22,27 @@ export function useWishlistQuery(params?: Record<string, string | number>) {
         { url: API_ENDPOINTS.WISHLIST, method: "GET", params: compactParams(params) },
         PaginatedResponseZod(WishlistItemZod),
       ),
+  });
+}
+
+export function useInfiniteWishlistQuery(params?: Record<string, string | number>) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.wishlist(), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: API_ENDPOINTS.WISHLIST,
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(WishlistItemZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
   });
 }
 

@@ -128,7 +128,9 @@ export const API_ENDPOINTS = {
   COURSES: "/api/v1/courses",
   COURSES_ENROLLED: "/api/v1/courses/enrolled",
   ADMIN_COURSES: "/api/v1/admin/courses",
+  ADMIN_COURSES_OPTIONS: "/api/v1/admin/courses/options",
   TUTOR_COURSES: "/api/v1/tutor/courses",
+  TUTOR_COURSES_OPTIONS: "/api/v1/tutor/courses/options",
 
   ADMIN_CHAPTERS: "/api/v1/admin/chapters",
   TUTOR_CHAPTERS: "/api/v1/tutor/chapters",
@@ -162,6 +164,7 @@ export const API_ENDPOINTS = {
   FEEDBACKS_PINNED: "/api/v1/feedbacks/pinned",
 
   ADMIN_TRANSACTIONS: "/api/v1/admin/transactions",
+  ADMIN_TRANSACTIONS_STATS: "/api/v1/admin/transactions/stats",
   TRANSACTIONS: "/api/v1/transactions",
   TRANSACTIONS_INITIATE: "/api/v1/transactions/initiate",
 
@@ -171,8 +174,10 @@ export const API_ENDPOINTS = {
 
   USERS: "/api/v1/users",
   ROLES: "/api/v1/roles",
+  ROLES_OPTIONS: "/api/v1/roles/options",
   PERMISSIONS: "/api/v1/permissions",
   CATEGORIES: "/api/v1/categories",
+  CATEGORIES_OPTIONS: "/api/v1/categories/options",
   CERTIFICATES: "/api/v1/certificates",
   DASHBOARD_ADMIN: "/api/v1/dashboard/admin",
   DASHBOARD_TUTOR: "/api/v1/dashboard/tutor",

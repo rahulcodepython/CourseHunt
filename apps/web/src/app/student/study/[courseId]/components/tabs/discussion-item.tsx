@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import {
-  useDiscussionRepliesQuery,
+  useInfiniteDiscussionRepliesQuery,
   useCreateDiscussionMutation,
   useUpdateDiscussionMutation,
   useDeleteDiscussionMutation,
@@ -16,7 +16,6 @@ import { Icon } from "@/components/common/icon";
 import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
 import { formatDateTime } from "@/lib/utils/format";
 import useSession from "@/hooks/use-session";
-import { mergeListPage } from "@/lib/utils/merge-list-page";
 
 const REPLIES_PAGE_SIZE = 5;
 
@@ -186,25 +185,23 @@ function DiscussionReplies({
   canDeleteAny?: boolean;
   scope?: "admin" | "tutor" | "student";
 }) {
-  const [page, setPage] = React.useState(1);
   const [items, setItems] = React.useState<Discussion[]>([]);
   const [replyText, setReplyText] = React.useState("");
 
   const {
-    data: raw,
+    data,
     isLoading,
-    isFetching,
-  } = useDiscussionRepliesQuery(parentId, page, REPLIES_PAGE_SIZE, scope);
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteDiscussionRepliesQuery(parentId, REPLIES_PAGE_SIZE, scope);
   const createReply = useCreateDiscussionMutation(scope);
 
   React.useEffect(() => {
-    const pageItems = Array.isArray(raw) ? raw : raw?.data;
-    if (!pageItems) return;
-    setItems((prev) => mergeListPage(prev, pageItems));
-  }, [raw]);
-
-  const total = (raw as any)?.total ?? (Array.isArray(raw) ? raw.length : raw?.data?.length ?? 0);
-  const hasMore = items.length < total;
+    if (data?.pages) {
+      setItems(data.pages.flatMap((page) => page.data));
+    }
+  }, [data]);
 
   const submitReply = async () => {
     if (!replyText.trim()) return;
@@ -247,14 +244,14 @@ function DiscussionReplies({
         ))
       )}
 
-      {hasMore && (
+      {hasNextPage && (
         <button
           type="button"
-          disabled={isFetching}
+          disabled={isFetchingNextPage}
           className="text-xs font-medium text-muted-foreground hover:text-foreground"
-          onClick={() => setPage((p) => p + 1)}
+          onClick={() => fetchNextPage()}
         >
-          {isFetching ? "Loading..." : "Load more replies"}
+          {isFetchingNextPage ? "Loading..." : "Load more replies"}
         </button>
       )}
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { request } from "@/react-query/client";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { request, compactParams } from "@/react-query/client";
 import { z } from "zod";
 
 import {
@@ -27,6 +27,30 @@ function getCouponEndpoint(scope: "admin" | "tutor") {
 export function useCouponsQuery(scope: "admin" | "tutor" = "admin") {
   return useQuery({ queryKey: queryKeys.coupons(scope), queryFn: () =>
     request({ url: getCouponEndpoint(scope), method: "GET" }, PaginatedResponseZod(CouponZod)) });
+}
+
+export function useInfiniteCouponsQuery(
+  scope: "admin" | "tutor" = "admin",
+  params?: { limit?: number },
+) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.coupons(scope), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: getCouponEndpoint(scope),
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(CouponZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
+  });
 }
 
 export function useCheckCouponQuery(code: string, courseId: string, enabled: boolean) {

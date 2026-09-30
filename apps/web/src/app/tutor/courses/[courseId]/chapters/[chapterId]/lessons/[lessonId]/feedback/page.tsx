@@ -1,55 +1,26 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useFeedbacksQuery, useDeleteFeedbackMutation } from "@/query-hooks/feedbacks.api";
+import { useInfiniteFeedbacksQuery, useDeleteFeedbackMutation } from "@/query-hooks/feedbacks.api";
 import type { Feedback } from "@/schema/feedbacks.types";
-import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
 import { DataTable } from "@/components/table/data-table";
-import { Icon } from "@/components/common/icon";
-import { Button } from "@/components/ui/button";
+import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 
-import { useManageCoursesQuery } from "@/query-hooks/courses.api";
-import { useChaptersQuery } from "@/query-hooks/chapters.api";
-import { useLessonsQuery } from "@/query-hooks/lessons.api";
-import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
-import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
-
 export default function TutorLessonFeedbackPage() {
-  const params = useParams<{
-    courseId: string;
-    chapterId: string;
-    lessonId: string;
-  }>();
-  const { courseId, chapterId, lessonId } = params;
-
-  const { data: rawCourses } = useManageCoursesQuery({ scope: "tutor" });
-  const { data: chaptersData } = useChaptersQuery(courseId, "tutor");
-  const { data: lessonsData } = useLessonsQuery(chapterId, "tutor");
-
-  const currentCourse = rawCourses?.data?.find((c) => c.id === courseId);
-  const currentChapter = chaptersData?.find((ch) => ch.id === chapterId);
-  const currentLesson = lessonsData?.find((l) => l.id === lessonId);
-
-  useSetBreadcrumbs([
-    { label: "My Courses", href: "/tutor/courses" },
-    { label: currentCourse?.title || "Course", href: `/tutor/courses/${courseId}` },
-    { label: "Chapters", href: `/tutor/courses/${courseId}/chapters` },
-    {
-      label: currentChapter?.title || "Chapter",
-      href: `/tutor/courses/${courseId}/chapters/${chapterId}/lessons`,
-    },
-    { label: currentLesson?.title || "Lesson" },
-    { label: "Feedbacks" },
-  ]);
-
-  const { data: rawFeedbacks, isLoading } = useFeedbacksQuery("tutor");
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteFeedbacksQuery("tutor", { limit: 20 });
   const deleteMutation = useDeleteFeedbackMutation("tutor");
 
-  const feedbacks: Feedback[] = rawFeedbacks?.data ?? [];
+  const feedbacks: Feedback[] = data?.pages.flatMap((page) => page.data) ?? [];
+  const totalCount = data?.pages[0]?.total;
   const { deleting, setDeleting, requestDelete, confirmDelete } = useCrudDialogState<Feedback>();
 
   const handleDelete = () => confirmDelete(deleteMutation.execute);
@@ -57,27 +28,19 @@ export default function TutorLessonFeedbackPage() {
   const columns = getColumns(requestDelete);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
-          <Link href={`/tutor/courses/${courseId}/chapters/${chapterId}/lessons`}>
-            <span className="flex items-center gap-1.5">
-              <Icon name="arrow-left" className="size-4" />
-              Back to Lessons
-            </span>
-          </Link>
-        </Button>
-        <PageHeader title="Lesson Feedback" subtitle="Review and moderate student feedback" />
-      </div>
-
+    <div className="w-full space-y-6">
       <DataTable
         columns={columns}
         data={feedbacks}
         searchPlaceholder="Search feedback..."
         emptyIcon="star"
-        emptyText="No feedback found"
+        emptyText="No feedback found for this lesson"
         isLoading={isLoading}
         loadingText="Loading feedback..."
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
 
       <ConfirmDeleteDialog

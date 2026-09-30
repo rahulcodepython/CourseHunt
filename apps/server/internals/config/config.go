@@ -54,7 +54,7 @@ type Config struct {
 
 	// Observability & Server Tuning
 	RequestTimeoutSec int    `env:"REQUEST_TIMEOUT_SEC" envDefault:"30" validate:"min=1"`
-	LokiURL           string `env:"LOKI_URL" envDefault:"http://loki:3100" validate:"url"`
+	LokiURL           string `env:"LOKI_URL" envDefault:"http://localhost:3100" validate:"url"`
 
 	// SMTP / Transactional Mailer
 	SMTPHost     string `env:"SMTP_HOST" envDefault:"localhost"`

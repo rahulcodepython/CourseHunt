@@ -200,4 +200,5 @@ func (r *Router) SetUp() {
 	// Start resilient background workers
 	r.Transactions.StartBackgroundWorkers(r.RootCtx)
 	r.Security.StartBackgroundWorkers(r.RootCtx)
+	r.Monitoring.StartHeartbeat(r.RootCtx)
 }

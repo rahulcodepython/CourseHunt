@@ -1,4 +1,4 @@
-package middlewares
+package middleware
 
 import (
 	"context"
@@ -13,9 +13,7 @@ import (
 // Audit rows are written by a small fixed pool of workers instead of a
 // goroutine per request — under a traffic spike or a slow DB, spawning one
 // goroutine per request has no upper bound and amplifies the outage instead
-// of shedding load. The queue is a bounded buffer; a full queue drops the
-// row (audit logging is best-effort and must never add request latency)
-// rather than blocking the caller.
+// of shedding load.
 const (
 	auditWorkerCount = 8
 	auditQueueSize   = 512
@@ -34,15 +32,18 @@ var (
 	auditQueueOnce sync.Once
 )
 
-func startAuditWorkers() {
-	auditQueue = make(chan auditJob, auditQueueSize)
-	for range auditWorkerCount {
-		go func() {
-			for job := range auditQueue {
-				execAuditRow(job)
-			}
-		}()
-	}
+// StartAuditWorkers initializes the background worker pool for database audit logs.
+func StartAuditWorkers() {
+	auditQueueOnce.Do(func() {
+		auditQueue = make(chan auditJob, auditQueueSize)
+		for range auditWorkerCount {
+			go func() {
+				for job := range auditQueue {
+					execAuditRow(job)
+				}
+			}()
+		}
+	})
 }
 
 func execAuditRow(j auditJob) {
@@ -76,13 +77,13 @@ func execAuditRow(j auditJob) {
 	}
 }
 
-// shouldAudit returns whether a request produces any audit log, notification, or security event row.
-func shouldAudit(method string, status int) bool {
+// ShouldAudit returns whether a request produces any audit log, notification, or security event row.
+func ShouldAudit(method string, status int) bool {
 	return method != fiber.MethodGet || status >= 500 || status == 401 || status == 403 || status == 429
 }
 
-// writeAuditRow enqueues the operational audit trail for this request onto the bounded worker pool.
-func writeAuditRow(db *pgxpool.Pool, method, routePath string, status int, userID *string, ip, userAgent, logMessage, notifMessage string) {
+// WriteAuditRow enqueues the operational audit trail for this request onto the bounded worker pool.
+func WriteAuditRow(db *pgxpool.Pool, method, routePath string, status int, userID *string, ip, userAgent, logMessage, notifMessage string) {
 	if db == nil || auditQueue == nil {
 		return
 	}

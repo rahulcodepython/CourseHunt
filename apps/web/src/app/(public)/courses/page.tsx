@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CourseCard } from "../components/course-card";
+import { CourseCard } from "../../../components/landing/course-card";
 
 const PAGE_SIZE = 12;
 

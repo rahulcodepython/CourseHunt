@@ -41,19 +41,37 @@ export function NotificationBell() {
 
   const [open, setOpen] = React.useState(false);
   const [seenCount, setSeenCount] = React.useState(0);
+  const lastMarkedIdRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
-    if (open) {
-      setSeenCount(items.length);
-      if (items.length > 0 && items[0]?.id) {
-        markNotificationsSeen(items[0].id).catch(() => {});
+    if (typeof window !== "undefined" && user?.id) {
+      const saved = sessionStorage.getItem(`last_seen_notif_${user.id}`);
+      if (saved) {
+        lastMarkedIdRef.current = parseInt(saved, 10);
       }
     }
-  }, [open, items]);
+  }, [user?.id]);
+
+  const newestId = items[0]?.id;
+  const hasUnseen =
+    items.length > 0 &&
+    newestId !== undefined &&
+    (lastMarkedIdRef.current === null || newestId > lastMarkedIdRef.current);
+
+  React.useEffect(() => {
+    if (open && hasUnseen && newestId !== undefined) {
+      lastMarkedIdRef.current = newestId;
+      if (user?.id) {
+        sessionStorage.setItem(`last_seen_notif_${user.id}`, String(newestId));
+      }
+      setSeenCount(items.length);
+      markNotificationsSeen(newestId).catch(() => {});
+    }
+  }, [open, hasUnseen, newestId, items.length, user?.id]);
 
   if (!enabled) return null;
 
-  const unseen = Math.max(0, items.length - seenCount);
+  const unseen = hasUnseen ? Math.max(0, items.length - seenCount) : 0;
   const recent = items.slice(0, 10);
   const href = NOTIFICATION_ROUTES[role] ?? "/";
 

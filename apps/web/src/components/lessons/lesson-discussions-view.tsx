@@ -1,77 +1,23 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Icon } from "@/components/common/icon";
-import { useManageCourseQuery, useManageCoursesQuery } from "@/query-hooks/courses.api";
-import { useChaptersQuery } from "@/query-hooks/chapters.api";
-import { useLessonsQuery } from "@/query-hooks/lessons.api";
-import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { DiscussionsTab } from "@/app/student/study/[courseId]/components/tabs/discussions-tab";
 
 export function LessonDiscussionsView({ scope }: { scope: "admin" | "tutor" }) {
-  const params = useParams<{
-    courseId: string;
-    chapterId: string;
-    lessonId: string;
-  }>();
-  const { courseId, chapterId, lessonId } = params;
-
-  const isAdmin = scope === "admin";
-  const { data: adminCourse } = useManageCourseQuery(courseId, isAdmin ? "admin" : undefined);
-  const { data: tutorCourses } = useManageCoursesQuery(isAdmin ? undefined : { scope: "tutor" });
-  const { data: chaptersData } = useChaptersQuery(courseId, scope);
-  const { data: lessonsData } = useLessonsQuery(chapterId, scope);
-
-  const currentCourse = isAdmin
-    ? adminCourse
-    : tutorCourses?.data?.find((c) => c.id === courseId);
-  const currentChapter = chaptersData?.find((ch) => ch.id === chapterId);
-  const currentLesson = lessonsData?.find((l) => l.id === lessonId);
-
-  const basePath = `/${scope}/courses`;
-
-  useSetBreadcrumbs([
-    { label: isAdmin ? "Courses" : "My Courses", href: basePath },
-    {
-      label: currentCourse?.title || "Course",
-      href: isAdmin ? `${basePath}/overview/${courseId}` : `${basePath}/${courseId}`,
-    },
-    { label: "Chapters", href: `${basePath}/${courseId}/chapters` },
-    {
-      label: currentChapter?.title || "Chapter",
-      href: `${basePath}/${courseId}/chapters/${chapterId}/lessons`,
-    },
-    { label: currentLesson?.title || "Lesson" },
-    { label: "Discussions" },
-  ]);
+  const params = useParams<{ lessonId: string }>();
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
-          <Link href={`${basePath}/${courseId}/chapters/${chapterId}/lessons`}>
-            <span className="flex items-center gap-1.5">
-              <Icon name="arrow-left" className="size-4" />
-              Back to Lessons
-            </span>
-          </Link>
-        </Button>
-        <PageHeader
-          title="Lesson Discussions"
-          subtitle="Moderate and participate in discussions for this lesson"
+    <Card className="w-full shadow-sm">
+      <CardContent className="p-6">
+        <DiscussionsTab
+          lessonId={params.lessonId}
+          scope={scope}
+          canEditAny
+          canDeleteAny
         />
-      </div>
-
-      <Card className="shadow-sm">
-        <CardContent className="p-6">
-          <DiscussionsTab lessonId={lessonId} scope={scope} canEditAny canDeleteAny />
-        </CardContent>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

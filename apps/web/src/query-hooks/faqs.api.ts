@@ -15,17 +15,31 @@ import { API_ENDPOINTS } from "@/lib/constants/const";
 import { FaqZod, CreateFaqRequestZod, UpdateFaqRequestZod } from "@/schema/faqs.types";
 import { DeleteResponseZod } from "@/schema/common.types";
 
-export function useFaqsQuery(courseId: string, scope: "admin" | "tutor" = "tutor") {
+const FaqsListZod = z.array(FaqZod).nullish().transform((val) => val ?? []);
+
+export function useFaqsQuery(
+  courseId: string,
+  scope: "admin" | "tutor" = "tutor",
+  options?: { enabled?: boolean },
+) {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_FAQS : API_ENDPOINTS.TUTOR_FAQS;
-  return useQuery({ queryKey: queryKeys.faqs(courseId, scope), queryFn: () => request({ url: endpoint, method: "GET", params: { course_id: courseId } }, z.array(FaqZod)), enabled: !!courseId });
+  return useQuery({
+    queryKey: queryKeys.faqs(courseId, scope),
+    queryFn: () => request({ url: endpoint, method: "GET", params: { course_id: courseId } }, FaqsListZod),
+    enabled: options?.enabled ?? !!courseId,
+  });
 }
 
 export function usePublicFaqsQuery(courseId: string) {
-  return useQuery({ queryKey: queryKeys.faqsPublic(courseId), queryFn: () =>
+  return useQuery({
+    queryKey: queryKeys.faqsPublic(courseId),
+    queryFn: () =>
       request(
         { url: API_ENDPOINTS.FAQS_PUBLIC, method: "GET", params: { course_id: courseId } },
-        z.array(FaqZod),
-      ), enabled: !!courseId });
+        FaqsListZod,
+      ),
+    enabled: !!courseId,
+  });
 }
 
 export function useCreateFaqMutation(courseId: string) {

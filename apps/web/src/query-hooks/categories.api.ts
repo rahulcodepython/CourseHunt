@@ -14,6 +14,7 @@ import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
 import {
   Category,
+  CategoryOptionZod,
   CategoryZod,
   CreateCategoryRequestZod,
   UpdateCategoryRequestZod,
@@ -26,6 +27,14 @@ export function useCategoriesQuery() {
       { url: API_ENDPOINTS.CATEGORIES, method: "GET" },
       z.union([z.array(CategoryZod), PaginatedResponseZod(CategoryZod)]),
     ) });
+}
+
+export function useCategoryOptionsQuery(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.categoriesOptions(),
+    queryFn: () => request({ url: API_ENDPOINTS.CATEGORIES_OPTIONS, method: "GET" }, z.array(CategoryOptionZod)),
+    enabled: options?.enabled ?? true,
+  });
 }
 
 export function useCreateCategoryMutation() {

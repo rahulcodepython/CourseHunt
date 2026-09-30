@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import useSession from "@/hooks/use-session";
 import { getDashboardURI, ROUTES } from "@/lib/constants/const";
+import Image from "next/image";
 
 export function SiteHeader() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export function SiteHeader() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href={ROUTES.HOME} className="flex items-center gap-2 font-bold">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Icon name="book" className="size-4.5" />
+            <Image src={'/logo.png'} alt="Logo" width={100} height={100} />
           </div>
           CourseHunt
         </Link>

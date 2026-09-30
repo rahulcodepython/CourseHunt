@@ -24,6 +24,15 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 	return utils.OK(c, "Lessons fetched successfully.", lessons)
 }
 
+func (a *App) handleAdminGetByID(c *fiber.Ctx) error {
+	lesson, err := a.AdminGetByID(c.UserContext(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Lesson fetched successfully.", lesson)
+}
+
 func (a *App) handleAdminReadContent(c *fiber.Ctx) error {
 	resp, err := a.AdminReadContent(c.UserContext(), c.Params("id"))
 	if err != nil {
@@ -57,6 +66,15 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	}
 
 	return utils.OK(c, "Lessons fetched successfully.", lessons)
+}
+
+func (a *App) handleTutorGetByID(c *fiber.Ctx) error {
+	lesson, err := a.TutorGetByID(c.UserContext(), c.Params("id"), middlewares.UserID(c))
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Lesson fetched successfully.", lesson)
 }
 
 func (a *App) handleTutorReadContent(c *fiber.Ctx) error {

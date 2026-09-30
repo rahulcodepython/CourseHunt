@@ -23,6 +23,60 @@ const (
 		WHERE ch.course_id = $1;
 	`
 
+	GetByIDAdmin = `
+		SELECT jsonb_build_object(
+			'id', ch.id,
+			'course_id', ch.course_id,
+			'chapter_no', ch.chapter_no,
+			'title', ch.title,
+			'total_lectures', ch.total_lectures,
+			'total_duration_seconds', ch.total_duration_seconds,
+			'unlock_days_after_enrollment', ch.unlock_days_after_enrollment,
+			'unlock_at', ch.unlock_at,
+			'prerequisite_chapter_id', ch.prerequisite_chapter_id,
+			'created_at', ch.created_at,
+			'updated_at', ch.updated_at
+		)
+		FROM chapters ch
+		WHERE ch.id = $1;
+	`
+
+	GetByIDTutor = `
+		WITH chapter_info AS (
+			SELECT ch.id, ch.course_id, c.tutor_id
+			FROM chapters ch
+			JOIN courses c ON c.id = ch.course_id
+			WHERE ch.id = $1
+		)
+		SELECT 
+			CASE
+				WHEN NOT EXISTS(SELECT 1 FROM chapter_info) THEN 1
+				WHEN (SELECT tutor_id FROM chapter_info) != $2 THEN 2
+				ELSE 0
+			END AS status_code,
+			CASE
+				WHEN EXISTS(SELECT 1 FROM chapter_info WHERE tutor_id = $2) THEN (
+					SELECT jsonb_build_object(
+						'id', ch.id,
+						'course_id', ch.course_id,
+						'chapter_no', ch.chapter_no,
+						'title', ch.title,
+						'total_lectures', ch.total_lectures,
+						'total_duration_seconds', ch.total_duration_seconds,
+						'unlock_days_after_enrollment', ch.unlock_days_after_enrollment,
+						'unlock_at', ch.unlock_at,
+						'prerequisite_chapter_id', ch.prerequisite_chapter_id,
+						'created_at', ch.created_at,
+						'updated_at', ch.updated_at
+					)
+					FROM chapters ch
+					WHERE ch.id = $1
+				)
+				ELSE NULL
+			END AS data;
+	`
+
+
 	ListScoped = `
 		WITH auth_check AS (
 			SELECT

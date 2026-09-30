@@ -231,6 +231,35 @@ const (
 		WHERE c.slug = $1 AND c.status = 'published';
 	`
 
+	AdminGetByID = `
+		WITH enrollment_counts AS (
+			SELECT e.course_id, COUNT(*) AS student_count
+			FROM enrollments e
+			WHERE e.revoked = false
+			GROUP BY e.course_id
+		)
+		SELECT row_to_json(data) AS data
+		FROM (
+			SELECT c.id, c.slug, c.title, c.short_description, c.long_description, c.image_url,
+			       c.language, c.level, c.actual_price, c.final_price, COALESCE(c.benefits, '{}') AS benefits, COALESCE(c.requirements, '{}') AS requirements,
+			       c.coupon_allowed, c.is_free, c.status, c.total_lectures, c.total_duration_seconds, c.rating_avg, c.feedback_count,
+			       COALESCE(ec.student_count, 0) AS student_count,
+			       CASE
+			       		WHEN t.id IS NOT NULL THEN jsonb_build_object(
+			       			'id', t.id,
+			       			'name', COALESCE(t.name, ''),
+			       			'image', t.image
+			       		)
+			       		ELSE NULL
+			       END AS tutor,
+			       c.created_at, c.updated_at
+			FROM courses c
+			LEFT JOIN enrollment_counts ec ON ec.course_id = c.id
+			LEFT JOIN "users" t ON c.tutor_id = t.id
+			WHERE c.id = $1
+		) data;
+	`
+
 	GetByID = `
 		WITH enrollment_counts AS (
 			SELECT e.course_id, COUNT(*) AS student_count
@@ -327,6 +356,52 @@ func BuildPublicListQuery(whereStr string, idx int) string {
 	`, whereStr, whereStr, idx, idx+1)
 }
 
+func BuildAdminListQuery(whereStr string, idx int) string {
+	return fmt.Sprintf(`
+		WITH enrollment_counts AS (
+			SELECT e.course_id, COUNT(*) AS student_count
+			FROM enrollments e
+			WHERE e.revoked = false
+			GROUP BY e.course_id
+		)
+		SELECT jsonb_build_object(
+			'total', COALESCE((SELECT COUNT(*) FROM courses c WHERE %s), 0),
+			'data', COALESCE((
+				SELECT jsonb_agg(
+					jsonb_build_object(
+						'id', c.id,
+						'title', c.title,
+						'slug', c.slug,
+						'image_url', c.image_url,
+						'status', c.status,
+						'final_price', c.final_price,
+						'total_lectures', c.total_lectures,
+						'rating_avg', c.rating_avg,
+						'student_count', COALESCE(ec.student_count, 0),
+						'tutor', CASE
+							WHEN t.id IS NOT NULL THEN jsonb_build_object(
+								'id', t.id,
+								'name', COALESCE(t.name, ''),
+								'image', t.image
+							)
+							ELSE NULL
+						END
+					) ORDER BY c.created_at DESC
+				)
+				FROM (
+					SELECT c.id, c.title, c.slug, c.image_url, c.status, c.final_price, c.total_lectures, c.rating_avg, c.tutor_id, c.created_at
+					FROM courses c
+					WHERE %s
+					ORDER BY c.created_at DESC
+					LIMIT $%d OFFSET $%d
+				) c
+				LEFT JOIN enrollment_counts ec ON ec.course_id = c.id
+				LEFT JOIN "users" t ON c.tutor_id = t.id
+			), '[]'::jsonb)
+		);
+	`, whereStr, whereStr, idx, idx+1)
+}
+
 func BuildTutorListQuery(whereStr string, idx int) string {
 	return fmt.Sprintf(`
 		WITH enrollment_counts AS (
@@ -345,15 +420,11 @@ func BuildTutorListQuery(whereStr string, idx int) string {
 						'slug', c.slug,
 						'title', c.title,
 						'short_description', c.short_description,
-						'long_description', c.long_description,
 						'image_url', c.image_url,
-						'preview_video_url', c.preview_video_url,
 						'language', c.language,
 						'level', c.level,
 						'actual_price', c.actual_price,
 						'final_price', c.final_price,
-						'benefits', COALESCE(c.benefits, '{}'),
-						'requirements', COALESCE(c.requirements, '{}'),
 						'category_id', c.category_id,
 						'coupon_allowed', c.coupon_allowed,
 						'is_free', c.is_free,
@@ -387,3 +458,101 @@ func BuildTutorListQuery(whereStr string, idx int) string {
 		);
 	`, whereStr, whereStr, idx, idx+1)
 }
+
+const (
+	AdminCourseOptions = `
+		SELECT COALESCE(
+			jsonb_agg(
+				jsonb_build_object(
+					'id', id,
+					'title', title
+				) ORDER BY title ASC
+			), '[]'::jsonb
+		)
+		FROM courses;
+	`
+
+	TutorCourseOptions = `
+		SELECT COALESCE(
+			jsonb_agg(
+				jsonb_build_object(
+					'id', id,
+					'title', title
+				) ORDER BY title ASC
+			), '[]'::jsonb
+		)
+		FROM courses
+		WHERE tutor_id = $1;
+	`
+
+	CourseSummaryQuery = `
+		SELECT jsonb_build_object(
+			'id', id,
+			'title', title
+		)
+		FROM courses
+		WHERE id = $1;
+	`
+
+	CourseAnalyticsQuery = `
+		SELECT jsonb_build_object(
+			'daily_sales', COALESCE((
+				SELECT jsonb_agg(
+					jsonb_build_object(
+						'day', daily_data.day,
+						'date', daily_data.date,
+						'revenue', daily_data.revenue,
+						'count', daily_data.count
+					)
+				)
+				FROM (
+					SELECT
+						TO_CHAR(d.day, 'Dy') AS day,
+						TO_CHAR(d.day, 'YYYY-MM-DD') AS date,
+						COALESCE(SUM(t.amount), 0) AS revenue,
+						COALESCE(COUNT(t.id), 0) AS count
+					FROM generate_series(
+						CURRENT_DATE - INTERVAL '6 days',
+						CURRENT_DATE,
+						INTERVAL '1 day'
+					) AS d(day)
+					LEFT JOIN transactions t ON
+						t.course_id = $1
+						AND t.status = 'success'
+						AND DATE(t.created_at) = d.day
+					GROUP BY d.day
+					ORDER BY d.day ASC
+				) AS daily_data
+			), '[]'::jsonb),
+			'monthly_sales', COALESCE((
+				SELECT jsonb_agg(
+					jsonb_build_object(
+						'month', monthly_data.month,
+						'year_month', monthly_data.year_month,
+						'revenue', monthly_data.revenue,
+						'count', monthly_data.count
+					)
+				)
+				FROM (
+					SELECT
+						TO_CHAR(m.month, 'Mon') AS month,
+						TO_CHAR(m.month, 'YYYY-MM') AS year_month,
+						COALESCE(SUM(t.amount), 0) AS revenue,
+						COALESCE(COUNT(t.id), 0) AS count
+					FROM generate_series(
+						DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months',
+						DATE_TRUNC('month', CURRENT_DATE),
+						INTERVAL '1 month'
+					) AS m(month)
+					LEFT JOIN transactions t ON
+						t.course_id = $1
+						AND t.status = 'success'
+						AND DATE_TRUNC('month', t.created_at) = m.month
+					GROUP BY m.month
+					ORDER BY m.month ASC
+				) AS monthly_data
+			), '[]'::jsonb)
+		);
+	`
+)
+

@@ -1,14 +1,26 @@
 "use client";
 
-import { useEnrolledCoursesQuery } from "@/query-hooks/courses.api";
+import * as React from "react";
+import { useInfiniteEnrolledCoursesQuery } from "@/query-hooks/courses.api";
 import type { EnrolledCourseResponse } from "@/schema/courses.types";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/table/data-table";
 import { columns } from "./columns";
 
 export default function StudentLearnPage() {
-  const { data: raw, isLoading } = useEnrolledCoursesQuery();
-  const courses: EnrolledCourseResponse[] = raw?.data ?? [];
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteEnrolledCoursesQuery({ limit: 12 });
+
+  const courses: EnrolledCourseResponse[] = React.useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
+  const totalCount = data?.pages[0]?.total ?? 0;
 
   return (
     <div className="space-y-6">
@@ -22,6 +34,10 @@ export default function StudentLearnPage() {
         emptyText="You haven't enrolled in any courses yet."
         isLoading={isLoading}
         loadingText="Loading your courses..."
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { request, compactParams } from "@/react-query/client";
 import { z } from "zod";
 
@@ -27,6 +27,27 @@ export function useUsersQuery(params?: Record<string, string | number>) {
         { url: API_ENDPOINTS.USERS, method: "GET", params: compactParams(params) },
         PaginatedResponseZod(UserListResponseZod),
       ),
+  });
+}
+
+export function useInfiniteUsersQuery(params?: Record<string, string | number>) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.users(params), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: API_ENDPOINTS.USERS,
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(UserListResponseZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
   });
 }
 
@@ -106,5 +127,26 @@ export function useAdminProfilesQuery(params?: Record<string, string | number>) 
         { url: API_ENDPOINTS.PROFILE_ADMIN, method: "GET", params: compactParams(params) },
         PaginatedResponseZod(AdminProfileItemZod),
       ),
+  });
+}
+
+export function useInfiniteAdminProfilesQuery(params?: Record<string, string | number>) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.profilesAdmin(params), "infinite"],
+    queryFn: ({ pageParam = 1 }) =>
+      request(
+        {
+          url: API_ENDPOINTS.PROFILE_ADMIN,
+          method: "GET",
+          params: compactParams({
+            ...params,
+            page: pageParam,
+            limit: params?.limit ?? 10,
+          }),
+        },
+        PaginatedResponseZod(AdminProfileItemZod),
+      ),
+    getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
+    initialPageParam: 1,
   });
 }

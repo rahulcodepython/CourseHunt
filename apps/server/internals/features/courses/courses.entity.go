@@ -19,9 +19,9 @@ type Course struct {
 	Level                string                  `json:"level" db:"level"`
 	ActualPrice          float64                 `json:"actual_price" db:"actual_price"`
 	FinalPrice           float64                 `json:"final_price" db:"final_price"`
-	Benefits             []string                `json:"benefits" db:"benefits"`
-	Requirements         []string                `json:"requirements" db:"requirements"`
-	CategoryID           *string                 `json:"-" db:"category_id"`
+	Benefits             []string                `json:"benefits,omitempty" db:"benefits"`
+	Requirements         []string                `json:"requirements,omitempty" db:"requirements"`
+	CategoryID           *string                 `json:"category_id,omitempty" db:"category_id"`
 	CouponAllowed        bool                    `json:"coupon_allowed" db:"coupon_allowed"`
 	IsFree               bool                    `json:"is_free" db:"is_free"`
 	TotalLectures        int                     `json:"total_lectures" db:"total_lectures"`
@@ -33,6 +33,64 @@ type Course struct {
 	Tutor                *generic.InstructorInfo `json:"tutor,omitempty" db:"tutor"`
 	CreatedAt            time.Time               `json:"created_at" db:"created_at"`
 	UpdatedAt            time.Time               `json:"updated_at" db:"updated_at"`
+}
+
+type AdminCourseItem struct {
+	ID            string                  `json:"id" db:"id"`
+	Title         string                  `json:"title" db:"title"`
+	Slug          string                  `json:"slug" db:"slug"`
+	ImageURL      *string                 `json:"image_url,omitempty" db:"image_url"`
+	Status        string                  `json:"status" db:"status"`
+	FinalPrice    float64                 `json:"final_price" db:"final_price"`
+	TotalLectures int                     `json:"total_lectures" db:"total_lectures"`
+	RatingAvg     float64                 `json:"rating_avg" db:"rating_avg"`
+	StudentCount  int                     `json:"student_count" db:"student_count"`
+	Tutor         *generic.InstructorInfo `json:"tutor,omitempty" db:"tutor"`
+}
+
+type AdminCourseDetail struct {
+	ID                   string                  `json:"id" db:"id"`
+	Slug                 string                  `json:"slug" db:"slug"`
+	Title                string                  `json:"title" db:"title"`
+	ShortDescription     *string                 `json:"short_description,omitempty" db:"short_description"`
+	LongDescription      *string                 `json:"long_description,omitempty" db:"long_description"`
+	ImageURL             *string                 `json:"image_url,omitempty" db:"image_url"`
+	Language             string                  `json:"language" db:"language"`
+	Level                string                  `json:"level" db:"level"`
+	ActualPrice          float64                 `json:"actual_price" db:"actual_price"`
+	FinalPrice           float64                 `json:"final_price" db:"final_price"`
+	Benefits             []string                `json:"benefits,omitempty" db:"benefits"`
+	Requirements         []string                `json:"requirements,omitempty" db:"requirements"`
+	CouponAllowed        bool                    `json:"coupon_allowed" db:"coupon_allowed"`
+	IsFree               bool                    `json:"is_free" db:"is_free"`
+	TotalLectures        int                     `json:"total_lectures" db:"total_lectures"`
+	TotalDurationSeconds int                     `json:"total_duration_seconds" db:"total_duration_seconds"`
+	RatingAvg            float64                 `json:"rating_avg" db:"rating_avg"`
+	FeedbackCount        int                     `json:"feedback_count" db:"feedback_count"`
+	StudentCount         int                     `json:"student_count" db:"student_count"`
+	Status               string                  `json:"status" db:"status"`
+	Tutor                *generic.InstructorInfo `json:"tutor,omitempty" db:"tutor"`
+	CreatedAt            time.Time               `json:"created_at" db:"created_at"`
+	UpdatedAt            time.Time               `json:"updated_at" db:"updated_at"`
+}
+
+type DailySalesPoint struct {
+	Day     string  `json:"day"`
+	Date    string  `json:"date"`
+	Revenue float64 `json:"revenue"`
+	Count   int     `json:"count"`
+}
+
+type MonthlySalesPoint struct {
+	Month     string  `json:"month"`
+	YearMonth string  `json:"year_month"`
+	Revenue   float64 `json:"revenue"`
+	Count     int     `json:"count"`
+}
+
+type CourseAnalyticsResponse struct {
+	DailySales   []DailySalesPoint   `json:"daily_sales"`
+	MonthlySales []MonthlySalesPoint `json:"monthly_sales"`
 }
 
 type StudyLessonItem struct {
@@ -177,3 +235,14 @@ type CourseStudyResponse struct {
 	Completed         bool               `json:"completed"`
 	Chapters          []StudyChapterItem `json:"chapters"`
 }
+
+type CourseOption struct {
+	ID    string `json:"id" db:"id"`
+	Title string `json:"title" db:"title"`
+}
+
+type CourseSummary struct {
+	ID    string `json:"id" db:"id"`
+	Title string `json:"title" db:"title"`
+}
+

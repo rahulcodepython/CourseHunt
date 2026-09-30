@@ -1,10 +1,8 @@
 import { ROUTES } from "@/lib/constants/const";
 
-// Routes visible without a session: the marketing/browse site and checkout
-// (which gates only the purchase action itself, not the page). Shared
-// between the edge middleware (proxy.ts) and SessionProvider so the two
-// gates never drift apart.
-const PUBLIC_PREFIXES = ["/courses", "/checkout"];
+// Routes visible without a session: the marketing/browse site. Shared
+// between edge middleware (middleware.ts) and SessionProvider.
+const PUBLIC_PREFIXES = ["/courses"];
 
 export function isPublicPath(pathname: string): boolean {
   if (

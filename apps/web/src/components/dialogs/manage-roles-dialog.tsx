@@ -7,9 +7,8 @@ import { LoadingButton } from "@/components/common/loading-button";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { CollapsibleCheckboxList } from "@/components/common/collapsible-checkbox-list";
-import { useRolesQuery } from "@/query-hooks/roles.api";
+import { useRoleOptionsQuery } from "@/query-hooks/roles.api";
 import { useAssignRoleMutation, useRevokeRoleMutation } from "@/query-hooks/users.api";
-import type { Role } from "@/schema/roles.types";
 
 /**
  * Assigns/revokes custom (non-system) roles for a single user — the
@@ -31,12 +30,9 @@ export function ManageRolesDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { data: rawRoles } = useRolesQuery();
+  const { data: assignableRoles = [] } = useRoleOptionsQuery({ enabled: open });
   const assignRoleMutation = useAssignRoleMutation();
   const revokeRoleMutation = useRevokeRoleMutation();
-
-  const roles: Role[] = rawRoles ?? [];
-  const assignableRoles = roles.filter((r) => !r.is_system);
 
   const initialSelected = React.useMemo(
     () =>

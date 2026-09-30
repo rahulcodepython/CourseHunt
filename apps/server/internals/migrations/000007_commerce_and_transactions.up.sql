@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     status              TEXT CHECK (status IN ('pending','success','failed','duplicate','refunded')) DEFAULT 'pending',
     error_description   TEXT,
     confirmed_at        TIMESTAMPTZ,
-    expires_at          TIMESTAMPTZ GENERATED ALWAYS AS (created_at + INTERVAL '1 hour') STORED,
+    expires_at          TIMESTAMPTZ DEFAULT (CURRENT_TIMESTAMP + INTERVAL '1 hour'),
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -1,18 +1,26 @@
 "use client";
-import * as React from "react";
 
-import { useManageCoursesQuery } from "@/query-hooks/courses.api";
+import * as React from "react";
+import { useInfiniteAdminCoursesQuery } from "@/query-hooks/courses.api";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/table/data-table";
-import type { Course } from "@/schema/courses.types";
 import { getColumns } from "./columns";
-import { CourseDetailsModal } from "@/components/dialogs/course-details-modal";
 
 export default function CoursesPage() {
-  const { data: rawCourses, isLoading } = useManageCoursesQuery();
-  const courses: Course[] = rawCourses?.data ?? [];
-  const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
-  const columns = React.useMemo(() => getColumns({ onViewCourse: setSelectedCourse }), []);
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteAdminCoursesQuery({ limit: 12 });
+
+  const courses = React.useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
+  const totalCount = data?.pages[0]?.total ?? 0;
+  const columns = React.useMemo(() => getColumns(), []);
 
   return (
     <div className="space-y-6">
@@ -26,14 +34,10 @@ export default function CoursesPage() {
         emptyText="No courses found"
         isLoading={isLoading}
         loadingText="Loading courses..."
-      />
-
-      <CourseDetailsModal
-        course={selectedCourse}
-        open={selectedCourse !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedCourse(null);
-        }}
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
     </div>
   );

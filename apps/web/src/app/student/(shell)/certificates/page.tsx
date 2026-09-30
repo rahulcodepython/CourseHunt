@@ -2,24 +2,31 @@
 
 import * as React from "react";
 
-import { useCertificatesQuery, useClaimCertificateMutation } from "@/query-hooks/certificates.api";
+import { useInfiniteCertificatesQuery, useClaimCertificateMutation } from "@/query-hooks/certificates.api";
 import { useEnrolledCoursesQuery } from "@/query-hooks/courses.api";
 import useSession from "@/hooks/use-session";
 import type { Certificate } from "@/schema/certificate.types";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/table/data-table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/common/icon";
 import { getColumns, type ExtendedCertificate } from "./columns";
 
 export default function StudentCertificatesPage() {
   const { user } = useSession();
-  const { data: rawCerts, isLoading } = useCertificatesQuery();
+  const {
+    data: certsData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteCertificatesQuery({ limit: 12 });
   const { data: rawEnrolled } = useEnrolledCoursesQuery();
   const claimMutation = useClaimCertificateMutation();
 
-  const certificates: Certificate[] = rawCerts?.data ?? [];
+  const certificates: Certificate[] = React.useMemo(
+    () => certsData?.pages.flatMap((page) => page.data) ?? [],
+    [certsData],
+  );
+  const totalCount = certsData?.pages[0]?.total ?? 0;
   const enrolled = rawEnrolled?.data ?? [];
 
   const certifiedCourseIds = new Set(certificates.map((c) => c.course.id));
@@ -64,6 +71,10 @@ export default function StudentCertificatesPage() {
         emptyText="No certificates yet — complete a course to earn one."
         isLoading={isLoading}
         loadingText="Loading certificates..."
+        onLoadMore={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        totalCount={totalCount}
       />
     </div>
   );

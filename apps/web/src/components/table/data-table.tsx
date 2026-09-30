@@ -33,12 +33,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon, type IconName } from "@/components/common/icon";
 import { useDebounce } from "@/hooks/use-debounce";
-import { FormDialog } from "@/components/dialogs/form-dialog";
-import { DialogFooter } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { LoadingButton } from "@/components/common/loading-button";
-import { exportToCSV, exportToXLSX } from "@/lib/utils/csv";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { ExportTableButton } from "./data-table-export";
+import { DataTablePagination } from "./data-table-pagination";
 
 export type TableColumns<TData> = Parameters<typeof useReactTable<TData>>[0]["columns"];
 export type TableColumn<TData> = TableColumns<TData>[number];
@@ -61,118 +58,13 @@ export interface DataTableProps<TData> {
   exportFilename?: string;
   /** When provided, rows expand to reveal nested children (e.g. category -> subcategories) instead of a flat list. */
   getSubRows?: (row: TData) => TData[] | undefined;
+  /** Infinite scroll callback when scrolling near the end of the table */
+  onLoadMore?: () => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  totalCount?: number;
 }
 
-type ExportFormat = "csv" | "xlsx";
-
-/** Exports displayed DataTable rows as CSV or XLSX using in-memory table data. */
-function ExportTableButton<TData>({
-  table,
-  filename,
-}: {
-  table: TanStackTable<TData>;
-  filename: string;
-}) {
-  const [open, setOpen] = React.useState(false);
-  const [format, setFormat] = React.useState<ExportFormat>("csv");
-  const [isExporting, setIsExporting] = React.useState(false);
-
-  const handleExport = async () => {
-    const visibleColumns = table
-      .getVisibleLeafColumns()
-      .filter((col) => col.id !== "actions" && col.id !== "select");
-
-    const headers = visibleColumns.map((col) => {
-      const headerDef = col.columnDef.header;
-      if (typeof headerDef === "string") return headerDef;
-      return col.id;
-    });
-
-    const rows = table.getFilteredRowModel().rows.map((row) =>
-      visibleColumns.map((col) => {
-        const val = row.getValue(col.id);
-        if (val === null || val === undefined) return "";
-        if (typeof val === "object") {
-          if ("name" in (val as any) && typeof (val as any).name === "string") return (val as any).name;
-          if ("title" in (val as any) && typeof (val as any).title === "string") return (val as any).title;
-          return JSON.stringify(val);
-        }
-        return String(val);
-      }),
-    );
-
-    setIsExporting(true);
-    try {
-      if (format === "csv") {
-        exportToCSV(filename, headers, rows);
-      } else {
-        await exportToXLSX(filename, headers, rows);
-      }
-      setOpen(false);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  return (
-    <>
-      <Button variant="outline" size="sm" className="flex gap-2" onClick={() => setOpen(true)}>
-        <Icon name="download" className="size-4" />
-        <span>Export</span>
-      </Button>
-      <FormDialog
-        open={open}
-        onOpenChange={setOpen}
-        title="Export Table"
-        description="Choose a file format to download the currently displayed rows."
-      >
-        <RadioGroup
-          value={format}
-          onValueChange={(v) => setFormat(v as ExportFormat)}
-          className="py-2"
-        >
-          <div className="flex items-center gap-2">
-            <RadioGroupItem value="csv" id="export-format-csv" />
-            <Label htmlFor="export-format-csv">CSV (.csv)</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <RadioGroupItem value="xlsx" id="export-format-xlsx" />
-            <Label htmlFor="export-format-xlsx">Excel (.xlsx)</Label>
-          </div>
-        </RadioGroup>
-        <DialogFooter className="mt-2">
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isExporting}>
-            Cancel
-          </Button>
-          <LoadingButton onClick={handleExport} loading={isExporting}>
-            Download
-          </LoadingButton>
-        </DialogFooter>
-      </FormDialog>
-    </>
-  );
-}
-
-/** Row-count status line for DataTable. */
-function DataTablePagination<TData>({
-  table,
-  visibleCount,
-}: {
-  table: TanStackTable<TData>;
-  visibleCount: number;
-}) {
-  const total = table.getFilteredRowModel().rows.length;
-  if (total === 0) return null;
-
-  return (
-    <div className="flex items-center justify-center px-4 py-3">
-      <p className="text-xs text-muted-foreground">
-        Showing <span className="font-medium text-foreground">{Math.min(visibleCount, total)}</span>{" "}
-        of <span className="font-medium text-foreground">{total}</span> results
-      </p>
-    </div>
-  );
-}
 
 export function DataTable<TData>({
   columns,
@@ -189,6 +81,10 @@ export function DataTable<TData>({
   toolbarActions,
   exportFilename,
   getSubRows,
+  onLoadMore,
+  hasNextPage,
+  isFetchingNextPage,
+  totalCount,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -198,6 +94,12 @@ export function DataTable<TData>({
 
   const [filterInput, setFilterInput] = React.useState("");
   const debouncedFilter = useDebounce(filterInput, 300);
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    onLoadMore: onLoadMore ?? (() => {}),
+  });
 
   React.useEffect(() => {
     if (searchColumnKey) {
@@ -230,14 +132,14 @@ export function DataTable<TData>({
     getPaginationRowModel: getPaginationRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     initialState: {
-      pagination: { pageSize },
+      pagination: { pageSize: onLoadMore ? 10000 : pageSize },
     },
   });
 
   const pageIndex = table.getState().pagination.pageIndex;
   const canLoadMore = table.getCanNextPage();
   const visibleRows = table.getRowModel().rows;
-  const visibleCount = (pageIndex + 1) * pageSize;
+  const visibleCount = onLoadMore ? visibleRows.length : (pageIndex + 1) * pageSize;
   const resolvedEmptyText = isLoading ? loadingText : emptyText;
 
   return (
@@ -360,7 +262,24 @@ export function DataTable<TData>({
         </Table>
       </div>
 
-      {showPagination && <DataTablePagination table={table} visibleCount={visibleCount} />}
+      {onLoadMore && hasNextPage && (
+        <div ref={sentinelRef} className="py-4 text-center">
+          {isFetchingNextPage ? (
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Icon name="refresh" className="size-4 animate-spin" />
+              <span>Loading more records...</span>
+            </div>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={onLoadMore}>
+              Load more
+            </Button>
+          )}
+        </div>
+      )}
+
+      {showPagination && (
+        <DataTablePagination table={table} visibleCount={visibleCount} totalCount={totalCount} />
+      )}
     </div>
   );
 }

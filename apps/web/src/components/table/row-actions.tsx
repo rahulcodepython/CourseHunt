@@ -1,14 +1,47 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
+import { MoreHorizontal } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Icon, type IconName } from "@/components/common/icon";
 import { cn } from "@/lib/utils/utils";
 
-/** Right-aligned row of icon action buttons for a DataTable "actions" column. */
-export function RowActions({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center justify-end gap-1">{children}</div>;
+/** Three-dot dropdown menu for a DataTable "actions" column. */
+export function RowActions({
+  children,
+  triggerLabel = "Actions",
+}: {
+  children: React.ReactNode;
+  triggerLabel?: string;
+}) {
+  return (
+    <div className="flex items-center justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 p-0 text-muted-foreground hover:text-foreground"
+            aria-label={triggerLabel}
+          >
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">{triggerLabel}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          {children}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
 }
 
 export function RowActionButton({
@@ -19,8 +52,9 @@ export function RowActionButton({
   destructive,
   className,
   iconClassName,
+  disabled,
 }: {
-  icon: IconName;
+  icon?: IconName;
   label: string;
   onClick?: () => void;
   /** Renders as a Link instead of a click handler (e.g. "view details" actions). */
@@ -28,28 +62,45 @@ export function RowActionButton({
   destructive?: boolean;
   className?: string;
   iconClassName?: string;
+  disabled?: boolean;
 }) {
-  const iconEl = <Icon name={icon} className={cn("size-4", iconClassName)} />;
+  const content = (
+    <>
+      {icon && (
+        <Icon
+          name={icon}
+          className={cn(
+            "mr-2 size-4 shrink-0",
+            destructive ? "text-destructive" : "text-muted-foreground",
+            iconClassName,
+          )}
+        />
+      )}
+      <span className={cn("truncate", destructive && "text-destructive")}>{label}</span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <DropdownMenuItem asChild disabled={disabled} className={className}>
+        <Link href={href} className="flex w-full items-center cursor-pointer">
+          {content}
+        </Link>
+      </DropdownMenuItem>
+    );
+  }
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className={cn(
-            "size-8",
-            destructive && "text-destructive hover:text-destructive",
-            className,
-          )}
-          onClick={onClick}
-          aria-label={label}
-          asChild={Boolean(href)}
-        >
-          {href ? <Link href={href}>{iconEl}</Link> : iconEl}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <DropdownMenuItem
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "cursor-pointer",
+        destructive && "text-destructive focus:text-destructive focus:bg-destructive/10",
+        className,
+      )}
+    >
+      {content}
+    </DropdownMenuItem>
   );
 }

@@ -13,6 +13,7 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	router.Get("/v1/courses/course/:slug", a.handlePublicSingle)
 
 	gAuth := router.Group("/v1/courses", auth)
+	gAuth.Get("/:id/summary", middlewares.ValidateUUIDParams("id"), a.handleCourseSummary)
 	gAuth.Get("/:id/study", middlewares.ValidateUUIDParams("id"), a.handleStudy)
 	gAuth.Get("/enrolled", a.handleEnrolledList)
 	gAuth.Post("/:id/enroll", middlewares.ValidateUUIDParams("id"), a.handleEnrollFree)
@@ -21,13 +22,17 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	adminGuard := middlewares.PermissionGuard(generic.PermAdminCoursesInspect)
 	gAdmin := router.Group("/v1/admin/courses", auth, adminGuard)
 	gAdmin.Get("/", a.handleAdminList)
+	gAdmin.Get("/options", a.handleAdminCourseOptions)
 	gAdmin.Get("/:id", middlewares.ValidateUUIDParams("id"), a.handleAdminGetByID)
+	gAdmin.Get("/:id/analytics", middlewares.ValidateUUIDParams("id"), a.handleAdminCourseAnalytics)
 
 	// Tutor course authoring: strictly single permission PermTutorCoursesManage
 	tutorGuard := middlewares.PermissionGuard(generic.PermTutorCoursesManage)
 	gTutor := router.Group("/v1/tutor/courses", auth, tutorGuard)
 	gTutor.Get("/", a.handleTutorList)
+	gTutor.Get("/options", a.handleTutorCourseOptions)
 	gTutor.Get("/:id", middlewares.ValidateUUIDParams("id"), a.handleTutorGetByID)
+	gTutor.Get("/:id/analytics", middlewares.ValidateUUIDParams("id"), a.handleTutorCourseAnalytics)
 	gTutor.Post("/", a.handleCreate)
 	gTutor.Patch("/:id", middlewares.ValidateUUIDParams("id"), a.handleUpdate)
 	gTutor.Delete("/:id", middlewares.ValidateUUIDParams("id"), a.handleDelete)

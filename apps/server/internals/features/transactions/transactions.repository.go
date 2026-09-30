@@ -217,3 +217,7 @@ func (a *App) SettleAdminPayoutRepository(ctx context.Context, payoutID, referen
 	}
 	return nil
 }
+
+func (a *App) StatsRepository(ctx context.Context) (*TransactionStats, error) {
+	return postgres.QueryJSON[TransactionStats](ctx, a.DB, TransactionStatsQuery)
+}
