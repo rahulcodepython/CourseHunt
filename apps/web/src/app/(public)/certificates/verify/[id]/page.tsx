@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/utils/format";
 import { API_CONFIG, ROUTES } from "@/lib/constants/const";
 import { CertificateVerificationZod } from "@/schema/certificate.types";
 import { ApiResponseZod } from "@/schema/common.types";
+import React from "react";
 
 async function fetchVerification(id: string) {
   const baseUrl = API_CONFIG.DEFAULT_URL;

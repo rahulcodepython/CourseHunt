@@ -18,6 +18,7 @@ import {
 import useSession from "@/hooks/use-session";
 import { getDashboardURI, ROUTES } from "@/lib/constants/const";
 import Image from "next/image";
+import React from "react";
 
 export function SiteHeader() {
   const router = useRouter();
