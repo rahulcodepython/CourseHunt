@@ -11,6 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Icon } from "@/components/common/icon";
 import { formatDate } from "@/lib/utils/format";
 
@@ -72,8 +80,8 @@ export default function StudentDashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Continue Learning</CardTitle>
             <Button variant="outline" size="sm" asChild>
@@ -96,51 +104,58 @@ export default function StudentDashboardPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {inProgress.map((course) => (
-                  <div key={course.id} className="flex items-center gap-4 rounded-md border p-3">
-                    <div className="size-12 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center text-muted-foreground">
-                      {course.image_url ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={course.image_url}
-                          alt={course.title}
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <Icon name="book" className="size-5 opacity-40" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{course.title}</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <Progress value={course.completion_percent} className="h-1.5" />
-                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                          {Math.round(course.completion_percent)}%
-                        </span>
+              <div className="space-y-3">
+                {inProgress.map((course) => {
+                  const href = course.last_accessed_lesson_id
+                    ? `/student/study/${course.id}?lessonId=${course.last_accessed_lesson_id}`
+                    : `/student/study/${course.id}`;
+                  return (
+                    <Link
+                      key={course.id}
+                      href={href}
+                      className="group flex items-center gap-4 rounded-md border p-3 transition-colors hover:border-primary/40 hover:bg-muted/50"
+                    >
+                      <div className="size-12 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center text-muted-foreground group-hover:opacity-90">
+                        {course.image_url ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={course.image_url}
+                            alt={course.title}
+                            className="size-full object-cover"
+                          />
+                        ) : (
+                          <Icon name="book" className="size-5 opacity-40" />
+                        )}
                       </div>
-                    </div>
-                    <Button size="sm" asChild>
-                      <Link
-                        href={
-                          course.last_accessed_lesson_id
-                            ? `/student/study/${course.id}?lessonId=${course.last_accessed_lesson_id}`
-                            : `/student/study/${course.id}`
-                        }
-                      >
-                        Study
-                      </Link>
-                    </Button>
-                  </div>
-                ))}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">
+                          {course.title}
+                        </p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <Progress value={course.completion_percent} className="h-1.5" />
+                          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                            {Math.round(course.completion_percent)}%
+                          </span>
+                        </div>
+                      </div>
+                      <Icon
+                        name="chevron-right"
+                        className="size-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-foreground"
+                      />
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Certificates</CardTitle>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/student/certificates">View All</Link>
+            </Button>
           </CardHeader>
           <CardContent>
             {d.recent_certificates.length === 0 ? (
@@ -149,16 +164,44 @@ export default function StudentDashboardPage() {
                 <p className="text-sm text-muted-foreground">No certificates earned yet.</p>
               </div>
             ) : (
-              <ul className="space-y-3">
-                {d.recent_certificates.map((cert, i) => (
-                  <li key={i} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="truncate font-medium">{cert.course_title}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatDate(cert.issued_at)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Issued Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {d.recent_certificates.map((cert, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="max-w-[200px] truncate font-medium">
+                          {cert.course_title}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                          {formatDate(cert.issued_at)}
+                        </TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                            <Icon name="check" className="size-3" />
+                            Verified
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href="/student/certificates">
+                              View
+                              <Icon name="chevron-right" className="ml-1 size-3.5" />
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

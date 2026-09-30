@@ -63,7 +63,8 @@ type Config struct {
 
 // Load reads .env (if present), binds environment variables, and validates all constraints.
 func Load() *Config {
-	_ = godotenv.Load() // ignore error: .env file is optional in containerized/production setups
+	_ = godotenv.Load()            // ignore error: .env file is optional in containerized/production setups
+	_ = godotenv.Load("../../.env") // fallback if invoked from apps/server subdirectory
 
 	cfg := &Config{}
 	if err := env.Parse(cfg); err != nil {

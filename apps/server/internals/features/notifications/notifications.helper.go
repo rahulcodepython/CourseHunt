@@ -10,6 +10,8 @@ func roleColumnFor(role string) (string, bool) {
 		return "is_admin", true
 	case generic.RoleTutor:
 		return "is_tutor", true
+	case generic.RoleUser:
+		return "is_student", true
 	default:
 		return "", false
 	}

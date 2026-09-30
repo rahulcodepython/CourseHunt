@@ -30,12 +30,12 @@ const NOTIFICATION_ROUTES: Partial<Record<string, string>> = {
 export function NotificationBell() {
   const { user } = useSession();
   const role = user?.role ?? "";
-  const enabled = role === ROLES.ADMIN || role === ROLES.TUTOR;
+  const enabled = !!user;
 
   const { items, refresh, isFetching } = useCursorFeed(
     queryKeys.notificationsFeedBell(),
     fetchNotifications,
-    { limit: 10, refetchInterval: enabled ? POLL_INTERVAL_MS : undefined },
+    { limit: 10, enabled, refetchInterval: enabled ? POLL_INTERVAL_MS : undefined },
   );
 
   const [open, setOpen] = React.useState(false);

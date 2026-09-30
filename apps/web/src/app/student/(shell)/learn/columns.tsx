@@ -6,7 +6,6 @@ import type { TableColumn } from "@/components/table/data-table";
 import type { EnrolledCourseResponse } from "@/schema/courses.types";
 import { Icon } from "@/components/common/icon";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusBadgeEntry } from "@/components/common/status-badge";
 
 const columnHelper = createColumnHelper<EnrolledCourseResponse>();
@@ -21,9 +20,12 @@ export const columns: TableColumn<EnrolledCourseResponse>[] = [
     header: "Course",
     cell: ({ row }) => {
       const course = row.original;
+      const href = course.last_accessed_lesson_id
+        ? `/student/study/${course.id}?lessonId=${course.last_accessed_lesson_id}`
+        : `/student/study/${course.id}`;
       return (
-        <div className="flex items-center gap-3">
-          <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
+        <Link href={href} className="group flex items-center gap-3">
+          <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:opacity-90">
             {course.image_url ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img src={course.image_url} alt={course.title} className="size-full object-cover" />
@@ -31,8 +33,8 @@ export const columns: TableColumn<EnrolledCourseResponse>[] = [
               <Icon name="book" className="size-5 opacity-40" />
             )}
           </div>
-          <p className="max-w-70 truncate font-medium">{course.title}</p>
-        </div>
+          <p className="max-w-70 truncate font-medium group-hover:text-primary transition-colors">{course.title}</p>
+        </Link>
       );
     },
   }),
@@ -56,22 +58,5 @@ export const columns: TableColumn<EnrolledCourseResponse>[] = [
     cell: ({ getValue }) => (
       <StatusBadge status={getValue() >= 100 ? "completed" : "in-progress"} map={statusMap} />
     ),
-  }),
-  columnHelper.display({
-    id: "actions",
-    header: () => <div className="text-right">Actions</div>,
-    cell: ({ row }) => {
-      const course = row.original;
-      const href = course.last_accessed_lesson_id
-        ? `/student/study/${course.id}?lessonId=${course.last_accessed_lesson_id}`
-        : `/student/study/${course.id}`;
-      return (
-        <div className="flex justify-end">
-          <Button size="sm" asChild>
-            <Link href={href}>Study</Link>
-          </Button>
-        </div>
-      );
-    },
   }),
 ];

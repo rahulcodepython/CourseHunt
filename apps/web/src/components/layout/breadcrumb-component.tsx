@@ -32,15 +32,15 @@ export default function BreadcrumbComponent() {
   const role = pathname.startsWith(ROUTES.TUTOR_DASHBOARD)
     ? "tutor"
     : pathname.startsWith(ROUTES.STUDENT_DASHBOARD)
-    ? "student"
-    : "admin";
+      ? "student"
+      : "admin";
 
   const rootHref =
     role === "tutor"
       ? ROUTES.TUTOR_DASHBOARD
       : role === "student"
-      ? ROUTES.STUDENT_DASHBOARD
-      : ROUTES.ADMIN_DASHBOARD;
+        ? ROUTES.STUDENT_DASHBOARD
+        : ROUTES.ADMIN_DASHBOARD;
 
   const isTutor = role === "tutor";
 
@@ -96,12 +96,12 @@ export default function BreadcrumbComponent() {
         subtab === "feedback"
           ? "Feedback"
           : subtab === "discussions"
-          ? "Discussions"
-          : subtab === "quiz"
-          ? "Quiz"
-          : subtab === "resources"
-          ? "Resources"
-          : subtab.charAt(0).toUpperCase() + subtab.slice(1);
+            ? "Discussions"
+            : subtab === "quiz"
+              ? "Quiz"
+              : subtab === "resources"
+                ? "Resources"
+                : subtab.charAt(0).toUpperCase() + subtab.slice(1);
 
       return [
         { label: isTutor ? "My Courses" : "Courses", href: `/${r}/courses` },
@@ -155,12 +155,12 @@ export default function BreadcrumbComponent() {
         tab === "about"
           ? "About"
           : tab === "chapters"
-          ? "Chapters"
-          : tab === "enrollments"
-          ? "Enrollments"
-          : tab === "faqs"
-          ? "FAQs"
-          : tab.charAt(0).toUpperCase() + tab.slice(1);
+            ? "Chapters"
+            : tab === "enrollments"
+              ? "Enrollments"
+              : tab === "faqs"
+                ? "FAQs"
+                : tab.charAt(0).toUpperCase() + tab.slice(1);
 
       return [
         { label: isTutor ? "My Courses" : "Courses", href: `/${r}/courses` },
@@ -252,7 +252,7 @@ export default function BreadcrumbComponent() {
       {/* Mobile Breadcrumb (Back to parent + truncated active item) */}
       <div className="flex sm:hidden items-center gap-1.5 min-w-0 text-xs text-muted-foreground">
         {mobileCurrent ? (
-          <>
+          <React.Fragment>
             <Link
               href={mobileParent.href || rootHref}
               className="inline-flex items-center gap-1 hover:text-foreground shrink-0 max-w-32.5 font-medium"
@@ -268,7 +268,7 @@ export default function BreadcrumbComponent() {
             >
               {mobileCurrent.label}
             </span>
-          </>
+          </React.Fragment>
         ) : (
           <span className="font-semibold text-foreground">Dashboard</span>
         )}
@@ -292,7 +292,7 @@ export default function BreadcrumbComponent() {
 
           {/* Intermediate collapsed dropdown */}
           {shouldCollapse && (
-            <>
+            <React.Fragment>
               <BreadcrumbSeparator className="shrink-0" />
               <BreadcrumbItem className="shrink-0">
                 <DropdownMenu>
@@ -319,7 +319,7 @@ export default function BreadcrumbComponent() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </BreadcrumbItem>
-            </>
+            </React.Fragment>
           )}
 
           {/* Visible ancestors and leaf node */}

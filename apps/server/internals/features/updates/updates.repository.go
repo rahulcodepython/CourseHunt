@@ -130,5 +130,6 @@ func (a *App) TutorDeleteRepository(ctx context.Context, id, userID string) (str
 
 func (a *App) FeedRepository(ctx context.Context, userID string, page, limit int) (*UpdateFeedResponse, error) {
 	offset := (page - 1) * limit
-	return postgres.QueryJSON[UpdateFeedResponse](ctx, a.DB, FeedUpdates, userID, limit, offset)
+	return postgres.QueryJSON[UpdateFeedResponse](ctx, a.DB, FeedUpdates, userID, limit, offset, page)
 }
+

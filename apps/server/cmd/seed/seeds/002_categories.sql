@@ -6,7 +6,9 @@ INSERT INTO categories (id, parent_id, name) VALUES
     (gen_random_uuid(), NULL, 'Mobile Development'),
     (gen_random_uuid(), NULL, 'Data Science & AI'),
     (gen_random_uuid(), NULL, 'Cloud & DevOps'),
-    (gen_random_uuid(), NULL, 'Design & UX')
+    (gen_random_uuid(), NULL, 'Design & UX'),
+    (gen_random_uuid(), NULL, 'Cybersecurity'),
+    (gen_random_uuid(), NULL, 'Database Engineering')
 ON CONFLICT (parent_id, name) DO NOTHING;
 
 -- Subcategories (Categories with parent_id)
@@ -19,12 +21,18 @@ FROM (VALUES
     ('Web Development', 'Node.js & Microservices'),
     ('Mobile Development', 'Flutter & Dart'),
     ('Mobile Development', 'React Native'),
+    ('Mobile Development', 'iOS & Swift Mastery'),
     ('Data Science & AI', 'Machine Learning with Python'),
     ('Data Science & AI', 'Deep Learning & LLMs'),
+    ('Data Science & AI', 'AI Agents & LLMOps'),
     ('Cloud & DevOps', 'Docker & Kubernetes'),
     ('Cloud & DevOps', 'AWS & Cloud Architecture'),
     ('Design & UX', 'UI/UX Design Fundamentals'),
-    ('Design & UX', 'Figma & Prototyping')
+    ('Design & UX', 'Figma & Prototyping'),
+    ('Cybersecurity', 'Ethical Hacking & Pentesting'),
+    ('Cybersecurity', 'Cloud & Infrastructure Security'),
+    ('Database Engineering', 'PostgreSQL Deep Dive'),
+    ('Database Engineering', 'Redis & Caching Systems')
 ) AS v(parent_name, name)
 JOIN categories c ON c.name = v.parent_name AND c.parent_id IS NULL
 ON CONFLICT (parent_id, name) DO NOTHING;

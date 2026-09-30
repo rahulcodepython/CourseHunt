@@ -9,7 +9,7 @@ export default function NotFound() {
     <div className="flex min-h-screen items-center justify-center px-4 py-16">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center gap-2 text-center">
-          <div className="flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <div className="flex size-14 items-center justify-center rounded-md bg-muted text-muted-foreground">
             <Icon name="search" className="size-7" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Page not found</h1>

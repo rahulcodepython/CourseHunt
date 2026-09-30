@@ -34,6 +34,7 @@ import {
 import { Icon, type IconName } from "@/components/common/icon";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { cn } from "@/lib/utils/utils";
 import { ExportTableButton } from "./data-table-export";
 import { DataTablePagination } from "./data-table-pagination";
 
@@ -63,6 +64,8 @@ export interface DataTableProps<TData> {
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   totalCount?: number;
+  /** Optional click handler for entire row */
+  onRowClick?: (row: TData) => void;
 }
 
 
@@ -85,6 +88,7 @@ export function DataTable<TData>({
   hasNextPage,
   isFetchingNextPage,
   totalCount,
+  onRowClick,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -229,7 +233,16 @@ export function DataTable<TData>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-muted/40 transition-colors"
+                  className={cn(
+                    "hover:bg-muted/40 transition-colors",
+                    onRowClick && "cursor-pointer"
+                  )}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest("button, a, input, [role='menuitem'], [data-prevent-row-click]")) {
+                      return;
+                    }
+                    onRowClick?.(row.original);
+                  }}
                 >
                   {row.getVisibleCells().map((cell, cellIndex) => (
                     <TableCell

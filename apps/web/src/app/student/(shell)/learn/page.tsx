@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { useInfiniteEnrolledCoursesQuery } from "@/query-hooks/courses.api";
 import type { EnrolledCourseResponse } from "@/schema/courses.types";
 import { PageHeader } from "@/components/layout/page-header";
@@ -8,6 +9,7 @@ import { DataTable } from "@/components/table/data-table";
 import { columns } from "./columns";
 
 export default function StudentLearnPage() {
+  const router = useRouter();
   const {
     data,
     isLoading,
@@ -38,6 +40,12 @@ export default function StudentLearnPage() {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         totalCount={totalCount}
+        onRowClick={(course) => {
+          const href = course.last_accessed_lesson_id
+            ? `/student/study/${course.id}?lessonId=${course.last_accessed_lesson_id}`
+            : `/student/study/${course.id}`;
+          router.push(href);
+        }}
       />
     </div>
   );

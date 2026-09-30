@@ -8,7 +8,7 @@ import (
 )
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
-	g := router.Group("/v1/notifications", auth, middlewares.RoleGuard(generic.RoleAdmin, generic.RoleTutor))
+	g := router.Group("/v1/notifications", auth, middlewares.RoleGuard(generic.RoleAdmin, generic.RoleTutor, generic.RoleUser))
 	g.Get("/", a.handleList)
 	g.Post("/seen", a.handleMarkSeen)
 }

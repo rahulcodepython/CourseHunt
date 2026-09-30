@@ -106,7 +106,7 @@ export function DiscussionItem({
 
         <div className="flex items-center gap-3 px-1 text-xs text-muted-foreground">
           {!editing && (
-            <>
+            <React.Fragment>
               {canEdit && (
                 <button
                   type="button"
@@ -125,7 +125,7 @@ export function DiscussionItem({
                   Delete
                 </button>
               )}
-            </>
+            </React.Fragment>
           )}
           {!isReply && (
             <button

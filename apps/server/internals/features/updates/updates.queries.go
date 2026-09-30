@@ -185,9 +185,14 @@ const (
 			ORDER BY is_unseen DESC, created_at DESC
 			LIMIT $2 OFFSET $3
 		)
-		SELECT
-			COALESCE((SELECT total FROM count_cte), 0) AS total,
-			COALESCE((SELECT jsonb_agg(data_cte) FROM data_cte), '[]'::jsonb) AS updates;
+		SELECT jsonb_build_object(
+			'updates', jsonb_build_object(
+				'data', COALESCE((SELECT jsonb_agg(data_cte) FROM data_cte), '[]'::jsonb),
+				'total', COALESCE((SELECT total FROM count_cte), 0),
+				'page', $4::int,
+				'limit', $2::int
+			)
+		);
 	`
 
 	DefaultUpdatesWhere = "1=1"

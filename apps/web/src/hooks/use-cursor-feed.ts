@@ -22,7 +22,7 @@ export interface CursorPageParams {
 export function useCursorFeed<T extends FeedItem>(
   queryKey: QueryKey,
   fetchPage: (params: CursorPageParams) => Promise<T[] | { data?: T[] }>,
-  opts?: { limit?: number; refetchInterval?: number },
+  opts?: { limit?: number; refetchInterval?: number; enabled?: boolean },
 ) {
   const limit = opts?.limit ?? 10;
 
@@ -37,6 +37,7 @@ export function useCursorFeed<T extends FeedItem>(
       if (!lastPage || lastPage.length < limit) return undefined;
       return lastPage[lastPage.length - 1]?.id;
     },
+    enabled: opts?.enabled ?? true,
     refetchInterval: opts?.refetchInterval,
     refetchIntervalInBackground: false,
   });

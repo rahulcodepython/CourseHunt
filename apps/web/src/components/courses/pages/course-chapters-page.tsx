@@ -80,7 +80,7 @@ export function CourseChaptersPage({
       />
 
       {isTutor && (
-        <>
+        <React.Fragment>
           <CourseChapterDialog
             open={chapterDialogOpen}
             onOpenChange={setChapterDialogOpen}
@@ -96,7 +96,7 @@ export function CourseChaptersPage({
             description={`Are you sure you want to delete chapter "${deletingChapter?.title}"? All lessons inside this chapter will also be permanently deleted.`}
             confirmText="Delete Chapter"
           />
-        </>
+        </React.Fragment>
       )}
     </div>
   );

@@ -315,7 +315,7 @@ export function ChapterLessonsView({
 
       {/* Tutor Lesson Dialogs */}
       {isTutor && (
-        <>
+        <React.Fragment>
           <LessonWizardDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}
@@ -342,7 +342,7 @@ export function ChapterLessonsView({
             confirmText="Delete Chapter"
             variant="destructive"
           />
-        </>
+        </React.Fragment>
       )}
     </div>
   );

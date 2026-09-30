@@ -79,7 +79,7 @@ export function CourseFaqsPage({
       />
 
       {isTutor && (
-        <>
+        <React.Fragment>
           <CourseFaqDialog
             open={faqDialogOpen}
             onOpenChange={setFaqDialogOpen}
@@ -95,7 +95,7 @@ export function CourseFaqsPage({
             description={`Are you sure you want to delete this FAQ: "${deletingFaq?.question}"? This action cannot be undone.`}
             confirmText="Delete FAQ"
           />
-        </>
+        </React.Fragment>
       )}
     </div>
   );

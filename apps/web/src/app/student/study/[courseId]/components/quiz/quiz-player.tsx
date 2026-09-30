@@ -116,7 +116,7 @@ export function QuizPlayer({
 
   if (phase === "result" && result) {
     return (
-      <>
+      <React.Fragment>
         <QuizResultView
           result={result}
           passScorePercent={quiz.pass_score_percent}
@@ -134,7 +134,7 @@ export function QuizPlayer({
             />
           </DialogContent>
         </Dialog>
-      </>
+      </React.Fragment>
     );
   }
 

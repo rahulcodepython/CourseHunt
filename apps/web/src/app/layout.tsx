@@ -14,11 +14,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: "CourseHunt Admin",
-    template: "%s · CourseHunt Admin",
-  },
-  description: "CourseHunt platform administration dashboard",
+  title: "CourseHunt",
+  description: "CourseHunt online course selling platform ",
 };
 
 export default function RootLayout({

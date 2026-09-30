@@ -191,7 +191,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 {!course.is_free && (
-                  <>
+                  <React.Fragment>
                     <Separator />
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Course Price</span>
@@ -204,7 +204,7 @@ export default function CheckoutPage() {
                         )}
                       </div>
                     </div>
-                  </>
+                  </React.Fragment>
                 )}
               </CardContent>
             </Card>
@@ -257,7 +257,7 @@ export default function CheckoutPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {course.is_free ? (
-                  <>
+                  <React.Fragment>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Total</span>
                       <span className="font-semibold text-green-600">Free</span>
@@ -269,9 +269,9 @@ export default function CheckoutPage() {
                     >
                       {user ? "Enroll for Free" : "Log in to Enroll"}
                     </Button>
-                  </>
+                  </React.Fragment>
                 ) : (
-                  <>
+                  <React.Fragment>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Subtotal</span>
@@ -304,7 +304,7 @@ export default function CheckoutPage() {
                     <p className="text-center text-xs text-muted-foreground">
                       Secure payment processed by Razorpay
                     </p>
-                  </>
+                  </React.Fragment>
                 )}
                 {!user && (
                   <p className="text-center text-xs text-muted-foreground">

@@ -8,8 +8,8 @@ import (
 )
 
 func (a *App) List(ctx context.Context, userID, role string, afterID, beforeID *int64, limit int) ([]Notification, error) {
-	if role != generic.RoleAdmin && role != generic.RoleTutor {
-		return nil, utils.ErrForbidden("Access denied. Notifications are only available to tutors and administrators.", nil)
+	if role != generic.RoleAdmin && role != generic.RoleTutor && role != generic.RoleUser {
+		return nil, utils.ErrForbidden("Access denied. Notifications are not available for this role.", nil)
 	}
 
 	list, err := a.ListRepository(ctx, userID, role, afterID, beforeID, limit)
@@ -20,8 +20,8 @@ func (a *App) List(ctx context.Context, userID, role string, afterID, beforeID *
 }
 
 func (a *App) MarkSeen(ctx context.Context, userID, role string, lastSeenID int64) error {
-	if role != generic.RoleAdmin && role != generic.RoleTutor {
-		return utils.ErrForbidden("Access denied. Notifications are only available to tutors and administrators.", nil)
+	if role != generic.RoleAdmin && role != generic.RoleTutor && role != generic.RoleUser {
+		return utils.ErrForbidden("Access denied. Notifications are not available for this role.", nil)
 	}
 
 	if err := a.MarkSeenRepository(ctx, userID, lastSeenID); err != nil {

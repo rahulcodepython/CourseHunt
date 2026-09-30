@@ -5,6 +5,7 @@ import { request } from "@/react-query/client";
 import { z } from "zod";
 
 import {
+  useApiMutation,
   useSimpleMutation,
   useArrayMutation,
   appendToArray,
@@ -13,6 +14,7 @@ import {
 } from "@/react-query/mutations";
 import { queryKeys } from "@/react-query/query-keys";
 import { API_ENDPOINTS } from "@/lib/constants/const";
+import type { CourseStudyResponse } from "@/schema/courses.types";
 import {
   LessonZod,
   CreateLessonRequestZod,
@@ -22,6 +24,7 @@ import {
   UpsertVideoContentRequestZod,
   UpsertDocumentContentRequestZod,
   LessonCompleteResponseZod,
+  type LessonCompleteResponse,
   LessonVideoContentZod,
   LessonDocumentContentZod,
   LessonResourceZod,
@@ -89,13 +92,47 @@ export function useUpdateLessonMutation(chapterId: string) {
 }
 
 export function useCompleteLessonMutation(courseId: string) {
-  return useSimpleMutation({
+  return useApiMutation<LessonCompleteResponse, string>({
     mutationFn: (id: string) =>
       request(
         { url: `${API_ENDPOINTS.STUDENT_LESSONS}/${id}/complete`, method: "POST" },
         LessonCompleteResponseZod,
       ),
-    invalidateKeys: [queryKeys.courseStudy(courseId)],
+    queryKey: queryKeys.courseStudy(courseId),
+    updater: (old: CourseStudyResponse | undefined, res: LessonCompleteResponse) => {
+      if (!old) return old;
+      let totalLectures = 0;
+      let totalCompleted = 0;
+      const updatedChapters = (old.chapters ?? []).map((ch) => {
+        let chapterCompletedLessons = 0;
+        const updatedLessons = (ch.lessons ?? []).map((les) => {
+          const isCompleted = les.id === res.lesson_id ? res.completed : les.completed;
+          if (isCompleted) {
+            chapterCompletedLessons++;
+            totalCompleted++;
+          }
+          totalLectures++;
+          return les.id === res.lesson_id ? { ...les, completed: res.completed } : les;
+        });
+        const chCompleted = updatedLessons.length > 0 && chapterCompletedLessons === updatedLessons.length;
+        return {
+          ...ch,
+          progress: {
+            ...ch.progress,
+            lessons_completed: chapterCompletedLessons,
+            completed: chCompleted,
+          },
+          lessons: updatedLessons,
+        };
+      });
+      const completionPercent = totalLectures > 0 ? Math.round((totalCompleted / totalLectures) * 100) : 0;
+      return {
+        ...old,
+        completion_percent: completionPercent,
+        completed: completionPercent === 100,
+        chapters: updatedChapters,
+      };
+    },
     showToast: true,
   });
 }

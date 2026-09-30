@@ -30,7 +30,7 @@ export default async function CertificateVerifyPage({
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-16">
       <Card className="w-full max-w-lg">
         {verification.valid ? (
-          <>
+          <React.Fragment>
             <CardHeader className="flex flex-col items-center gap-2 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-green-100 text-green-600">
                 <Icon name="shield-check" className="size-7" />
@@ -107,9 +107,9 @@ export default async function CertificateVerifyPage({
                 </p>
               ) : null}
             </CardContent>
-          </>
+          </React.Fragment>
         ) : (
-          <>
+          <React.Fragment>
             <CardHeader className="flex flex-col items-center gap-2 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-red-100 text-red-600">
                 <Icon name="shield" className="size-7" />
@@ -128,7 +128,7 @@ export default async function CertificateVerifyPage({
                 Return to CourseHunt
               </Link>
             </CardContent>
-          </>
+          </React.Fragment>
         )}
       </Card>
     </div>

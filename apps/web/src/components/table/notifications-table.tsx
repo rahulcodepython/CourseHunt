@@ -15,12 +15,17 @@ import type { Notification } from "@/schema/notifications.types";
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
-const typeIcon: Record<Notification["type"], IconName> = {
+const typeIcon: Record<string, IconName> = {
   login: "lock",
   purchase: "credit-card",
   discussion: "messages",
   feedback: "star",
   system_error: "shield",
+  enrollment: "book",
+  course_update: "bell",
+  coupon: "ticket",
+  payout: "credit-card",
+  system: "info-circle",
 };
 
 const columnHelper = createColumnHelper<Notification>();
@@ -34,12 +39,16 @@ const notificationsColumns = [
   }),
   columnHelper.accessor("type", {
     header: "Type",
-    cell: ({ getValue }) => (
-      <Badge variant="secondary" className="gap-1 capitalize">
-        <Icon name={typeIcon[getValue()]} className="size-3" />
-        {getValue().replace("_", " ")}
-      </Badge>
-    ),
+    cell: ({ getValue }) => {
+      const type = getValue();
+      const iconName = typeIcon[type] ?? "bell";
+      return (
+        <Badge variant="secondary" className="gap-1 capitalize">
+          <Icon name={iconName} className="size-3" />
+          {type.replace("_", " ")}
+        </Badge>
+      );
+    },
   }),
   columnHelper.accessor("message", {
     header: "Message",

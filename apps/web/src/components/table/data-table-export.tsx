@@ -65,7 +65,7 @@ export function ExportTableButton<TData>({
   };
 
   return (
-    <>
+    <React.Fragment>
       <Button variant="outline" size="sm" className="flex gap-2" onClick={() => setOpen(true)}>
         <Icon name="download" className="size-4" />
         <span>Export</span>
@@ -99,6 +99,6 @@ export function ExportTableButton<TData>({
           </LoadingButton>
         </DialogFooter>
       </FormDialog>
-    </>
+    </React.Fragment>
   );
 }

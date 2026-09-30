@@ -144,7 +144,7 @@ export function CourseAboutTab({
 
       {/* Tutor Course Edit Form & Danger Zone */}
       {role === "tutor" && (
-        <>
+        <React.Fragment>
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Edit Course Details</CardTitle>
@@ -198,7 +198,7 @@ export function CourseAboutTab({
               </div>
             </CardContent>
           </Card>
-        </>
+        </React.Fragment>
       )}
     </div>
   );

@@ -59,7 +59,7 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           {!isPending && user ? (
-            <>
+            <React.Fragment>
               <Button variant="ghost" size="icon" asChild>
                 <Link href="/student/wishlist" aria-label="Wishlist">
                   <Icon name="heart" className="size-4.5" />
@@ -69,7 +69,7 @@ export function SiteHeader() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative flex items-center gap-2 rounded-full h-9 px-2"
+                    className="relative flex items-center gap-2 rounded-md h-9 px-2"
                   >
                     <UserAvatar name={user.name} image={user.image} className="size-7 border" />
                   </Button>
@@ -97,7 +97,7 @@ export function SiteHeader() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </>
+            </React.Fragment>
           ) : (
             <Button asChild>
               <Link href={ROUTES.LOGIN}>Sign In</Link>

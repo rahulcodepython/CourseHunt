@@ -47,7 +47,7 @@ export function CourseSettingsPage({
   }
 
   return (
-    <>
+    <React.Fragment>
       <CourseSettingsTab
         course={course}
         role={role}
@@ -66,6 +66,6 @@ export function CourseSettingsPage({
           variant="destructive"
         />
       )}
-    </>
+    </React.Fragment>
   );
 }

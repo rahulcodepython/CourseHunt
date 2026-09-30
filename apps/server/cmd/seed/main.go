@@ -88,7 +88,9 @@ func main() {
 		enrollments, lesson_progress, chapter_progress, feedbacks, 
 		coupons, coupon_usages, transactions, webhook_events, discussions, 
 		notes, updates, update_seen, certificates, wishlists, 
-		cart_items, profiles RESTART IDENTITY CASCADE;
+		cart_items, profiles, lesson_resources, faqs, notifications, notification_seen,
+		user_learning_streaks, assignments, assignment_submissions,
+		tutor_payout_profiles, tutor_payout_transactions RESTART IDENTITY CASCADE;
 	`
 	ctx := context.Background()
 	if _, err := db.Exec(ctx, truncateSQL); err != nil {
@@ -126,16 +128,27 @@ func main() {
 	printTableCount(db, "courses", "courses")
 	printTableCount(db, "chapters", "chapters")
 	printTableCount(db, "lessons", "lessons")
+	printTableCount(db, "lesson_resources", "lesson_resources")
+	printTableCount(db, "faqs", "faqs")
 	printTableCount(db, "quizzes", "quiz_metadata")
 	printTableCount(db, "quiz_questions", "quiz_questions")
+	printTableCount(db, "quiz_attempts", "quiz_attempts")
 	printTableCount(db, "enrollments", "enrollments")
 	printTableCount(db, "lesson_progress", "lesson_progress")
 	printTableCount(db, "feedbacks (reviews)", "feedbacks")
 	printTableCount(db, "coupons", "coupons")
+	printTableCount(db, "coupon_usages", "coupon_usages")
 	printTableCount(db, "transactions", "transactions")
 	printTableCount(db, "discussions", "discussions")
+	printTableCount(db, "notes", "notes")
 	printTableCount(db, "certificates", "certificates")
 	printTableCount(db, "updates", "updates")
+	printTableCount(db, "user_learning_streaks", "user_learning_streaks")
+	printTableCount(db, "assignments", "assignments")
+	printTableCount(db, "assignment_submissions", "assignment_submissions")
+	printTableCount(db, "tutor_payout_profiles", "tutor_payout_profiles")
+	printTableCount(db, "tutor_payout_transactions", "tutor_payout_transactions")
+	printTableCount(db, "notifications", "notifications")
 
 	log.Println("==================================================")
 	log.Println("🚀 [seeder] SUCCESS: Database reset and seed complete!")

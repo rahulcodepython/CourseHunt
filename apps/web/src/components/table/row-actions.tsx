@@ -65,7 +65,7 @@ export function RowActionButton({
   disabled?: boolean;
 }) {
   const content = (
-    <>
+    <React.Fragment>
       {icon && (
         <Icon
           name={icon}
@@ -77,7 +77,7 @@ export function RowActionButton({
         />
       )}
       <span className={cn("truncate", destructive && "text-destructive")}>{label}</span>
-    </>
+    </React.Fragment>
   );
 
   if (href) {

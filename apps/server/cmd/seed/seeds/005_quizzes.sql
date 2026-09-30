@@ -12,7 +12,7 @@ FROM (VALUES
     ('python-data-science-machine-learning-bootcamp', 1, 5, 'Python Data Science Quiz', 600, 3, 70),
     ('deep-learning-llms-transformers-python', 1, 5, 'Deep Learning & Neural Nets Quiz', 600, 3, 75),
     ('flutter-dart-multiplatform-mobile-dev', 1, 5, 'Flutter Widget Lifecycle Quiz', 600, 3, 70),
-    ('rust-systems-programming-masterclass', 1, 5, 'Rust Ownership & Lifetimes Quiz', 900, 3, 80)
+    ('rust-systems-programming-masterclass', 1, 5, 'Rust Ownership & Lifetimes Quiz', 1200, 10, 70)
 ) AS v(slug, ch_no, l_no, title, time_limit_seconds, total_questions, pass_score_percent)
 JOIN courses c ON c.slug = v.slug
 JOIN chapters ch ON ch.course_id = c.id AND ch.chapter_no = v.ch_no
@@ -49,9 +49,16 @@ FROM (VALUES
     ('Flutter Widget Lifecycle Quiz', 'Which method is called first when a StateWidget is inserted into the tree?', 'single_choice', 10),
     ('Flutter Widget Lifecycle Quiz', 'Fill in the blank: To update the UI in a Flutter State, call the _____ method.', 'fill_blank', 10),
     ('Flutter Widget Lifecycle Quiz', 'StatelessWidgets re-render whenever their properties change.', 'single_choice', 10),
-    ('Rust Ownership & Lifetimes Quiz', 'How many mutable references to a resource can exist simultaneously in Rust?', 'single_choice', 10),
+    ('Rust Ownership & Lifetimes Quiz', 'How many mutable references to a particular piece of data can exist in a given scope?', 'single_choice', 10),
+    ('Rust Ownership & Lifetimes Quiz', 'Which keyword is used to transfer ownership of captured variables into a closure?', 'single_choice', 10),
+    ('Rust Ownership & Lifetimes Quiz', 'What happens when the owner of heap-allocated memory (e.g. Box or Vec) goes out of scope?', 'single_choice', 10),
+    ('Rust Ownership & Lifetimes Quiz', 'Which of the following are fundamental rules of Rust ownership? (Select all that apply)', 'multi_choice', 10),
+    ('Rust Ownership & Lifetimes Quiz', 'Which types implement the Copy trait by default in Rust? (Select all that apply)', 'multi_choice', 10),
+    ('Rust Ownership & Lifetimes Quiz', 'Select all valid lifetime annotations and specifiers in Rust.', 'multi_choice', 10),
     ('Rust Ownership & Lifetimes Quiz', 'Fill in the blank: Rust memory is automatically cleaned up when a variable goes out of _____.', 'fill_blank', 10),
-    ('Rust Ownership & Lifetimes Quiz', 'Which keyword is used to transfer ownership of a variable into a closure?', 'single_choice', 10)
+    ('Rust Ownership & Lifetimes Quiz', 'Fill in the blank: In Rust, a shared immutable reference is created using the symbol _____.', 'fill_blank', 10),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the chronological phases of a Rust variable lifecycle.', 'arrange', 10),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the order of compiler borrow checker rules evaluation.', 'arrange', 10)
 ) AS v(quiz_title, question_text, question_type, points)
 JOIN quiz_metadata qm ON qm.title = v.quiz_title
 ON CONFLICT (id) DO NOTHING;
@@ -97,10 +104,30 @@ FROM (VALUES
     ('Flutter Widget Lifecycle Quiz', 'Which method is called first when a StateWidget is inserted into the tree?', 'build()', false),
     ('Flutter Widget Lifecycle Quiz', 'StatelessWidgets re-render whenever their properties change.', 'True', true),
     ('Flutter Widget Lifecycle Quiz', 'StatelessWidgets re-render whenever their properties change.', 'False', false),
-    ('Rust Ownership & Lifetimes Quiz', 'How many mutable references to a resource can exist simultaneously in Rust?', 'Exactly 1', true),
-    ('Rust Ownership & Lifetimes Quiz', 'How many mutable references to a resource can exist simultaneously in Rust?', 'Unlimited', false),
-    ('Rust Ownership & Lifetimes Quiz', 'Which keyword is used to transfer ownership of a variable into a closure?', 'move', true),
-    ('Rust Ownership & Lifetimes Quiz', 'Which keyword is used to transfer ownership of a variable into a closure?', 'borrow', false)
+    ('Rust Ownership & Lifetimes Quiz', 'How many mutable references to a particular piece of data can exist in a given scope?', 'Exactly 1', true),
+    ('Rust Ownership & Lifetimes Quiz', 'How many mutable references to a particular piece of data can exist in a given scope?', 'Unlimited', false),
+    ('Rust Ownership & Lifetimes Quiz', 'How many mutable references to a particular piece of data can exist in a given scope?', 'Up to 3', false),
+    ('Rust Ownership & Lifetimes Quiz', 'How many mutable references to a particular piece of data can exist in a given scope?', 'Depends on available memory', false),
+    ('Rust Ownership & Lifetimes Quiz', 'Which keyword is used to transfer ownership of captured variables into a closure?', 'move', true),
+    ('Rust Ownership & Lifetimes Quiz', 'Which keyword is used to transfer ownership of captured variables into a closure?', 'borrow', false),
+    ('Rust Ownership & Lifetimes Quiz', 'Which keyword is used to transfer ownership of captured variables into a closure?', 'take', false),
+    ('Rust Ownership & Lifetimes Quiz', 'Which keyword is used to transfer ownership of captured variables into a closure?', 'clone', false),
+    ('Rust Ownership & Lifetimes Quiz', 'What happens when the owner of heap-allocated memory (e.g. Box or Vec) goes out of scope?', 'The Drop trait runs and heap memory is freed immediately', true),
+    ('Rust Ownership & Lifetimes Quiz', 'What happens when the owner of heap-allocated memory (e.g. Box or Vec) goes out of scope?', 'A garbage collector sweeps it on the next cycle', false),
+    ('Rust Ownership & Lifetimes Quiz', 'What happens when the owner of heap-allocated memory (e.g. Box or Vec) goes out of scope?', 'A segmentation fault is raised', false),
+    ('Rust Ownership & Lifetimes Quiz', 'What happens when the owner of heap-allocated memory (e.g. Box or Vec) goes out of scope?', 'Memory leaks until the OS reclaims it', false),
+    ('Rust Ownership & Lifetimes Quiz', 'Which of the following are fundamental rules of Rust ownership? (Select all that apply)', 'Each value in Rust has an owner', true),
+    ('Rust Ownership & Lifetimes Quiz', 'Which of the following are fundamental rules of Rust ownership? (Select all that apply)', 'There can only be one owner at a time', true),
+    ('Rust Ownership & Lifetimes Quiz', 'Which of the following are fundamental rules of Rust ownership? (Select all that apply)', 'When the owner goes out of scope, the value is dropped', true),
+    ('Rust Ownership & Lifetimes Quiz', 'Which of the following are fundamental rules of Rust ownership? (Select all that apply)', 'Unused values are scanned periodically by a background runtime GC', false),
+    ('Rust Ownership & Lifetimes Quiz', 'Which types implement the Copy trait by default in Rust? (Select all that apply)', 'i32, u64, and f64 primitive numeric types', true),
+    ('Rust Ownership & Lifetimes Quiz', 'Which types implement the Copy trait by default in Rust? (Select all that apply)', 'bool and char', true),
+    ('Rust Ownership & Lifetimes Quiz', 'Which types implement the Copy trait by default in Rust? (Select all that apply)', 'String and Vec<T>', false),
+    ('Rust Ownership & Lifetimes Quiz', 'Which types implement the Copy trait by default in Rust? (Select all that apply)', 'Box<T>', false),
+    ('Rust Ownership & Lifetimes Quiz', 'Select all valid lifetime annotations and specifiers in Rust.', '''a', true),
+    ('Rust Ownership & Lifetimes Quiz', 'Select all valid lifetime annotations and specifiers in Rust.', '''static', true),
+    ('Rust Ownership & Lifetimes Quiz', 'Select all valid lifetime annotations and specifiers in Rust.', '''lifetime', true),
+    ('Rust Ownership & Lifetimes Quiz', 'Select all valid lifetime annotations and specifiers in Rust.', '#borrow', false)
 ) AS v(quiz_title, question_text, option_text, is_correct)
 JOIN quiz_questions qq ON qq.question_text = v.question_text
 JOIN quiz_metadata qm ON qm.id = qq.quiz_id AND qm.title = v.quiz_title
@@ -116,7 +143,15 @@ FROM (VALUES
     ('Docker Basics Quiz', 'Arrange the steps to publish a Docker image to Docker Hub.', 'Write Dockerfile configuration', 1),
     ('Docker Basics Quiz', 'Arrange the steps to publish a Docker image to Docker Hub.', 'Build local image: docker build', 2),
     ('Docker Basics Quiz', 'Arrange the steps to publish a Docker image to Docker Hub.', 'Tag image with registry repository name', 3),
-    ('Docker Basics Quiz', 'Arrange the steps to publish a Docker image to Docker Hub.', 'Push image: docker push', 4)
+    ('Docker Basics Quiz', 'Arrange the steps to publish a Docker image to Docker Hub.', 'Push image: docker push', 4),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the chronological phases of a Rust variable lifecycle.', 'Variable declaration and value binding (let x = ...)', 1),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the chronological phases of a Rust variable lifecycle.', 'Accessing, borrowing, or passing references in active scope', 2),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the chronological phases of a Rust variable lifecycle.', 'Reaching the end of the enclosing block scope (})', 3),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the chronological phases of a Rust variable lifecycle.', 'Automatic invocation of the drop() destructor', 4),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the order of compiler borrow checker rules evaluation.', 'Ensure variable is initialized before any read access', 1),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the order of compiler borrow checker rules evaluation.', 'Track active immutable references to the resource', 2),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the order of compiler borrow checker rules evaluation.', 'Verify no mutable references co-exist with active immutable borrows', 3),
+    ('Rust Ownership & Lifetimes Quiz', 'Arrange the order of compiler borrow checker rules evaluation.', 'Verify reference lifetime does not outlive owner lifetime', 4)
 ) AS v(quiz_title, question_text, item_text, correct_order)
 JOIN quiz_questions qq ON qq.question_text = v.question_text
 JOIN quiz_metadata qm ON qm.id = qq.quiz_id AND qm.title = v.quiz_title
@@ -134,9 +169,56 @@ FROM (VALUES
     ('Python Data Science Quiz', 'Fill in the blank: A 2D labeled data structure in Pandas is called a _____.', 'DataFrame'),
     ('Deep Learning & Neural Nets Quiz', 'Fill in the blank: The activation function ReLU stands for Rectified _____ Unit.', 'Linear'),
     ('Flutter Widget Lifecycle Quiz', 'Fill in the blank: To update the UI in a Flutter State, call the _____ method.', 'setState'),
-    ('Rust Ownership & Lifetimes Quiz', 'Fill in the blank: Rust memory is automatically cleaned up when a variable goes out of _____.', 'scope')
+    ('Rust Ownership & Lifetimes Quiz', 'Fill in the blank: Rust memory is automatically cleaned up when a variable goes out of _____.', 'scope'),
+    ('Rust Ownership & Lifetimes Quiz', 'Fill in the blank: In Rust, a shared immutable reference is created using the symbol _____.', '&')
 ) AS v(quiz_title, question_text, answer)
 JOIN quiz_questions qq ON qq.question_text = v.question_text
 JOIN quiz_metadata qm ON qm.id = qq.quiz_id AND qm.title = v.quiz_title
 ON CONFLICT DO NOTHING;
+
+-- Seed Quiz Attempts for rahulprofession01@gmail.com, bwubca23406@gmail.com, and user@example.com
+INSERT INTO quiz_attempts (id, quiz_id, user_id, started_at, submitted_at, total_score, passed, correct_count, incorrect_count, skipped_count)
+SELECT gen_random_uuid(), qm.id, u.id, v.started_at, v.submitted_at, v.total_score, v.passed, v.correct_count, v.incorrect_count, v.skipped_count
+FROM (VALUES
+    ('Go Syntax & Basic Concurrency Quiz', 'rahulprofession01@gmail.com', CURRENT_TIMESTAMP - INTERVAL '7 days 20 minutes', CURRENT_TIMESTAMP - INTERVAL '7 days', 30.00, true, 3, 0, 0),
+    ('Next.js App Router Quiz', 'rahulprofession01@gmail.com', CURRENT_TIMESTAMP - INTERVAL '4 days 25 minutes', CURRENT_TIMESTAMP - INTERVAL '4 days', 30.00, true, 3, 0, 0),
+    ('Python Data Science Quiz', 'bwubca23406@gmail.com', CURRENT_TIMESTAMP - INTERVAL '5 days 15 minutes', CURRENT_TIMESTAMP - INTERVAL '5 days', 30.00, true, 3, 0, 0),
+    ('Deep Learning & Neural Nets Quiz', 'bwubca23406@gmail.com', CURRENT_TIMESTAMP - INTERVAL '2 days 18 minutes', CURRENT_TIMESTAMP - INTERVAL '2 days', 20.00, false, 2, 1, 0),
+    ('Go Syntax & Basic Concurrency Quiz', 'user@example.com', CURRENT_TIMESTAMP - INTERVAL '6 days 12 minutes', CURRENT_TIMESTAMP - INTERVAL '6 days', 20.00, false, 2, 1, 0),
+    ('Docker Basics Quiz', 'charlie@example.com', CURRENT_TIMESTAMP - INTERVAL '8 days 15 minutes', CURRENT_TIMESTAMP - INTERVAL '8 days', 30.00, true, 3, 0, 0)
+) AS v(quiz_title, email, started_at, submitted_at, total_score, passed, correct_count, incorrect_count, skipped_count)
+JOIN quiz_metadata qm ON qm.title = v.quiz_title
+JOIN users u ON u.email = v.email
+ON CONFLICT (id) DO NOTHING;
+
+-- Seed Single Choice Answers for Quiz Attempts
+INSERT INTO quiz_attempt_single_answers (id, attempt_id, question_id, selected_option_id, is_correct, is_skipped)
+SELECT gen_random_uuid(), qa.id, qq.id, qo.id, qo.is_correct, false
+FROM quiz_attempts qa
+JOIN quiz_metadata qm ON qm.id = qa.quiz_id
+JOIN users u ON u.id = qa.user_id
+JOIN quiz_questions qq ON qq.quiz_id = qm.id AND qq.question_type = 'single_choice'
+JOIN quiz_options qo ON qo.question_id = qq.id AND qo.is_correct = true
+ON CONFLICT (attempt_id, question_id) DO NOTHING;
+
+-- Seed Fill Blank Answers for Quiz Attempts
+INSERT INTO quiz_attempt_fill_answers (id, attempt_id, question_id, fill_text, is_correct, is_skipped)
+SELECT gen_random_uuid(), qa.id, qq.id, qfb.answer, true, false
+FROM quiz_attempts qa
+JOIN quiz_metadata qm ON qm.id = qa.quiz_id
+JOIN users u ON u.id = qa.user_id
+JOIN quiz_questions qq ON qq.quiz_id = qm.id AND qq.question_type = 'fill_blank'
+JOIN quiz_fill_blank_answers qfb ON qfb.question_id = qq.id
+ON CONFLICT (attempt_id, question_id) DO NOTHING;
+
+-- Ensure all lessons referenced by quiz_metadata are flagged as 'quiz' and clear conflicting media/docs
+UPDATE lessons SET lesson_type = 'quiz'
+WHERE id IN (SELECT lesson_id FROM quiz_metadata);
+
+DELETE FROM lesson_document_content
+WHERE lesson_id IN (SELECT lesson_id FROM quiz_metadata);
+
+DELETE FROM lesson_video_content
+WHERE lesson_id IN (SELECT lesson_id FROM quiz_metadata);
+
 

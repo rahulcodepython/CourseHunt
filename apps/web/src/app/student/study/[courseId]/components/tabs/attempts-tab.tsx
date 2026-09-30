@@ -79,7 +79,7 @@ export function AttemptsTab({ quizId }: { quizId: string }) {
   );
 
   return (
-    <>
+    <React.Fragment>
       <DataTable
         columns={columns}
         data={attempts}
@@ -106,6 +106,6 @@ export function AttemptsTab({ quizId }: { quizId: string }) {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </React.Fragment>
   );
 }

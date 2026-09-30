@@ -155,5 +155,123 @@ INSERT INTO courses (
         ARRAY['Basic HTML, CSS, JavaScript'],
         (SELECT id FROM categories WHERE name = 'Vue & Nuxt'), true,
         25, 17500, 4.82, 16, 'published'
+    ),
+    (
+        gen_random_uuid(),
+        (SELECT id FROM users WHERE email = 'rahulcode2026@gmail.com'),
+        'kubernetes-gitops-cilium-mastery',
+        'Kubernetes Platform Engineering: Cilium, ArgoCD & GitOps',
+        'Master cloud native platform engineering with Cilium eBPF, ArgoCD declarative GitOps, Helm, and zero-trust service mesh.',
+        'Take your Kubernetes engineering to staff level. In this course, Rahul Verma guides you through replacing kube-proxy with Cilium eBPF, implementing continuous delivery via ArgoCD GitOps, securing workloads with Kyverno policies, and telemetry with Hubble.',
+        'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?auto=format&fit=crop&w=800&q=80',
+        'https://www.w3schools.com/html/mov_bbb.mp4',
+        'English', 'advanced', 159.99, 59.99,
+        ARRAY['Cilium eBPF CNI & Service Mesh', 'ArgoCD declarative GitOps automation', 'Kubernetes Zero-Trust Security Policies', 'Hubble network observability'],
+        ARRAY['Strong Linux fundamentals', 'Familiarity with basic Docker & Kubernetes pods'],
+        (SELECT id FROM categories WHERE name = 'Docker & Kubernetes'), true,
+        15, 12600, 4.96, 21, 'published'
+    ),
+    (
+        gen_random_uuid(),
+        (SELECT id FROM users WHERE email = 'tutor@example.com'),
+        'git-github-essential-crash-course',
+        'Git & GitHub Essential Crash Course: Zero to Collaboration Hero',
+        'Learn essential Git version control, GitHub workflows, branching strategies, rebasing, and open source pull requests.',
+        'A comprehensive free course to master Git commands, interactive rebasing, merge conflict resolution, pull request etiquette, and GitHub Actions basics.',
+        'https://images.unsplash.com/photo-1556075798-4825dfaaf498?auto=format&fit=crop&w=800&q=80',
+        'https://www.w3schools.com/html/mov_bbb.mp4',
+        'English', 'beginner', 0.00, 0.00,
+        ARRAY['Master git branch, merge, and rebase', 'Collaborate via GitHub Pull Requests', 'Resolve tricky merge conflicts', 'Automate tests with GitHub Actions'],
+        ARRAY['No prior experience required!'],
+        (SELECT id FROM categories WHERE name = 'Golang & Backend'), false,
+        10, 7200, 4.92, 54, 'published'
+    ),
+    (
+        gen_random_uuid(),
+        (SELECT id FROM users WHERE email = 'tutor@example.com'),
+        'ethical-hacking-network-penetration-testing',
+        'Practical Ethical Hacking & Network Penetration Testing',
+        'Learn real-world penetration testing, network vulnerability scanning, Wireshark packet analysis, and OWASP Top 10 exploits.',
+        'Hands-on ethical hacking fundamentals. Master Kali Linux tools, Nmap reconnaissance, Metasploit exploitation, Burp Suite web assessment, and defensible security auditing.',
+        'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80',
+        'https://www.w3schools.com/html/mov_bbb.mp4',
+        'English', 'intermediate', 139.99, 49.99,
+        ARRAY['Network scanning with Nmap', 'Web vulnerability exploitation with Burp Suite', 'Packet analysis using Wireshark', 'OWASP Top 10 mitigation strategies'],
+        ARRAY['Basic networking knowledge (IP, TCP/UDP, DNS)'],
+        (SELECT id FROM categories WHERE name = 'Ethical Hacking & Pentesting'), true,
+        15, 14400, 4.87, 19, 'published'
+    ),
+    (
+        gen_random_uuid(),
+        (SELECT id FROM users WHERE email = 'rahulcode2026@gmail.com'),
+        'k8s-production-troubleshooting-draft',
+        'Kubernetes Production Troubleshooting & Incident Response',
+        'Debug CrashLoopBackOff, OOMKilled pods, DNS resolution failures, and etcd split-brain incidents under pressure.',
+        'Work in progress course designed for SREs and DevOps engineers. Currently being prepared by Rahul Verma.',
+        'https://images.unsplash.com/photo-1607799279861-4dd421887fb3?auto=format&fit=crop&w=800&q=80',
+        'https://www.w3schools.com/html/mov_bbb.mp4',
+        'English', 'advanced', 99.99, 39.99,
+        ARRAY['Debug crash loop backoff errors', 'Resolve Kubernetes CoreDNS outages', 'Triage etcd performance bottlenecks'],
+        ARRAY['Experience running Kubernetes clusters'],
+        (SELECT id FROM categories WHERE name = 'Docker & Kubernetes'), true,
+        5, 3600, 0.00, 0, 'draft'
+    ),
+    (
+        gen_random_uuid(),
+        (SELECT id FROM users WHERE email = 'john.doe@example.com'),
+        'legacy-angularjs-modern-migration-archived',
+        'Legacy AngularJS to Modern React 19 Migration Patterns',
+        'Strategic step-by-step techniques to modernize monolithic AngularJS 1.x codebases to modern React 19 and Next.js.',
+        'Archived course preserved for reference on legacy modernization strategies and hybrid ng-react architectures.',
+        'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
+        'https://www.w3schools.com/html/mov_bbb.mp4',
+        'English', 'intermediate', 79.99, 29.99,
+        ARRAY['Strangler Fig Pattern for frontend migrations', 'Interoperability between Angular directives and React components'],
+        ARRAY['Knowledge of JavaScript and AngularJS'],
+        (SELECT id FROM categories WHERE name = 'React & Next.js'), false,
+        10, 7200, 4.50, 8, 'archived'
+    ),
+    (
+        gen_random_uuid(),
+        (SELECT id FROM users WHERE email = 'sarah.smith@example.com'),
+        'python-ai-agents-langchain-langgraph',
+        'AI Agents & Multi-Agent Systems with LangChain & LangGraph',
+        'Build autonomous LLM agents, persistent memory workflows, human-in-the-loop validation, and RAG pipelines.',
+        'Step beyond simple prompting. Learn how to architect stateful multi-agent systems using LangGraph, connect tools and external APIs, implement vector search with PgVector, and deploy production agent services.',
+        'https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=800&q=80',
+        'https://www.w3schools.com/html/mov_bbb.mp4',
+        'English', 'intermediate', 189.99, 74.99,
+        ARRAY['LangGraph cyclic workflows & state graphs', 'Tool calling and autonomous agent loops', 'PgVector semantic search integration', 'Production observability with LangSmith'],
+        ARRAY['Intermediate Python skills', 'Basic understanding of LLMs'],
+        (SELECT id FROM categories WHERE name = 'AI Agents & LLMOps'), true,
+        15, 15000, 4.95, 33, 'published'
     )
 ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, final_price = EXCLUDED.final_price;
+
+-- Set is_free flag for free courses
+UPDATE courses SET is_free = true WHERE actual_price = 0 AND final_price = 0;
+
+-- Seed Course FAQs
+INSERT INTO faqs (id, course_id, question, answer, sort_order)
+SELECT gen_random_uuid(), c.id, v.question, v.answer, v.sort_order
+FROM (VALUES
+    ('go-golang-microservices-masterclass', 'Do I need prior experience with Go to take this course?', 'Basic familiarity with programming syntax in any language (Go, Python, C, Java) is helpful, but we cover Go concurrency and fundamentals thoroughly from the beginning.', 1),
+    ('go-golang-microservices-masterclass', 'Are the microservice projects deployed to real cloud servers?', 'Yes! We configure Docker containers, setup Postgres connection pooling with sqlx, and deploy to Kubernetes with continuous deployment pipelines.', 2),
+    ('go-golang-microservices-masterclass', 'Do I get access to full source code repositories?', 'Yes, complete GitHub repositories for every single chapter with branch-by-branch checkpoints are included.', 3),
+    ('fullstack-nextjs-react-mastery', 'Does this course cover Next.js 15 and React 19 Server Actions?', 'Yes, the entire curriculum was built from scratch specifically for Next.js 15 App Router, React 19 Server Components, Server Actions, and Tailwind CSS v4.', 1),
+    ('fullstack-nextjs-react-mastery', 'How is authentication handled in the course projects?', 'We use modern Better-Auth with session tokens, JWT plugins, role-based access control, and Postgres persistence.', 2),
+    ('fullstack-nextjs-react-mastery', 'Are TypeScript types provided for all exercises?', 'Yes, 100% of the project codebase is strictly typed in TypeScript with zero any assertions.', 3),
+    ('system-design-distributed-systems', 'Is this course suitable for senior system design interview prep?', 'Absolutely. It is modeled after real architecture interviews at Google, Meta, and Amazon, covering CAP theorem, distributed consensus (Raft), sharding, and caching.', 1),
+    ('system-design-distributed-systems', 'Will there be architecture diagrams included?', 'Yes, high-resolution architectural schematics and sequence diagrams are attached to every single module.', 2),
+    ('docker-kubernetes-modern-devops', 'Do I need a paid cloud account for Kubernetes labs?', 'No, all hands-on exercises are designed to run locally using Minikube or Kind, with optional EKS/GKE deployment guides.', 1),
+    ('docker-kubernetes-modern-devops', 'Are Helm charts included in the repository?', 'Yes, complete production-ready Helm charts with values.yaml configurations for dev, staging, and production environments are provided.', 2),
+    ('python-data-science-machine-learning-bootcamp', 'Will I build real machine learning models in this bootcamp?', 'Yes, you will build and evaluate linear regression, random forests, XGBoost classifiers, and neural networks using real industry datasets.', 1),
+    ('deep-learning-llms-transformers-python', 'Do I need an expensive GPU to follow along?', 'Google Colab Free or Kaggle T4 GPUs are completely sufficient for all fine-tuning and PyTorch training notebooks in this course.', 1),
+    ('kubernetes-gitops-cilium-mastery', 'What makes Cilium eBPF different from standard Kubernetes kube-proxy?', 'Cilium replaces iptables with eBPF in kernel space for ultra low-latency packet routing, transparent mTLS, and real-time observability via Hubble.', 1),
+    ('kubernetes-gitops-cilium-mastery', 'Is ArgoCD sync automated in this course?', 'Yes, we set up declarative Application and ApplicationSet CRDs with automated PR preview environments.', 2),
+    ('git-github-essential-crash-course', 'Is this course really completely free?', 'Yes! This course is 100% free forever for all CourseHunt students to learn modern Git version control.', 1),
+    ('python-ai-agents-langchain-langgraph', 'Does this course teach cyclic graphs with LangGraph?', 'Yes, we teach stateful cyclic graphs with conditional edges, human-in-the-loop checkpoints, and tool call routers.', 1)
+) AS v(slug, question, answer, sort_order)
+JOIN courses c ON c.slug = v.slug
+ON CONFLICT (id) DO NOTHING;
+

@@ -17,7 +17,10 @@ INSERT INTO "users" (id, name, email, "emailVerified", image, role) VALUES
     (gen_random_uuid(), 'Charlie Brown', 'charlie@example.com', true, 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80', 'user'),
     (gen_random_uuid(), 'David Wright', 'david@example.com', true, 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80', 'user'),
     (gen_random_uuid(), 'Eva Davis', 'eva@example.com', true, 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=250&q=80', 'user'),
-    (gen_random_uuid(), 'Fiona Gallagher', 'fiona@example.com', true, 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=250&q=80', 'user')
+    (gen_random_uuid(), 'Fiona Gallagher', 'fiona@example.com', true, 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=250&q=80', 'user'),
+    (gen_random_uuid(), 'Rahul Sharma', 'rahulprofession01@gmail.com', true, 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=250&q=80', 'user'),
+    (gen_random_uuid(), 'Rahul Dev (BWU BCA)', 'bwubca23406@gmail.com', true, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80', 'user'),
+    (gen_random_uuid(), 'Rahul Verma (Cloud & DevOps Architect)', 'rahulcode2026@gmail.com', true, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80', 'tutor')
 ON CONFLICT (email) DO UPDATE SET
     name = EXCLUDED.name,
     image = EXCLUDED.image,
@@ -45,7 +48,10 @@ FROM (VALUES
     ('charlie@example.com','2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
     ('david@example.com',  '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
     ('eva@example.com',    '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
-    ('fiona@example.com',  '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90')
+    ('fiona@example.com',  '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
+    ('rahulprofession01@gmail.com', '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
+    ('bwubca23406@gmail.com',       '2fc9c5ff7668bbdb273250224f09c0ed:bb5b0d3b555409c39130bb2d57511bb818e095a0d7ea1e338417a44940f7919c9c5867ff2e75c69d2f14a78883f43a0d6f6dd0d7e2d93580d592e76685ae1d90'),
+    ('rahulcode2026@gmail.com',     '2cb0733c3a8ef0699f0d5fee0f38fbca:f6e4b51eab9527a3c9c52c9ff5f842adef3cf921f23584d946ab27b8eda1414211de126aecaebb3283bf7b62472f59f6785baf4b0c4053b1240c42f357be1efd')
 ) AS v(email, hash)
 JOIN "users" u ON u.email = v.email
 ON CONFLICT ("providerId", "accountId") DO NOTHING;
@@ -114,7 +120,27 @@ FROM (VALUES
     ('charlie@example.com', 'DevOps enthusiast transitioning into Cloud Native engineering.', 'Junior Systems Engineer', NULL, 0, 0),
     ('david@example.com', 'Data enthusiast learning Python & AI models.', 'Data Analyst', NULL, 0, 0),
     ('eva@example.com', 'UI/UX Designer expanding into React and Next.js frontend development.', 'Product Designer', NULL, 0, 0),
-    ('fiona@example.com', 'Mobile app developer learning Flutter and React Native.', 'App Developer', NULL, 0, 0)
+    ('fiona@example.com', 'Mobile app developer learning Flutter and React Native.', 'App Developer', NULL, 0, 0),
+    ('rahulprofession01@gmail.com', 'Passionate Software Engineer and Cloud enthusiast learning Go microservices, distributed architectures, and modern Next.js.', 'Full-Stack Software Engineer', 'https://github.com/rahulprofession01', 0, 0),
+    ('bwubca23406@gmail.com', 'BCA scholar specializing in Cloud Native development, Python AI, and DevOps systems.', 'Cloud & AI Enthusiast | BCA Scholar', 'https://linkedin.com/in/bwubca23406', 0, 0),
+    ('rahulcode2026@gmail.com', 'Rahul Verma is a Senior Cloud Architect & Kubernetes specialist specializing in resilient multi-cloud infrastructures.', 'Staff Cloud & DevOps Architect', 'https://rahulverma.cloud', 145, 4.96)
 ) AS v(email, bio, headline, website, total_students, rating_avg)
 JOIN users u ON u.email = v.email
 ON CONFLICT (user_id) DO UPDATE SET bio = EXCLUDED.bio, headline = EXCLUDED.headline, website = EXCLUDED.website;
+
+-- Seed Tutor Payout Profiles for tutors
+INSERT INTO tutor_payout_profiles (user_id, commission_percentage, bank_account_number, bank_ifsc_code, upi_id, payout_mode)
+SELECT u.id, v.commission, v.bank_acc, v.ifsc, v.upi, v.mode
+FROM (VALUES
+    ('tutor@example.com', 85.00, '919020048192834', 'HDFC0001234', 'alexrivers@oksbi', 'bank_transfer'),
+    ('sarah.smith@example.com', 90.00, '308910293847561', 'SBIN0004567', 'sarahsmith@icici', 'upi'),
+    ('john.doe@example.com', 85.00, '501002394857192', 'UTIB0000890', 'johndoe@paytm', 'bank_transfer'),
+    ('rahulcode2026@gmail.com', 90.00, '602019283746501', 'KKBK0000345', 'rahulcloud@apl', 'bank_transfer')
+) AS v(email, commission, bank_acc, ifsc, upi, mode)
+JOIN users u ON u.email = v.email
+ON CONFLICT (user_id) DO UPDATE SET
+    commission_percentage = EXCLUDED.commission_percentage,
+    bank_account_number = EXCLUDED.bank_account_number,
+    bank_ifsc_code = EXCLUDED.bank_ifsc_code,
+    upi_id = EXCLUDED.upi_id,
+    payout_mode = EXCLUDED.payout_mode;

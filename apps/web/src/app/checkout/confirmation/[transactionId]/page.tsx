@@ -39,17 +39,17 @@ export default function PaymentConfirmationPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
       {view === "polling" && (
-        <>
+        <React.Fragment>
           <Icon name="refresh" className="size-16 animate-spin text-primary" />
           <h1 className="text-xl font-semibold">Confirming your payment...</h1>
           <p className="max-w-sm text-sm text-muted-foreground">
             Please don&apos;t close this page while we confirm your payment with Razorpay.
           </p>
-        </>
+        </React.Fragment>
       )}
 
       {view === "success" && (
-        <>
+        <React.Fragment>
           <div className="flex size-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-500/10">
             <Icon name="check" className="size-8 text-green-600" />
           </div>
@@ -58,11 +58,11 @@ export default function PaymentConfirmationPage() {
           <Button asChild>
             <Link href={ROUTES.STUDENT_DASHBOARD}>Go to Dashboard</Link>
           </Button>
-        </>
+        </React.Fragment>
       )}
 
       {view === "failed" && (
-        <>
+        <React.Fragment>
           <div className="flex size-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/10">
             <Icon name="x" className="size-8 text-red-600" />
           </div>
@@ -75,11 +75,11 @@ export default function PaymentConfirmationPage() {
           <Button asChild>
             <Link href="/courses">Try Again</Link>
           </Button>
-        </>
+        </React.Fragment>
       )}
 
       {view === "exhausted" && (
-        <>
+        <React.Fragment>
           <div className="flex size-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/10">
             <Icon name="clock" className="size-8 text-amber-600" />
           </div>
@@ -91,7 +91,7 @@ export default function PaymentConfirmationPage() {
           <Button asChild>
             <Link href={ROUTES.STUDENT_DASHBOARD}>Go to Dashboard</Link>
           </Button>
-        </>
+        </React.Fragment>
       )}
     </div>
   );

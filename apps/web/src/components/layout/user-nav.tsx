@@ -45,7 +45,7 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative flex items-center gap-2 rounded-full h-9 px-2 focus:outline-none hover:bg-accent"
+          className="relative flex items-center gap-2 rounded-md h-9 px-2 focus:outline-none hover:bg-accent"
         >
           <UserAvatar name={user?.name ?? "Admin"} image={user?.image} className="size-7 border" />
           <span className="hidden text-sm font-medium sm:inline-block pr-1">
@@ -68,7 +68,7 @@ export function UserNav() {
           </Link>
         </DropdownMenuItem>
         {isAdminOrTutor && (
-          <>
+          <React.Fragment>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href={ROUTES.CHANGE_PASSWORD} className="cursor-pointer">
@@ -76,7 +76,7 @@ export function UserNav() {
                 Change Password
               </Link>
             </DropdownMenuItem>
-          </>
+          </React.Fragment>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={handleLogout} className="cursor-pointer">
