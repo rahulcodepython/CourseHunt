@@ -1,15 +1,6 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-// Local dev points this at Mailpit (docker-compose service, web UI on
-// http://localhost:8025) — no real inbox needed. Swap SMTP_* in production.
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "localhost",
-  port: Number(process.env.SMTP_PORT) || 1025,
-  secure: process.env.SMTP_SECURE === "true",
-  auth: process.env.SMTP_USER
-    ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
-    : undefined,
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendOTPEmail(
   to: string,
@@ -23,9 +14,18 @@ export async function sendOTPEmail(
     "change-email": "Confirm your new CourseHunt email",
   }[purpose];
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || "CourseHunt <no-reply@coursehunt.localhost>",
-    to,
+  const from = process.env.EMAIL_FROM || "CourseHunt <onboarding@resend.dev>";
+
+  if (!process.env.RESEND_API_KEY) {
+    console.warn(
+      `[resend] RESEND_API_KEY is not set. OTP for ${to} (${purpose}) is: ${otp}`,
+    );
+    return;
+  }
+
+  const { data, error } = await resend.emails.send({
+    from,
+    to: [to],
     subject,
     text: `Your CourseHunt verification code is: ${otp}\n\nThis code expires in 5 minutes. If you didn't request this, you can ignore this email.`,
     html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
@@ -35,4 +35,11 @@ export async function sendOTPEmail(
             <p style="color:#666;font-size:14px">This code expires in 5 minutes. If you didn't request this, you can safely ignore this email.</p>
         </div>`,
   });
+
+  if (error) {
+    console.error("[resend] Failed to send OTP email:", error);
+    throw new Error(`Failed to send OTP email: ${error.message}`);
+  }
+
+  return data;
 }

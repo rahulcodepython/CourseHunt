@@ -6,6 +6,7 @@
   ],
   "scripts": {
     "help": "bun scripts/help.ts",
+    "deps:status": "docker compose ps",
     "deps:up": "docker compose up -d --wait",
     "deps:down": "docker compose down",
     "migrate-up": "bun --env-file=.env --filter @coursehunt/server migrate-up",
@@ -14,6 +15,9 @@
     "flush": "bun --env-file=.env --filter @coursehunt/server flush",
     "dev:web": "bun --env-file=.env --filter @coursehunt/web dev",
     "dev:server": "bun --env-file=.env --filter @coursehunt/server dev",
-    "dev": "bun run deps:up && bun --env-file=.env --filter @coursehunt/web --filter @coursehunt/server dev"
+    "dev": "bun scripts/check-deps.ts && bun --env-file=.env --filter @coursehunt/web --filter @coursehunt/server dev"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2"
   }
 }

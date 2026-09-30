@@ -2,11 +2,14 @@ package mailer
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
-	"net/smtp"
+	"net/http"
 	"sync"
+	"time"
 
 	"coursehunt/server/internals/config"
 )
@@ -17,18 +20,27 @@ type MailMessage struct {
 	HTML    string
 }
 
+type resendEmailPayload struct {
+	From    string   `json:"from"`
+	To      []string `json:"to"`
+	Subject string   `json:"subject"`
+	HTML    string   `json:"html"`
+}
+
 type Mailer struct {
-	cfg    *config.Config
-	queue  chan MailMessage
-	stopCh chan struct{}
-	wg     sync.WaitGroup
+	cfg        *config.Config
+	queue      chan MailMessage
+	stopCh     chan struct{}
+	wg         sync.WaitGroup
+	httpClient *http.Client
 }
 
 func New(cfg *config.Config) *Mailer {
 	m := &Mailer{
-		cfg:    cfg,
-		queue:  make(chan MailMessage, 1024),
-		stopCh: make(chan struct{}),
+		cfg:        cfg,
+		queue:      make(chan MailMessage, 1024),
+		stopCh:     make(chan struct{}),
+		httpClient: &http.Client{Timeout: 10 * time.Second},
 	}
 	m.startWorker()
 	return m
@@ -63,38 +75,57 @@ func (m *Mailer) SendAsync(to, subject, htmlContent string) {
 	select {
 	case m.queue <- MailMessage{To: to, Subject: subject, HTML: htmlContent}:
 	default:
-		log.Printf("[mailer] queue saturated, dropping email to %s", to)
+		log.Printf("[resend] queue saturated, dropping email to %s", to)
 	}
 }
 
 func (m *Mailer) sendRaw(msg MailMessage) {
-	addr := fmt.Sprintf("%s:%d", m.cfg.SMTPHost, m.cfg.SMTPPort)
-
-	var auth smtp.Auth
-	if m.cfg.SMTPUsername != "" && m.cfg.SMTPPassword != "" {
-		auth = smtp.PlainAuth("", m.cfg.SMTPUsername, m.cfg.SMTPPassword, m.cfg.SMTPHost)
-	}
-
-	headers := make(map[string]string)
-	headers["From"] = m.cfg.SMTPFrom
-	headers["To"] = msg.To
-	headers["Subject"] = msg.Subject
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=UTF-8"
-
-	var body bytes.Buffer
-	for k, v := range headers {
-		body.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
-	}
-	body.WriteString("\r\n")
-	body.WriteString(msg.HTML)
-
-	err := smtp.SendMail(addr, auth, m.cfg.SMTPFrom, []string{msg.To}, body.Bytes())
-	if err != nil {
-		log.Printf("[mailer] failed to send email to %s: %v (host=%s)", msg.To, err, addr)
+	if m.cfg.ResendAPIKey == "" {
+		log.Printf("[resend] warning: RESEND_API_KEY is not configured; skipping email to %s", msg.To)
 		return
 	}
-	log.Printf("[mailer] sent email %q to %s", msg.Subject, msg.To)
+
+	from := m.cfg.EmailFrom
+	if from == "" {
+		from = "CourseHunt <onboarding@resend.dev>"
+	}
+
+	payload := resendEmailPayload{
+		From:    from,
+		To:      []string{msg.To},
+		Subject: msg.Subject,
+		HTML:    msg.HTML,
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("[resend] failed to marshal email payload for %s: %v", msg.To, err)
+		return
+	}
+
+	req, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[resend] failed to create request for %s: %v", msg.To, err)
+		return
+	}
+
+	req.Header.Set("Authorization", "Bearer "+m.cfg.ResendAPIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := m.httpClient.Do(req)
+	if err != nil {
+		log.Printf("[resend] network error sending email to %s: %v", msg.To, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("[resend] error response sending email to %s (status %d): %s", msg.To, resp.StatusCode, string(bodyBytes))
+		return
+	}
+
+	log.Printf("[resend] successfully sent email %q to %s", msg.Subject, msg.To)
 }
 
 // ── Transactional Email Templates ──
