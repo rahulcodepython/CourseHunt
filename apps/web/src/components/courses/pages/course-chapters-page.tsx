@@ -6,7 +6,6 @@ import type { Chapter } from "@/schema/chapters.types";
 import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getChapterColumns } from "@/components/chapters/chapter-columns";
 import { DataTable } from "@/components/table/data-table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/common/icon";
 import { CourseChapterDialog } from "@/components/courses/manage/course-chapter-dialog";
@@ -53,35 +52,32 @@ export function CourseChaptersPage({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Course Curriculum</CardTitle>
-            <CardDescription>
-              {isTutor
-                ? "Organize, create and sequence chapters and lessons"
-                : "Inspect all chapters and lectures for this course"}
-            </CardDescription>
-          </div>
-          {isTutor && (
-            <Button onClick={openCreateChapter}>
-              <Icon name="plus" className="mr-1.5 size-4" />
-              Create Chapter
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={chapterColumns}
-            data={chapters}
-            searchPlaceholder="Search chapters..."
-            emptyIcon="folder"
-            emptyText="No chapters created yet for this course"
-            isLoading={isLoading}
-            loadingText="Loading chapters..."
-          />
-        </CardContent>
-      </Card>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold">Course Curriculum</h2>
+          <p className="text-sm text-muted-foreground">
+            {isTutor
+              ? "Organize, create and sequence chapters and lessons"
+              : "Inspect all chapters and lectures for this course"}
+          </p>
+        </div>
+        {isTutor && (
+          <Button onClick={openCreateChapter}>
+            <Icon name="plus" className="mr-1.5 size-4" />
+            Create Chapter
+          </Button>
+        )}
+      </div>
+
+      <DataTable
+        columns={chapterColumns}
+        data={chapters}
+        searchPlaceholder="Search chapters..."
+        emptyIcon="folder"
+        emptyText="No chapters created yet for this course"
+        isLoading={isLoading}
+        loadingText="Loading chapters..."
+      />
 
       {isTutor && (
         <>

@@ -33,6 +33,32 @@ func (a *App) CreateResourceRepository(ctx context.Context, lessonID, tutorID st
 	return postgres.DecodeJSON[LessonResource](resourceData)
 }
 
+func (a *App) UpdateResourceRepository(ctx context.Context, resourceID, tutorID string, req UpdateResourceRequest) (*LessonResource, error) {
+	var (
+		resourceExists bool
+		isOwner        bool
+		resourceData   []byte
+	)
+
+	err := a.DB.QueryRow(
+		ctx,
+		UpdateResource,
+		resourceID, req.Title, req.FileURL, req.FileType, tutorID,
+	).Scan(&resourceExists, &isOwner, &resourceData)
+	if err != nil {
+		return nil, postgres.MapPgError(err)
+	}
+
+	if err := postgres.CheckConditions(
+		postgres.Condition{Failed: !resourceExists, Err: generic.ErrLessonsResourceNotFound},
+		postgres.Condition{Failed: !isOwner, Err: generic.ErrLessonsAccessDenied},
+	); err != nil {
+		return nil, err
+	}
+
+	return postgres.DecodeJSON[LessonResource](resourceData)
+}
+
 func (a *App) DeleteResourceRepository(ctx context.Context, resourceID, tutorID string) (string, *string, error) {
 	var (
 		resourceExists bool

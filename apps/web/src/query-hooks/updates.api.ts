@@ -34,7 +34,7 @@ export function useUpdatesQuery(scope: "admin" | "tutor" = "admin") {
 
 export function useInfiniteUpdatesQuery(
   scope: "admin" | "tutor" = "admin",
-  params?: { limit?: number },
+  params?: { limit?: number; course_id?: string },
 ) {
   return useInfiniteQuery({
     queryKey: [...queryKeys.updates(scope), "infinite", params],

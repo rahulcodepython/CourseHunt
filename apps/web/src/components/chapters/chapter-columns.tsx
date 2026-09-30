@@ -30,7 +30,7 @@ export const getChapterColumns = (courseId: string, options: ChapterColumnOption
     header: ({ column }) => <SortableColumnHeader column={column} label="Title" />,
     cell: ({ row, getValue }) => {
       const chapter = row.original;
-      const href = `/${options.role}/courses/${courseId}/chapters/${chapter.id}/lessons`;
+      const href = `/${options.role}/courses/${courseId}/chapters/${chapter.id}`;
       return (
         <Link
           href={href}
@@ -56,14 +56,14 @@ export const getChapterColumns = (courseId: string, options: ChapterColumnOption
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => {
       const chapter = row.original;
-      const href = `/${options.role}/courses/${courseId}/chapters/${chapter.id}/lessons`;
+      const href = `/${options.role}/courses/${courseId}/chapters/${chapter.id}`;
 
       if (options.role === "admin") {
         return (
           <div className="flex justify-end">
             <Button variant="outline" size="sm" asChild className="h-8">
               <Link href={href}>
-                <Icon name="book" className="mr-1.5 size-3.5" />
+                <Icon name="settings" className="mr-1.5 size-3.5" />
                 Manage
               </Link>
             </Button>
@@ -74,17 +74,17 @@ export const getChapterColumns = (courseId: string, options: ChapterColumnOption
       return (
         <RowActions>
           <RowActionButton
-            icon="book"
-            label="View Lessons"
+            icon="settings"
+            label="Manage"
             href={href}
           />
           {options.onEdit && (
-            <RowActionButton icon="pencil" label="Edit Chapter" onClick={() => options.onEdit?.(chapter)} />
+            <RowActionButton icon="pencil" label="Edit" onClick={() => options.onEdit?.(chapter)} />
           )}
           {options.onDelete && (
             <RowActionButton
               icon="trash"
-              label="Delete Chapter"
+              label="Delete"
               onClick={() => options.onDelete?.(chapter)}
               destructive
             />

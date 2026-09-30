@@ -336,10 +336,34 @@ const (
 			RETURNING id, title, file_url, file_type
 		)
 		SELECT 
-			(SELECT tutor_id FROM auth) AS course_tutor_id,
+			EXISTS(SELECT 1 FROM lessons WHERE id = $1) AS lesson_exists,
+			COALESCE((SELECT tutor_id = $5 FROM auth), false) AS is_owner,
 			row_to_json(inserted.*) AS inserted_data
-		FROM (SELECT 1) dummy
-		LEFT JOIN inserted ON true;
+		FROM (SELECT 1) dummy;
+	`
+
+	UpdateResource = `
+		WITH auth AS (
+			SELECT c.tutor_id
+			FROM lesson_resources lr
+			JOIN lessons l ON l.id = lr.lesson_id
+			JOIN chapters ch ON ch.id = l.chapter_id
+			JOIN courses c ON c.id = ch.course_id
+			WHERE lr.id = $1
+		),
+		updated AS (
+			UPDATE lesson_resources
+			SET title = COALESCE($2, title),
+			    file_url = COALESCE($3, file_url),
+			    file_type = COALESCE($4, file_type)
+			WHERE id = $1 AND EXISTS(SELECT 1 FROM auth WHERE auth.tutor_id = $5)
+			RETURNING id, title, file_url, file_type
+		)
+		SELECT 
+			EXISTS(SELECT 1 FROM lesson_resources WHERE id = $1) AS resource_exists,
+			COALESCE((SELECT tutor_id = $5 FROM auth), false) AS is_owner,
+			row_to_json(updated.*) AS updated_data
+		FROM (SELECT 1) dummy;
 	`
 
 	DeleteResource = `

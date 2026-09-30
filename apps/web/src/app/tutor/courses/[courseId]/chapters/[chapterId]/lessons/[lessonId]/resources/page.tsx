@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,16 +9,12 @@ import { z } from "zod";
 import {
   useLessonResourcesQuery,
   useAddResourceMutation,
+  useUpdateResourceMutation,
   useDeleteResourceMutation,
 } from "@/query-hooks/lessons.api";
-import { useCourseSummaryQuery } from "@/query-hooks/courses.api";
-import { useChaptersQuery } from "@/query-hooks/chapters.api";
-import { useLessonsQuery } from "@/query-hooks/lessons.api";
-import { useSetBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import type { LessonResource } from "@/schema/lessons.types";
 
-import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/table/data-table";
 import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
@@ -120,20 +115,113 @@ function AddResourceDialog({
   );
 }
 
+function EditResourceDialog({
+  resource,
+  open,
+  onOpenChange,
+  lessonId,
+}: {
+  resource: LessonResource | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  lessonId: string;
+}) {
+  const updateResourceMutation = useUpdateResourceMutation(lessonId);
+  const [pendingFile, setPendingFile] = React.useState<{ url: string; fileType: string } | null>(
+    null,
+  );
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ResourceFormData>({
+    resolver: zodResolver(resourceSchema),
+    defaultValues: { title: resource?.title ?? "" },
+  });
+
+  React.useEffect(() => {
+    if (open && resource) {
+      reset({ title: resource.title });
+      setPendingFile({ url: resource.file_url, fileType: resource.file_type || "" });
+    }
+  }, [open, resource, reset]);
+
+  const onSubmit = async (data: ResourceFormData) => {
+    if (!resource) return;
+    const [res] = await Promise.all([
+      updateResourceMutation.execute({
+        resourceId: resource.id,
+        data: {
+          title: data.title.trim(),
+          file_url: pendingFile?.url,
+          file_type: pendingFile?.fileType,
+        },
+      }),
+      flushPendingUploads(),
+    ]);
+    if (res?.success) onOpenChange(false);
+  };
+
+  return (
+    <FormDialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) clearPendingUploads();
+        onOpenChange(o);
+      }}
+      title="Edit Resource"
+      description="Update resource details or replace the attached file"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 overflow-hidden min-w-0 w-full">
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-resource-title">Resource Title</Label>
+          <Input id="edit-resource-title" placeholder="e.g. Slide Deck" {...register("title")} />
+          {errors.title && <p className="text-xs text-red-400">{errors.title.message}</p>}
+        </div>
+        <FileUpload
+          label="File"
+          field="file_url"
+          accept="document"
+          value={pendingFile ?? { url: "", fileType: "" }}
+          onChange={(_field, url, fileType) => setPendingFile({ url, fileType })}
+        />
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <LoadingButton
+            type="submit"
+            disabled={!pendingFile?.url}
+            loading={updateResourceMutation.isPending}
+          >
+            Save Changes
+          </LoadingButton>
+        </DialogFooter>
+      </form>
+    </FormDialog>
+  );
+}
+
 export default function LessonResourcesPage() {
   const params = useParams<{ courseId: string; chapterId: string; lessonId: string }>();
-  const { courseId, chapterId, lessonId } = params;
+  const { lessonId } = params;
 
   const { data: rawResources, isLoading } = useLessonResourcesQuery(lessonId);
   const resources: LessonResource[] = rawResources ?? [];
   const deleteResourceMutation = useDeleteResourceMutation(lessonId);
 
   const [addOpen, setAddOpen] = React.useState(false);
+  const [editingResource, setEditingResource] = React.useState<LessonResource | null>(null);
   const { deleting, setDeleting, requestDelete, confirmDelete } = useCrudDialogState<LessonResource>();
 
   const handleDelete = () => confirmDelete(deleteResourceMutation.execute);
 
-  const columns = getColumns(requestDelete);
+  const columns = React.useMemo(
+    () => getColumns((r) => setEditingResource(r), requestDelete),
+    [requestDelete],
+  );
 
   return (
     <div className="w-full space-y-6">
@@ -159,6 +247,13 @@ export default function LessonResourcesPage() {
       />
 
       <AddResourceDialog open={addOpen} onOpenChange={setAddOpen} lessonId={lessonId} />
+
+      <EditResourceDialog
+        resource={editingResource}
+        open={!!editingResource}
+        onOpenChange={(open) => !open && setEditingResource(null)}
+        lessonId={lessonId}
+      />
 
       <ConfirmDeleteDialog
         open={!!deleting}

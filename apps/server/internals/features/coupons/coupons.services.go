@@ -14,11 +14,11 @@ import (
 
 // --- Admin Services ---
 
-func (a *App) AdminList(ctx context.Context, page, limit int, status, isActive, code string) ([]Coupon, int, error) {
-	cacheKey := fmt.Sprintf("coupons:admin:list:p:%d:l:%d:st:%s:ia:%s:c:%s", page, limit, status, isActive, code)
+func (a *App) AdminList(ctx context.Context, page, limit int, status, isActive, code, courseID string) ([]Coupon, int, error) {
+	cacheKey := fmt.Sprintf("coupons:admin:list:p:%d:l:%d:st:%s:ia:%s:c:%s:cid:%s", page, limit, status, isActive, code, courseID)
 
 	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (couponListCacheData, error) {
-		list, total, err := a.AdminListRepository(ctx, page, limit, status, isActive, code)
+		list, total, err := a.AdminListRepository(ctx, page, limit, status, isActive, code, courseID)
 		if err != nil {
 			return couponListCacheData{}, utils.ErrInternal("Failed to fetch coupons.", err)
 		}
@@ -71,11 +71,11 @@ func (a *App) AdminDelete(ctx context.Context, id string) (string, error) {
 
 // --- Tutor Services ---
 
-func (a *App) TutorList(ctx context.Context, page, limit int, userID, status, isActive, code string) ([]Coupon, int, error) {
-	cacheKey := fmt.Sprintf("coupons:tutor:list:p:%d:l:%d:u:%s:st:%s:ia:%s:c:%s", page, limit, userID, status, isActive, code)
+func (a *App) TutorList(ctx context.Context, page, limit int, userID, status, isActive, code, courseID string) ([]Coupon, int, error) {
+	cacheKey := fmt.Sprintf("coupons:tutor:list:p:%d:l:%d:u:%s:st:%s:ia:%s:c:%s:cid:%s", page, limit, userID, status, isActive, code, courseID)
 
 	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (couponListCacheData, error) {
-		list, total, err := a.TutorListRepository(ctx, page, limit, userID, status, isActive, code)
+		list, total, err := a.TutorListRepository(ctx, page, limit, userID, status, isActive, code, courseID)
 		if err != nil {
 			return couponListCacheData{}, utils.ErrInternal("Failed to fetch coupons.", err)
 		}

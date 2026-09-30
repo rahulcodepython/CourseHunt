@@ -31,10 +31,10 @@ export function useCouponsQuery(scope: "admin" | "tutor" = "admin") {
 
 export function useInfiniteCouponsQuery(
   scope: "admin" | "tutor" = "admin",
-  params?: { limit?: number },
+  params?: { limit?: number; course_id?: string; status?: string; is_active?: string; code?: string },
 ) {
   return useInfiniteQuery({
-    queryKey: [...queryKeys.coupons(scope), "infinite"],
+    queryKey: [...queryKeys.coupons(scope), "infinite", params],
     queryFn: ({ pageParam = 1 }) =>
       request(
         {

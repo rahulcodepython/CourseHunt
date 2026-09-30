@@ -164,7 +164,7 @@ export function useInfiniteManageCoursesQuery(params?: {
             limit: params?.limit ?? 10,
           }),
         },
-        PaginatedResponseZod(CourseZod),
+        PaginatedResponseZod(AdminCourseItemZod),
       ),
     getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.page + 1 : undefined),
     initialPageParam: 1,

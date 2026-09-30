@@ -2,18 +2,14 @@
 
 import * as React from "react";
 
-import { useInfiniteManageCoursesQuery, useDeleteCourseMutation } from "@/query-hooks/courses.api";
-import type { Course } from "@/schema/courses.types";
+import { useInfiniteManageCoursesQuery } from "@/query-hooks/courses.api";
+import type { AdminCourseItem } from "@/schema/courses.types";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/table/data-table";
-import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
 import { Icon } from "@/components/common/icon";
 import { Button } from "@/components/ui/button";
-import { useCrudDialogState } from "@/hooks/use-crud-dialog-state";
 import { getColumns } from "./columns";
 import { CourseModal } from "./course-modal";
-import { CourseStatusDialog } from "./course-status-dialog";
-import { CourseDetailsModal } from "@/components/dialogs/course-details-modal";
 
 export default function TutorCoursesPage() {
   const {
@@ -23,32 +19,15 @@ export default function TutorCoursesPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteManageCoursesQuery({ scope: "tutor", limit: 12 });
-  const deleteMutation = useDeleteCourseMutation();
 
-  const courses: Course[] = React.useMemo(
+  const courses: AdminCourseItem[] = React.useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
     [data],
   );
   const totalCount = data?.pages[0]?.total ?? 0;
 
-  const {
-    dialogOpen,
-    setDialogOpen,
-    editing,
-    openCreate,
-    openEdit,
-    deleting,
-    setDeleting,
-    requestDelete,
-    confirmDelete,
-  } = useCrudDialogState<Course>();
-
-  const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
-  const [statusCourse, setStatusCourse] = React.useState<Course | null>(null);
-  const columns = React.useMemo(
-    () => getColumns(openEdit, requestDelete, setSelectedCourse, setStatusCourse),
-    [openEdit, requestDelete],
-  );
+  const [createModalOpen, setCreateModalOpen] = React.useState(false);
+  const columns = React.useMemo(() => getColumns(), []);
 
   return (
     <div className="space-y-6">
@@ -56,7 +35,7 @@ export default function TutorCoursesPage() {
         title="My Courses"
         subtitle="Create, edit and manage the courses you teach"
         actions={
-          <Button onClick={openCreate}>
+          <Button onClick={() => setCreateModalOpen(true)}>
             <Icon name="plus" className="size-4" />
             Create Course
           </Button>
@@ -77,32 +56,10 @@ export default function TutorCoursesPage() {
         totalCount={totalCount}
       />
 
-      <CourseModal open={dialogOpen} onOpenChange={setDialogOpen} editingCourse={editing} />
-
-      <CourseStatusDialog
-        course={statusCourse}
-        open={statusCourse !== null}
-        onOpenChange={(open) => {
-          if (!open) setStatusCourse(null);
-        }}
-      />
-
-      <CourseDetailsModal
-        course={selectedCourse}
-        open={selectedCourse !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedCourse(null);
-        }}
-      />
-
-      <ConfirmDeleteDialog
-        open={!!deleting}
-        onOpenChange={(open) => !open && setDeleting(null)}
-        onConfirm={() => confirmDelete(deleteMutation.execute)}
-        loading={deleteMutation.isPending}
-        title="Delete Course"
-        description={`Are you sure you want to delete "${deleting?.title}"? This will also delete all its chapters and lessons. This action cannot be undone.`}
-        confirmText="Delete Course"
+      <CourseModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        editingCourse={null}
       />
     </div>
   );

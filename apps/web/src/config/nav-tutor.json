@@ -7,12 +7,6 @@
                 "href": "/tutor",
                 "icon": "dashboard",
                 "permission": null
-            },
-            {
-                "title": "Notifications",
-                "href": "/tutor/notifications",
-                "icon": "bell",
-                "permission": null
             }
         ]
     },
@@ -23,13 +17,13 @@
                 "title": "My Courses",
                 "href": "/tutor/courses",
                 "icon": "category",
-                "permission": "tutor:courses:manage"
+                "permission": null
             },
             {
                 "title": "Course Updates",
                 "href": "/tutor/updates",
                 "icon": "world",
-                "permission": "tutor:updates:manage"
+                "permission": null
             }
         ]
     },
@@ -40,7 +34,7 @@
                 "title": "My Coupons",
                 "href": "/tutor/coupons",
                 "icon": "ticket",
-                "permission": "tutor:coupons:manage"
+                "permission": null
             }
         ]
     }

@@ -1,10 +1,15 @@
 "use client";
 
-import * as React from "react";
-import { useParams } from "next/navigation";
-import { CourseAboutPage } from "@/components/courses/pages/course-about-page";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 
-export default function AdminCourseAboutPage() {
+export default function AdminCourseAboutRedirect() {
   const params = useParams<{ courseId: string }>();
-  return <CourseAboutPage courseId={params.courseId} role="admin" />;
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace(`/admin/courses/${params.courseId}/settings`);
+  }, [params.courseId, router]);
+
+  return null;
 }

@@ -121,42 +121,24 @@ export const getLessonColumns = (
           );
         }
 
+        const targetHref = lesson.lesson_type === "quiz"
+          ? `${basePath}/quiz`
+          : `${basePath}/resources`;
+
         return (
           <RowActions>
-            {lesson.lesson_type === "quiz" ? (
-              <RowActionButton
-                icon="list"
-                label="Manage Quiz"
-                href={`${basePath}/quiz`}
-                iconClassName="text-amber-500"
-              />
-            ) : (
-              <RowActionButton
-                icon="file-text"
-                label="Manage Resources"
-                href={`${basePath}/resources`}
-                iconClassName="text-blue-500"
-              />
-            )}
             <RowActionButton
-              icon="star"
-              label="View Feedback"
-              href={`${basePath}/feedback`}
-              iconClassName="text-amber-500 fill-amber-500"
-            />
-            <RowActionButton
-              icon="messages"
-              label="View Discussions"
-              href={`${basePath}/discussions`}
-              iconClassName="text-primary"
+              icon="settings"
+              label="Manage"
+              href={targetHref}
             />
             {options.onEdit && (
-              <RowActionButton icon="pencil" label="Edit Lesson" onClick={() => options.onEdit?.(lesson)} />
+              <RowActionButton icon="pencil" label="Edit" onClick={() => options.onEdit?.(lesson)} />
             )}
             {options.onDelete && (
               <RowActionButton
                 icon="trash"
-                label="Delete Lesson"
+                label="Delete"
                 onClick={() => options.onDelete?.(lesson)}
                 destructive
               />

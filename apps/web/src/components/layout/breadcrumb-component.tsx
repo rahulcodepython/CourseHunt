@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,7 +11,14 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
+  BreadcrumbEllipsis,
 } from "@/components/ui/breadcrumb";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { useBreadcrumbStore, type BreadcrumbItemData } from "@/store/breadcrumb.store";
 import { ROUTES } from "@/lib/constants/const";
 import { useManageCourseQuery } from "@/query-hooks/courses.api";
@@ -227,41 +235,125 @@ export default function BreadcrumbComponent() {
     });
   }, [customOverride, pathname, role, isTutor, courseTitle, chapterTitle, lessonTitle]);
 
+  // Split items for Desktop: collapse intermediate steps if trail is deep
+  const shouldCollapse = items.length > 2;
+  const collapsedItems = shouldCollapse ? items.slice(0, items.length - 2) : [];
+  const visibleItems = shouldCollapse
+    ? [items[items.length - 2], items[items.length - 1]]
+    : items;
+
+  // Mobile parent and current item
+  const mobileParent =
+    items.length >= 2 ? items[items.length - 2] : { label: "Dashboard", href: rootHref };
+  const mobileCurrent = items.length > 0 ? items[items.length - 1] : null;
+
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          {items.length === 0 ? (
-            <BreadcrumbPage>Dashboard</BreadcrumbPage>
-          ) : (
-            <BreadcrumbLink asChild>
-              <Link href={rootHref}>Dashboard</Link>
-            </BreadcrumbLink>
-          )}
-        </BreadcrumbItem>
-        {items.map((item, index) => {
-          const isLast = index === items.length - 1;
-          return (
-            <React.Fragment key={index}>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                {isLast || !item.href ? (
-                  <BreadcrumbPage className="max-w-37.5 truncate sm:max-w-75">
-                    {item.label}
-                  </BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link href={item.href} className="max-w-37.5 truncate sm:max-w-75">
-                      {item.label}
-                    </Link>
-                  </BreadcrumbLink>
-                )}
+    <div className="flex items-center min-w-0">
+      {/* Mobile Breadcrumb (Back to parent + truncated active item) */}
+      <div className="flex sm:hidden items-center gap-1.5 min-w-0 text-xs text-muted-foreground">
+        {mobileCurrent ? (
+          <>
+            <Link
+              href={mobileParent.href || rootHref}
+              className="inline-flex items-center gap-1 hover:text-foreground shrink-0 max-w-32.5 font-medium"
+              title={`Back to ${mobileParent.label}`}
+            >
+              <ChevronLeft className="size-3.5 shrink-0" />
+              <span className="truncate">Back to {mobileParent.label}</span>
+            </Link>
+            <span className="shrink-0 text-muted-foreground/60">/</span>
+            <span
+              className="truncate min-w-0 max-w-37.5 font-semibold text-foreground"
+              title={mobileCurrent.label}
+            >
+              {mobileCurrent.label}
+            </span>
+          </>
+        ) : (
+          <span className="font-semibold text-foreground">Dashboard</span>
+        )}
+      </div>
+
+      {/* Desktop Breadcrumb (Fluid flexbox + smart truncation + collapsible intermediate dropdown) */}
+      <Breadcrumb className="hidden sm:flex min-w-0">
+        <BreadcrumbList className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-nowrap">
+          {/* Root: Dashboard */}
+          <BreadcrumbItem className="shrink-0">
+            {items.length === 0 ? (
+              <BreadcrumbPage>Dashboard</BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink asChild>
+                <Link href={rootHref} className="hover:text-foreground transition-colors">
+                  Dashboard
+                </Link>
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+
+          {/* Intermediate collapsed dropdown */}
+          {shouldCollapse && (
+            <>
+              <BreadcrumbSeparator className="shrink-0" />
+              <BreadcrumbItem className="shrink-0">
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className="flex size-7 items-center justify-center rounded-md hover:bg-accent hover:text-foreground text-muted-foreground transition-colors focus:outline-none"
+                    aria-label="More breadcrumbs"
+                  >
+                    <BreadcrumbEllipsis className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-44 max-w-72">
+                    {collapsedItems.map((collapsed, idx) => (
+                      <DropdownMenuItem key={idx} asChild>
+                        {collapsed.href ? (
+                          <Link href={collapsed.href} className="w-full truncate block">
+                            {collapsed.label}
+                          </Link>
+                        ) : (
+                          <span className="w-full truncate block text-muted-foreground">
+                            {collapsed.label}
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </BreadcrumbItem>
-            </React.Fragment>
-          );
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
+            </>
+          )}
+
+          {/* Visible ancestors and leaf node */}
+          {visibleItems.map((item, index) => {
+            const isLast = index === visibleItems.length - 1;
+            return (
+              <React.Fragment key={index}>
+                <BreadcrumbSeparator className="shrink-0" />
+                <BreadcrumbItem className={isLast ? "min-w-0" : "shrink-0"}>
+                  {isLast || !item.href ? (
+                    <BreadcrumbPage
+                      className="truncate block min-w-0 max-w-[200px] md:max-w-[280px] lg:max-w-[380px] font-medium"
+                      title={item.label}
+                    >
+                      {item.label}
+                    </BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link
+                        href={item.href}
+                        className="truncate block max-w-[130px] md:max-w-[180px]"
+                        title={item.label}
+                      >
+                        {item.label}
+                      </Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </React.Fragment>
+            );
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
   );
 }
 

@@ -29,6 +29,7 @@ func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
 	gTutor.Post("/:id/video", middlewares.ValidateUUIDParams("id"), a.handleUpsertVideoContent)
 	gTutor.Post("/:id/document", middlewares.ValidateUUIDParams("id"), a.handleUpsertDocumentContent)
 	gTutor.Post("/:id/resources", middlewares.ValidateUUIDParams("id"), a.handleCreateResource)
+	gTutor.Patch("/:id/resources/:resourceID", middlewares.ValidateUUIDParams("id", "resourceID"), a.handleUpdateResource)
 	gTutor.Delete("/:id/resources/:resourceID", middlewares.ValidateUUIDParams("id", "resourceID"), a.handleDeleteResource)
 
 	// Student study endpoints

@@ -15,8 +15,9 @@ func (a *App) handleAdminList(c *fiber.Ctx) error {
 	status := c.Query("status")
 	isActive := c.Query("is_active")
 	code := c.Query("code")
+	courseID := c.Query("course_id")
 
-	list, total, err := a.AdminList(c.UserContext(), page, limit, status, isActive, code)
+	list, total, err := a.AdminList(c.UserContext(), page, limit, status, isActive, code, courseID)
 	if err != nil {
 		return err
 	}
@@ -72,8 +73,9 @@ func (a *App) handleTutorList(c *fiber.Ctx) error {
 	status := c.Query("status")
 	isActive := c.Query("is_active")
 	code := c.Query("code")
+	courseID := c.Query("course_id")
 
-	list, total, err := a.TutorList(c.UserContext(), page, limit, userID, status, isActive, code)
+	list, total, err := a.TutorList(c.UserContext(), page, limit, userID, status, isActive, code, courseID)
 	if err != nil {
 		return err
 	}

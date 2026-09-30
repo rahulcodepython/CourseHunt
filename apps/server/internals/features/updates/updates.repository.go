@@ -7,11 +7,17 @@ import (
 	"coursehunt/server/internals/pkg/postgres"
 )
 
-func (a *App) AdminListRepository(ctx context.Context, page, limit int) ([]CourseUpdate, int, error) {
+func (a *App) AdminListRepository(ctx context.Context, page, limit int, courseID string) ([]CourseUpdate, int, error) {
 	offset := (page - 1) * limit
-	query := BuildListUpdatesQuery(DefaultUpdatesWhere)
+	where := DefaultUpdatesWhere
+	args := []interface{}{limit, offset}
+	if courseID != "" {
+		where += " AND u.course_id = $3"
+		args = append(args, courseID)
+	}
+	query := BuildListUpdatesQuery(where)
 
-	payload, err := postgres.QueryJSON[updatesPayload](ctx, a.DB, query, limit, offset)
+	payload, err := postgres.QueryJSON[updatesPayload](ctx, a.DB, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -21,11 +27,17 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int) ([]Cours
 	return payload.Data, payload.Total, nil
 }
 
-func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID string) ([]CourseUpdate, int, error) {
+func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID, courseID string) ([]CourseUpdate, int, error) {
 	offset := (page - 1) * limit
-	query := BuildListUpdatesQuery(TutorUpdatesWhere)
+	where := TutorUpdatesWhere
+	args := []interface{}{limit, offset, userID}
+	if courseID != "" {
+		where += " AND u.course_id = $4"
+		args = append(args, courseID)
+	}
+	query := BuildListUpdatesQuery(where)
 
-	payload, err := postgres.QueryJSON[updatesPayload](ctx, a.DB, query, limit, offset, userID)
+	payload, err := postgres.QueryJSON[updatesPayload](ctx, a.DB, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}

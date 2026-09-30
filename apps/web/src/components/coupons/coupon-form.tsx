@@ -49,14 +49,20 @@ export function CouponForm({
   editingCoupon,
   onSuccess,
   scope,
+  fixedCourseId,
+  fixedCourseTitle,
 }: {
   editingCoupon: Coupon | null;
   onSuccess: () => void;
   scope: "admin" | "tutor";
+  fixedCourseId?: string;
+  fixedCourseTitle?: string;
 }) {
   const createMutation = useCreateCouponMutation(scope);
   const updateMutation = useUpdateCouponMutation(scope);
-  const { data: courses = [] } = useCourseOptionsQuery(scope, { enabled: !editingCoupon });
+  const { data: courses = [] } = useCourseOptionsQuery(scope, {
+    enabled: !editingCoupon && !fixedCourseId,
+  });
 
   const {
     register,
@@ -72,7 +78,7 @@ export function CouponForm({
       expires_at: "",
       max_usage: 100,
       is_active: true,
-      courseId: scope === "tutor" ? "" : NO_COURSE,
+      courseId: fixedCourseId ?? (scope === "tutor" ? "" : NO_COURSE),
     },
   });
 
@@ -130,7 +136,16 @@ export function CouponForm({
         />
         {errors.code && <p className="text-xs text-red-400">{errors.code.message}</p>}
       </div>
-      {!editingCoupon && (
+      {fixedCourseId ? (
+        <div className="space-y-1.5">
+          <Label>Course</Label>
+          <Input
+            value={fixedCourseTitle || "Current Course"}
+            disabled
+            className="bg-muted text-muted-foreground cursor-not-allowed"
+          />
+        </div>
+      ) : !editingCoupon && (
         <div className="space-y-1.5">
           <Label>Course</Label>
           <Controller

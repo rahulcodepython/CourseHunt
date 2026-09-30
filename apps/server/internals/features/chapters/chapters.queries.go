@@ -50,9 +50,9 @@ const (
 		)
 		SELECT 
 			CASE
-				WHEN NOT EXISTS(SELECT 1 FROM chapter_info) THEN 1
-				WHEN (SELECT tutor_id FROM chapter_info) != $2 THEN 2
-				ELSE 0
+				WHEN NOT EXISTS(SELECT 1 FROM chapter_info) THEN 0
+				WHEN (SELECT tutor_id FROM chapter_info) != $2 THEN 1
+				ELSE 2
 			END AS status_code,
 			CASE
 				WHEN EXISTS(SELECT 1 FROM chapter_info WHERE tutor_id = $2) THEN (

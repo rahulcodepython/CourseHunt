@@ -11,11 +11,11 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
-func (a *App) AdminList(ctx context.Context, page, limit int) ([]CourseUpdate, int, error) {
-	cacheKey := fmt.Sprintf("updates:admin:list:p:%d:l:%d", page, limit)
+func (a *App) AdminList(ctx context.Context, page, limit int, courseID string) ([]CourseUpdate, int, error) {
+	cacheKey := fmt.Sprintf("updates:admin:list:p:%d:l:%d:c:%s", page, limit, courseID)
 
 	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (updatesCacheData, error) {
-		list, total, err := a.AdminListRepository(ctx, page, limit)
+		list, total, err := a.AdminListRepository(ctx, page, limit, courseID)
 		if err != nil {
 			return updatesCacheData{}, utils.ErrInternal("Failed to fetch updates.", err)
 		}
@@ -27,11 +27,11 @@ func (a *App) AdminList(ctx context.Context, page, limit int) ([]CourseUpdate, i
 	return result.Data, result.Total, nil
 }
 
-func (a *App) TutorList(ctx context.Context, page, limit int, userID string) ([]CourseUpdate, int, error) {
-	cacheKey := fmt.Sprintf("updates:tutor:list:p:%d:l:%d:u:%s", page, limit, userID)
+func (a *App) TutorList(ctx context.Context, page, limit int, userID, courseID string) ([]CourseUpdate, int, error) {
+	cacheKey := fmt.Sprintf("updates:tutor:list:p:%d:l:%d:u:%s:c:%s", page, limit, userID, courseID)
 
 	result, err := cache.Fetch(ctx, a.Cache, cacheKey, 5*time.Minute, func() (updatesCacheData, error) {
-		list, total, err := a.TutorListRepository(ctx, page, limit, userID)
+		list, total, err := a.TutorListRepository(ctx, page, limit, userID, courseID)
 		if err != nil {
 			return updatesCacheData{}, utils.ErrInternal("Failed to fetch updates.", err)
 		}

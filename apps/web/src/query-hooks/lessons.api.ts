@@ -193,6 +193,24 @@ export function useDeleteResourceMutation(id: string) {
   });
 }
 
+export function useUpdateResourceMutation(id: string) {
+  return useArrayMutation<
+    z.infer<typeof LessonResourceZod>,
+    { resourceId: string; data: { title?: string; file_url?: string; file_type?: string } },
+    z.infer<typeof LessonResourceZod>
+  >({
+    mutationFn: ({ resourceId, data }) =>
+      request(
+        { url: `${API_ENDPOINTS.TUTOR_LESSONS}/${id}/resources/${resourceId}`, method: "PATCH", data },
+        LessonResourceZod,
+      ),
+    queryKey: queryKeys.lessonResources(id, "tutor"),
+    updater: (res) => replaceInArray(res),
+    invalidateKeys: [queryKeys.lessonResources(id, "tutor"), queryKeys.lessonResources(id, "admin")],
+    showToast: true,
+  });
+}
+
 export function useLessonResourcesQuery(id: string, scope: "admin" | "tutor" = "tutor") {
   const endpoint = scope === "admin" ? API_ENDPOINTS.ADMIN_LESSONS : API_ENDPOINTS.TUTOR_LESSONS;
   return useQuery({ queryKey: queryKeys.lessonResources(id, scope), queryFn: () =>

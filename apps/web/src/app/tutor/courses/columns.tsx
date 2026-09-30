@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
 import type { TableColumn } from "@/components/table/data-table";
-import type { Course } from "@/schema/courses.types";
+import type { AdminCourseItem } from "@/schema/courses.types";
 import { formatINR } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/common/icon";
@@ -11,14 +11,9 @@ import { SortableColumnHeader } from "@/components/table/sortable-column-header"
 import { RowActions, RowActionButton } from "@/components/table/row-actions";
 import { COURSE_STATUS } from "@/lib/constants/const";
 
-const columnHelper = createColumnHelper<Course>();
+const columnHelper = createColumnHelper<AdminCourseItem>();
 
-export const getColumns = (
-  onEdit: (course: Course) => void,
-  onDelete: (course: Course) => void,
-  onViewCourse: (course: Course) => void,
-  onSetStatus: (course: Course) => void,
-): TableColumn<Course>[] => [
+export const getColumns = (): TableColumn<AdminCourseItem>[] => [
   columnHelper.accessor("title", {
     header: ({ column }) => <SortableColumnHeader column={column} label="Course" />,
     cell: ({ row }) => {
@@ -109,15 +104,6 @@ export const getColumns = (
               href={`/courses/${course.slug}`}
             />
           )}
-          <RowActionButton icon="eye" label="Quick View" onClick={() => onViewCourse(course)} />
-          <RowActionButton icon="pencil" label="Edit Info" onClick={() => onEdit(course)} />
-          <RowActionButton icon="globe" label="Set Status" onClick={() => onSetStatus(course)} />
-          <RowActionButton
-            icon="trash"
-            label="Delete Course"
-            onClick={() => onDelete(course)}
-            destructive
-          />
         </RowActions>
       );
     },

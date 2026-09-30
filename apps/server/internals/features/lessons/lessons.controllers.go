@@ -182,6 +182,20 @@ func (a *App) handleCreateResource(c *fiber.Ctx) error {
 	return utils.Created(c, "Resource added successfully.", res)
 }
 
+func (a *App) handleUpdateResource(c *fiber.Ctx) error {
+	var req UpdateResourceRequest
+	if err := utils.BindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	res, err := a.UpdateResource(c.UserContext(), c.Params("resourceID"), middlewares.UserID(c), req)
+	if err != nil {
+		return err
+	}
+
+	return utils.OK(c, "Resource updated successfully.", res)
+}
+
 func (a *App) handleDeleteResource(c *fiber.Ctx) error {
 	id, err := a.DeleteResource(c.UserContext(), c.Params("resourceID"), middlewares.UserID(c))
 	if err != nil {

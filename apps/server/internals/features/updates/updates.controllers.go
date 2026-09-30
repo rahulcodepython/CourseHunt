@@ -12,8 +12,9 @@ import (
 
 func (a *App) handleAdminList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
+	courseID := c.Query("course_id")
 
-	list, total, err := a.AdminList(c.UserContext(), page, limit)
+	list, total, err := a.AdminList(c.UserContext(), page, limit, courseID)
 	if err != nil {
 		return err
 	}
@@ -65,8 +66,9 @@ func (a *App) handleAdminDelete(c *fiber.Ctx) error {
 func (a *App) handleTutorList(c *fiber.Ctx) error {
 	page, limit := utils.PaginationParams(c)
 	userID := middlewares.UserID(c)
+	courseID := c.Query("course_id")
 
-	list, total, err := a.TutorList(c.UserContext(), page, limit, userID)
+	list, total, err := a.TutorList(c.UserContext(), page, limit, userID, courseID)
 	if err != nil {
 		return err
 	}

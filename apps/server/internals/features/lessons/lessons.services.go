@@ -321,6 +321,23 @@ func (a *App) CreateResource(ctx context.Context, lessonID, userID string, req A
 	return res, nil
 }
 
+func (a *App) UpdateResource(ctx context.Context, resourceID, userID string, req UpdateResourceRequest) (*LessonResource, error) {
+	res, err := a.UpdateResourceRepository(ctx, resourceID, userID, req)
+	if err != nil {
+		if errors.Is(err, generic.ErrLessonsResourceNotFound) {
+			return nil, utils.ErrNotFound("Resource not found.", err)
+		}
+		if errors.Is(err, generic.ErrLessonsAccessDenied) {
+			return nil, utils.ErrForbidden("Access denied. You do not own this course.", err)
+		}
+		return nil, utils.ErrInternal("Failed to update resource.", err)
+	}
+
+	a.Cache.Invalidate(ctx, "lessons:*")
+
+	return res, nil
+}
+
 func (a *App) DeleteResource(ctx context.Context, resourceID, userID string) (string, error) {
 	deletedID, oldURL, err := a.DeleteResourceRepository(ctx, resourceID, userID)
 	if err != nil {

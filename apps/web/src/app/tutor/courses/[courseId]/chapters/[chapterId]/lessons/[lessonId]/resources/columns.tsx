@@ -7,17 +7,20 @@ import { RowActions, RowActionButton } from "@/components/table/row-actions";
 
 const columnHelper = createColumnHelper<LessonResource>();
 
-export const getColumns = (onDelete: (resource: LessonResource) => void) => [
+export const getColumns = (
+  onEdit: (resource: LessonResource) => void,
+  onDelete: (resource: LessonResource) => void,
+) => [
   columnHelper.accessor("title", {
     header: "Title",
-    cell: ({ getValue }) => <span className="font-medium">{getValue()}</span>,
+    cell: ({ getValue }) => <span className="font-medium text-foreground">{getValue()}</span>,
   }),
   columnHelper.accessor("file_type", {
     header: "File Type",
     cell: ({ getValue }) => {
       const type = getValue();
       return type ? (
-        <Badge variant="outline" className="uppercase">
+        <Badge variant="outline" className="uppercase text-xs font-mono">
           {type}
         </Badge>
       ) : (
@@ -33,9 +36,10 @@ export const getColumns = (onDelete: (resource: LessonResource) => void) => [
       return (
         <RowActions>
           <RowActionButton icon="external-link" label="Open File" href={resource.file_url} />
+          <RowActionButton icon="pencil" label="Edit" onClick={() => onEdit(resource)} />
           <RowActionButton
             icon="trash"
-            label="Delete Resource"
+            label="Delete"
             onClick={() => onDelete(resource)}
             destructive
           />

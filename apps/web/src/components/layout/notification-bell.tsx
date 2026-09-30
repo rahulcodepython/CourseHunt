@@ -19,9 +19,8 @@ import { ROLES } from "@/lib/constants/const";
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
-const NOTIFICATION_ROUTES: Record<string, string> = {
+const NOTIFICATION_ROUTES: Partial<Record<string, string>> = {
   [ROLES.ADMIN]: "/admin/notifications",
-  [ROLES.TUTOR]: "/tutor/notifications",
 };
 
 // Mounted once in GenericDashboardLayout's header — persists across every
@@ -73,7 +72,7 @@ export function NotificationBell() {
 
   const unseen = hasUnseen ? Math.max(0, items.length - seenCount) : 0;
   const recent = items.slice(0, 10);
-  const href = NOTIFICATION_ROUTES[role] ?? "/";
+  const href = NOTIFICATION_ROUTES[role];
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -112,15 +111,17 @@ export function NotificationBell() {
             ))
           )}
         </div>
-        <div className="border-t p-2">
-          <Link
-            href={href}
-            className="block text-center text-xs font-medium text-primary hover:underline"
-            onClick={() => setOpen(false)}
-          >
-            View all
-          </Link>
-        </div>
+        {href && (
+          <div className="border-t p-2">
+            <Link
+              href={href}
+              className="block text-center text-xs font-medium text-primary hover:underline"
+              onClick={() => setOpen(false)}
+            >
+              View all
+            </Link>
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

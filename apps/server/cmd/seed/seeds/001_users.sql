@@ -78,6 +78,27 @@ FROM "users" u
 WHERE u.role = 'admin'
 ON CONFLICT DO NOTHING;
 
+-- Bootstrap tutor access: Tutor role holding every tutor:* permission
+INSERT INTO roles (name, description, is_system)
+VALUES ('Tutor', 'Default tutor access — manage courses, updates, coupons, quizzes, discussions, and feedbacks.', true)
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT (SELECT id FROM roles WHERE name = 'Tutor'), p.id
+FROM permissions p
+WHERE p.id LIKE 'tutor:%'
+ON CONFLICT DO NOTHING;
+
+DELETE FROM roles_user WHERE user_id IN (
+    SELECT id FROM "users" WHERE role = 'tutor'
+);
+
+INSERT INTO roles_user (user_id, role_id)
+SELECT u.id, (SELECT id FROM roles WHERE name = 'Tutor')
+FROM "users" u
+WHERE u.role = 'tutor'
+ON CONFLICT DO NOTHING;
+
 -- Insert User Profiles (Merged single `profiles` table)
 INSERT INTO profiles (user_id, bio, headline, website, total_students, rating_avg)
 SELECT u.id, v.bio, v.headline, v.website, v.total_students, v.rating_avg

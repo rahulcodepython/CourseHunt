@@ -7,7 +7,6 @@ import {
   useDeleteCouponMutation,
 } from "@/query-hooks/coupons.api";
 import type { Coupon } from "@/schema/coupons.types";
-import { PageHeader } from "@/components/layout/page-header";
 import { Loading } from "@/components/common/loading";
 import { ConfirmDeleteDialog } from "@/components/dialogs/confirm-delete-dialog";
 import { DataTable } from "@/components/table/data-table";
@@ -27,21 +26,34 @@ const COPY = {
   },
 } as const;
 
-export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
+export function CouponsManager({
+  scope,
+  fixedCourseId,
+  fixedCourseTitle,
+}: {
+  scope: "admin" | "tutor";
+  fixedCourseId?: string;
+  fixedCourseTitle?: string;
+}) {
   const {
     data,
     isLoading,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteCouponsQuery(scope, { limit: 12 });
+  } = useInfiniteCouponsQuery(scope, { limit: 12, course_id: fixedCourseId });
   const updateMutation = useUpdateCouponMutation(scope);
   const deleteMutation = useDeleteCouponMutation(scope);
-  const coupons: Coupon[] = React.useMemo(
+
+  const rawCoupons: Coupon[] = React.useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
     [data],
   );
-  const totalCount = data?.pages[0]?.total ?? 0;
+  const coupons = React.useMemo(
+    () => (fixedCourseId ? rawCoupons.filter((c) => c.course?.id === fixedCourseId) : rawCoupons),
+    [rawCoupons, fixedCourseId],
+  );
+  const totalCount = fixedCourseId ? coupons.length : (data?.pages[0]?.total ?? 0);
 
   const {
     dialogOpen: isModalOpen,
@@ -68,16 +80,20 @@ export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={copy.title}
-        subtitle={copy.subtitle}
-        actions={
-          <Button onClick={openCreate}>
-            <Icon name="plus" className="size-4" />
-            Create Coupon
-          </Button>
-        }
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold">
+            {fixedCourseId ? "Course Coupons" : copy.title}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {fixedCourseId ? "Discount coupons specific to this course" : copy.subtitle}
+          </p>
+        </div>
+        <Button onClick={openCreate}>
+          <Icon name="plus" className="size-4" />
+          Create Coupon
+        </Button>
+      </div>
 
       <DataTable
         columns={columns}
@@ -100,9 +116,11 @@ export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
         description={
           editingCoupon
             ? "Update the coupon details"
-            : scope === "tutor"
-              ? "Create a discount coupon for one of your courses"
-              : "Create a new discount coupon"
+            : fixedCourseId
+              ? "Create a discount coupon specific to this course"
+              : scope === "tutor"
+                ? "Create a discount coupon for one of your courses"
+                : "Create a new discount coupon"
         }
       >
         {isModalOpen && (
@@ -110,6 +128,8 @@ export function CouponsManager({ scope }: { scope: "admin" | "tutor" }) {
             editingCoupon={editingCoupon}
             onSuccess={() => setIsModalOpen(false)}
             scope={scope}
+            fixedCourseId={fixedCourseId}
+            fixedCourseTitle={fixedCourseTitle}
           />
         )}
       </FormDialog>

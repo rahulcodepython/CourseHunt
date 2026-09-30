@@ -56,14 +56,18 @@ export function CourseLayoutView({
       },
     ];
 
-    if (pathname.endsWith("/about")) {
-      base.push({ label: "About" });
+    if (pathname.endsWith("/settings") || pathname.endsWith("/about")) {
+      base.push({ label: "Settings" });
     } else if (pathname.endsWith("/chapters")) {
       base.push({ label: "Chapters" });
     } else if (pathname.endsWith("/faqs")) {
       base.push({ label: "FAQs" });
     } else if (pathname.endsWith("/enrollments")) {
       base.push({ label: "Students" });
+    } else if (pathname.endsWith("/updates")) {
+      base.push({ label: "Updates" });
+    } else if (pathname.endsWith("/coupons")) {
+      base.push({ label: "Coupons" });
     }
 
     return base;
@@ -100,10 +104,12 @@ export function CourseLayoutView({
 
   const tabs = [
     { label: "Overview", href: `/${role}/courses/${courseId}`, icon: "chart-bar", exact: true },
-    { label: "About", href: `/${role}/courses/${courseId}/about`, icon: "info-circle", exact: false },
     { label: "Chapters", href: `/${role}/courses/${courseId}/chapters`, icon: "hierarchy", exact: false },
     { label: "FAQs", href: `/${role}/courses/${courseId}/faqs`, icon: "help-circle", exact: false },
     { label: "Students", href: `/${role}/courses/${courseId}/enrollments`, icon: "users", exact: false },
+    { label: "Updates", href: `/${role}/courses/${courseId}/updates`, icon: "world", exact: false },
+    { label: "Coupons", href: `/${role}/courses/${courseId}/coupons`, icon: "ticket", exact: false },
+    { label: "Settings", href: `/${role}/courses/${courseId}/settings`, icon: "settings", exact: false },
   ];
 
   return (

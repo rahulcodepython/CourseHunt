@@ -76,6 +76,12 @@ type AddResourceRequest struct {
 	FileType *string `json:"file_type" validate:"omitempty,max=50"`
 }
 
+type UpdateResourceRequest struct {
+	Title    *string `json:"title" validate:"omitempty,min=1,max=200"`
+	FileURL  *string `json:"file_url" validate:"omitempty,url"`
+	FileType *string `json:"file_type" validate:"omitempty,max=50"`
+}
+
 type AggregatedLessonContentResponse struct {
 	LessonType      string                 `json:"lesson_type"`
 	PlaybackSeconds int                    `json:"playback_seconds"`

@@ -56,10 +56,12 @@ export function GenericDashboardLayout({
       <SidebarProvider>
         <AppSidebar navGroups={navGroups} brandLogo={<Image src={'/logo.png'} alt="Logo" width={1000} height={1000} className="w-10 h-10" />} />
         <SidebarInset>
-          <header className="sticky top-0 z-40 flex items-center justify-start gap-4 border-b bg-background/80 p-2 backdrop-blur-md">
-            <SidebarTrigger />
-            <BreadcrumbComponent />
-            <div className="ml-auto flex items-center gap-2 pr-2">
+          <header className="sticky top-0 z-40 flex items-center justify-start gap-3 border-b bg-background/80 p-2 backdrop-blur-md min-w-0">
+            <SidebarTrigger className="shrink-0" />
+            <div className="min-w-0 flex-1">
+              <BreadcrumbComponent />
+            </div>
+            <div className="ml-auto flex shrink-0 items-center gap-2 pr-2">
               <NotificationBell />
               <ThemeToggle />
               <UserNav />

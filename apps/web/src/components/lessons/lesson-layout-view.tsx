@@ -52,6 +52,8 @@ export function LessonLayoutView({
     ? "Quiz"
     : pathname.endsWith("/resources")
     ? "Resources"
+    : pathname.endsWith("/settings")
+    ? "Settings"
     : "";
 
   const breadcrumbs = React.useMemo(() => {
@@ -61,11 +63,11 @@ export function LessonLayoutView({
       { label: "Chapters", href: `/${role}/courses/${courseId}/chapters` },
       {
         label: chapterTitle,
-        href: `/${role}/courses/${courseId}/chapters/${chapterId}/lessons`,
+        href: `/${role}/courses/${courseId}/chapters/${chapterId}`,
       },
       {
         label: "Lessons",
-        href: `/${role}/courses/${courseId}/chapters/${chapterId}/lessons`,
+        href: `/${role}/courses/${courseId}/chapters/${chapterId}`,
       },
       {
         label: lessonTitle,
@@ -103,6 +105,7 @@ export function LessonLayoutView({
     } else {
       tabs.unshift({ label: "Resources", href: `${basePath}/resources`, icon: "file-text" });
     }
+    tabs.push({ label: "Settings", href: `${basePath}/settings`, icon: "settings" });
   }
 
   const isTabActive = (href: string) =>

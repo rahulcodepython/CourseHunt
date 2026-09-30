@@ -27,7 +27,7 @@ func (a *App) ReadByCodeRepository(ctx context.Context, code string) (*Coupon, e
 	return coupon, nil
 }
 
-func (a *App) AdminListRepository(ctx context.Context, page, limit int, status, isActive, code string) ([]Coupon, int, error) {
+func (a *App) AdminListRepository(ctx context.Context, page, limit int, status, isActive, code, courseID string) ([]Coupon, int, error) {
 	offset := (page - 1) * limit
 	filter := postgres.NewFilter(limit, offset)
 
@@ -39,6 +39,9 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int, status, 
 	}
 	if code != "" {
 		filter.AddCondition("c.code ILIKE $%d", "%"+code+"%")
+	}
+	if courseID != "" {
+		filter.AddCondition("c.course_id = $%d", courseID)
 	}
 
 	payload, err := postgres.QueryJSON[CouponListPayload](ctx, a.DB, BuildListQuery(filter.Join("1=1")), filter.Args...)
@@ -52,11 +55,14 @@ func (a *App) AdminListRepository(ctx context.Context, page, limit int, status, 
 	return payload.Data, payload.Total, nil
 }
 
-func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID, status, isActive, code string) ([]Coupon, int, error) {
+func (a *App) TutorListRepository(ctx context.Context, page, limit int, userID, status, isActive, code, courseID string) ([]Coupon, int, error) {
 	offset := (page - 1) * limit
 	filter := postgres.NewFilter(limit, offset)
 
 	filter.AddCondition("c.created_by = $%d", userID)
+	if courseID != "" {
+		filter.AddCondition("c.course_id = $%d", courseID)
+	}
 	if status != "" {
 		filter.AddCondition("c.is_active = $%d::boolean", status)
 	}
