@@ -33,3 +33,19 @@ func (a *App) signVideoContent(ctx context.Context, res *AggregatedLessonContent
 	cloned.VideoContent = &videoCopy
 	return &cloned
 }
+
+// signResources swaps each private resource URL for a short-lived presigned
+// download URL. Public and external URLs pass through unchanged.
+func (a *App) signResources(ctx context.Context, resources []LessonResource) []LessonResource {
+	if a.Storage == nil || len(resources) == 0 {
+		return resources
+	}
+	signed := make([]LessonResource, len(resources))
+	copy(signed, resources)
+	for i := range signed {
+		if u, err := a.Storage.GeneratePresignedDownloadURL(ctx, signed[i].FileURL, 15*time.Minute); err == nil && u != "" {
+			signed[i].FileURL = u
+		}
+	}
+	return signed
+}

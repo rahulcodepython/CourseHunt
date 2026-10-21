@@ -13,7 +13,7 @@ export const TelemetryZod = z.object({
 export type Telemetry = z.infer<typeof TelemetryZod>;
 
 export const ServiceStatusZod = z.object({
-  status: z.enum(["up", "down"]),
+  status: z.enum(["up", "down", "disabled"]),
   error: z.string().optional(),
 });
 

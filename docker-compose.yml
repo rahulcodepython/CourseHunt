@@ -70,24 +70,6 @@ services:
       retries: 5
       start_period: 5s
 
-  loki:
-    image: grafana/loki:3.0.0
-    container_name: coursehunt-loki
-    restart: unless-stopped
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-    volumes:
-      - ./infra/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
-      - loki-data:/loki
-    networks:
-      - coursehunt-network
-    healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 3s
 
 networks:
   coursehunt-network:
@@ -97,4 +79,3 @@ volumes:
   pgdata:
   redisdata:
   miniodata:
-  loki-data:

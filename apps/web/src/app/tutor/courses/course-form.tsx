@@ -300,6 +300,7 @@ export function CourseForm({
             <FileUpload
               label="Preview Video"
               field="preview_video_url"
+              visibility="public"
               accept="video"
               value={{ url: field.value ?? "", fileType: "video" }}
               onChange={(_field, url) => field.onChange(url)}

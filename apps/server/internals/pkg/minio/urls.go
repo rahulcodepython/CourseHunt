@@ -9,52 +9,37 @@ import (
 
 // GeneratePresignedStreamingURL generates a short-lived presigned URL for private video streaming
 // enforcing inline content disposition to support browser byte-range seek requests.
-func (s *Storage) GeneratePresignedStreamingURL(ctx context.Context, objectKey string, expires time.Duration) (string, error) {
-	s.mu.RLock()
-	client := s.publicClient
-	bucket := s.bucket
-	baseURL := s.baseURL
-	s.mu.RUnlock()
-
-	if client == nil {
-		return "", fmt.Errorf("storage client is not initialized")
-	}
-
-	key := s.CleanKey(objectKey, baseURL)
-	if key == "" {
-		return "", fmt.Errorf("empty object key")
-	}
-
-	if expires <= 0 {
-		expires = 15 * time.Minute
-	}
-
-	reqParams := make(url.Values)
-	// Enforce byte-range requests for seamless video seek operations
-	reqParams.Set("response-content-disposition", "inline")
-
-	u, err := client.PresignedGetObject(ctx, bucket, key, expires, reqParams)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate secure streaming url: %w", err)
-	}
-	return u.String(), nil
+func (s *Storage) GeneratePresignedStreamingURL(ctx context.Context, objectURL string, expires time.Duration) (string, error) {
+	return s.presignGet(ctx, objectURL, expires, "inline")
 }
 
 // GeneratePresignedDownloadURL generates a secure download URL with attachment disposition.
-func (s *Storage) GeneratePresignedDownloadURL(ctx context.Context, objectKey string, expires time.Duration) (string, error) {
+func (s *Storage) GeneratePresignedDownloadURL(ctx context.Context, objectURL string, expires time.Duration) (string, error) {
+	return s.presignGet(ctx, objectURL, expires, "attachment")
+}
+
+// presignGet signs a GET for objects in the private bucket. Public-bucket and
+// external URLs are already fetchable by the browser, so they are returned
+// as-is.
+func (s *Storage) presignGet(ctx context.Context, objectURL string, expires time.Duration, disposition string) (string, error) {
+	if s == nil {
+		return objectURL, nil
+	}
 	s.mu.RLock()
 	client := s.publicClient
-	bucket := s.bucket
-	baseURL := s.baseURL
+	privBucket := s.bucket
 	s.mu.RUnlock()
 
 	if client == nil {
 		return "", fmt.Errorf("storage client is not initialized")
 	}
 
-	key := s.CleanKey(objectKey, baseURL)
+	bucket, key := s.resolve(objectURL)
 	if key == "" {
-		return "", fmt.Errorf("empty object key")
+		return objectURL, nil
+	}
+	if bucket != privBucket {
+		return s.objectURL(bucket, key), nil
 	}
 
 	if expires <= 0 {
@@ -62,20 +47,27 @@ func (s *Storage) GeneratePresignedDownloadURL(ctx context.Context, objectKey st
 	}
 
 	reqParams := make(url.Values)
-	reqParams.Set("response-content-disposition", "attachment")
+	reqParams.Set("response-content-disposition", disposition)
 
 	u, err := client.PresignedGetObject(ctx, bucket, key, expires, reqParams)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate secure download url: %w", err)
+		return "", fmt.Errorf("failed to generate presigned url: %w", err)
 	}
 	return u.String(), nil
 }
 
-// GetSignedUploadURL generates a signed PUT URL for uploading an object, valid for the specified duration.
-func (s *Storage) GetSignedUploadURL(ctx context.Context, objectName string, expires time.Duration) (string, error) {
+// GetSignedUploadURL generates a signed PUT URL for uploading an object to the
+// public or private bucket, valid for the specified duration.
+func (s *Storage) GetSignedUploadURL(ctx context.Context, objectName string, public bool, expires time.Duration) (string, error) {
+	if s == nil {
+		return "", ErrDisabled
+	}
 	s.mu.RLock()
 	client := s.publicClient
 	bucket := s.bucket
+	if public {
+		bucket = s.publicBucket
+	}
 	s.mu.RUnlock()
 
 	if client == nil {
@@ -97,18 +89,28 @@ func (s *Storage) GetSignedUploadURL(ctx context.Context, objectName string, exp
 	return signedURL.String(), nil
 }
 
-// GetSignedURL generates a signed URL for uploading an object, valid for 15 minutes.
-func (s *Storage) GetSignedURL(ctx context.Context, objectName string) (string, error) {
-	return s.GetSignedUploadURL(ctx, objectName, 15*time.Minute)
-}
-
-// GetPublicURL returns the public URL for a given object name in the public bucket.
-func (s *Storage) GetPublicURL(objectName string) string {
+// ObjectURL returns the URL persisted in the DB for an uploaded object. Public
+// objects get their browser-fetchable URL on MINIO_PUBLIC_BASE_URL; private
+// objects get a MINIO_BASE_URL reference that is only usable once presigned.
+func (s *Storage) ObjectURL(objectName string, public bool) string {
+	if s == nil {
+		return ""
+	}
 	s.mu.RLock()
-	baseURL := s.publicBaseURL
-	if baseURL == "" {
-		baseURL = s.baseURL
+	bucket := s.bucket
+	if public {
+		bucket = s.publicBucket
 	}
 	s.mu.RUnlock()
-	return fmt.Sprintf("%s/%s", baseURL, objectName)
+	return s.objectURL(bucket, objectName)
+}
+
+func (s *Storage) objectURL(bucket, key string) string {
+	s.mu.RLock()
+	baseURL := s.baseURL
+	if bucket == s.publicBucket && s.publicBaseURL != "" {
+		baseURL = s.publicBaseURL
+	}
+	s.mu.RUnlock()
+	return fmt.Sprintf("%s/%s", baseURL, key)
 }

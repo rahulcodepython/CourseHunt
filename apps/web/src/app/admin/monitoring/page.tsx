@@ -67,8 +67,10 @@ export default function MonitoringPage() {
     ...rawServices,
   };
 
+  // "disabled" = optional service not configured (e.g. Redis); not counted as an outage.
   const services = Object.entries(serviceMap);
-  const operationalCount = services.filter(([, s]) => s.status === "up").length;
+  const enabledServices = services.filter(([, s]) => s.status !== "disabled");
+  const operationalCount = enabledServices.filter(([, s]) => s.status === "up").length;
 
   return (
     <div className="space-y-6">
@@ -184,7 +186,7 @@ export default function MonitoringPage() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base font-semibold">Service Health Overview</CardTitle>
             <Badge variant="outline" className="text-xs">
-              {operationalCount} / {services.length} Operational
+              {operationalCount} / {enabledServices.length} Operational
             </Badge>
           </CardHeader>
           <CardContent className="space-y-2.5 pt-2 flex-1 flex flex-col justify-around">
@@ -197,7 +199,11 @@ export default function MonitoringPage() {
                   <span
                     className={cn(
                       "size-2.5 rounded-full shrink-0",
-                      status.status === "up" ? "bg-emerald-500" : "bg-destructive animate-pulse",
+                      status.status === "up"
+                        ? "bg-emerald-500"
+                        : status.status === "disabled"
+                          ? "bg-muted-foreground/40"
+                          : "bg-destructive animate-pulse",
                     )}
                   />
                   <div>
@@ -208,10 +214,14 @@ export default function MonitoringPage() {
                   </div>
                 </div>
                 <Badge
-                  variant={status.status === "up" ? "secondary" : "destructive"}
+                  variant={status.status === "down" ? "destructive" : "secondary"}
                   className={status.status === "up" ? "bg-emerald-500/10 text-emerald-500" : ""}
                 >
-                  {status.status === "up" ? "Operational" : "Down"}
+                  {status.status === "up"
+                    ? "Operational"
+                    : status.status === "disabled"
+                      ? "Disabled"
+                      : "Down"}
                 </Badge>
               </div>
             ))}

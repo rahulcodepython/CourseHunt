@@ -15,8 +15,9 @@ func (a *App) handleGetSignedURL(c *fiber.Ctx) error {
 	}
 
 	fileName := c.Query("file_name")
+	visibility := c.Query("visibility", VisibilityPrivate)
 
-	resp, err := a.GetSignedURL(c.UserContext(), user.UserID, user.Role, fileName)
+	resp, err := a.GetSignedURL(c.UserContext(), user.UserID, user.Role, fileName, visibility)
 	if err != nil {
 		return err
 	}

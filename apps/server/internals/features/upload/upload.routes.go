@@ -8,6 +8,6 @@ import (
 )
 
 func (a *App) RegisterRoutes(router fiber.Router, auth fiber.Handler) {
-	g := router.Group("/v1/upload", auth, middlewares.RoleGuard(generic.RoleAdmin, generic.RoleTutor))
+	g := router.Group("/v1/upload", auth, middlewares.RoleGuard(generic.RoleAdmin, generic.RoleTutor, generic.RoleUser))
 	g.Get("/signed/url", a.handleGetSignedURL)
 }

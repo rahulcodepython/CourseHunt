@@ -6,19 +6,25 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
 // Cache wraps the Redis client and exposes caching, querying, and invalidation operations.
+// With a nil client (Redis disabled) reads miss and writes are no-ops, except
+// SetNX, which falls back to a per-process map so debouncing still works.
 type Cache struct {
 	client *redis.Client
+
+	mu    sync.Mutex
+	local map[string]time.Time // SetNX fallback: key -> expiry
 }
 
 // NewCache initializes a new Cache instance with the provided Redis client.
 func NewCache(client *redis.Client) *Cache {
-	return &Cache{client: client}
+	return &Cache{client: client, local: make(map[string]time.Time)}
 }
 
 // Ping checks the health status of the Redis connection.
@@ -118,12 +124,33 @@ func (c *Cache) DeleteByPattern(ctx context.Context, pattern string) error {
 
 // SetNX sets a key with a value and TTL only if the key does not already exist.
 func (c *Cache) SetNX(ctx context.Context, key string, val interface{}, ttl time.Duration) (bool, error) {
-	if c == nil || c.client == nil {
+	if c == nil {
 		return true, nil
+	}
+	if c.client == nil {
+		return c.localSetNX(key, ttl), nil
 	}
 	data, err := json.Marshal(val)
 	if err != nil {
 		return false, err
 	}
 	return c.client.SetNX(ctx, key, data, ttl).Result()
+}
+
+func (c *Cache) localSetNX(key string, ttl time.Duration) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	now := time.Now()
+	if exp, ok := c.local[key]; ok && now.Before(exp) {
+		return false
+	}
+	// Sweep expired keys so the map stays bounded by the TTL window.
+	for k, exp := range c.local {
+		if !now.Before(exp) {
+			delete(c.local, k)
+		}
+	}
+	c.local[key] = now.Add(ttl)
+	return true
 }

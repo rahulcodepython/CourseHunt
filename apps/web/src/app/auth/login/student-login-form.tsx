@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -12,7 +13,7 @@ import { LoadingButton } from "@/components/common/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { getDashboardURI } from "@/lib/constants/const";
+import { getDashboardURI, ROUTES } from "@/lib/constants/const";
 
 const inputClass =
   "border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30";
@@ -232,6 +233,20 @@ export function StudentLoginForm() {
 
       <p className="mt-6 text-center text-xs text-zinc-500">
         New here? Signing in creates your student account instantly.
+      </p>
+      <p className="mt-2 text-center text-xs text-zinc-500">
+        By continuing, you agree to our{" "}
+        <Link href={ROUTES.TERMS} className="underline underline-offset-2 hover:text-zinc-700">
+          Terms &amp; Conditions
+        </Link>{" "}
+        and{" "}
+        <Link
+          href={ROUTES.PRIVACY_POLICY}
+          className="underline underline-offset-2 hover:text-zinc-700"
+        >
+          Privacy Policy
+        </Link>
+        .
       </p>
     </div>
   );

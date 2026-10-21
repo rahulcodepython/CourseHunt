@@ -32,7 +32,9 @@ func main() {
 
 	// Connect to Redis
 	rdb := redis.Connect(cfg)
-	defer rdb.Close()
+	if rdb != nil {
+		defer rdb.Close()
+	}
 
 	// Connect to MinIO storage, continuing without file storage if initialization fails.
 	storage, err := minio.Connect(cfg)

@@ -25,13 +25,13 @@ type Config struct {
 	MigrationsDir         string        `env:"MIGRATIONS_DIR" envDefault:"internals/migrations"`
 
 	// MinIO / S3
-	MinioEnd           string `env:"MINIO_ENDPOINT" envDefault:"localhost:9000" validate:"required"`
-	MinioAccess        string `env:"MINIO_ACCESS_KEY" envDefault:"minioadmin"`
-	MinioSecret        string `env:"MINIO_SECRET_KEY" envDefault:"minioadmin"`
-	MinioBucket        string `env:"MINIO_BUCKET" envDefault:"coursehunt" validate:"required"`
-	MinioBaseURL       string `env:"MINIO_BASE_URL" envDefault:"http://localhost:9000/coursehunt" validate:"required,url"`
-	MinioPublicBucket  string `env:"MINIO_PUBLIC_BUCKET" envDefault:"coursehunt-public"`
-	MinioPublicBaseURL string `env:"MINIO_PUBLIC_BASE_URL" envDefault:"http://localhost:9000/coursehunt-public" validate:"required,url"`
+	MinioEnd           string `env:"MINIO_ENDPOINT" envDefault:""` // empty = storage disabled
+	MinioAccess        string `env:"MINIO_ACCESS_KEY" envDefault:""`
+	MinioSecret        string `env:"MINIO_SECRET_KEY" envDefault:""`
+	MinioBucket        string `env:"MINIO_BUCKET" envDefault:"coursehunt"`
+	MinioBaseURL       string `env:"MINIO_BASE_URL" envDefault:"" validate:"omitempty,url"`
+	MinioPublicBucket  string `env:"MINIO_PUBLIC_BUCKET" envDefault:""`
+	MinioPublicBaseURL string `env:"MINIO_PUBLIC_BASE_URL" envDefault:"" validate:"omitempty,url"`
 	MinioSecure        bool   `env:"MINIO_SECURE" envDefault:"false"`
 
 	// CORS & Auth
@@ -47,14 +47,11 @@ type Config struct {
 	TaxPercent            float64 `env:"TAX_PERCENT" envDefault:"18" validate:"gte=0,lte=100"`
 
 	// Redis
-	RedisHost     string `env:"REDIS_HOST" envDefault:"localhost"`
-	RedisPort     string `env:"REDIS_PORT" envDefault:"6379" validate:"numeric"`
-	RedisPassword string `env:"REDIS_PASSWORD" envDefault:""`
-	RedisDB       int    `env:"REDIS_DB" envDefault:"0" validate:"gte=0"`
+	// redis:// or rediss:// URL; empty = Redis disabled.
+	RedisURL string `env:"REDIS_URL" envDefault:""`
 
 	// Observability & Server Tuning
-	RequestTimeoutSec int    `env:"REQUEST_TIMEOUT_SEC" envDefault:"30" validate:"min=1"`
-	LokiURL           string `env:"LOKI_URL" envDefault:"http://localhost:3100" validate:"url"`
+	RequestTimeoutSec int `env:"REQUEST_TIMEOUT_SEC" envDefault:"30" validate:"min=1"`
 
 	// Resend SaaS Mailer
 	ResendAPIKey string `env:"RESEND_API_KEY" envDefault:""`

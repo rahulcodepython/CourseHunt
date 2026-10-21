@@ -9,7 +9,10 @@ export function isPublicPath(pathname: string): boolean {
     pathname === ROUTES.HOME ||
     pathname === ROUTES.LOGIN ||
     pathname === ROUTES.CHANGE_PASSWORD ||
-    pathname === ROUTES.TWO_FACTOR
+    pathname === ROUTES.TWO_FACTOR ||
+    pathname === ROUTES.PRIVACY_POLICY ||
+    pathname === ROUTES.DATA_SECURITY ||
+    pathname === ROUTES.TERMS
   ) {
     return true;
   }

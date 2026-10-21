@@ -3,7 +3,10 @@ import { COOKIES, ROUTES } from "@/lib/constants/const";
 import { isPublicPath } from "@/lib/auth/public-routes";
 
 export function proxy(request: NextRequest) {
-  const sessionToken = request.cookies.get(COOKIES.SESSION_TOKEN)?.value;
+  // Over HTTPS better-auth prefixes the cookie name with `__Secure-`.
+  const sessionToken =
+    request.cookies.get(`__Secure-${COOKIES.SESSION_TOKEN}`)?.value ??
+    request.cookies.get(COOKIES.SESSION_TOKEN)?.value;
   const isAuthenticated = Boolean(sessionToken);
   const { pathname } = request.nextUrl;
 

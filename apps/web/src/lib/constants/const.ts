@@ -36,6 +36,18 @@ export const ROUTES = {
   LOGIN: "/auth/login",
   CHANGE_PASSWORD: "/auth/change-password",
   TWO_FACTOR: "/auth/two-factor",
+  PRIVACY_POLICY: "/privacy-policy",
+  DATA_SECURITY: "/data-security",
+  TERMS: "/terms-and-conditions",
+} as const;
+
+// Shown on the legal pages. Update these before going live.
+export const LEGAL = {
+  BRAND: "CourseHunt",
+  CONTACT_EMAIL: "support@rahulcodepython.in",
+  SECURITY_EMAIL: "security@rahulcodepython.in",
+  JURISDICTION: "India",
+  LAST_UPDATED: "21 October 2026",
 } as const;
 
 // Resolve the post-login landing page for a given account role. Falls back to

@@ -8,6 +8,10 @@ import (
 	"coursehunt/server/internals/utils"
 )
 
+var imageExtensions = map[string]bool{
+	".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true,
+}
+
 var allowedExtensions = map[string]bool{
 	".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true,
 	".mp4": true, ".webm": true, ".pdf": true, ".doc": true, ".docx": true,

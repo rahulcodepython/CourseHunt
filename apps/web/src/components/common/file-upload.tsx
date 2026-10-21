@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/common/icon";
-import { getSignedUrl } from "@/query-hooks/upload.api";
+import { getSignedUrl, type UploadVisibility } from "@/query-hooks/upload.api";
 import { registerPendingUpload, removePendingUpload } from "@/lib/utils/pending-uploads";
 import { cn } from "@/lib/utils/utils";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ interface FileUploadProps {
   className?: string;
   /** Fired synchronously with the raw File the moment it's selected, before upload starts (e.g. to read video duration client-side). */
   onFileSelected?: (file: File) => void;
+  /** Public files are served directly from the media domain; private ones only via presigned URLs. Defaults to public for images, private otherwise. */
+  visibility?: UploadVisibility;
 }
 
 const ACCEPT_EXTENSIONS: Record<FileUploadProps["accept"], string> = {
@@ -61,6 +63,7 @@ export default function FileUpload({
   value,
   className,
   onFileSelected,
+  visibility = accept === "image" ? "public" : "private",
 }: FileUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [pendingSignedUrl, setPendingSignedUrl] = useState<string | null>(null);
@@ -104,7 +107,7 @@ export default function FileUpload({
 
     try {
       const uniqueFileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-      const signedInfo = await getSignedUrl(uniqueFileName);
+      const signedInfo = await getSignedUrl(uniqueFileName, visibility);
       setPendingSignedUrl(signedInfo.url);
       registerPendingUpload(signedInfo.url, file);
       onChange(field, signedInfo.downloadUrl, accept);

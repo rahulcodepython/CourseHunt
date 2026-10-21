@@ -191,6 +191,7 @@ const (
 	ErrMsgInvalidFileName      = "File name query param required."
 	ErrMsgUnsafeFileName       = "Invalid or unsafe file name."
 	ErrMsgExtensionNotAllowed  = "File extension not allowed."
+	ErrMsgInvalidVisibility    = "visibility must be public or private."
 	ErrMsgInvalidStatusParam   = "Invalid status parameter."
 	ErrMsgInvalidDateFrom      = "Invalid date_from format. Use RFC3339 format."
 	ErrMsgInvalidDateTo        = "Invalid date_to format. Use RFC3339 format."

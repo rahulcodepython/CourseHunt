@@ -18,14 +18,18 @@ func (a *App) checkServices(ctx context.Context) (map[string]ServiceStatus, bool
 		services["postgres"] = ServiceStatus{Status: "up"}
 	}
 
-	if err := a.Cache.Ping(ctx); err != nil {
+	if a.Cache.Client() == nil {
+		services["redis"] = ServiceStatus{Status: "disabled"}
+	} else if err := a.Cache.Ping(ctx); err != nil {
 		allHealthy = false
 		services["redis"] = ServiceStatus{Status: "down", Error: err.Error()}
 	} else {
 		services["redis"] = ServiceStatus{Status: "up"}
 	}
 
-	if err := a.Storage.Ping(ctx); err != nil {
+	if a.Storage == nil {
+		services["minio"] = ServiceStatus{Status: "disabled"}
+	} else if err := a.Storage.Ping(ctx); err != nil {
 		allHealthy = false
 		services["minio"] = ServiceStatus{Status: "down", Error: err.Error()}
 	} else {
@@ -33,17 +37,4 @@ func (a *App) checkServices(ctx context.Context) (map[string]ServiceStatus, bool
 	}
 
 	return services, allHealthy
-}
-
-type LokiQueryResultStream struct {
-	Stream map[string]string `json:"stream"`
-	Values [][]string        `json:"values"`
-}
-
-type LokiQueryResponse struct {
-	Status string `json:"status"`
-	Data   struct {
-		ResultType string                  `json:"resultType"`
-		Result     []LokiQueryResultStream `json:"result"`
-	} `json:"data"`
 }

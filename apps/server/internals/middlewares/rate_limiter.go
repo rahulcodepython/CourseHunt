@@ -6,6 +6,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"coursehunt/server/internals/generic"
@@ -95,9 +96,7 @@ func createRateLimiter(
 	skipPredicate func(c *fiber.Ctx) bool,
 ) fiber.Handler {
 	if rdb == nil {
-		return func(c *fiber.Ctx) error {
-			return c.Next()
-		}
+		return createMemoryRateLimiter(max, window, keyPrefix, verifier, skipPredicate)
 	}
 
 	limiter := redis_rate.NewLimiter(rdb)
@@ -151,7 +150,83 @@ func createRateLimiter(
 	}
 }
 
-// RateLimiterMiddleware provides global rate limiting across instances using Redis GCRA.
+// createMemoryRateLimiter is the fallback when Redis is disabled: a fixed-window
+// limiter kept in this process's memory. Limits apply per instance, so with N
+// backend instances a client can make up to N times max requests per window.
+func createMemoryRateLimiter(
+	max int,
+	window time.Duration,
+	keyPrefix string,
+	verifier *jwt.Verifier,
+	skipPredicate func(c *fiber.Ctx) bool,
+) fiber.Handler {
+	type bucket struct {
+		hits    int
+		resetAt time.Time
+	}
+	var (
+		mu        sync.Mutex
+		buckets   = make(map[string]*bucket)
+		nextSweep = time.Now().Add(window)
+	)
+
+	return func(c *fiber.Ctx) error {
+		if skipPredicate != nil && skipPredicate(c) {
+			return c.Next()
+		}
+
+		identifier, userID, ip := ExtractClientIdentifier(c, verifier)
+		key := fmt.Sprintf("%s:%s", keyPrefix, identifier)
+		now := time.Now()
+
+		mu.Lock()
+		if now.After(nextSweep) {
+			for k, b := range buckets {
+				if now.After(b.resetAt) {
+					delete(buckets, k)
+				}
+			}
+			nextSweep = now.Add(window)
+		}
+		b, ok := buckets[key]
+		if !ok || now.After(b.resetAt) {
+			b = &bucket{resetAt: now.Add(window)}
+			buckets[key] = b
+		}
+		b.hits++
+		remaining := max - b.hits
+		resetAt := b.resetAt
+		mu.Unlock()
+
+		c.Set("X-RateLimit-Limit", strconv.Itoa(max))
+		c.Set("X-RateLimit-Reset", strconv.FormatInt(resetAt.Unix(), 10))
+
+		if remaining < 0 {
+			retryAfterSec := int(math.Ceil(time.Until(resetAt).Seconds()))
+			if retryAfterSec < 1 {
+				retryAfterSec = 1
+			}
+
+			slog.Warn("rate limit exceeded",
+				"prefix", keyPrefix,
+				"identifier", identifier,
+				"user_id", userID,
+				"ip", ip,
+				"retry_after_sec", retryAfterSec,
+			)
+
+			c.Set("Retry-After", strconv.Itoa(retryAfterSec))
+			c.Set("X-RateLimit-Remaining", "0")
+			return utils.ErrTooManyRequests(generic.ErrMsgTooManyRequests, nil)
+		}
+
+		c.Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
+		return c.Next()
+	}
+}
+
+// RateLimiterMiddleware provides global rate limiting across instances using Redis GCRA,
+// or per-instance in-memory limiting when Redis is disabled.
 // It tracks authenticated users by UserID (preventing multi-IP evasion) and guests by IP address.
 func RateLimiterMiddleware(rdb *redis.Client, verifier ...*jwt.Verifier) fiber.Handler {
 	var v *jwt.Verifier

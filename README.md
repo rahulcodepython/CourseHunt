@@ -16,7 +16,7 @@ infra/
   postgres/                     Postgres image build (adds pg_cron)
 ```
 
-See `ARCHITECTURE_TEMPLATE.md` for the architectural patterns used throughout both stacks.
+See `docs/ARCHITECTURE_TEMPLATE.md` for the architectural patterns used throughout both stacks.
 
 ## Running locally
 

@@ -11,12 +11,14 @@ export const SignedURLResponseZod = z.object({
   htmlUrl: z.string(),
 });
 
-export async function getSignedUrl(fileName: string) {
+export type UploadVisibility = "public" | "private";
+
+export async function getSignedUrl(fileName: string, visibility: UploadVisibility) {
   const res = await apiRequest(
     {
       url: API_ENDPOINTS.UPLOAD_SIGNED_URL,
       method: "GET",
-      params: { file_name: fileName },
+      params: { file_name: fileName, visibility },
     },
     SignedURLResponseZod,
   );
@@ -27,7 +29,7 @@ export function useUploadMediaMutation() {
   const mutation = useSimpleMutation({
     mutationFn: async ({ file, fileType }: { file: File; fileType: string }) => {
       const uniqueFileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-      const signedInfo = await getSignedUrl(uniqueFileName);
+      const signedInfo = await getSignedUrl(uniqueFileName, fileType === "image" ? "public" : "private");
 
       await axios.put(signedInfo.url, file, {
         headers: {

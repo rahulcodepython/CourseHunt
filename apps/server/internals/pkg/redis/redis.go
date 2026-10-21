@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -12,17 +11,26 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Connect returns nil when REDIS_URL is unset: Redis is optional, and every
+// caller (cache, rate limiter, heartbeat) has an in-process fallback.
 func Connect(cfg *config.Config) *redis.Client {
-	addr := fmt.Sprintf("%s:%s", cfg.RedisHost, cfg.RedisPort)
+	if cfg.RedisURL == "" {
+		slog.Info("redis disabled (REDIS_URL not set); using in-process fallbacks")
+		return nil
+	}
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: cfg.RedisPassword,
-		DB:       cfg.RedisDB,
-	})
+	// Accepts redis://[user:pass@]host:port[/db] and rediss:// (TLS).
+	opts, err := redis.ParseURL(cfg.RedisURL)
+	if err != nil {
+		slog.Warn("invalid REDIS_URL, running without redis", "error", err)
+		return nil
+	}
+	addr := opts.Addr
+
+	client := redis.NewClient(opts)
 
 	const maxAttempts = 3
-	err := retry.Connect("redis", maxAttempts, 1*time.Second, func() error {
+	err = retry.Connect("redis", maxAttempts, 1*time.Second, func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 		return client.Ping(ctx).Err()

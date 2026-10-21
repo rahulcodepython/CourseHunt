@@ -5,7 +5,7 @@ console.log(`
 
 \x1b[1mAvailable Scripts:\x1b[0m
   \x1b[32mbun run help\x1b[0m          Display this help message
-  \x1b[32mbun run deps:up\x1b[0m       Start background infra dependencies (Postgres, Redis, MinIO, Mailpit, Loki)
+  \x1b[32mbun run deps:up\x1b[0m       Start background infra dependencies (Postgres, Redis, MinIO)
   \x1b[32mbun run deps:down\x1b[0m     Stop and tear down docker compose dependencies
   \x1b[32mbun run migrate-up\x1b[0m    Apply all pending database migrations
   \x1b[32mbun run migrate-down\x1b[0m  Roll back the last database migration

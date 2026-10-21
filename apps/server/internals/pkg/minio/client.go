@@ -2,9 +2,11 @@ package minio
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -45,9 +47,19 @@ const minioRegion = "us-east-1"
 // persisted in the DB (GetPublicURL) can be fetched by the browser without credentials.
 const publicReadPolicyTemplate = `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::%s/*"]}]}`
 
+// ErrDisabled is returned by operations that need storage when none is configured.
+var ErrDisabled = errors.New("file storage is not configured")
+
 // Connect initializes the MinIO client with retries and ensures both private
-// and public buckets exist, returning a ready-to-use *Storage.
+// and public buckets exist, returning a ready-to-use *Storage. It returns nil
+// (storage disabled) when MINIO_ENDPOINT is unset; every *Storage method is
+// safe to call on nil.
 func Connect(cfg *config.Config) (*Storage, error) {
+	if cfg.MinioEnd == "" {
+		slog.Info("file storage disabled (MINIO_ENDPOINT not set)")
+		return nil, nil
+	}
+
 	s := &Storage{cfg: cfg}
 
 	const maxAttempts = 5
@@ -119,16 +131,18 @@ func (s *Storage) init() error {
 		slog.Warn("failed to set public-read policy on public bucket", "bucket", publicBucket, "err", err)
 	}
 
-	pubBaseURL := cfg.MinioPublicBaseURL
+	baseURL := strings.TrimRight(cfg.MinioBaseURL, "/")
+	// Must differ from baseURL: resolve() tells the buckets apart by prefix.
+	pubBaseURL := strings.TrimRight(cfg.MinioPublicBaseURL, "/")
 	if pubBaseURL == "" {
-		pubBaseURL = cfg.MinioBaseURL
+		pubBaseURL = strings.TrimSuffix(baseURL, "/"+cfg.MinioBucket) + "/" + publicBucket
 	}
 
 	s.mu.Lock()
 	s.client = client
 	s.publicClient = publicClient
 	s.bucket = cfg.MinioBucket
-	s.baseURL = cfg.MinioBaseURL
+	s.baseURL = baseURL
 	s.publicBucket = publicBucket
 	s.publicBaseURL = pubBaseURL
 	s.mu.Unlock()
@@ -149,6 +163,9 @@ func publicEndpointFrom(baseURL, fallbackEndpoint string, fallbackSecure bool) (
 
 // Ping checks health status of the MinIO connection, attempting auto-reconnect if needed.
 func (s *Storage) Ping(ctx context.Context) error {
+	if s == nil {
+		return ErrDisabled
+	}
 	s.mu.RLock()
 	client, bucket := s.client, s.bucket
 	s.mu.RUnlock()

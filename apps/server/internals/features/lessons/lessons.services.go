@@ -156,6 +156,9 @@ func (a *App) Delete(ctx context.Context, id, userID string) (string, error) {
 }
 
 func (a *App) UpsertVideoContent(ctx context.Context, lessonID, userID string, req UpsertVideoContentRequest) (*LessonVideoContent, error) {
+	if a.Storage != nil {
+		req.VideoURL = a.Storage.CanonicalURL(req.VideoURL)
+	}
 	if req.WrittenContent != nil {
 		req.WrittenContent = utils.SanitizeUGCPtr(req.WrittenContent)
 	}
@@ -305,6 +308,10 @@ func (a *App) UpdateComplete(ctx context.Context, lessonID, userID string) error
 }
 
 func (a *App) CreateResource(ctx context.Context, lessonID, userID string, req AddResourceRequest) (*LessonResource, error) {
+	if a.Storage != nil {
+		req.FileURL = a.Storage.CanonicalURL(req.FileURL)
+	}
+
 	res, err := a.CreateResourceRepository(ctx, lessonID, userID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrLessonsLessonNotFound) {
@@ -322,6 +329,10 @@ func (a *App) CreateResource(ctx context.Context, lessonID, userID string, req A
 }
 
 func (a *App) UpdateResource(ctx context.Context, resourceID, userID string, req UpdateResourceRequest) (*LessonResource, error) {
+	if a.Storage != nil {
+		req.FileURL = a.Storage.CanonicalURLPtr(req.FileURL)
+	}
+
 	res, err := a.UpdateResourceRepository(ctx, resourceID, userID, req)
 	if err != nil {
 		if errors.Is(err, generic.ErrLessonsResourceNotFound) {
@@ -377,7 +388,7 @@ func (a *App) AdminReadResources(ctx context.Context, lessonID string) ([]Lesson
 		}
 		return nil, utils.ErrInternal("Failed to fetch resources.", err)
 	}
-	return res, nil
+	return a.signResources(ctx, res), nil
 }
 
 func (a *App) TutorReadResources(ctx context.Context, lessonID, userID string) ([]LessonResource, error) {
@@ -401,7 +412,7 @@ func (a *App) TutorReadResources(ctx context.Context, lessonID, userID string) (
 		}
 		return nil, utils.ErrInternal("Failed to fetch resources.", err)
 	}
-	return res, nil
+	return a.signResources(ctx, res), nil
 }
 
 func (a *App) StudentReadResources(ctx context.Context, lessonID, userID string) ([]LessonResource, error) {
@@ -425,5 +436,5 @@ func (a *App) StudentReadResources(ctx context.Context, lessonID, userID string)
 		}
 		return nil, utils.ErrInternal("Failed to fetch resources.", err)
 	}
-	return res, nil
+	return a.signResources(ctx, res), nil
 }
